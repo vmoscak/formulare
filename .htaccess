@@ -1,0 +1,5 @@
+# Ochrana tmp adresára
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^tmp/ - [F,L]
+</IfModule>

@@ -1,0 +1,3 @@
+# Runtime cache fontov Dompdf (regeneruje sa z vendor/ pri behu)
+tmp/fonts/*
+!tmp/fonts/.gitkeep
