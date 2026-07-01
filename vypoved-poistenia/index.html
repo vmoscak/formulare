@@ -934,7 +934,7 @@ function bind(){
   $('street').addEventListener('focus', e=>{ if((state.street||'').trim().length>=3) renderSuggest(); });
 
   $('saveBtn').addEventListener('click',function(){try{localStorage.setItem('vypoved_state',JSON.stringify(state));var b=$('saveBtn');b.textContent='Uložené ✓';setTimeout(function(){b.textContent='Uložiť koncept';},1800);}catch(e){}});
-  $('genBtn').addEventListener('click', doPrint);
+  $('genBtn').addEventListener('click', doPDF);
   $('pdfBtn').addEventListener('click', doPDF);
   $('printBtn').addEventListener('click', doPrint);
   $('copyBtn').addEventListener('click', doCopy);
