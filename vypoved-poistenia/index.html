@@ -581,8 +581,17 @@ let _previewTimer=null;
 function refreshPreview(){
   if(_previewTimer) clearTimeout(_previewTimer);
   _previewTimer=setTimeout(function(){
-    const frame=document.getElementById('letterFrame');
-    if(frame) frame.srcdoc=buildLetterHtml(true);
+    var frame=document.getElementById('letterFrame');
+    if(!frame) return;
+    frame.onload=function(){
+      try{
+        var doc=frame.contentDocument;
+        var scale=frame.clientWidth/794;   // 210mm @ 96dpi ≈ 794px (celá A4 šírka)
+        doc.body.style.transform='scale('+scale+')';
+        frame.style.height=Math.ceil(1123*scale)+'px';   // 297mm výška, zmenšená
+      }catch(e){}
+    };
+    frame.srcdoc=buildLetterHtml(true);
   }, 180);
 }
 
@@ -757,7 +766,7 @@ function buildLetterHtml(previewMode){
   `;
   const pageMargin = '24mm 22mm 32mm';
   let css = base + (DESIGNS[design] || DESIGNS.klasicky) + ' @page{ margin:'+pageMargin+'; }';
-  if(previewMode) css = previewFonts + css + ' body{ padding:'+pageMargin+'; min-height:247mm; position:relative; } .footer-bar{ position:absolute; }';
+  if(previewMode) css = previewFonts + css + ' html{ overflow:hidden; background:#fff; } body{ width:210mm; min-height:297mm; padding:'+pageMargin+'; position:relative; background:#fff; transform-origin:top left; } .footer-bar{ position:absolute; }';
 
   return '<!DOCTYPE html><html lang="sk"><head>'
     +'<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
