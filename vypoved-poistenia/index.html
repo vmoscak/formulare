@@ -701,7 +701,8 @@ function buildLetterHtml(previewMode){
     ${middle}`;
 
   const base = `
-    * { box-sizing:border-box; margin:0; padding:0; }
+    div,p,table,tr,td,th,strong,span,a,h1,h2,h3 { box-sizing:border-box; margin:0; padding:0; }
+    body { margin:0; padding:0; }
     a,:link,:visited { color:inherit; text-decoration:none; }
     table.parties { width:100%; border-collapse:collapse; table-layout:fixed; }
     table.parties td { vertical-align:top; width:50%; word-wrap:break-word; }
@@ -764,9 +765,10 @@ function buildLetterHtml(previewMode){
     @font-face { font-family:'DejaVu Serif'; font-weight:bold; src:url('../vendor/dompdf/lib/fonts/DejaVuSerif-Bold.ttf'); }
     @font-face { font-family:'DejaVu Serif'; font-style:italic; src:url('../vendor/dompdf/lib/fonts/DejaVuSerif-Italic.ttf'); }
   `;
-  const pageMargin = '24mm 22mm 32mm';
-  let css = base + (DESIGNS[design] || DESIGNS.klasicky) + ' @page{ margin:'+pageMargin+'; }';
-  if(previewMode) css = previewFonts + css + ' html{ overflow:hidden; background:#fff; } body{ width:210mm; min-height:297mm; padding:'+pageMargin+'; position:relative; background:#fff; transform-origin:top left; } .footer-bar{ position:absolute; }';
+  // Dompdf nesprávne parsuje 3-hodnotový @page margin skrátený zápis (ľavý/pravý okraj sa stratí) — nutný plný 4-hodnotový zápis (T R B L)
+  const pageMargin4 = '24mm 22mm 32mm 22mm';
+  let css = base + (DESIGNS[design] || DESIGNS.klasicky) + ' @page{ margin:'+pageMargin4+'; }';
+  if(previewMode) css = previewFonts + css + ' html{ overflow:hidden; background:#fff; } body{ width:210mm; min-height:297mm; padding:'+pageMargin4+'; position:relative; background:#fff; transform-origin:top left; } .footer-bar{ position:absolute; }';
 
   return '<!DOCTYPE html><html lang="sk"><head>'
     +'<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
