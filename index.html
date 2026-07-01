@@ -3,14 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="VMfin Formuláre – vyplň, stiahni ako PDF, hotovo. Výpoveď poistnej zmluvy a ďalšie vzory.">
-<meta name="robots" content="index,follow">
-<meta property="og:title" content="VMfin · Formuláre">
-<meta property="og:description" content="Pripravené vzory a formuláre – vyplň online a stiahni ako PDF.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://formulare.vmfin.sk">
-<title>VMfin · Formuláre</title>
-<link rel="icon" href="https://www.vmfin.sk/favicon.ico">
+<meta name="robots" content="noindex,nofollow">
+<title>Formuláre</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -47,22 +41,10 @@
     width:46px; height:46px; border-radius:13px; flex-shrink:0;
     background:linear-gradient(135deg,var(--accent),#3a7ae4); color:#fff;
     display:flex; align-items:center; justify-content:center;
-    font-weight:800; font-size:20px; letter-spacing:-.02em;
     box-shadow:0 6px 18px rgba(31,95,209,.28);
   }
   .head h1{font-size:20px; font-weight:800; letter-spacing:-.02em; margin:0;}
   .head p{font-size:13px; color:var(--muted); margin:3px 0 0;}
-
-  /* Intro riadok */
-  .intro{
-    background:#fff; border:1px solid var(--border); border-radius:var(--radius);
-    padding:18px 22px; margin-bottom:22px;
-    display:flex; align-items:center; gap:12px;
-    box-shadow:0 8px 30px rgba(30,38,56,.05);
-  }
-  .intro .dot{width:9px; height:9px; border-radius:50%; background:#22b07d; flex-shrink:0;}
-  .intro span{font-size:13.5px; color:var(--label);}
-  .intro b{color:var(--ink);}
 
   /* Mriežka formulárov */
   .grid{
@@ -106,13 +88,6 @@
     padding:4px 9px; border-radius:999px;
   }
 
-  /* Pätička */
-  .foot{
-    margin-top:30px; padding:18px 4px; text-align:center;
-    font-size:12.5px; color:var(--muted);
-  }
-  .foot a{color:var(--accent); font-weight:600;}
-
   @media(max-width:520px){
     body{padding:16px;}
     .head h1{font-size:18px;}
@@ -123,16 +98,15 @@
 <div class="wrap">
 
   <div class="head">
-    <div class="logo">VM</div>
-    <div>
-      <h1>Formuláre &amp; vzory</h1>
-      <p>VMfin · vyplň online a stiahni ako PDF</p>
+    <div class="logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15l2 2 4-4"/>
+      </svg>
     </div>
-  </div>
-
-  <div class="intro">
-    <div class="dot"></div>
-    <span><b>Zadarmo a bez registrácie.</b> Vyber formulár, vyplň údaje a stiahni si hotové PDF pripravené na podpis.</span>
+    <div>
+      <h1>Formuláre</h1>
+      <p>Vyplň údaje a stiahni hotové PDF</p>
+    </div>
   </div>
 
   <div class="grid">
@@ -145,7 +119,7 @@
         </svg>
       </div>
       <h2>Výpoveď poistnej zmluvy</h2>
-      <p>Výpoveď životného, majetkového či iného poistenia. Vyber poisťovňu, dôvod a termín – text sa doplní automaticky.</p>
+      <p>Výber poisťovne, dôvodu a termínu – text výpovede sa doplní automaticky.</p>
       <span class="go">Otvoriť
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </span>
@@ -160,7 +134,7 @@
         </svg>
       </div>
       <h2>Splnomocnenie</h2>
-      <p>Splnomocnenie na zastupovanie pri vybavovaní poistných a finančných záležitostí.</p>
+      <p>Splnomocnenie na zastupovanie pri vybavovaní.</p>
       <span class="go" style="color:var(--muted);">Čoskoro</span>
     </div>
 
@@ -173,17 +147,12 @@
         </svg>
       </div>
       <h2>Ďalšie formuláre</h2>
-      <p>Postupne pribudnú ďalšie vzory a žiadosti. Chýba ti niečo konkrétne? Napíš mi.</p>
+      <p>Postupne pribudnú ďalšie vzory a žiadosti.</p>
       <span class="go" style="color:var(--muted);">Čoskoro</span>
     </div>
 
   </div>
 
-  <div class="foot">
-    © <span id="y"></span> VMfin · <a href="https://www.vmfin.sk" target="_blank" rel="noopener">vmfin.sk</a> · <a href="mailto:vmfin@vmfin.sk">vmfin@vmfin.sk</a>
-  </div>
-
 </div>
-<script>document.getElementById('y').textContent=new Date().getFullYear();</script>
 </body>
 </html>
