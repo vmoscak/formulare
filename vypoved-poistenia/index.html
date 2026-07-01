@@ -368,15 +368,8 @@
         <span class="live"><i></i>Aktualizuje sa naživo</span>
       </div>
       <div class="preview-tools">
-        <button class="tool main" id="pdfBtn" title="Stiahne hotové PDF zo servera">Uložiť ako PDF</button>
-        <button class="tool" id="printBtn">Tlačiť</button>
         <button class="tool" id="copyBtn">Kopírovať</button>
       </div>
-      <div class="variant-row">
-        <div class="cap">VZHĽAD VÝSTUPU</div>
-        <div class="variant-chips" id="variants"></div>
-      </div>
-
       <div class="letter klasicky" id="letter">
         <div class="inner">
           <div class="head-classic"><div class="nm" id="L_nm"></div><div class="ad" id="L_ad"></div></div>
@@ -482,12 +475,12 @@ async function fetchNominatim(q){
 const state = {
   type:'pzp', reason:'anniversary', insurer:'allianz', variant:'klasicky',
   ibanOn:true, touched:false, endDateManual:'',
-  conclDate:'2025-12-20',
-  name:'Ján Novák', street:'Hlavná 1424/25', city:'Prešov', zip:'080 01',
-  contract:'8079 123 456', vehicle:'Škoda Octavia, EČV: PO123AB',
-  phone:'+421 905 123 456', email:'jan.novak@email.sk',
-  iban:'SK89 1100 0000 0029 1234 5678',
-  note:'Vozidlo som predal a poistnú zmluvu už nevyužijem.',
+  conclDate:'',
+  name:'', street:'', city:'', zip:'',
+  contract:'', vehicle:'',
+  phone:'', email:'',
+  iban:'',
+  note:'',
 };
 
 /* ===========================================================================
@@ -617,10 +610,6 @@ function renderControls(){
       + '<div><div class="r-label">'+r.label+'</div><div class="r-hint">'+r.hint+'</div></div></div>';
   }).join('');
 
-  // varianty
-  const V=[['klasicky','Klasický'],['minimal','Minimal']];
-  $('variants').innerHTML = V.map(([k,l])=>
-    '<div class="chip'+(k===state.variant?' sel':'')+'" data-variant="'+k+'">'+l+'</div>').join('');
 }
 
 function syncInputs(){
@@ -821,7 +810,7 @@ function doPDF(){
   const tooLate=state.reason==='early'&&(TODAY>addMonths(concl,2));
   if(Object.keys(errors).length>0||tooLate) return;
 
-  const btn=$('pdfBtn');
+  const btn=$('genBtn');
   btn.textContent='Generujem\u2026'; btn.disabled=true;
 
   const letterHtml=buildLetterHtml();
@@ -847,11 +836,11 @@ function doPDF(){
     a.href=url; a.download=filename+'.pdf';
     document.body.appendChild(a); a.click();
     setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
-    btn.textContent='Uložiť ako PDF'; btn.disabled=false;
+    btn.textContent='Vygenerovať a stiahnuť PDF'; btn.disabled=false;
   })
   .catch(function(e){
     console.error(e);
-    btn.textContent='Uložiť ako PDF'; btn.disabled=false;
+    btn.textContent='Vygenerovať a stiahnuť PDF'; btn.disabled=false;
     alert('Chyba PDF:\n' + e.message);
   });
 }
@@ -911,7 +900,6 @@ function bind(){
   document.addEventListener('click', e=>{
     const t=e.target.closest('[data-type]');     if(t){ state.type=t.dataset.type; render(); renderControls(); return; }
     const r=e.target.closest('[data-reason]');    if(r){ state.reason=r.dataset.reason; state.endDateManual=''; render(); renderControls(); return; }
-    const v=e.target.closest('[data-variant]');   if(v){ state.variant=v.dataset.variant; render(); renderControls(); return; }
     const sg=e.target.closest('#suggest .row');   if(sg){ const a=$('suggest')._list[+sg.dataset.i];
         state.street=a.street; state.city=a.city; state.zip=a.zip; $('suggest').style.display='none'; syncInputs(); render(); return; }
     if(!e.target.closest('.addr-wrap')) $('suggest').style.display='none';
@@ -930,8 +918,6 @@ function bind(){
   $('street').addEventListener('focus', e=>{ if((state.street||'').trim().length>=3) renderSuggest(); });
 
   $('genBtn').addEventListener('click', doPDF);
-  $('pdfBtn').addEventListener('click', doPDF);
-  $('printBtn').addEventListener('click', doPrint);
   $('copyBtn').addEventListener('click', doCopy);
   $('resetBtn').addEventListener('click', doReset);
 }
