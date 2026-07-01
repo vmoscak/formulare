@@ -49,6 +49,11 @@
   /* hlavička */
   .head{display:flex; align-items:center; justify-content:space-between; gap:12px;
         flex-wrap:wrap; padding:16px 26px; border-bottom:1px solid #e8ebf2;}
+  .head-left{display:flex; align-items:center; gap:14px;}
+  .back-btn{width:38px; height:38px; border-radius:11px; border:1.5px solid #dde1ea; background:#fff;
+        display:flex; align-items:center; justify-content:center; color:#4a5160; flex-shrink:0;
+        text-decoration:none; transition:border-color .15s, color .15s;}
+  .back-btn:hover{border-color:var(--accent); color:var(--accent);}
   .brand{display:flex; align-items:center; gap:11px;}
   .logo{width:36px; height:36px; border-radius:12px; background:var(--accent); color:#fff;
         display:flex; align-items:center; justify-content:center; font-weight:800; font-size:17px;}
@@ -172,41 +177,10 @@
         cursor:pointer; background:#fff; color:var(--label); border:1.5px solid #dde1ea;}
   .chip.sel{background:var(--accent); color:#fff; border-color:var(--accent);}
 
-  /* samotný list */
-  .letter{background:#fff; border-radius:10px; box-shadow:0 10px 34px rgba(60,40,20,.13);
-          overflow:hidden; font-family:'Lora',Georgia,serif; color:#2b2520;}
-  .letter .inner{padding:44px 46px; font-size:14px; line-height:1.72;}
-  .letter .parties{display:flex; justify-content:space-between; gap:20px; margin-bottom:26px;}
-  .letter .p-label{font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:#9a8f82;
-        font-weight:700; margin-bottom:4px; font-family:'Plus Jakarta Sans',sans-serif;}
-  .letter .adresat{text-align:right; max-width:240px; margin-left:auto;}
-  .letter .b{font-weight:600;}
-  .letter .date{text-align:right; margin-bottom:22px; color:#5a5249;}
-  .letter .subj{font-weight:700; font-size:15px; margin-bottom:20px;}
-  .letter p{margin:0 0 14px; text-align:justify;}
-  .letter .closing{margin:20px 0 0;}
-  .letter .sig{margin-top:42px;}
-  .letter .sigline{display:inline-block; min-width:180px; border-top:1px solid var(--accent);
-        padding-top:6px; font-weight:600;}
-  .letter .sigcap{font-size:10.5px; color:#9a8f82; margin-top:4px; font-family:'Plus Jakarta Sans',sans-serif;}
-
-  /* variant: klasický */
-  .letter.klasicky .head-classic{text-align:center; padding-bottom:14px; margin-bottom:22px;
-        border-bottom:2px solid #2b2520;}
-  .letter.klasicky .head-classic .nm{font-size:21px; font-weight:700; letter-spacing:.04em;}
-  .letter.klasicky .head-classic .ad{font-size:13px; color:#5a5249; margin-top:3px;}
-  .letter.klasicky .odosielatel{display:none;}      /* meno je v centrovanej hlavičke */
-  .letter.klasicky .subj{border-bottom:2px solid #2b2520; padding-bottom:7px;}
-  .letter.klasicky .sig{text-align:right;}
-
-  /* variant: minimal */
-  .letter.minimal{font-family:'Plus Jakarta Sans',sans-serif;}
-  .letter.minimal .topline{font-size:11px; letter-spacing:.24em; text-transform:uppercase;
-        color:#9a8f82; font-weight:600; margin-bottom:7px;}
-  .letter.minimal .rule{height:2px; width:40px; background:#2b2520; margin-bottom:24px;}
-  .head-classic,.topline,.rule{display:none;}        /* default skryté, varianty zapnú */
-  .letter.klasicky .head-classic{display:block;}
-  .letter.minimal .topline,.letter.minimal .rule{display:block;}
+  /* náhľad listu = iframe s reálnym PDF obsahom (WYSIWYG) */
+  .letter-wrap{border-radius:10px;}
+  .letter-frame{width:100%; height:760px; border:none; border-radius:10px; background:#fff;
+        box-shadow:0 10px 34px rgba(60,40,20,.13); display:block;}
 
   @media print{ body{background:#fff;} .app{box-shadow:none;} }
 </style>
@@ -216,11 +190,16 @@
 <div class="app">
   <!-- HLAVIČKA -->
   <div class="head">
-    <div class="brand">
-      <div class="logo">V</div>
-      <div>
-        <b>Výpoveď poistnej zmluvy</b><br>
-        <small>Vyplň údaje a stiahni hotovú výpoveď ako PDF</small>
+    <div class="head-left">
+      <a href="../" class="back-btn" title="Späť na formuláre">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <div class="brand">
+        <div class="logo">V</div>
+        <div>
+          <b>Výpoveď poistnej zmluvy</b><br>
+          <small>Vyplň údaje a stiahni hotovú výpoveď ako PDF</small>
+        </div>
       </div>
     </div>
     <div class="head-actions">
@@ -370,35 +349,12 @@
       <div class="preview-tools">
         <button class="tool" id="copyBtn">Kopírovať</button>
       </div>
-      <div class="letter klasicky" id="letter">
-        <div class="inner">
-          <div class="head-classic"><div class="nm" id="L_nm"></div><div class="ad" id="L_ad"></div></div>
-          <div class="topline">Výpoveď poistnej zmluvy</div><div class="rule"></div>
-          <div class="parties">
-            <div class="odosielatel">
-              <div class="p-label">Odosielateľ</div>
-              <div class="b" id="L_from_name"></div>
-              <div id="L_from_street"></div>
-              <div id="L_from_zip"></div>
-            </div>
-            <div class="adresat">
-              <div class="p-label">Adresát</div>
-              <div class="b" id="L_ins_name"></div>
-              <div id="L_ins_street"></div>
-              <div id="L_ins_zip"></div>
-            </div>
-          </div>
-          <div class="date" id="L_date"></div>
-          <div class="subj" id="L_subj"></div>
-          <p id="L_greeting"></p>
-          <div id="L_paras"></div>
-          <p class="closing" id="L_closing"></p>
-          <div class="sig">
-            <div class="sigline" id="L_sig"></div>
-            <div class="sigcap">vlastnoručný podpis</div>
-            <div id="L_sigcontact" style="margin-top:8px;font-size:11px;color:#888;"></div>
-          </div>
-        </div>
+      <div class="variant-row">
+        <div class="cap">DIZAJN VÝSTUPU</div>
+        <div class="variant-chips" id="designs"></div>
+      </div>
+      <div class="letter-wrap">
+        <iframe id="letterFrame" class="letter-frame" title="Náhľad výpovede"></iframe>
       </div>
     </div>
   </div>
@@ -473,7 +429,7 @@ async function fetchNominatim(q){
    STAV — predvyplnené ukážkové hodnoty (pokojne vymaž na prázdne "")
 =========================================================================== */
 const state = {
-  type:'pzp', reason:'anniversary', insurer:'allianz', variant:'klasicky',
+  type:'pzp', reason:'anniversary', insurer:'allianz', design:'klasicky',
   ibanOn:true, touched:false, endDateManual:'',
   conclDate:'',
   name:'', street:'', city:'', zip:'',
@@ -610,11 +566,24 @@ function renderControls(){
       + '<div><div class="r-label">'+r.label+'</div><div class="r-hint">'+r.hint+'</div></div></div>';
   }).join('');
 
+  // dizajny výstupu
+  const DES=[['klasicky','Klasický'],['moderny','Moderný'],['elegantny','Elegantný']];
+  $('designs').innerHTML = DES.map(([k,l])=>
+    '<div class="chip'+(k===state.design?' sel':'')+'" data-design="'+k+'">'+l+'</div>').join('');
 }
 
 function syncInputs(){
   ['name','street','city','zip','contract','vehicle','phone','email','iban','note','conclDate']
     .forEach(k=>{ if($(k)) $(k).value = state[k]; });
+}
+
+let _previewTimer=null;
+function refreshPreview(){
+  if(_previewTimer) clearTimeout(_previewTimer);
+  _previewTimer=setTimeout(function(){
+    const frame=document.getElementById('letterFrame');
+    if(frame) frame.srcdoc=buildLetterHtml(true);
+  }, 180);
 }
 
 function render(){
@@ -654,29 +623,10 @@ function render(){
   $('summary').style.display = (state.touched && errCount>0) ? 'flex' : 'none';
   $('summaryMsg').textContent = 'Skontroluj zvýraznené polia ('+errCount+') a skús to znova.';
 
-  // ===== LIST =====
-  const ins = INSURERS[state.insurer];
-  const placeDate = (state.city||'…')+', '+fmt(TODAY);
-  const subject = 'Vec: Výpoveď poistnej zmluvy č. '+state.contract;
-  const paras = buildParas(endDate);
-
-  $('letter').className = 'letter '+state.variant;
-  $('L_nm').textContent = state.name;
-  $('L_ad').textContent = state.street+' · '+state.zip+' '+state.city;
-  $('L_from_name').textContent = state.name;
-  $('L_from_street').textContent = state.street;
-  $('L_from_zip').textContent = state.zip+' '+state.city;
-  $('L_ins_name').textContent = ins.name;
-  $('L_ins_street').textContent = ins.street;
-  $('L_ins_zip').textContent = ins.zip+' '+ins.city;
-  $('L_date').textContent = placeDate;
-  $('L_subj').textContent = subject;
-  $('L_greeting').textContent = 'Vážená poisťovňa,';
-  $('L_paras').innerHTML = paras.map(p=>'<p>'+escapeHtml(p)+'</p>').join('');
-  $('L_closing').textContent = 'S úctou,';
-  $('L_sig').textContent = state.name;
-  var _p=(state.name||'').trim().split(/\s+/),_av=_p.length>=2?_p[0][0]+_p[_p.length-1][0]:_p[0]?_p[0][0]:'?'; $('avatar').textContent=_av.toUpperCase();
-  if($('L_sigcontact')) $('L_sigcontact').textContent=[state.phone,state.email].filter(Boolean).join(' | ');
+  // avatar z iniciál + živý náhľad (presne to, čo bude v PDF)
+  var _p=(state.name||'').trim().split(/\s+/),_av=_p.length>=2?_p[0][0]+_p[_p.length-1][0]:(_p[0]?_p[0][0]:'?');
+  $('avatar').textContent=_av.toUpperCase();
+  refreshPreview();
 }
 
 function escapeHtml(x){ return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -699,7 +649,7 @@ function buildLetterData(){
   };
 }
 
-function buildLetterHtml(){
+function buildLetterHtml(previewMode){
   const d=buildLetterData();
   const paraHtml=d.paras.map(function(p){
     return '<p>'+escapeHtml(p).replace(/\n/g,'<br>')+'</p>';
@@ -709,66 +659,15 @@ function buildLetterHtml(){
     state.email ? 'E-mail: '+escapeHtml(state.email) : ''
   ].filter(Boolean).join('\u2002|\u2002');
 
-  const css=`
-    @page { margin: 25mm 22mm 28mm 25mm; }
-    * { box-sizing: border-box; margin: 0; padding: 0; color: #1a1a1a; }
-    body {
-      font-family: 'DejaVu Sans', Arial, sans-serif;
-      font-size: 11pt;
-      line-height: 1.7;
-      color: #1a1a1a;
-      background: #fff;
-    }
-    a { color: #1a1a1a; text-decoration: none; }
-    :link { color: #1a1a1a; text-decoration: none; }
-    :visited { color: #1a1a1a; text-decoration: none; }
-    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-    td { vertical-align: top; padding: 0; word-wrap: break-word; }
-    .place-date { text-align: right; margin: 10mm 0 10mm; font-size: 11pt; }
-    .subject {
-      font-size: 12pt; font-weight: bold;
-      border-bottom: 1.5pt solid #1a1a1a;
-      padding-bottom: 3pt;
-      margin-bottom: 7mm;
-      width: 100%;
-    }
-    .salutation { margin-bottom: 5mm; }
-    p { margin-bottom: 4.5mm; text-align: justify; color: #1a1a1a; }
-    .farewell { margin-top: 7mm; margin-bottom: 13mm; }
-    .sig-line {
-      display: block; width: 58mm;
-      border-top: 1pt solid #333;
-      padding-top: 4pt;
-      font-size: 11pt; font-weight: bold;
-    }
-    .sig-contact { margin-top: 4pt; font-size: 9pt; color: #555; }
-    .footer-bar {
-      margin-top: 14mm;
-      border-top: 0.5pt solid #ccc;
-      padding-top: 4pt;
-      font-size: 8.5pt;
-      color: #999;
-    }
-    .fl { text-align: left; }
-    .fr { text-align: right; }
-  `;
+  const design = state.design || 'klasicky';
+  const subjectText = escapeHtml(d.subject).replace(/^Vec:\s*/,'');
 
-  // Header uses table so columns never clip
-  const headerHtml=`<table style="margin-bottom:13mm;width:100%;table-layout:fixed;"><tr>
-    <td style="width:50%;vertical-align:top;padding:0;font-size:11pt;line-height:1.55;word-wrap:break-word;">
-      <strong style="font-size:12pt;display:block;margin-bottom:2pt;">${escapeHtml(d.name)}</strong>
-      ${escapeHtml(d.street)}<br>${escapeHtml(d.zipCity)}
-    </td>
-    <td style="width:50%;vertical-align:top;padding:0;font-size:11pt;line-height:1.55;text-align:right;word-wrap:break-word;">
-      <strong style="font-size:12pt;display:block;margin-bottom:2pt;">${escapeHtml(d.insName)}</strong>
-      ${escapeHtml(d.insStreet)}<br>${escapeHtml(d.insZipCity)}
-    </td>
+  const parties = `<table class="parties"><tr>
+    <td class="from"><strong>${escapeHtml(d.name)}</strong><br>${escapeHtml(d.street)}<br>${escapeHtml(d.zipCity)}</td>
+    <td class="to"><strong>${escapeHtml(d.insName)}</strong><br>${escapeHtml(d.insStreet)}<br>${escapeHtml(d.insZipCity)}</td>
   </tr></table>`;
 
-  const body=`
-    ${headerHtml}
-    <div class="place-date">${escapeHtml(d.placeDate)}</div>
-    <div class="subject">Vec: ${escapeHtml(d.subject).replace(/^Vec:\s*/,'')}</div>
+  const middle = `
     <div class="salutation">Vážená poisťovňa,</div>
     <div class="body-text">${paraHtml}</div>
     <div class="farewell">S úctou,</div>
@@ -781,8 +680,79 @@ function buildLetterHtml(){
         <td class="fl">${escapeHtml(d.name)}</td>
         <td class="fr">Výpoveď č. ${escapeHtml(state.contract)}</td>
       </tr></table>
-    </div>
+    </div>`;
+
+  const title = (design==='elegantny') ? '<div class="doctitle">Výpoveď poistnej zmluvy</div>' : '';
+
+  const body = `
+    ${title}
+    <div class="header-block">${parties}</div>
+    <div class="place-date">${escapeHtml(d.placeDate)}</div>
+    <div class="subject">Vec: ${subjectText}</div>
+    ${middle}`;
+
+  const base = `
+    * { box-sizing:border-box; margin:0; padding:0; }
+    a,:link,:visited { color:inherit; text-decoration:none; }
+    table.parties { width:100%; border-collapse:collapse; table-layout:fixed; }
+    table.parties td { vertical-align:top; width:50%; word-wrap:break-word; }
+    table.parties td.to { text-align:right; }
+    .body-text p { text-align:justify; }
+    .footer-bar table { width:100%; border-collapse:collapse; }
+    .footer-bar td.fr { text-align:right; }
   `;
+
+  const DESIGNS = {
+    klasicky: `
+      @page { margin: 24mm 22mm 26mm; }
+      body { font-family:'DejaVu Sans',sans-serif; font-size:11pt; line-height:1.6; color:#222; background:#fff; }
+      .header-block { margin-bottom:12mm; }
+      table.parties td { font-size:11pt; line-height:1.5; }
+      table.parties td strong { font-size:11.5pt; }
+      .place-date { text-align:right; margin:0 0 10mm; }
+      .subject { font-weight:bold; font-size:12.5pt; border-bottom:1.5pt solid #222; padding-bottom:4pt; margin-bottom:7mm; }
+      .salutation { margin-bottom:5mm; }
+      .body-text p { margin-bottom:4mm; }
+      .farewell { margin:7mm 0 12mm; }
+      .sig-line { display:block; width:58mm; border-top:1pt solid #333; padding-top:4pt; font-size:11pt; font-weight:bold; }
+      .sig-contact { margin-top:3pt; font-size:9pt; color:#666; }
+      .footer-bar { margin-top:16mm; border-top:0.5pt solid #ccc; padding-top:4pt; font-size:8.5pt; color:#999; }
+    `,
+    moderny: `
+      @page { margin: 22mm 20mm 26mm; }
+      body { font-family:'DejaVu Sans',sans-serif; font-size:11pt; line-height:1.62; color:#2a2f38; background:#fff; }
+      .header-block { border-bottom:2.5pt solid #1f5fd1; padding-bottom:4mm; margin-bottom:7mm; }
+      table.parties td { font-size:10.5pt; line-height:1.5; }
+      table.parties td.from strong { font-size:14pt; color:#1f5fd1; }
+      table.parties td.to strong { font-size:11pt; }
+      .place-date { text-align:right; margin:0 0 7mm; color:#5a6270; }
+      .subject { background:#1f5fd1; color:#fff; font-weight:bold; font-size:12pt; padding:5pt 8pt; margin-bottom:7mm; }
+      .salutation { margin-bottom:5mm; }
+      .body-text p { margin-bottom:4mm; }
+      .farewell { margin:7mm 0 12mm; }
+      .sig-line { display:block; width:58mm; border-top:1.5pt solid #1f5fd1; padding-top:4pt; font-size:11pt; font-weight:bold; }
+      .sig-contact { margin-top:3pt; font-size:9pt; color:#7a828d; }
+      .footer-bar { margin-top:16mm; border-top:2pt solid #1f5fd1; padding-top:4pt; font-size:8.5pt; color:#9aa0a8; }
+    `,
+    elegantny: `
+      @page { margin: 24mm 22mm 26mm; }
+      body { font-family:'DejaVu Serif','Times New Roman',serif; font-size:11.5pt; line-height:1.6; color:#20242b; background:#fff; }
+      .doctitle { text-align:center; font-size:15pt; letter-spacing:3pt; text-transform:uppercase; font-weight:bold; padding:6pt 0; border-top:1pt solid #20242b; border-bottom:1pt solid #20242b; margin-bottom:10mm; }
+      .header-block { margin-bottom:9mm; }
+      table.parties td { font-size:11pt; line-height:1.5; }
+      .place-date { text-align:right; font-style:italic; margin:0 0 8mm; }
+      .subject { font-weight:bold; font-size:12.5pt; border-bottom:0.75pt solid #20242b; padding-bottom:4pt; margin-bottom:7mm; }
+      .salutation { margin-bottom:5mm; }
+      .body-text p { margin-bottom:4mm; }
+      .farewell { margin:7mm 0 12mm; }
+      .sig-line { display:block; width:58mm; border-top:0.75pt solid #444; padding-top:4pt; font-size:11.5pt; font-weight:bold; }
+      .sig-contact { margin-top:3pt; font-size:9pt; color:#666; font-family:'DejaVu Sans',sans-serif; }
+      .footer-bar { margin-top:16mm; border-top:0.5pt solid #bbb; padding-top:4pt; font-size:8.5pt; color:#999; font-family:'DejaVu Sans',sans-serif; }
+    `
+  };
+
+  let css = base + (DESIGNS[design] || DESIGNS.klasicky);
+  if(previewMode) css += ' body{ padding:16mm 16mm; }';
 
   return '<!DOCTYPE html><html lang="sk"><head>'
     +'<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
@@ -856,7 +826,7 @@ function doCopy(){
 
 function doReset(){
   Object.assign(state,{
-    type:'pzp', reason:'anniversary', insurer:'allianz', variant:'klasicky',
+    type:'pzp', reason:'anniversary', insurer:'allianz', design:'klasicky',
     ibanOn:true, touched:false, endDateManual:'', conclDate:'',
     name:'', street:'', city:'', zip:'', contract:'', vehicle:'', phone:'', email:'', iban:'', note:'',
   });
@@ -900,6 +870,7 @@ function bind(){
   document.addEventListener('click', e=>{
     const t=e.target.closest('[data-type]');     if(t){ state.type=t.dataset.type; render(); renderControls(); return; }
     const r=e.target.closest('[data-reason]');    if(r){ state.reason=r.dataset.reason; state.endDateManual=''; render(); renderControls(); return; }
+    const dg=e.target.closest('[data-design]');   if(dg){ state.design=dg.dataset.design; render(); renderControls(); return; }
     const sg=e.target.closest('#suggest .row');   if(sg){ const a=$('suggest')._list[+sg.dataset.i];
         state.street=a.street; state.city=a.city; state.zip=a.zip; $('suggest').style.display='none'; syncInputs(); render(); return; }
     if(!e.target.closest('.addr-wrap')) $('suggest').style.display='none';
