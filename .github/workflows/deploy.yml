@@ -10,13 +10,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Deploy Formuláre
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          port: 22
-          local_path: ./*
-          remote_path: /sub/formulare/
-          sftp_only: true
+
+      - name: Inštalácia lftp
+        run: sudo apt-get update -y && sudo apt-get install -y lftp
+
+      - name: Deploy Formuláre (lftp mirror, vytvára vnorené priečinky)
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          lftp -c "
+          set sftp:auto-confirm yes;
+          set net:max-retries 2;
+          set net:timeout 20;
+          open -u '$FTP_USERNAME','$FTP_PASSWORD' sftp://$FTP_SERVER:22;
+          mirror -R --verbose --parallel=3 \
+            --exclude ^\.git/ \
+            --exclude ^\.github/ \
+            ./ /sub/formulare/;
+          "
