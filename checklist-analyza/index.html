@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="sk"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checklist – výstup z analýzy</title>
+
+
+
+<!-- =========================================================================
+     GENERÁTOR CHECKLISTU – VÝSTUP Z FINANČNEJ ANALÝZY
+     -------------------------------------------------------------------------
+     Celá aplikácia je v tomto jednom súbore: HTML + CSS (v <style>) + JS (dole).
+     PDF sa generuje na serveri cez zdieľaný ../pdf.php (Dompdf) — rovnaký
+     endpoint ako v ostatných formulároch.
+
+     KDE ČO UPRAVIŤ:
+       • Farby / vzhľad ........ sekcia <style>, premenné :root (--accent atď.)
+       • Prednastavené úlohy ... JS, pole DEFAULT_ITEMS
+       • Text a nadpisy ........ JS, funkcia buildLetterHtml()
+========================================================================== -->
+
+<style>
+  :root{
+    --accent:#1a936f;
+    --accent-soft:#e7f5ef;
+    --accent-line:#c7e8da;
+    --ink:#1d2536;
+    --muted:#8b94a3;
+    --label:#515a6b;
+    --border:#e2e6ee;
+    --bg:#eef1f6;
+    --err:#d9362b;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Plus Jakarta Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding:24px;
+  }
+  input,select,textarea{font-family:inherit; outline:none;}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent)!important;}
+
+  .app{max-width:1220px; margin:0 auto; background:#fff; border-radius:20px; overflow:hidden;
+       box-shadow:0 12px 44px rgba(30,38,56,.10);}
+
+  .head{display:flex; align-items:center; justify-content:space-between; gap:12px;
+        flex-wrap:wrap; padding:16px 26px; border-bottom:1px solid #e8ebf2;}
+  .head-left{display:flex; align-items:center; gap:14px;}
+  .back-btn{width:38px; height:38px; border-radius:11px; border:1.5px solid #dde1ea; background:#fff;
+        display:flex; align-items:center; justify-content:center; color:#4a5160; flex-shrink:0;
+        text-decoration:none; transition:border-color .15s, color .15s;}
+  .back-btn:hover{border-color:var(--accent); color:var(--accent);}
+  .brand{display:flex; align-items:center; gap:11px;}
+  .logo{width:36px; height:36px; border-radius:12px; background:var(--accent); color:#fff;
+        display:flex; align-items:center; justify-content:center; font-weight:800; font-size:17px;}
+  .brand b{font-size:16px; font-weight:800; letter-spacing:-.01em;}
+  .brand small{font-size:11.5px; color:var(--muted);}
+  .head-actions{display:flex; align-items:center; gap:10px;}
+  .avatar{width:36px; height:36px; border-radius:50%; background:#eef1f7; display:flex;
+          align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#6b7280;}
+
+  .body{display:flex; flex-wrap:wrap; align-items:stretch;}
+  .form{flex:1 1 460px; min-width:300px; padding:28px 30px; display:flex; flex-direction:column; gap:30px;}
+  .preview{flex:1 1 380px; min-width:300px; background:var(--bg); padding:26px 30px;
+           border-left:1px solid #e8ebf2; display:flex; flex-direction:column;}
+
+  .step-head{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
+  .step-num{width:24px; height:24px; border-radius:8px; background:var(--accent-soft); color:var(--accent);
+            font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center;}
+  .step-title{font-size:13px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--label);}
+
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .fields{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .col-full{grid-column:1 / -1;}
+
+  .field{display:flex; flex-direction:column; gap:6px;}
+  .field > label{font-size:11px; font-weight:700; color:var(--muted); letter-spacing:.04em;}
+  .field input,.field select,.field textarea{
+    padding:11px 13px; border:1.5px solid var(--border); border-radius:12px; background:#fff;
+    font-size:14px; color:var(--ink);}
+  .field input[type=date]{font-weight:600;}
+  .field textarea{min-height:78px; resize:vertical; line-height:1.5;}
+  .field .hint{font-size:11px; color:var(--muted);}
+  .field .err{font-size:11px; color:#c0392b; font-weight:600; display:none;}
+  .field.invalid input,.field.invalid textarea,.field.invalid select{border-color:var(--err);}
+  .field.invalid .err{display:block;}
+
+  .items{display:flex; flex-direction:column; gap:10px;}
+  .item{border:1.5px solid var(--border); border-radius:14px; padding:12px 14px; background:#fff;}
+  .item-top{display:flex; align-items:flex-start; gap:10px;}
+  .item-check{flex:none; width:22px; height:22px; border-radius:6px; border:1.5px solid #c7cdd9;
+      display:flex; align-items:center; justify-content:center; cursor:pointer; margin-top:2px; color:#fff;}
+  .item-check.on{background:var(--accent); border-color:var(--accent);}
+  .item-body{flex:1; display:flex; flex-direction:column; gap:8px;}
+  .item-body textarea{min-height:44px;}
+  .item-meta{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .item-del{flex:none; width:28px; height:28px; border-radius:8px; border:1.5px solid #dde1ea; background:#fff;
+      color:#9aa2b1; display:flex; align-items:center; justify-content:center; cursor:pointer;}
+  .item-del:hover{border-color:var(--err); color:var(--err);}
+  .item.done .item-body textarea{color:#9aa2b1; text-decoration:line-through;}
+
+  .add-item{align-self:flex-start; padding:10px 16px; border-radius:11px; border:1.5px dashed #c7cdd9;
+      background:#fff; color:var(--label); font-weight:600; font-size:13px; cursor:pointer;}
+  .add-item:hover{border-color:var(--accent); color:var(--accent);}
+
+  .alert{display:flex; gap:10px; align-items:flex-start; padding:12px 14px; border-radius:12px;
+         background:#fdecea; border:1.5px solid #f3c0b8; margin-top:12px;}
+  .alert .bang{flex:none; width:20px; height:20px; border-radius:50%; background:var(--err); color:#fff;
+               font-size:13px; font-weight:800; display:flex; align-items:center; justify-content:center;}
+  .alert .msg{font-size:12.5px; line-height:1.45; color:#9a2a20;}
+
+  .actions{display:flex; gap:12px; padding-top:2px;}
+  .btn-primary{flex:1; text-align:center; padding:15px; border-radius:14px; background:var(--accent);
+       color:#fff; font-weight:700; font-size:14.5px; cursor:pointer; border:none;
+       box-shadow:0 8px 18px rgba(26,147,111,.30);}
+  .btn-primary:disabled{opacity:.6; cursor:default;}
+  .btn-ghost{padding:15px 20px; border-radius:14px; border:1.5px solid #dde1ea; background:#fff;
+       color:var(--label); font-weight:600; font-size:14px; cursor:pointer;}
+
+  .preview-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
+  .preview-head .t{font-size:13px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--label);}
+  .live{display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--muted);}
+  .live i{width:7px; height:7px; border-radius:50%; background:#3a9b6e; display:inline-block;}
+  .preview-tools{display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;}
+  .tool{padding:11px 16px; border-radius:11px; background:#fff; border:1.5px solid #dde1ea;
+        color:#4a5160; font-size:13px; font-weight:600; cursor:pointer;}
+
+  .letter-wrap{border-radius:10px;}
+  .letter-frame{width:100%; height:940px; border:none; border-radius:10px; background:#fff;
+        box-shadow:0 10px 34px rgba(60,40,20,.13); display:block;}
+
+  @media print{ body{background:#fff;} .app{box-shadow:none;} }
+  @media (max-width:720px){ .fields{grid-template-columns:1fr;} .grid2{grid-template-columns:1fr;} .item-meta{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="head">
+    <div class="head-left">
+      <a href="../" class="back-btn" title="Späť na formuláre">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <div class="brand">
+        <div class="logo">✓</div>
+        <div>
+          <b>Checklist</b><br>
+          <small>Výstup z finančnej analýzy</small>
+        </div>
+      </div>
+    </div>
+    <div class="head-actions">
+      <div class="avatar" id="avatar">?</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- ============ FORMULÁR ============ -->
+    <div class="form">
+
+      <!-- 1. klient a analýza -->
+      <div>
+        <div class="step-head"><div class="step-num">1</div><div class="step-title">Klient a finančná analýza</div></div>
+        <div class="fields">
+          <div class="field col-full" data-k="clientName">
+            <label>MENO KLIENTA (KLIENTOV)</label>
+            <input id="clientName" placeholder="napr. Ján a Mária Novákovci">
+            <span class="err">Zadaj meno klienta</span>
+          </div>
+          <div class="field" data-k="analysisDate">
+            <label>DÁTUM FINANČNEJ ANALÝZY</label>
+            <input type="date" id="analysisDate">
+            <span class="err">Zadaj dátum analýzy</span>
+          </div>
+          <div class="field" data-k="advisorName">
+            <label>MENO PORADCU</label>
+            <input id="advisorName" placeholder="Meno a priezvisko poradcu">
+            <span class="err">Zadaj meno poradcu</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. úlohy -->
+      <div>
+        <div class="step-head"><div class="step-num">2</div><div class="step-title">Úlohy a odporúčania</div></div>
+        <div class="items" id="items"></div>
+        <button type="button" class="add-item" id="addItem" style="margin-top:10px;">+ Pridať úlohu</button>
+      </div>
+
+      <!-- 3. ďalší krok -->
+      <div>
+        <div class="step-head"><div class="step-num">3</div><div class="step-title">Ďalší krok</div></div>
+        <div class="grid2">
+          <div class="field" data-k="followupDate">
+            <label>TERMÍN ĎALŠIEHO STRETNUTIA <span style="font-weight:500;text-transform:none;">(nepovinné)</span></label>
+            <input type="date" id="followupDate">
+            <span class="err"></span>
+          </div>
+        </div>
+        <div class="field col-full" data-k="note" style="margin-top:12px;">
+          <label>POZNÁMKA <span style="font-weight:500;text-transform:none;">(nepovinné)</span></label>
+          <textarea id="note" placeholder="napr. Klient dodá podklady do 7 dní…"></textarea>
+          <span class="err"></span>
+        </div>
+      </div>
+
+      <div class="alert" id="summary" style="display:none;">
+        <span class="bang">!</span>
+        <span class="msg" id="summaryMsg"></span>
+      </div>
+
+      <div class="actions">
+        <button class="btn-primary" id="genBtn">Vygenerovať a stiahnuť PDF</button>
+        <button class="btn-ghost" id="resetBtn">Vyčistiť</button>
+      </div>
+    </div>
+
+    <!-- ============ NÁHĽAD ============ -->
+    <div class="preview">
+      <div class="preview-head">
+        <span class="t">Náhľad checklistu</span>
+        <span class="live"><i></i>Aktualizuje sa naživo</span>
+      </div>
+      <div class="preview-tools">
+        <button class="tool" id="copyBtn">Kopírovať text</button>
+      </div>
+      <div class="letter-wrap">
+        <iframe id="letterFrame" class="letter-frame" title="Náhľad checklistu"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===========================================================================
+   DÁTA — prednastavené úlohy (dajú sa upraviť / vymazať)
+=========================================================================== */
+const TODAY = new Date();
+
+const DEFAULT_ITEMS = [
+  { text:'Vytvoriť likvidnú finančnú rezervu na neočakávané výdavky', owner:'klient', due:'', done:false },
+  { text:'Skontrolovať a prípadne doplniť životné / rizikové poistenie', owner:'spoločne', due:'', done:false },
+  { text:'Zrevidovať podmienky existujúceho úveru / hypotéky', owner:'poradca', due:'', done:false },
+  { text:'Nastaviť pravidelné investovanie voľných prostriedkov', owner:'klient', due:'', done:false },
+];
+
+const OWNERS = { klient:'klient', poradca:'poradca', spolocne:'spoločne' };
+
+/* ===========================================================================
+   STAV
+=========================================================================== */
+let _idSeq = 1;
+function withId(it){ return Object.assign({ id:_idSeq++ }, it); }
+
+const state = {
+  clientName:'', analysisDate: toISO(TODAY), advisorName:'',
+  items: DEFAULT_ITEMS.map(withId),
+  followupDate:'', note:'',
+  touched:false,
+};
+
+/* ===========================================================================
+   POMOCNÉ FUNKCIE PRE DÁTUMY
+=========================================================================== */
+function parseDate(s){ const p=(s||'').split('-').map(Number); if(p.length!==3||!p[0]) return null;
+  const d=new Date(p[0],p[1]-1,p[2]); return isNaN(d)?null:d; }
+function fmt(d){ return d.getDate()+'. '+(d.getMonth()+1)+'. '+d.getFullYear(); }
+function toISO(d){ const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+
+/* ===========================================================================
+   VALIDÁCIA
+=========================================================================== */
+function validate(){
+  const e = {};
+  if(!state.clientName.trim()) e.clientName='Zadaj meno klienta';
+  if(!parseDate(state.analysisDate)) e.analysisDate='Zadaj dátum analýzy';
+  if(!state.advisorName.trim()) e.advisorName='Zadaj meno poradcu';
+  return e;
+}
+
+/* ===========================================================================
+   VYKRESLENIE
+=========================================================================== */
+const $ = id => document.getElementById(id);
+
+function renderItems(){
+  const box = $('items');
+  box.innerHTML = state.items.map(function(it){
+    return '<div class="item'+(it.done?' done':'')+'" data-id="'+it.id+'">'
+      + '<div class="item-top">'
+      + '<div class="item-check'+(it.done?' on':'')+'" data-act="toggle">'+(it.done?'✓':'')+'</div>'
+      + '<div class="item-body">'
+      + '<textarea placeholder="Popis úlohy / odporúčania" data-act="text">'+escapeHtml(it.text)+'</textarea>'
+      + '<div class="item-meta">'
+      + '<select data-act="owner">'
+        + Object.keys(OWNERS).map(function(k){ return '<option value="'+k+'"'+(k===it.owner?' selected':'')+'>'+OWNERS[k]+'</option>'; }).join('')
+      + '</select>'
+      + '<input type="date" value="'+it.due+'" data-act="due">'
+      + '</div></div>'
+      + '<div class="item-del" data-act="del" title="Odstrániť úlohu">✕</div>'
+      + '</div></div>';
+  }).join('') || '<div style="font-size:13px;color:var(--muted);">Zatiaľ žiadne úlohy. Pridaj prvú nižšie.</div>';
+}
+
+function render(){
+  const errors = validate();
+  document.querySelectorAll('.field[data-k]').forEach(f=>{
+    const k=f.dataset.k;
+    const bad = state.touched && errors[k];
+    f.classList.toggle('invalid', !!bad);
+    const err=f.querySelector('.err'); if(err && errors[k]) err.textContent=errors[k];
+  });
+  const errCount = Object.keys(errors).length;
+  $('summary').style.display = (state.touched && errCount>0) ? 'flex' : 'none';
+  $('summaryMsg').textContent = 'Skontroluj zvýraznené polia ('+errCount+') a skús to znova.';
+
+  var _p=(state.clientName||'').trim().split(/\s+/),_av=_p.length>=2?_p[0][0]+_p[_p.length-1][0]:(_p[0]?_p[0][0]:'?');
+  $('avatar').textContent=_av.toUpperCase();
+
+  renderItems();
+  refreshPreview();
+}
+
+function escapeHtml(x){ return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+let _previewTimer=null;
+function refreshPreview(){
+  if(_previewTimer) clearTimeout(_previewTimer);
+  _previewTimer=setTimeout(function(){
+    var frame=document.getElementById('letterFrame');
+    if(!frame) return;
+    frame.onload=function(){
+      try{
+        var doc=frame.contentDocument;
+        var scale=frame.clientWidth/794;
+        doc.body.style.transform='scale('+scale+')';
+        var contentH=doc.body.scrollHeight;
+        frame.style.height=Math.ceil(contentH*scale)+'px';
+      }catch(e){}
+    };
+    frame.srcdoc=buildLetterHtml(true);
+  }, 180);
+}
+
+/* ===========================================================================
+   ZOSTAVENIE LISTU (HTML pre PDF aj náhľad)
+=========================================================================== */
+function buildLetterHtml(previewMode){
+  const analysisDate = parseDate(state.analysisDate) ? fmt(parseDate(state.analysisDate)) : '…';
+  const followupDate = parseDate(state.followupDate) ? fmt(parseDate(state.followupDate)) : '';
+  const doneCount = state.items.filter(function(it){ return it.done; }).length;
+
+  const rows = state.items.map(function(it){
+    const due = parseDate(it.due) ? fmt(parseDate(it.due)) : '—';
+    return '<tr class="'+(it.done?'done':'')+'">'
+      + '<td class="box"><span class="chk">'+(it.done?'X':'')+'</span></td>'
+      + '<td class="tx">'+escapeHtml(it.text||'…')+'</td>'
+      + '<td class="ow">'+escapeHtml(OWNERS[it.owner]||it.owner||'')+'</td>'
+      + '<td class="du">'+escapeHtml(due)+'</td>'
+      + '</tr>';
+  }).join('');
+
+  const body = `
+    <div class="doctitle">Checklist – výstup z analýzy</div>
+    <div class="meta">
+      <div><strong>Klient:</strong> ${escapeHtml(state.clientName||'…')}</div>
+      <div><strong>Dátum analýzy:</strong> ${escapeHtml(analysisDate)}</div>
+      <div><strong>Poradca:</strong> ${escapeHtml(state.advisorName||'…')}</div>
+    </div>
+    <table class="tasks">
+      <thead><tr><th></th><th>Úloha / odporúčanie</th><th>Zodpovedný</th><th>Termín</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="4" style="color:#8b94a3;">Žiadne úlohy</td></tr>'}</tbody>
+    </table>
+    <div class="progress">Splnené: ${doneCount} z ${state.items.length}</div>
+    ${followupDate ? '<div class="followup"><strong>Ďalšie stretnutie:</strong> '+escapeHtml(followupDate)+'</div>' : ''}
+    ${state.note.trim() ? '<div class="note"><strong>Poznámka:</strong> '+escapeHtml(state.note.trim())+'</div>' : ''}
+    <div class="footer-bar">
+      <table><tr>
+        <td class="fl">${escapeHtml(state.clientName||'…')}</td>
+        <td class="fr">Checklist – výstup z analýzy</td>
+      </tr></table>
+    </div>`;
+
+  const css = `
+    div,p,table,tr,td,th,strong,span { box-sizing:border-box; margin:0; padding:0; }
+    body { margin:0; padding:0; font-family:'DejaVu Sans',sans-serif; font-size:11pt; line-height:1.6; color:#20242b; background:#fff; }
+    .doctitle { text-align:center; font-size:16pt; letter-spacing:2pt; text-transform:uppercase; font-weight:bold;
+      padding:7pt 0; border-top:1pt solid #20242b; border-bottom:1pt solid #20242b; margin-bottom:8mm; }
+    .meta { font-size:10.5pt; margin-bottom:8mm; }
+    .meta div { margin-bottom:2mm; }
+    table.tasks { width:100%; border-collapse:collapse; margin-bottom:6mm; }
+    table.tasks th { text-align:left; font-size:8.5pt; text-transform:uppercase; letter-spacing:.5pt; color:#8b94a3;
+      border-bottom:1pt solid #ccc; padding:3mm 2mm; }
+    table.tasks td { border-bottom:0.5pt solid #e2e6ee; padding:3mm 2mm; font-size:10.5pt; vertical-align:top; }
+    table.tasks tr.done td.tx { color:#9aa2b1; }
+    td.box { width:8mm; }
+    .chk { display:inline-block; width:4mm; height:4mm; border:1pt solid #333; text-align:center;
+      line-height:4mm; font-size:8pt; font-weight:bold; }
+    td.ow { width:26mm; color:#515a6b; }
+    td.du { width:26mm; color:#515a6b; }
+    .progress { font-size:10pt; color:#515a6b; margin-bottom:6mm; }
+    .followup, .note { font-size:10.5pt; margin-bottom:4mm; }
+    .footer-bar table { width:100%; border-collapse:collapse; }
+    .footer-bar td.fr { text-align:right; }
+    .footer-bar { position:fixed; bottom:-22mm; left:0; right:0; width:166mm; border-top:0.5pt solid #ccc; padding-top:4pt; font-size:8.5pt; color:#999; }
+    @page{ margin:24mm 22mm 32mm 22mm; }
+  `;
+
+  const previewFonts = `
+    @font-face { font-family:'DejaVu Sans'; src:url('../vendor/dompdf/lib/fonts/DejaVuSans.ttf'); }
+    @font-face { font-family:'DejaVu Sans'; font-weight:bold; src:url('../vendor/dompdf/lib/fonts/DejaVuSans-Bold.ttf'); }
+  `;
+  let finalCss = css;
+  if(previewMode) finalCss = previewFonts + css + ' html{ overflow:hidden; background:#fff; } body{ box-sizing:border-box; width:210mm; padding:24mm 22mm 32mm 22mm; background:#fff; transform-origin:top left; } .footer-bar{ position:static; margin-top:20mm; width:auto; }';
+
+  return '<!DOCTYPE html><html lang="sk"><head>'
+    +'<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
+    +'<title>Checklist</title>'
+    +'<style>'+finalCss+'</style></head><body>'+body+'</body></html>';
+}
+
+/* ===========================================================================
+   AKCIE — PDF (server), kopírovanie, reset
+=========================================================================== */
+function doPDF(){
+  state.touched=true; render();
+  const errors=validate();
+  if(Object.keys(errors).length>0) return;
+
+  const btn=$('genBtn');
+  btn.textContent='Generujem…'; btn.disabled=true;
+
+  const letterHtml=buildLetterHtml();
+  const filename='Checklist_'+(state.clientName||'klient').replace(/\s+/g,'_');
+
+  fetch('../pdf.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ html: letterHtml, filename: filename })
+  })
+  .then(function(r){
+    const ct = r.headers.get('Content-Type') || '';
+    if (ct.includes('application/json') || ct.includes('text/')) {
+      return r.text().then(function(t){ throw new Error('Server: ' + t); });
+    }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.blob();
+  })
+  .then(function(blob){
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=filename+'.pdf';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    btn.textContent='Vygenerovať a stiahnuť PDF'; btn.disabled=false;
+  })
+  .catch(function(e){
+    console.error(e);
+    btn.textContent='Vygenerovať a stiahnuť PDF'; btn.disabled=false;
+    alert('Chyba PDF:\n' + e.message);
+  });
+}
+
+function doCopy(){
+  const analysisDate = parseDate(state.analysisDate) ? fmt(parseDate(state.analysisDate)) : '…';
+  const followupDate = parseDate(state.followupDate) ? fmt(parseDate(state.followupDate)) : '';
+  const lines = ['CHECKLIST – VÝSTUP Z ANALÝZY','',
+    'Klient: '+(state.clientName||'…'),
+    'Dátum analýzy: '+analysisDate,
+    'Poradca: '+(state.advisorName||'…'),''];
+  state.items.forEach(function(it){
+    const due = parseDate(it.due) ? fmt(parseDate(it.due)) : '';
+    lines.push('['+(it.done?'X':' ')+'] '+it.text+' — '+(OWNERS[it.owner]||it.owner)+(due?(' (do '+due+')'):''));
+  });
+  if(followupDate) lines.push('','Ďalšie stretnutie: '+followupDate);
+  if(state.note.trim()) lines.push('','Poznámka: '+state.note.trim());
+  try{ if(navigator.clipboard) navigator.clipboard.writeText(lines.join('\n')); }catch(e){}
+  const b=$('copyBtn'); b.textContent='Skopírované ✓'; setTimeout(()=>b.textContent='Kopírovať text',1600);
+}
+
+function doReset(){
+  Object.assign(state,{
+    clientName:'', analysisDate: toISO(TODAY), advisorName:'',
+    items: DEFAULT_ITEMS.map(withId),
+    followupDate:'', note:'', touched:false,
+  });
+  syncInputs(); render();
+}
+
+function syncInputs(){
+  ['clientName','analysisDate','advisorName','followupDate','note'].forEach(k=>{ if($(k)) $(k).value = state[k]; });
+}
+
+/* ===========================================================================
+   UDALOSTI
+=========================================================================== */
+function bind(){
+  ['clientName','analysisDate','advisorName','followupDate','note'].forEach(k=>{
+    if($(k)) $(k).addEventListener('input', e=>{ state[k]=e.target.value; render(); });
+  });
+
+  $('addItem').addEventListener('click', ()=>{
+    state.items.push(withId({ text:'', owner:'klient', due:'', done:false }));
+    render();
+  });
+
+  $('items').addEventListener('click', e=>{
+    const row = e.target.closest('.item'); if(!row) return;
+    const id = Number(row.dataset.id);
+    const it = state.items.find(x=>x.id===id); if(!it) return;
+    const act = e.target.closest('[data-act]'); if(!act) return;
+    if(act.dataset.act==='toggle'){ it.done=!it.done; render(); }
+    if(act.dataset.act==='del'){ state.items = state.items.filter(x=>x.id!==id); render(); }
+  });
+
+  const onItemFieldChange = e=>{
+    const row = e.target.closest('.item'); if(!row) return;
+    const id = Number(row.dataset.id);
+    const it = state.items.find(x=>x.id===id); if(!it) return;
+    const act = e.target.dataset.act;
+    if(act==='text') it.text=e.target.value;
+    if(act==='owner') it.owner=e.target.value;
+    if(act==='due') it.due=e.target.value;
+    refreshPreview();
+  };
+  $('items').addEventListener('input', onItemFieldChange);
+  $('items').addEventListener('change', onItemFieldChange);
+
+  $('genBtn').addEventListener('click', doPDF);
+  $('copyBtn').addEventListener('click', doCopy);
+  $('resetBtn').addEventListener('click', doReset);
+}
+
+/* ===========================================================================
+   ŠTART
+=========================================================================== */
+(function init(){
+  syncInputs(); bind(); render();
+})();
+</script>
+
+</body></html>
