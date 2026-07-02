@@ -152,7 +152,16 @@
         box-shadow:0 10px 34px rgba(60,40,20,.13); display:block;}
 
   @media print{ body{background:#fff;} .app{box-shadow:none;} }
-  @media (max-width:720px){ .fields{grid-template-columns:1fr;} .grid4{grid-template-columns:1fr 1fr;} .grid2{grid-template-columns:1fr;} }
+  @media (max-width:720px){
+    body{padding:12px;}
+    .head{padding:14px 16px;}
+    .head-actions{display:none;}
+    .form,.preview{min-width:0; padding:22px 18px;}
+    .fields{grid-template-columns:1fr;}
+    .grid4{grid-template-columns:1fr 1fr;}
+    .grid2{grid-template-columns:1fr;}
+  }
+  @media (max-width:420px){ .grid4{grid-template-columns:1fr;} }
 </style>
 </head>
 <body>
