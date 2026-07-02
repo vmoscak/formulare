@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="sk"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Čestné prehlásenie o neuplatňovaní si náhrady z iného poistenia</title>
+
+
+
+<!-- =========================================================================
+     GENERÁTOR ČESTNÉHO PREHLÁSENIA O NEUPLATŇOVANÍ SI NÁHRADY Z INÉHO POISTENIA
+     -------------------------------------------------------------------------
+     Celá aplikácia je v tomto jednom súbore: HTML + CSS (v <style>) + JS (dole).
+     PDF sa generuje na serveri cez zdieľaný ../pdf.php (Dompdf) — rovnaký
+     endpoint ako v ostatných formulároch.
+
+     KDE ČO UPRAVIŤ:
+       • Farby / vzhľad ........ sekcia <style>, premenné :root (--accent atď.)
+       • Zoznam poisťovní ...... JS, objekt  INSURERS
+       • Text prehlásenia ...... JS, funkcia buildParas()
+       • Napovedanie adresy .... JS, funkcia fetchNominatim() (Nominatim/OSM)
+========================================================================== -->
+
+<style>
+  :root{
+    --accent:#1f5fd1;
+    --accent-soft:#eaf1fc;
+    --accent-line:#cfe0fb;
+    --ink:#1d2536;
+    --muted:#8b94a3;
+    --label:#515a6b;
+    --border:#e2e6ee;
+    --bg:#eef1f6;
+    --err:#d9362b;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Plus Jakarta Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding:24px;
+  }
+  input,select,textarea{font-family:inherit; outline:none;}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent)!important;}
+
+  .app{max-width:1220px; margin:0 auto; background:#fff; border-radius:20px; overflow:hidden;
+       box-shadow:0 12px 44px rgba(30,38,56,.10);}
+
+  .head{display:flex; align-items:center; justify-content:space-between; gap:12px;
+        flex-wrap:wrap; padding:16px 26px; border-bottom:1px solid #e8ebf2;}
+  .head-left{display:flex; align-items:center; gap:14px;}
+  .back-btn{width:38px; height:38px; border-radius:11px; border:1.5px solid #dde1ea; background:#fff;
+        display:flex; align-items:center; justify-content:center; color:#4a5160; flex-shrink:0;
+        text-decoration:none; transition:border-color .15s, color .15s;}
+  .back-btn:hover{border-color:var(--accent); color:var(--accent);}
+  .brand{display:flex; align-items:center; gap:11px;}
+  .logo{width:36px; height:36px; border-radius:12px; background:var(--accent); color:#fff;
+        display:flex; align-items:center; justify-content:center; font-weight:800; font-size:17px;}
+  .brand b{font-size:16px; font-weight:800; letter-spacing:-.01em;}
+  .brand small{font-size:11.5px; color:var(--muted);}
+  .head-actions{display:flex; align-items:center; gap:10px;}
+  .avatar{width:36px; height:36px; border-radius:50%; background:#eef1f7; display:flex;
+          align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#6b7280;}
+
+  .body{display:flex; flex-wrap:wrap; align-items:stretch;}
+  .form{flex:1 1 460px; min-width:300px; padding:28px 30px; display:flex; flex-direction:column; gap:30px;}
+  .preview{flex:1 1 380px; min-width:300px; background:var(--bg); padding:26px 30px;
+           border-left:1px solid #e8ebf2; display:flex; flex-direction:column;}
+
+  .step-head{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
+  .step-num{width:24px; height:24px; border-radius:8px; background:var(--accent-soft); color:var(--accent);
+            font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center;}
+  .step-title{font-size:13px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--label);}
+
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .fields{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .col-full{grid-column:1 / -1;}
+
+  .field{display:flex; flex-direction:column; gap:6px;}
+  .field > label{font-size:11px; font-weight:700; color:var(--muted); letter-spacing:.04em;}
+  .field input,.field select,.field textarea{
+    padding:11px 13px; border:1.5px solid var(--border); border-radius:12px; background:#fff;
+    font-size:14px; color:var(--ink);}
+  .field input[type=date]{font-weight:600;}
+  .field textarea{min-height:78px; resize:vertical; line-height:1.5;}
+  .field .hint{font-size:11px; color:var(--muted);}
+  .field .err{font-size:11px; color:#c0392b; font-weight:600; display:none;}
+  .field.invalid input,.field.invalid textarea,.field.invalid select{border-color:var(--err);}
+  .field.invalid .err{display:block;}
+
+  .select-wrap{position:relative;}
+  .select-wrap select{width:100%; padding:13px 38px 13px 15px; border:1.5px solid var(--border);
+       border-radius:12px; background:#fff; font-size:14px; font-weight:600; color:var(--ink);
+       -webkit-appearance:none; appearance:none; cursor:pointer;}
+  .select-wrap .caret{position:absolute; right:15px; top:50%; transform:translateY(-50%);
+       color:#a3acba; font-size:11px; pointer-events:none;}
+
+  .addr-wrap{position:relative;}
+  .suggest{border:1.5px solid var(--border); border-radius:12px; background:#fff;
+           box-shadow:0 10px 26px rgba(30,38,56,.14); overflow:hidden; margin-top:4px;
+           position:absolute; left:0; right:0; z-index:5;}
+  .suggest .row{display:flex; align-items:center; justify-content:space-between; gap:12px;
+                padding:11px 13px; cursor:pointer; border-bottom:1px solid #f0f2f7;}
+  .suggest .row:last-child{border-bottom:none;}
+  .suggest .row:hover{background:#f4f7fd;}
+  .suggest .s-street{font-size:13.5px; font-weight:600;}
+  .suggest .s-city{font-size:12px; color:var(--muted); white-space:nowrap;}
+
+  .toggle-card{border:1.5px solid var(--border); border-radius:16px; padding:16px; background:#fff;}
+  .toggle-top{display:flex; align-items:center; justify-content:space-between; gap:12px;}
+  .switch{position:relative; width:46px; height:27px; border-radius:999px; background:#cdd3df;
+          cursor:pointer; transition:all .15s; flex:none;}
+  .switch.on{background:var(--accent);}
+  .switch i{position:absolute; top:3px; left:3px; width:21px; height:21px; border-radius:50%;
+            background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.25); transition:all .15s; display:block;}
+  .switch.on i{left:22px;}
+
+  .alert{display:flex; gap:10px; align-items:flex-start; padding:12px 14px; border-radius:12px;
+         background:#fdecea; border:1.5px solid #f3c0b8; margin-top:12px;}
+  .alert .bang{flex:none; width:20px; height:20px; border-radius:50%; background:var(--err); color:#fff;
+               font-size:13px; font-weight:800; display:flex; align-items:center; justify-content:center;}
+  .alert .msg{font-size:12.5px; line-height:1.45; color:#9a2a20;}
+
+  .actions{display:flex; gap:12px; padding-top:2px;}
+  .btn-primary{flex:1; text-align:center; padding:15px; border-radius:14px; background:var(--accent);
+       color:#fff; font-weight:700; font-size:14.5px; cursor:pointer; border:none;
+       box-shadow:0 8px 18px rgba(31,95,209,.30);}
+  .btn-primary:disabled{opacity:.6; cursor:default;}
+  .btn-ghost{padding:15px 20px; border-radius:14px; border:1.5px solid #dde1ea; background:#fff;
+       color:var(--label); font-weight:600; font-size:14px; cursor:pointer;}
+
+  .preview-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
+  .preview-head .t{font-size:13px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--label);}
+  .live{display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--muted);}
+  .live i{width:7px; height:7px; border-radius:50%; background:#3a9b6e; display:inline-block;}
+  .preview-tools{display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;}
+  .tool{padding:11px 16px; border-radius:11px; background:#fff; border:1.5px solid #dde1ea;
+        color:#4a5160; font-size:13px; font-weight:600; cursor:pointer;}
+
+  .letter-wrap{border-radius:10px;}
+  .letter-frame{width:100%; height:940px; border:none; border-radius:10px; background:#fff;
+        box-shadow:0 10px 34px rgba(60,40,20,.13); display:block;}
+
+  @media print{ body{background:#fff;} .app{box-shadow:none;} }
+  @media (max-width:720px){ .fields{grid-template-columns:1fr;} .grid2{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="head">
+    <div class="head-left">
+      <a href="../" class="back-btn" title="Späť na formuláre">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <div class="brand">
+        <div class="logo">Č</div>
+        <div>
+          <b>Čestné prehlásenie</b><br>
+          <small>O neuplatňovaní si náhrady z iného poistenia</small>
+        </div>
+      </div>
+    </div>
+    <div class="head-actions">
+      <div class="avatar" id="avatar">?</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- ============ FORMULÁR ============ -->
+    <div class="form">
+
+      <!-- 1. poisťovňa -->
+      <div>
+        <div class="step-head"><div class="step-num">1</div><div class="step-title">Poisťovňa, ktorej sa prehlásenie predkladá</div></div>
+        <div class="select-wrap">
+          <select id="insurer"></select>
+          <span class="caret">▼</span>
+        </div>
+        <div class="fields" style="margin-top:12px;" id="insurerExtra"></div>
+      </div>
+
+      <!-- 2. škodová udalosť -->
+      <div>
+        <div class="step-head"><div class="step-num">2</div><div class="step-title">Súvisiaca škodová udalosť</div></div>
+        <div class="grid2">
+          <div class="field" data-k="incidentDate">
+            <label>DÁTUM VZNIKU ŠKODY</label>
+            <input type="date" id="incidentDate">
+            <span class="err">Zadaj dátum vzniku škody</span>
+          </div>
+          <div class="field" data-k="contractNo">
+            <label>ČÍSLO ŠKODY / ZMLUVY <span style="font-weight:500;text-transform:none;">(nepovinné)</span></label>
+            <input id="contractNo" placeholder="napr. 1234567890">
+            <span class="err"></span>
+          </div>
+        </div>
+        <div class="field col-full" data-k="incidentDescription" style="margin-top:12px;">
+          <label>PREDMET / POPIS ŠKODY <span style="font-weight:500;text-transform:none;">(nepovinné)</span></label>
+          <textarea id="incidentDescription" placeholder="napr. požiar rodinného domu, škoda na vozidle…"></textarea>
+          <span class="err"></span>
+        </div>
+      </div>
+
+      <!-- 3. vyhlasujúci -->
+      <div>
+        <div class="step-head"><div class="step-num">3</div><div class="step-title">Vyhlasujúci</div></div>
+        <div class="fields">
+          <div class="field col-full" data-k="name">
+            <label>MENO A PRIEZVISKO</label>
+            <input id="name" placeholder="Meno a priezvisko">
+            <span class="err">Zadaj meno a priezvisko</span>
+          </div>
+          <div class="field" data-k="birth">
+            <label>DÁTUM NARODENIA</label>
+            <input type="date" id="birth">
+            <span class="err">Zadaj dátum narodenia</span>
+          </div>
+          <div class="field" data-k="idNum">
+            <label>RODNÉ ČÍSLO <span style="font-weight:500;text-transform:none;">(nepovinné)</span></label>
+            <input id="idNum" placeholder="000000/0000">
+            <span class="err"></span>
+          </div>
+          <div class="field col-full addr-wrap" data-k="street">
+            <label>TRVALÁ ADRESA · ulica a číslo</label>
+            <input id="street" placeholder="Začni písať ulicu…" autocomplete="off">
+            <div class="suggest" id="suggest" style="display:none;"></div>
+            <span class="err">Zadaj ulicu a číslo</span>
+          </div>
+          <div class="field" data-k="zip">
+            <label>PSČ</label>
+            <input id="zip" placeholder="000 00">
+            <span class="err">PSČ v tvare 080 01</span>
+          </div>
+          <div class="field" data-k="city">
+            <label>MESTO</label>
+            <input id="city" placeholder="Mesto">
+            <span class="err">Zadaj mesto</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. iné poistenie -->
+      <div>
+        <div class="step-head"><div class="step-num">4</div><div class="step-title">Iné súvisiace poistenie</div></div>
+        <div class="toggle-card">
+          <div class="toggle-top">
+            <div>
+              <div style="font-size:14px; font-weight:600;">Mám uzatvorené iné poistenie kryjúce rovnaké riziko</div>
+              <div style="font-size:12px; color:var(--muted);">Napr. súbežné poistenie majetku alebo zodpovednosti u inej poisťovne</div>
+            </div>
+            <div class="switch" id="otherSwitch"><i></i></div>
+          </div>
+          <div class="field" id="otherNoteField" data-k="otherNote" style="margin-top:14px; display:none;">
+            <label>UVEĎ POISŤOVŇU A DÔVOD, PREČO SI Z NEJ NÁHRADU NEUPLATŇUJEŠ</label>
+            <textarea id="otherNote" placeholder="napr. XY poisťovňa, poistenie sa na túto škodu nevzťahuje…"></textarea>
+            <span class="err">Doplň vysvetlenie k inému poisteniu</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. miesto a dátum podpisu -->
+      <div>
+        <div class="step-head"><div class="step-num">5</div><div class="step-title">Miesto a dátum podpisu</div></div>
+        <div class="grid2">
+          <div class="field" data-k="place">
+            <label>MIESTO PODPISU</label>
+            <input id="place" placeholder="napr. Bratislava">
+            <span class="err">Zadaj miesto podpisu</span>
+          </div>
+          <div class="field" data-k="signDate">
+            <label>DÁTUM PODPISU</label>
+            <input type="date" id="signDate">
+            <span class="err">Zadaj dátum podpisu</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert" id="summary" style="display:none;">
+        <span class="bang">!</span>
+        <span class="msg" id="summaryMsg"></span>
+      </div>
+
+      <div class="actions">
+        <button class="btn-primary" id="genBtn">Vygenerovať a stiahnuť PDF</button>
+        <button class="btn-ghost" id="resetBtn">Vyčistiť</button>
+      </div>
+    </div>
+
+    <!-- ============ NÁHĽAD ============ -->
+    <div class="preview">
+      <div class="preview-head">
+        <span class="t">Náhľad prehlásenia</span>
+        <span class="live"><i></i>Aktualizuje sa naživo</span>
+      </div>
+      <div class="preview-tools">
+        <button class="tool" id="copyBtn">Kopírovať text</button>
+      </div>
+      <div class="letter-wrap">
+        <iframe id="letterFrame" class="letter-frame" title="Náhľad prehlásenia"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===========================================================================
+   DÁTA — tu meníš obsah (poisťovne)
+=========================================================================== */
+const TODAY = new Date();
+
+const INSURERS = {
+  allianz:    { name:'Allianz – Slovenská poisťovňa, a.s.', street:'Pribinova 19',       zip:'811 09', city:'Bratislava' },
+  generali:   { name:'Generali Poisťovňa, a.s.',            street:'Lamačská cesta 3/A', zip:'841 04', city:'Bratislava' },
+  kooperativa:{ name:'KOOPERATIVA poisťovňa, a.s.',         street:'Štefanovičova 4',    zip:'816 23', city:'Bratislava' },
+  union:      { name:'Union poisťovňa, a.s.',               street:'Karadžičova 10',     zip:'813 60', city:'Bratislava' },
+  uniqa:      { name:'UNIQA poisťovňa, a.s.',               street:'Krasovského 15',     zip:'851 01', city:'Bratislava' },
+  csob:       { name:'ČSOB Poisťovňa, a.s.',                street:'Žižkova 11',         zip:'811 02', city:'Bratislava' },
+  komunalna:  { name:'Komunálna poisťovňa, a.s.',           street:'Štefánikova 17',     zip:'811 05', city:'Bratislava' },
+  wustenrot:  { name:'Wüstenrot poisťovňa, a.s.',           street:'Karadžičova 17',     zip:'825 22', city:'Bratislava' },
+  groupama:   { name:'Groupama poisťovňa a.s.',             street:'Miletičova 21',      zip:'821 08', city:'Bratislava' },
+  nn:         { name:'NN Životná poisťovňa, a.s.',          street:'Jesenského 4/C',     zip:'811 02', city:'Bratislava' },
+  other:      { name:'Iná poisťovňa', street:'', zip:'', city:'' },
+};
+
+// Napovedanie adresy cez Nominatim/OpenStreetMap.
+let _suggestTimer=null, _suggestCache={}, _suggestAbort=null;
+async function fetchNominatim(q){
+  if(_suggestCache[q]) return _suggestCache[q];
+  if(_suggestAbort){ try{_suggestAbort.abort();}catch(e){} }
+  _suggestAbort = new AbortController();
+  const url='https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&countrycodes=sk&q='+encodeURIComponent(q);
+  try{
+    const r=await fetch(url,{signal:_suggestAbort.signal,headers:{'Accept-Language':'sk'}});
+    const data=await r.json();
+    const results=data.map(function(item){
+      const a=item.address||{};
+      const road=a.road||a.pedestrian||a.footway||a.path||'';
+      const house=a.house_number||'';
+      const street=road+(house?' '+house:'');
+      const city=a.city||a.town||a.village||a.municipality||a.county||'';
+      const raw=(a.postcode||'').replace(/ /g,'');
+      const zip=raw.length===5?raw.slice(0,3)+' '+raw.slice(3):raw;
+      return {street:street,city:city,zip:zip};
+    }).filter(function(x){return x.street;});
+    _suggestCache[q]=results;
+    return results;
+  }catch(e){ return []; }
+}
+
+/* ===========================================================================
+   STAV
+=========================================================================== */
+const state = {
+  insurer:'allianz', insurerOtherName:'', insurerOtherAddress:'',
+  incidentDate:'', contractNo:'', incidentDescription:'',
+  name:'', birth:'', idNum:'', street:'', zip:'', city:'',
+  hasOther:false, otherNote:'',
+  place:'', signDate: toISO(TODAY),
+  touched:false,
+};
+
+/* ===========================================================================
+   POMOCNÉ FUNKCIE PRE DÁTUMY
+=========================================================================== */
+function parseDate(s){ const p=(s||'').split('-').map(Number); if(p.length!==3||!p[0]) return null;
+  const d=new Date(p[0],p[1]-1,p[2]); return isNaN(d)?null:d; }
+function fmt(d){ return d.getDate()+'. '+(d.getMonth()+1)+'. '+d.getFullYear(); }
+function toISO(d){ const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+
+function insurerInfo(){
+  if(state.insurer==='other'){
+    return { name: state.insurerOtherName || 'Poisťovňa', street: state.insurerOtherAddress || '', zip:'', city:'' };
+  }
+  return INSURERS[state.insurer];
+}
+
+/* ===========================================================================
+   ZOSTAVENIE TEXTU PREHLÁSENIA
+=========================================================================== */
+function buildParas(){
+  const birth = parseDate(state.birth) ? fmt(parseDate(state.birth)) : '…';
+  const idPart = state.idNum ? (', rodné číslo ' + state.idNum) : '';
+  const incidentDate = parseDate(state.incidentDate) ? fmt(parseDate(state.incidentDate)) : '…';
+  const contractPart = state.contractNo ? (', evidovanou pod č. ' + state.contractNo) : '';
+  const descPart = state.incidentDescription.trim() ? (' (' + state.incidentDescription.trim() + ')') : '';
+
+  const intro = 'Ja, dolu podpísaný/á ' + (state.name||'…') + ', nar. ' + birth + idPart
+    + ', trvale bytom ' + (state.street||'…') + ', ' + (state.zip||'…') + ' ' + (state.city||'…')
+    + ' (ďalej len „vyhlasujúci“), čestne vyhlasujem, že v súvislosti so škodovou udalosťou' + descPart
+    + ', ku ktorej došlo dňa ' + incidentDate + contractPart
+    + ', som si doposiaľ neuplatnil/a a ani do budúcna si neuplatním náhradu škody z iného poistenia toho istého rizika u inej poisťovne ani z inej poistnej zmluvy.';
+
+  const otherPara = state.hasOther
+    ? 'Zároveň uvádzam, že mám uzatvorené iné poistenie, ktoré by mohlo súvisieť s uvedeným rizikom: ' + (state.otherNote.trim()||'…') + '. Napriek tomu si z tohto poistenia náhradu za uvedenú škodu neuplatňujem.'
+    : '';
+
+  const warning = 'Som si vedomý/á, že uvedenie nepravdivých údajov v tomto čestnom vyhlásení môže mať za následok zamietnutie poistného plnenia, prípadne inú právnu zodpovednosť.';
+
+  return { intro, otherPara, warning };
+}
+
+/* ===========================================================================
+   VALIDÁCIA
+=========================================================================== */
+function validate(){
+  const e = {};
+  if(!parseDate(state.incidentDate)) e.incidentDate='Zadaj dátum vzniku škody';
+
+  if(!state.name.trim())   e.name='Zadaj meno a priezvisko';
+  if(!parseDate(state.birth)) e.birth='Zadaj dátum narodenia';
+  if(!state.street.trim()) e.street='Zadaj ulicu a číslo';
+  if(!/^\d{3} ?\d{2}$/.test(state.zip.trim())) e.zip='PSČ v tvare 080 01';
+  if(!state.city.trim())   e.city='Zadaj mesto';
+
+  if(state.hasOther && !state.otherNote.trim()) e.otherNote='Doplň vysvetlenie k inému poisteniu';
+
+  if(!state.place.trim()) e.place='Zadaj miesto podpisu';
+  if(!parseDate(state.signDate)) e.signDate='Zadaj dátum podpisu';
+
+  if(state.insurer==='other' && !state.insurerOtherName.trim()) e.insurerOtherName='Zadaj názov poisťovne';
+
+  return e;
+}
+
+/* ===========================================================================
+   VYKRESLENIE
+=========================================================================== */
+const $ = id => document.getElementById(id);
+
+function renderControls(){
+  $('insurer').innerHTML = Object.keys(INSURERS).map(k=>
+    '<option value="'+k+'"'+(k===state.insurer?' selected':'')+'>'+INSURERS[k].name+'</option>').join('');
+
+  let extraHtml='';
+  if(state.insurer==='other'){
+    extraHtml += '<div class="field col-full" data-k="insurerOtherName">'
+      + '<label>NÁZOV POISŤOVNE</label>'
+      + '<input id="insurerOtherName" placeholder="napr. XY poisťovňa, a.s.">'
+      + '<span class="err">Zadaj názov poisťovne</span></div>';
+    extraHtml += '<div class="field col-full" data-k="insurerOtherAddress">'
+      + '<label>ADRESA POISŤOVNE <span style="font-weight:500;text-transform:none;">(nepovinné)</span></label>'
+      + '<input id="insurerOtherAddress" placeholder="Ulica a číslo, PSČ mesto">'
+      + '<span class="err"></span></div>';
+  }
+  $('insurerExtra').innerHTML = extraHtml;
+  if($('insurerOtherName')) $('insurerOtherName').value = state.insurerOtherName;
+  if($('insurerOtherAddress')) $('insurerOtherAddress').value = state.insurerOtherAddress;
+}
+
+function syncInputs(){
+  ['incidentDate','contractNo','incidentDescription','name','birth','idNum','street','zip','city',
+   'otherNote','place','signDate']
+    .forEach(k=>{ if($(k)) $(k).value = state[k]; });
+}
+
+let _previewTimer=null;
+function refreshPreview(){
+  if(_previewTimer) clearTimeout(_previewTimer);
+  _previewTimer=setTimeout(function(){
+    var frame=document.getElementById('letterFrame');
+    if(!frame) return;
+    frame.onload=function(){
+      try{
+        var doc=frame.contentDocument;
+        var scale=frame.clientWidth/794;
+        doc.body.style.transform='scale('+scale+')';
+        var contentH=doc.body.scrollHeight;
+        frame.style.height=Math.ceil(contentH*scale)+'px';
+      }catch(e){}
+    };
+    frame.srcdoc=buildLetterHtml(true);
+  }, 180);
+}
+
+function render(){
+  $('otherNoteField').style.display = state.hasOther ? 'flex' : 'none';
+  $('otherSwitch').classList.toggle('on', state.hasOther);
+
+  const errors = validate();
+  document.querySelectorAll('.field[data-k]').forEach(f=>{
+    const k=f.dataset.k;
+    const bad = state.touched && errors[k];
+    f.classList.toggle('invalid', !!bad);
+    const err=f.querySelector('.err'); if(err && errors[k]) err.textContent=errors[k];
+  });
+  const errCount = Object.keys(errors).length;
+  $('summary').style.display = (state.touched && errCount>0) ? 'flex' : 'none';
+  $('summaryMsg').textContent = 'Skontroluj zvýraznené polia ('+errCount+') a skús to znova.';
+
+  var _p=(state.name||'').trim().split(/\s+/),_av=_p.length>=2?_p[0][0]+_p[_p.length-1][0]:(_p[0]?_p[0][0]:'?');
+  $('avatar').textContent=_av.toUpperCase();
+  refreshPreview();
+}
+
+function escapeHtml(x){ return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ===========================================================================
+   ZOSTAVENIE LISTU (HTML pre PDF aj náhľad)
+=========================================================================== */
+function buildLetterHtml(previewMode){
+  const d = buildParas();
+  const placeDate = (state.place||'…') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '…');
+  const ins = insurerInfo();
+  const insZipCity = [ins.zip, ins.city].filter(Boolean).join(' ');
+
+  const body = `
+    <div class="doctitle">Čestné prehlásenie</div>
+    <div class="addressee">Predkladá sa: <strong>${escapeHtml(ins.name)}</strong>${ins.street?', '+escapeHtml(ins.street):''}${insZipCity?', '+escapeHtml(insZipCity):''}</div>
+    <div class="body-text">
+      <p>${escapeHtml(d.intro)}</p>
+      ${d.otherPara ? '<p>'+escapeHtml(d.otherPara)+'</p>' : ''}
+      <p>${escapeHtml(d.warning)}</p>
+    </div>
+    <div class="place-date">${escapeHtml(placeDate)}</div>
+    <div class="sig-grid">
+      <div class="sig-col">
+        <div class="sig-line"></div>
+        <div class="sig-name">${escapeHtml(state.name||'…')}</div>
+        <div class="sig-role">vyhlasujúci</div>
+      </div>
+    </div>
+    <div class="footer-bar">
+      <table><tr>
+        <td class="fl">${escapeHtml(state.name||'…')}</td>
+        <td class="fr">Čestné prehlásenie</td>
+      </tr></table>
+    </div>`;
+
+  const css = `
+    div,p,table,tr,td,th,strong,span { box-sizing:border-box; margin:0; padding:0; }
+    body { margin:0; padding:0; font-family:'DejaVu Sans',sans-serif; font-size:11pt; line-height:1.6; color:#20242b; background:#fff; }
+    .doctitle { text-align:center; font-size:16pt; letter-spacing:3pt; text-transform:uppercase; font-weight:bold;
+      padding:7pt 0; border-top:1pt solid #20242b; border-bottom:1pt solid #20242b; margin-bottom:6mm; }
+    .addressee { font-size:10pt; color:#555; margin-bottom:9mm; }
+    .body-text p { margin-bottom:4.5mm; text-align:justify; }
+    .place-date { text-align:right; margin:9mm 0 14mm; }
+    .sig-grid { display:table; width:100%; margin-bottom:8mm; }
+    .sig-col { display:table-cell; width:58mm; text-align:center; }
+    .sig-line { border-top:1pt solid #333; margin:16mm 0 3pt; }
+    .sig-name { font-size:11pt; font-weight:bold; }
+    .sig-role { font-size:9pt; color:#666; margin-top:2pt; }
+    .footer-bar table { width:100%; border-collapse:collapse; }
+    .footer-bar td.fr { text-align:right; }
+    .footer-bar { position:fixed; bottom:-22mm; left:0; right:0; width:166mm; border-top:0.5pt solid #ccc; padding-top:4pt; font-size:8.5pt; color:#999; }
+    @page{ margin:24mm 22mm 32mm 22mm; }
+  `;
+
+  const previewFonts = `
+    @font-face { font-family:'DejaVu Sans'; src:url('../vendor/dompdf/lib/fonts/DejaVuSans.ttf'); }
+    @font-face { font-family:'DejaVu Sans'; font-weight:bold; src:url('../vendor/dompdf/lib/fonts/DejaVuSans-Bold.ttf'); }
+  `;
+  let finalCss = css;
+  if(previewMode) finalCss = previewFonts + css + ' html{ overflow:hidden; background:#fff; } body{ box-sizing:border-box; width:210mm; padding:24mm 22mm 32mm 22mm; background:#fff; transform-origin:top left; } .footer-bar{ position:static; margin-top:20mm; width:auto; }';
+
+  return '<!DOCTYPE html><html lang="sk"><head>'
+    +'<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
+    +'<title>Cestne vyhlasenie</title>'
+    +'<style>'+finalCss+'</style></head><body>'+body+'</body></html>';
+}
+
+/* ===========================================================================
+   AKCIE — PDF (server), kopírovanie, reset
+=========================================================================== */
+function doPDF(){
+  state.touched=true; render();
+  const errors=validate();
+  if(Object.keys(errors).length>0) return;
+
+  const btn=$('genBtn');
+  btn.textContent='Generujem…'; btn.disabled=true;
+
+  const letterHtml=buildLetterHtml();
+  const filename='Cestne_prehlasenie_'+(state.name||'klient').replace(/\s+/g,'_');
+
+  fetch('../pdf.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ html: letterHtml, filename: filename })
+  })
+  .then(function(r){
+    const ct = r.headers.get('Content-Type') || '';
+    if (ct.includes('application/json') || ct.includes('text/')) {
+      return r.text().then(function(t){ throw new Error('Server: ' + t); });
+    }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.blob();
+  })
+  .then(function(blob){
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=filename+'.pdf';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    btn.textContent='Vygenerovať a stiahnuť PDF'; btn.disabled=false;
+  })
+  .catch(function(e){
+    console.error(e);
+    btn.textContent='Vygenerovať a stiahnuť PDF'; btn.disabled=false;
+    alert('Chyba PDF:\n' + e.message);
+  });
+}
+
+function doCopy(){
+  const d=buildParas();
+  const placeDate = (state.place||'…') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '…');
+  const ins = insurerInfo();
+  const txt=['ČESTNÉ PREHLÁSENIE','','Predkladá sa: '+ins.name,'',d.intro]
+    .concat(d.otherPara?[d.otherPara]:[])
+    .concat([d.warning,'',placeDate,'','Vyhlasujúci: '+(state.name||'…')])
+    .join('\n');
+  try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
+  const b=$('copyBtn'); b.textContent='Skopírované ✓'; setTimeout(()=>b.textContent='Kopírovať text',1600);
+}
+
+function doReset(){
+  Object.assign(state,{
+    insurer:'allianz', insurerOtherName:'', insurerOtherAddress:'',
+    incidentDate:'', contractNo:'', incidentDescription:'',
+    name:'', birth:'', idNum:'', street:'', zip:'', city:'',
+    hasOther:false, otherNote:'',
+    place:'', signDate: toISO(TODAY), touched:false,
+  });
+  renderControls(); syncInputs(); render();
+}
+
+/* ===========================================================================
+   NAPOVEDANIE ADRESY
+=========================================================================== */
+function showSuggestList(list){
+  const box=$('suggest');
+  if(!list||!list.length){ box.style.display='none'; return; }
+  box.innerHTML=list.map(function(a,i){
+    return '<div class="row" data-i="'+i+'"><span class="s-street">'+a.street+'</span><span class="s-city">'+a.zip+' '+a.city+'</span></div>';
+  }).join('');
+  box._list=list;
+  box.style.display='block';
+}
+function renderSuggest(){
+  const q=(state.street||'').trim();
+  const box=$('suggest');
+  if(q.length<3){ box.style.display='none'; return; }
+  box.innerHTML='<div class="row" style="color:var(--muted);font-size:13px;justify-content:center;">Hľadám…</div>';
+  box.style.display='block';
+  if(_suggestTimer) clearTimeout(_suggestTimer);
+  _suggestTimer=setTimeout(function(){
+    var captured=q;
+    fetchNominatim(captured).then(function(results){
+      if((state.street||'').trim()!==captured) return;
+      showSuggestList(results);
+    });
+  },350);
+}
+
+/* ===========================================================================
+   UDALOSTI
+=========================================================================== */
+function bind(){
+  document.addEventListener('click', e=>{
+    const sg=e.target.closest('#suggest .row'); if(sg){ const a=$('suggest')._list[+sg.dataset.i];
+        state.street=a.street; state.city=a.city; state.zip=a.zip; $('suggest').style.display='none'; syncInputs(); render(); return; }
+    if(!e.target.closest('.addr-wrap')) $('suggest').style.display='none';
+  });
+
+  $('insurer').addEventListener('change', e=>{ state.insurer=e.target.value; render(); renderControls(); });
+  $('otherSwitch').addEventListener('click', ()=>{ state.hasOther=!state.hasOther; render(); });
+
+  document.addEventListener('input', e=>{
+    if(e.target.id==='insurerOtherName'){ state.insurerOtherName=e.target.value; render(); }
+    if(e.target.id==='insurerOtherAddress'){ state.insurerOtherAddress=e.target.value; render(); }
+  });
+
+  ['incidentDate','contractNo','incidentDescription','name','birth','idNum','zip','city','otherNote','place','signDate'].forEach(k=>{
+    if($(k)) $(k).addEventListener('input', e=>{ state[k]=e.target.value; render(); });
+  });
+  $('street').addEventListener('input', e=>{ state.street=e.target.value; renderSuggest(); render(); });
+  $('street').addEventListener('focus', e=>{ if((state.street||'').trim().length>=3) renderSuggest(); });
+
+  $('genBtn').addEventListener('click', doPDF);
+  $('copyBtn').addEventListener('click', doCopy);
+  $('resetBtn').addEventListener('click', doReset);
+}
+
+/* ===========================================================================
+   ŠTART
+=========================================================================== */
+(function init(){
+  renderControls(); syncInputs(); bind(); render();
+})();
+</script>
+
+</body></html>
