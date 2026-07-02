@@ -228,7 +228,7 @@
 
       <!-- 4. vyhlasujúci -->
       <div>
-        <div class="step-head"><div class="step-num">4</div><div class="step-title">Vyhlasujúci</div></div>
+        <div class="step-head"><div class="step-num">4</div><div class="step-title">Vyhlasujúci/-a</div></div>
         <div class="fields">
           <div class="field col-full" data-k="name">
             <label>MENO A PRIEZVISKO</label>
@@ -393,7 +393,7 @@ function buildParas(){
 
   const intro = 'Ja, dolu podpísaný/á ' + (state.name||'…') + ', nar. ' + birth + idPart
     + ', trvale bytom ' + (state.street||'…') + ', ' + (state.zip||'…') + ' ' + (state.city||'…')
-    + ' (ďalej len „vyhlasujúci“), čestne vyhlasujem, že som vlastníkom/vlastníčkou nasledovnej veci: '
+    + ' (ďalej len „vyhlasujúci/-a“), čestne vyhlasujem, že som vlastníkom/vlastníčkou nasledovnej veci: '
     + (state.itemDescription.trim()||'…') + '.';
 
   const purchasePara = 'Uvedenú vec som nadobudol/la kúpou dňa (aspoň približne) ' + purchaseDate + placePart + pricePart + '.';
@@ -527,7 +527,7 @@ function buildLetterHtml(previewMode){
       <div class="sig-col">
         <div class="sig-line"></div>
         <div class="sig-name">${escapeHtml(state.name||'…')}</div>
-        <div class="sig-role">vyhlasujúci</div>
+        <div class="sig-role">vyhlasujúci/-a</div>
       </div>
     </div>
     <div class="footer-bar">
@@ -617,7 +617,7 @@ function doCopy(){
   const ins = insurerInfo();
   const txt=['ČESTNÉ PREHLÁSENIE','','Predkladá sa: '+ins.name,'',d.intro,d.purchasePara,d.reasonPara]
     .concat(d.incidentPara?[d.incidentPara]:[])
-    .concat([d.warning,'',placeDate,'','Vyhlasujúci: '+(state.name||'…')])
+    .concat([d.warning,'',placeDate,'','Vyhlasujúci/-a: '+(state.name||'…')])
     .join('\n');
   try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
   const b=$('copyBtn'); b.textContent='Skopírované ✓'; setTimeout(()=>b.textContent='Kopírovať text',1600);

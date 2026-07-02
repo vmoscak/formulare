@@ -200,7 +200,7 @@
 
       <!-- 2. oprávnenia -->
       <div>
-        <div class="step-head"><div class="step-num">2</div><div class="step-title">Splnomocnenec je oprávnený najmä na</div></div>
+        <div class="step-head"><div class="step-num">2</div><div class="step-title">Splnomocnenec/-kyňa je oprávnený/-á najmä na</div></div>
         <div id="powers" style="display:flex; flex-direction:column; gap:8px;"></div>
         <div class="alert" id="powersEmpty" style="display:none;">
           <span class="bang">!</span>
@@ -210,7 +210,7 @@
 
       <!-- 3. splnomocniteľ -->
       <div>
-        <div class="step-head"><div class="step-num">3</div><div class="step-title">Splnomocniteľ (klient)</div></div>
+        <div class="step-head"><div class="step-num">3</div><div class="step-title">Splnomocniteľ/-ka (klient/-ka)</div></div>
         <div class="fields">
           <div class="field col-full" data-k="pName">
             <label>MENO A PRIEZVISKO</label>
@@ -248,7 +248,7 @@
 
       <!-- 4. splnomocnenec -->
       <div>
-        <div class="step-head"><div class="step-num">4</div><div class="step-title">Splnomocnenec (kto zastupuje)</div></div>
+        <div class="step-head"><div class="step-num">4</div><div class="step-title">Splnomocnenec/-kyňa (kto zastupuje)</div></div>
         <div class="fields">
           <div class="field col-full" data-k="aName">
             <label>MENO A PRIEZVISKO</label>
@@ -442,12 +442,12 @@ function buildParas(){
 
   const intro = 'Ja, dolu podpísaný/á ' + (state.pName||'…') + ', nar. ' + pBirth + pIdPart
     + ', trvale bytom ' + (state.pStreet||'…') + ', ' + (state.pZip||'…') + ' ' + (state.pCity||'…')
-    + ' (ďalej len „splnomocniteľ“), týmto splnomocňujem ' + (state.aName||'…') + ', nar. ' + aBirth
+    + ' (ďalej len „splnomocniteľ/-ka“), týmto splnomocňujem ' + (state.aName||'…') + ', nar. ' + aBirth
     + ', trvale bytom ' + (state.aStreet||'…') + ', ' + (state.aZip||'…') + ' ' + (state.aCity||'…') + aRolePart
-    + ' (ďalej len „splnomocnenec“), aby ma zastupoval/a ' + scopeText();
+    + ' (ďalej len „splnomocnenec/-kyňa“), aby ma zastupoval/a ' + scopeText();
 
   const powersList = Object.keys(POWERS).filter(k=>state.powers[k]).map(k=>POWERS[k].label);
-  const powersIntro = 'Splnomocnenec je v rámci tohto splnomocnenia oprávnený najmä na:';
+  const powersIntro = 'Splnomocnenec/-kyňa je v rámci tohto splnomocnenia oprávnený/-á najmä na:';
 
   const validEff = parseDate(state.validFrom) ? fmt(parseDate(state.validFrom)) : '…';
   const validity = state.validIndef
@@ -599,12 +599,12 @@ function buildLetterHtml(previewMode){
       <div class="sig-col">
         <div class="sig-line"></div>
         <div class="sig-name">${escapeHtml(state.pName||'…')}</div>
-        <div class="sig-role">splnomocniteľ</div>
+        <div class="sig-role">splnomocniteľ/-ka</div>
       </div>
       <div class="sig-col">
         <div class="sig-line"></div>
         <div class="sig-name">${escapeHtml(state.aName||'…')}</div>
-        <div class="sig-role">splnomocnenec – splnomocnenie prijímam</div>
+        <div class="sig-role">splnomocnenec/-kyňa – splnomocnenie prijímam</div>
       </div>
     </div>
     <div class="footer-bar">
@@ -691,7 +691,7 @@ function doCopy(){
   const placeDate = (state.place||'…') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '…');
   const txt=['SPLNOMOCNENIE','',d.intro,'',d.powersIntro]
     .concat(d.powersList.map(p=>'– '+p))
-    .concat(['', d.validity, '', placeDate, '', 'Splnomocniteľ: '+(state.pName||'…'), 'Splnomocnenec: '+(state.aName||'…')])
+    .concat(['', d.validity, '', placeDate, '', 'Splnomocniteľ/-ka: '+(state.pName||'…'), 'Splnomocnenec/-kyňa: '+(state.aName||'…')])
     .join('\n');
   try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
   const b=$('copyBtn'); b.textContent='Skopírované ✓'; setTimeout(()=>b.textContent='Kopírovať text',1600);

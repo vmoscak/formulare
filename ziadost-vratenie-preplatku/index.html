@@ -226,7 +226,7 @@
 
       <!-- 4. žiadateľ -->
       <div>
-        <div class="step-head"><div class="step-num">4</div><div class="step-title">Žiadateľ (poistník)</div></div>
+        <div class="step-head"><div class="step-num">4</div><div class="step-title">Žiadateľ/-ka (poistník/-čka)</div></div>
         <div class="fields">
           <div class="field col-full" data-k="name">
             <label>MENO A PRIEZVISKO</label>
@@ -411,7 +411,7 @@ function buildParas(){
   const changeDatePart = parseDate(state.changeDate) ? (' ku dňu ' + fmt(parseDate(state.changeDate))) : '';
 
   const paras = [];
-  paras.push('dolu podpísaný/á ' + (state.name||'…') + ', poistník poistnej zmluvy č. ' + (state.contractNo||'…')
+  paras.push('dolu podpísaný/á ' + (state.name||'…') + ', poistník/-čka poistnej zmluvy č. ' + (state.contractNo||'…')
     + ', si Vás týmto dovoľujem požiadať o vrátenie preplatku / nespotrebovaného poistného, ktorý mi vznikol v súvislosti s nasledovnou zmenou zmluvy: '
     + reasonLabel + changeDatePart + '.');
 

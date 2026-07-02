@@ -246,7 +246,7 @@
 
       <!-- 4. poistený / žiadateľ -->
       <div>
-        <div class="step-head"><div class="step-num">4</div><div class="step-title">Poistený / oprávnená osoba (žiadateľ)</div></div>
+        <div class="step-head"><div class="step-num">4</div><div class="step-title">Poistený/-á / oprávnená osoba (žiadateľ/-ka)</div></div>
         <div class="fields">
           <div class="field col-full" data-k="name">
             <label>MENO A PRIEZVISKO</label>
@@ -444,7 +444,7 @@ function buildParas(){
   const incidentPart = incidentDate ? (' ku ktorej došlo dňa ' + incidentDate + ',') : '';
 
   const paras = [];
-  paras.push('dolu podpísaný/á ' + (state.name||'…') + ' (ďalej len „poistený“) si Vás týmto dovoľujem vyrozumieť, že nesúhlasím '
+  paras.push('dolu podpísaný/á ' + (state.name||'…') + ' (ďalej len „poistený/-á“) si Vás týmto dovoľujem vyrozumieť, že nesúhlasím '
     + 's Vaším rozhodnutím vo veci škodovej udalosti č. ' + (state.claimNumber||'…') + ',' + incidentPart
     + ' o ktorom ste ma upovedomili dňa ' + decisionDate + decisionNumPart + '.');
 
