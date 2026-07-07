@@ -6,7 +6,7 @@
  */
 require_once __DIR__ . '/db.php';
 
-$advisorId = isset($_COOKIE['cur_advisor']) ? (int)$_COOKIE['cur_advisor'] : 0;
+$advisorId = curAdvisorId();
 if (!$advisorId) { header('Location: /'); exit; }
 
 $stmt = db()->prepare('SELECT * FROM formulare_advisors WHERE id = ? AND active = 1');

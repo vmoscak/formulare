@@ -10,7 +10,7 @@ if (isset($_GET['adv'])) {
         $stmt = db()->prepare('SELECT id FROM formulare_advisors WHERE id = ? AND active = 1');
         $stmt->execute([$advId]);
         if ($stmt->fetch()) {
-            setcookie('cur_advisor', (string)$advId, [
+            setcookie('cur_advisor', signAdvisorId($advId), [
                 'expires' => time() + 365 * 86400,
                 'path' => '/',
                 'secure' => !empty($_SERVER['HTTPS']),
@@ -30,7 +30,7 @@ try {
 } catch (Throwable $e) {
     $advisors = [];
 }
-$curAdvisorId = isset($_COOKIE['cur_advisor']) ? (int)$_COOKIE['cur_advisor'] : null;
+$curAdvisorId = curAdvisorId() ?: null;
 
 function advisorInitials(string $name): string {
     $parts = preg_split('/\s+/', trim($name));

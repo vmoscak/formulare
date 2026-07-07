@@ -2,7 +2,7 @@
 require_once __DIR__ . '/db.php';
 
 // Vyžaduje zvoleného poradcu — bez neho niet čo personalizovať, vráť na výber.
-$curAdvisorId = isset($_COOKIE['cur_advisor']) ? (int)$_COOKIE['cur_advisor'] : 0;
+$curAdvisorId = curAdvisorId();
 if (!$curAdvisorId) { header('Location: /'); exit; }
 
 try {

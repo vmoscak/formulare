@@ -8,7 +8,7 @@
 require_once __DIR__ . '/../db.php';
 header('Content-Type: application/json; charset=utf-8');
 
-$advisorId = isset($_COOKIE['cur_advisor']) ? (int)$_COOKIE['cur_advisor'] : 0;
+$advisorId = curAdvisorId();
 if (!$advisorId) { echo '{}'; exit; }
 
 try {

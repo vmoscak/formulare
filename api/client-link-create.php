@@ -9,7 +9,7 @@ header('Content-Type: application/json; charset=utf-8');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); echo '{"error":"method"}'; exit; }
 
-$advisorId = isset($_COOKIE['cur_advisor']) ? (int)$_COOKIE['cur_advisor'] : 0;
+$advisorId = curAdvisorId();
 if (!$advisorId) { http_response_code(401); echo '{"error":"no_advisor"}'; exit; }
 
 $input = json_decode(file_get_contents('php://input'), true) ?: [];
