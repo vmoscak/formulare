@@ -242,9 +242,9 @@
 
         <div class="grid2" style="margin-top:14px;">
           <div class="field">
-            <label>DÁTUM DOJEDNANIA POISTENIA</label>
+            <label>DÁTUM DOJEDNANIA POISTENIA <span style="font-weight:500;text-transform:none;">(nepovinné)</span></label>
             <input type="date" id="conclDate">
-            <span class="hint">Deň uzavretia zmluvy</span>
+            <span class="hint">Deň uzavretia zmluvy — ak nevyplníš, počíta sa od dnešného dňa</span>
           </div>
           <div class="field end-field">
             <label id="endLabel">DÁTUM UKONČENIA</label>
@@ -544,7 +544,6 @@ function validate(){
   if(!/^\d{3} ?\d{2}$/.test(state.zip.trim())) e.zip='PSČ v tvare 080 01';
   if(!state.city.trim())     e.city='Zadaj mesto';
   if(!state.contract.trim()) e.contract='Zadaj číslo zmluvy';
-  if(!parseDate(state.conclDate)) e.conclDate='Zadaj dátum dojednania';
   if(state.ibanOn && !/^SK\d{22}$/.test(ibanClean)) e.iban='Neplatný IBAN (SK + 22 číslic)';
   if(state.reason==='agreement' && !state.note.trim()) e.note='Uveď dôvod ukončenia';
   return e;
