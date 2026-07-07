@@ -38,6 +38,14 @@ function advisorInitials(string $name): string {
     $last = count($parts) > 1 ? mb_substr($parts[count($parts) - 1], 0, 1) : '';
     return mb_strtoupper($first . $last);
 }
+
+function advisorRgba(string $hex, float $alpha): string {
+    $hex = ltrim($hex, '#');
+    $r = hexdec(substr($hex, 0, 2));
+    $g = hexdec(substr($hex, 2, 2));
+    $b = hexdec(substr($hex, 4, 2));
+    return "rgba($r,$g,$b,$alpha)";
+}
 ?>
 <!DOCTYPE html>
 <html lang="sk">
@@ -224,8 +232,8 @@ function advisorInitials(string $name): string {
 
   a.card:hover{
     transform:translateY(-5px);
-    box-shadow:0 20px 44px rgba(31,95,209,.16);
-    border-color:var(--accent-line);
+    box-shadow:0 20px 44px var(--tile-shadow, rgba(31,95,209,.16));
+    border-color:var(--tile, var(--accent-line));
   }
   a.card:active{ transform:translateY(-2px); }
 
@@ -233,10 +241,11 @@ function advisorInitials(string $name): string {
     width:46px; height:46px; border-radius:13px;
     background:var(--tile, var(--accent-soft)); color:var(--tile-ink, var(--accent));
     display:flex; align-items:center; justify-content:center;
-    transition:transform .32s cubic-bezier(.22,1,.36,1);
+    transition:transform .32s cubic-bezier(.22,1,.36,1), box-shadow .32s ease;
     flex-shrink:0;
   }
   .card .ic.avatar{ font-size:15.5px; font-weight:800; letter-spacing:.02em; }
+  a.card:hover .ic.avatar{ box-shadow:0 0 0 6px var(--tile-ring, transparent); }
   a.card:hover .ic{
     transform:scale(1.08) rotate(-6deg);
   }
@@ -318,7 +327,7 @@ function advisorInitials(string $name): string {
     </div>
     <div class="grid">
       <?php foreach ($advisors as $adv): ?>
-      <a class="card" href="?adv=<?= (int)$adv['id'] ?>" style="--tile:<?= htmlspecialchars($adv['color']) ?>; --tile-ink:#fff;">
+      <a class="card" href="?adv=<?= (int)$adv['id'] ?>" style="--tile:<?= htmlspecialchars($adv['color']) ?>; --tile-ink:#fff; --tile-shadow:<?= advisorRgba($adv['color'], 0.20) ?>; --tile-ring:<?= advisorRgba($adv['color'], 0.22) ?>;">
         <div class="ic avatar"><?= htmlspecialchars(advisorInitials($adv['name'])) ?></div>
         <h2><?= htmlspecialchars($adv['name']) ?></h2>
         <p><?= htmlspecialchars($adv['org']) ?><?= $adv['id'] == $curAdvisorId ? ' — aktuálne prihlásený/-á' : '' ?></p>
