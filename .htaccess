@@ -20,6 +20,9 @@
     RewriteCond %{QUERY_STRING} (^|&)token=[a-f0-9]{64}(&|$)
     RewriteRule ^(financna-medzera|wizard-poistenie)/(index\.html)?$ - [L]
 
+    # 2b) Pekná URL pre prehľad majiteľa (/admin namiesto /admin.php)
+    RewriteRule ^admin/?$ admin.php [L]
+
     # 3) Všetko ostatné vyžaduje platnú gate cookie
     RewriteCond %{HTTP_COOKIE} !(^|;\s*)gate_auth=__GATE_TOKEN__(;|$)
     RewriteRule ^ /brana.php [L]

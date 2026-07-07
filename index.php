@@ -309,7 +309,7 @@ function advisorRgba(string $hex, float $alpha): string {
     </div>
     <div>
       <h1>Formuláre</h1>
-      <p>Vyber, s kým pracuješ</p>
+      <p>Klikni na svoje meno</p>
     </div>
   </div>
 
