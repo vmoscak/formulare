@@ -1,3 +1,7 @@
 # Runtime cache fontov Dompdf (regeneruje sa z vendor/ pri behu)
 tmp/fonts/*
 !tmp/fonts/.gitkeep
+
+# Lokálna konfigurácia (DB prístupové údaje, brána) — nikdy necommitovať
+config.local.php
+tmp/local.sqlite

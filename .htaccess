@@ -4,6 +4,29 @@
     RewriteRule ^tmp/ - [F,L]
 </IfModule>
 
+# ---------------------------------------------------------------------------
+# BRÁNA — celá doména len pre poradcov (formulare.vmfin.sk, klienti sem
+# nikdy nechodia priamo). Jedna zdieľaná fráza, cookie platná ~365 dní.
+#
+# GATE_TOKEN nižšie je placeholder nahradený v CI (.github/workflows/deploy.yml)
+# hodnotou zo secretu GATE_TOKEN — v gite nikdy nie je skutočná hodnota.
+# ---------------------------------------------------------------------------
+<IfModule mod_rewrite.c>
+    # 1) Vždy verejné infraštruktúrne endpointy — nikdy za bránou
+    RewriteRule ^(brana\.php|pdf\.php|api/client-session\.php|api/client-submit\.php|api/log-document\.php)$ - [L]
+
+    # 2) Klientský odkaz s jedinečným tokenom — pustí dnu len konkrétne
+    #    nástroje, ktoré majú klientský režim (nie celý web)
+    RewriteCond %{QUERY_STRING} (^|&)token=[a-f0-9]{64}(&|$)
+    RewriteRule ^(financna-medzera|wizard-poistenie)/(index\.html)?$ - [L]
+
+    # 3) Všetko ostatné vyžaduje platnú gate cookie
+    RewriteCond %{HTTP_COOKIE} !(^|;\s*)gate_auth=__GATE_TOKEN__(;|$)
+    RewriteRule ^ /brana.php [L]
+</IfModule>
+
+DirectoryIndex index.php index.html
+
 # Nekešovať HTML — aby sa vždy načítala aktuálna verzia formulárov
 <IfModule mod_headers.c>
     <FilesMatch "\.html$">
