@@ -278,7 +278,7 @@ function advisorInitials(string $name): string {
     </div>
     <div>
       <h1>Formuláre</h1>
-      <p>Prihlásený/-á ako <b><?= htmlspecialchars($me['name']) ?></b> — <a href="/" style="color:var(--accent); text-decoration:underline;">zmeniť poradcu</a></p>
+      <p>Prihlásený/-á ako <b><?= htmlspecialchars($me['name']) ?></b></p>
     </div>
   </div>
 
