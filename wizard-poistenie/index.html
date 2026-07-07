@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="sk"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aké poistenie potrebujem</title>
+
+
+
+<!-- =========================================================================
+     WIZARD "AKÉ POISTENIE POTREBUJEM"
+     -------------------------------------------------------------------------
+     Krátky dotazník (6 otázok), na konci odporúčanie TYPOV poistenia
+     (nie konkrétnych produktov) s krátkym vysvetlením "prečo".
+
+     KDE ČO UPRAVIŤ:
+       • Farby / vzhľad ................ sekcia <style>, premenné :root
+       • Otázky ......................... JS, pole QUESTIONS
+       • Logika odporúčania ............. JS, funkcia computeRecommendations()
+       • Kontakt poradcu (mailto) ....... JS, objekt ADVISOR
+========================================================================== -->
+
+<style>
+  :root{
+    --accent:#7a4fd6;
+    --accent-soft:#f0eafb;
+    --accent-line:#dcd0f5;
+    --ink:#1d2536;
+    --muted:#8b94a3;
+    --label:#515a6b;
+    --border:#e2e6ee;
+    --bg:#eef1f6;
+    --err:#d9362b;
+    --good:#0ca30c;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Plus Jakarta Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding:24px;
+  }
+  input,select,textarea{font-family:inherit; outline:none;}
+  input:focus,textarea:focus{border-color:var(--accent)!important;}
+
+  .app{max-width:760px; margin:0 auto; background:#fff; border-radius:20px; overflow:hidden;
+       box-shadow:0 12px 44px rgba(30,38,56,.10);}
+
+  .head{display:flex; align-items:center; gap:14px; padding:16px 26px; border-bottom:1px solid #e8ebf2;}
+  .back-btn{width:38px; height:38px; border-radius:11px; border:1.5px solid #dde1ea; background:#fff;
+        display:flex; align-items:center; justify-content:center; color:#4a5160; flex-shrink:0;
+        text-decoration:none; transition:border-color .15s, color .15s;}
+  .back-btn:hover{border-color:var(--accent); color:var(--accent);}
+  .brand{display:flex; align-items:center; gap:11px; min-width:0;}
+  .logo{width:36px; height:36px; border-radius:12px; background:var(--accent); color:#fff;
+        display:flex; align-items:center; justify-content:center; font-weight:800; font-size:17px; flex-shrink:0;}
+  .brand b{font-size:16px; font-weight:800; letter-spacing:-.01em;}
+  .brand small{font-size:11.5px; color:var(--muted);}
+
+  .progress-wrap{padding:18px 26px 0;}
+  .progress-label{display:flex; justify-content:space-between; font-size:11.5px; font-weight:700;
+      color:var(--muted); letter-spacing:.04em; text-transform:uppercase; margin-bottom:8px;}
+  .progress-track{height:6px; border-radius:999px; background:#eef1f6; overflow:hidden;}
+  .progress-fill{height:100%; border-radius:999px; background:linear-gradient(90deg,var(--accent),#a78bec);
+      transition:width .35s cubic-bezier(.22,1,.36,1);}
+
+  .panel{padding:30px 26px 26px;}
+  .q-title{font-size:19px; font-weight:800; letter-spacing:-.01em; margin:0 0 6px;}
+  .q-sub{font-size:13px; color:var(--muted); margin:0 0 22px;}
+
+  .opts{display:flex; flex-direction:column; gap:10px;}
+  .opt{display:flex; align-items:center; gap:13px; padding:15px 16px; border-radius:14px; cursor:pointer;
+        background:#fff; border:2px solid var(--border); transition:all .15s;}
+  .opt:hover{border-color:var(--accent-line);}
+  .opt.sel{background:var(--accent-soft); border-color:var(--accent); box-shadow:0 6px 16px rgba(122,79,214,.14);}
+  .opt .radio{flex:none; width:20px; height:20px; border-radius:50%; border:2px solid #b9c0cc;
+       display:flex; align-items:center; justify-content:center;}
+  .opt.sel .radio{border-color:var(--accent);}
+  .opt .radio i{width:9px; height:9px; border-radius:50%; background:transparent; display:block;}
+  .opt.sel .radio i{background:var(--accent);}
+  .opt .chk{flex:none; width:20px; height:20px; border-radius:7px; border:2px solid #b9c0cc;
+       display:flex; align-items:center; justify-content:center; font-size:13px; color:#fff;}
+  .opt.sel .chk{border-color:var(--accent); background:var(--accent);}
+  .opt .label{font-size:14.5px; font-weight:600;}
+
+  .nav-row{display:flex; gap:12px; margin-top:26px;}
+  .btn-primary{flex:1; text-align:center; padding:15px; border-radius:14px; background:var(--accent);
+       color:#fff; font-weight:700; font-size:14.5px; cursor:pointer; border:none;
+       box-shadow:0 8px 18px rgba(122,79,214,.30); transition:opacity .15s;}
+  .btn-primary:disabled{opacity:.45; cursor:default; box-shadow:none;}
+  .btn-ghost{padding:15px 20px; border-radius:14px; border:1.5px solid #dde1ea; background:#fff;
+       color:var(--label); font-weight:600; font-size:14px; cursor:pointer;}
+
+  /* ── výsledky ── */
+  .res-head{text-align:center; margin-bottom:22px;}
+  .res-head .ic{width:52px; height:52px; border-radius:16px; background:var(--accent-soft); color:var(--accent);
+      display:flex; align-items:center; justify-content:center; margin:0 auto 14px;}
+  .res-head h2{margin:0 0 6px; font-size:20px; font-weight:800;}
+  .res-head p{margin:0; font-size:13.5px; color:var(--muted);}
+
+  .rec-list{display:flex; flex-direction:column; gap:12px; margin-bottom:24px;}
+  .rec-card{border:1.5px solid var(--border); border-radius:14px; padding:16px 18px; background:#fff;}
+  .rec-card .rc-title{display:flex; align-items:center; gap:9px; font-size:14.5px; font-weight:800; margin-bottom:6px;}
+  .rec-card .rc-num{width:24px; height:24px; border-radius:8px; background:var(--accent-soft); color:var(--accent);
+      display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; flex-shrink:0;}
+  .rec-card .rc-why{font-size:13px; color:var(--label); line-height:1.55; margin-left:33px;}
+
+  .gap-link{display:block; text-align:center; font-size:13.5px; font-weight:700; color:var(--accent);
+      padding:14px; border:1.5px dashed var(--accent-line); border-radius:14px; margin-bottom:22px; text-decoration:none;}
+  .gap-link:hover{background:var(--accent-soft);}
+
+  .contact-card{border:1.5px solid var(--accent); border-radius:16px; padding:20px; box-shadow:0 10px 28px rgba(122,79,214,.14);}
+  .contact-card h3{margin:0 0 4px; font-size:14.5px; font-weight:800;}
+  .contact-card p{margin:0 0 14px; font-size:12.5px; color:var(--muted); line-height:1.5;}
+  .contact-fields{display:flex; flex-direction:column; gap:10px;}
+  .field{display:flex; flex-direction:column; gap:6px;}
+  .field > label{font-size:11px; font-weight:700; color:var(--muted); letter-spacing:.04em;}
+  .field input,.field textarea{padding:11px 13px; border:1.5px solid var(--border); border-radius:12px;
+      background:#fff; font-size:14px; color:var(--ink);}
+  .field textarea{min-height:64px; resize:vertical;}
+  .field .err{font-size:11px; color:#c0392b; font-weight:600; display:none;}
+  .field.invalid input{border-color:var(--err);}
+  .field.invalid .err{display:block;}
+  .contact-actions{display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;}
+  .contact-actions .btn-primary,.contact-actions .btn-ghost{flex:1 1 160px;}
+  .sent-ok{display:none; align-items:center; gap:8px; font-size:12.5px; font-weight:700; color:var(--good); margin-top:10px;}
+  .sent-ok.show{display:flex;}
+  .restart{display:block; text-align:center; font-size:12.5px; color:var(--muted); margin-top:18px; cursor:pointer;}
+  .restart:hover{color:var(--accent);}
+
+  @media (max-width:520px){
+    body{padding:12px;}
+    .head{padding:14px 16px;}
+    .progress-wrap{padding:14px 16px 0;}
+    .panel{padding:22px 16px 20px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="head">
+    <a href="../" class="back-btn" title="Späť na formuláre">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    </a>
+    <div class="brand">
+      <div class="logo">?</div>
+      <div style="min-width:0;">
+        <b>Aké poistenie potrebujem</b><br>
+        <small>Krátky dotazník s odporúčaním typu krytia</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-label"><span id="progressLabel">Otázka 1 z 6</span><span id="progressPct">17 %</span></div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:17%;"></div></div>
+  </div>
+
+  <div class="panel" id="panel"></div>
+</div>
+
+<script>
+/* ===========================================================================
+   KONTAKT NA PORADCU (mailto fallback, bez potreby servera)
+=========================================================================== */
+const ADVISOR = { name:'Vladimír Moščák', org:'', email:'vmfin@vmfin.sk', phone:'+421 910 491 768' };
+
+/* Prepíše ADVISOR reálnou identitou aktuálneho poradcu (podľa cur_advisor
+   cookie na hlavnej stránke). Zlyhanie = ticho ostane natvrdo napísaný fallback. */
+async function loadAdvisor(){
+  try{
+    const r = await fetch('../api/whoami.php', { credentials:'same-origin' });
+    if(r.ok){ const d = await r.json(); if(d && d.name) Object.assign(ADVISOR, d); }
+  }catch(e){ /* ponechá fallback */ }
+}
+
+const TODAY = new Date();
+function escapeHtml(x){ return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+const params = new URLSearchParams(location.search);
+const TOOL_NAME = 'wizard-poistenie';
+const CLIENT_TOKEN = params.get('token') || null;
+let clientLinkLabel = null;
+
+/* ===========================================================================
+   OTÁZKY
+=========================================================================== */
+const QUESTIONS = [
+  { key:'status', type:'single', title:'Aký je váš pracovný status?', sub:'Vyber možnosť, ktorá ťa najlepšie vystihuje.',
+    options:[
+      { v:'zamestnanec', label:'Zamestnanec/-kyňa' },
+      { v:'szco', label:'SZČO' },
+      { v:'majitel', label:'Majiteľ/-ka firmy' },
+    ] },
+  { key:'hasDependents', type:'single', title:'Máte deti alebo iné osoby závislé od vášho príjmu?', sub:'',
+    options:[ { v:'ano', label:'Áno' }, { v:'nie', label:'Nie' } ] },
+  { key:'hasLoan', type:'single', title:'Máte hypotéku alebo iný väčší úver?', sub:'',
+    options:[ { v:'ano', label:'Áno' }, { v:'nie', label:'Nie' } ] },
+  { key:'property', type:'single', title:'Vlastníte nehnuteľnosť, ktorú obývate alebo prenajímate?', sub:'',
+    options:[
+      { v:'obyvam', label:'Áno, obývam ju' },
+      { v:'prenajimam', label:'Áno, prenajímam ju' },
+      { v:'nie', label:'Nevlastním nehnuteľnosť' },
+    ] },
+  { key:'existingIns', type:'multi', title:'Máte už nejaké poistenie?', sub:'Vyber všetko, čo platí — alebo „Zatiaľ žiadne".',
+    options:[
+      { v:'zivotne', label:'Životné poistenie' },
+      { v:'majetkove', label:'Majetkové poistenie' },
+      { v:'ziadne', label:'Zatiaľ žiadne', exclusive:true },
+    ] },
+  { key:'concern', type:'single', title:'Čo vás momentálne najviac zaujíma?', sub:'',
+    options:[
+      { v:'rodina', label:'Zabezpečenie rodiny' },
+      { v:'majetok', label:'Ochrana majetku' },
+      { v:'vypadok', label:'Výpadok príjmu pri chorobe' },
+      { v:'prehlad', label:'Len si to chcem prejsť' },
+    ] },
+];
+
+/* ===========================================================================
+   STAV
+=========================================================================== */
+const state = {
+  step: 0, // 0..QUESTIONS.length-1 = otázky, QUESTIONS.length = výsledky
+  answers: { status:'', hasDependents:'', hasLoan:'', property:'', existingIns:[], concern:'' },
+  contactName:'', contactPhone:'', contactNote:'', touched:false,
+};
+
+/* ===========================================================================
+   LOGIKA ODPORÚČANIA
+=========================================================================== */
+function computeRecommendations(){
+  const a = state.answers;
+  const has = t => a.existingIns.includes(t);
+  const recs = [];
+
+  if(a.hasDependents==='ano'){
+    recs.push({ key:'zivotne', title:'Životné poistenie', why: has('zivotne')
+      ? 'Životné poistenie už máš — odporúčame skontrolovať, či poistná suma zodpovedá aktuálnym záväzkom a počtu detí.'
+      : 'Máš osoby závislé od tvojho príjmu — v prípade úmrtia by poistenie nahradilo výpadok príjmu pre rodinu.' });
+    recs.push({ key:'invalidita', title:'Poistenie invalidity',
+      why:'Dlhodobá invalidita by ohrozila príjem rodiny podobne ako úmrtie — štátny invalidný dôchodok pokryje spravidla len časť výpadku.' });
+  }
+
+  if(a.hasLoan==='ano'){
+    recs.push({ key:'uver', title:'Poistenie schopnosti splácať úver',
+      why:'Pri výpadku príjmu (PN, invalidita, úmrtie) by mohol nastať problém so splácaním hypotéky alebo úveru.' });
+  }
+
+  if(a.property==='obyvam'){
+    recs.push({ key:'domacnost', title:'Poistenie majetku a domácnosti', why: has('majetkove')
+      ? 'Majetkové poistenie už máš — odporúčame overiť, či poistná suma zodpovedá aktuálnej hodnote nehnuteľnosti a vybavenia.'
+      : 'Chráni nehnuteľnosť, v ktorej bývaš, a vybavenie domácnosti pred škodami (napr. požiar, voda, krádež).' });
+  }
+  if(a.property==='prenajimam'){
+    recs.push({ key:'prenajom', title:'Poistenie prenajímanej nehnuteľnosti',
+      why:'Pri prenájme je vhodné majetkové poistenie rozšírené o zodpovednosť prenajímateľa a prípadný výpadok nájomného.' });
+  }
+
+  if(a.status==='szco' || a.concern==='vypadok'){
+    recs.push({ key:'pn', title:'Poistenie príjmu pri PN / práceneschopnosti', why: a.status==='szco'
+      ? 'Ako SZČO nemáš nárok na náhradu príjmu od zamestnávateľa počas PN — štátne nemocenské pokryje len časť príjmu.'
+      : 'Štátne nemocenské dávky pokrývajú len časť príjmu — poistenie doplní rozdiel počas dlhšej PN.' });
+  }
+
+  if(a.status==='majitel'){
+    recs.push({ key:'zodpovednost', title:'Poistenie zodpovednosti podnikateľa/firmy',
+      why:'Ako majiteľ/-ka firmy nesieš podnikateľské riziká a zodpovednosť za škody spôsobené pri činnosti firmy.' });
+  }
+
+  const seen = new Set();
+  let uniq = recs.filter(r => seen.has(r.key) ? false : (seen.add(r.key), true));
+
+  if(!uniq.length){
+    uniq.push({ key:'zaklad', title:'Základné životné a úrazové poistenie',
+      why:'Zatiaľ nemáš výraznejšie záväzky ani závislé osoby — odporúčame začať základným životným a úrazovým krytím ako štartovacím bodom.' });
+  }
+
+  const priority = { rodina:['zivotne','invalidita'], majetok:['domacnost','prenajom'], vypadok:['pn'] };
+  const boost = priority[a.concern] || [];
+  uniq = uniq.map((r,i)=>({...r, _i:i})).sort((x,y)=>
+    (boost.includes(y.key)?1:0) - (boost.includes(x.key)?1:0) || x._i-y._i);
+
+  return uniq;
+}
+
+/* ===========================================================================
+   VYKRESLENIE
+=========================================================================== */
+const $ = id => document.getElementById(id);
+const TOTAL_STEPS = QUESTIONS.length + 1; // + výsledky
+
+function updateProgress(){
+  const stepNo = Math.min(state.step+1, QUESTIONS.length);
+  const pct = Math.round(((state.step)/QUESTIONS.length)*100);
+  if(state.step < QUESTIONS.length){
+    $('progressLabel').textContent = 'Otázka '+stepNo+' z '+QUESTIONS.length;
+    $('progressPct').textContent = pct+' %';
+    $('progressFill').style.width = Math.max(6,pct)+'%';
+    $('progressWrap').style.display = '';
+  } else {
+    $('progressLabel').textContent = 'Výsledok';
+    $('progressPct').textContent = '100 %';
+    $('progressFill').style.width = '100%';
+  }
+}
+
+function isAnswered(q){
+  const v = state.answers[q.key];
+  return q.type==='multi' ? v.length>0 : !!v;
+}
+
+function renderQuestion(){
+  const q = QUESTIONS[state.step];
+  const val = state.answers[q.key];
+
+  const optsHtml = q.options.map(o=>{
+    const selected = q.type==='multi' ? val.includes(o.v) : val===o.v;
+    const shape = q.type==='multi'
+      ? '<div class="chk">'+(selected?'✓':'')+'</div>'
+      : '<div class="radio"><i></i></div>';
+    return '<div class="opt'+(selected?' sel':'')+'" data-v="'+o.v+'">'+shape+'<div class="label">'+o.label+'</div></div>';
+  }).join('');
+
+  $('panel').innerHTML = ''
+    + '<h1 class="q-title">'+q.title+'</h1>'
+    + (q.sub ? '<p class="q-sub">'+q.sub+'</p>' : '<div style="margin-bottom:18px;"></div>')
+    + '<div class="opts" id="opts">'+optsHtml+'</div>'
+    + '<div class="nav-row">'
+      + (state.step>0 ? '<button class="btn-ghost" id="backBtn">Späť</button>' : '')
+      + '<button class="btn-primary" id="nextBtn" '+(isAnswered(q)?'':'disabled')+'>'+(state.step===QUESTIONS.length-1?'Zobraziť odporúčanie':'Pokračovať')+'</button>'
+    + '</div>';
+
+  $('opts').addEventListener('click', e=>{
+    const opt = e.target.closest('.opt'); if(!opt) return;
+    const v = opt.dataset.v;
+    if(q.type==='multi'){
+      const optDef = q.options.find(o=>o.v===v);
+      let arr = state.answers[q.key].slice();
+      if(optDef.exclusive){
+        arr = arr.includes(v) ? [] : [v];
+      } else {
+        arr = arr.filter(x => !(q.options.find(o=>o.v===x)||{}).exclusive);
+        if(arr.includes(v)) arr = arr.filter(x=>x!==v); else arr.push(v);
+      }
+      state.answers[q.key] = arr;
+    } else {
+      state.answers[q.key] = v;
+    }
+    renderQuestion();
+  });
+
+  if($('backBtn')) $('backBtn').addEventListener('click', ()=>{ state.step--; render(); });
+  $('nextBtn').addEventListener('click', ()=>{
+    if(!isAnswered(q)) return;
+    state.step++;
+    render();
+  });
+}
+
+function renderResults(){
+  const recs = computeRecommendations();
+  const recHtml = recs.map((r,i)=>
+    '<div class="rec-card">'
+    + '<div class="rc-title"><span class="rc-num">'+(i+1)+'</span>'+r.title+'</div>'
+    + '<div class="rc-why">'+r.why+'</div>'
+    + '</div>'
+  ).join('');
+
+  const pdfCardHtml = CLIENT_TOKEN ? '' : ''
+    + '<div class="contact-card" id="pdfCard">'
+      + '<h3>PDF pre klienta</h3>'
+      + '<p>Jednostranový A4 prehľad odporúčaných typov poistenia — na vytlačenie alebo poslanie klientovi.</p>'
+      + '<button class="btn-primary" id="pdfBtn" style="width:100%;">Generovať PDF pre klienta</button>'
+    + '</div>';
+
+  const sendLinkCardHtml = CLIENT_TOKEN ? '' : ''
+    + '<div class="contact-card" id="sendLinkCard">'
+      + '<h3>Poslať klientovi na vyplnenie</h3>'
+      + '<p>Klient dostane odkaz na tento istý dotazník — vyplní si ho sám, vy sa k odpovediam kedykoľvek vrátite.</p>'
+      + '<div class="contact-fields">'
+        + '<div class="field" data-k="clientLinkLabel"><label>MENO KLIENTA</label><input id="clientLinkLabel" placeholder="napr. Ján Novák"><span class="err">Zadaj meno klienta</span></div>'
+      + '</div>'
+      + '<div class="contact-actions"><button class="btn-primary" id="createLinkBtn" style="width:100%;">Vytvoriť odkaz</button></div>'
+      + '<div id="createdLinkBox" style="display:none; margin-top:14px;">'
+        + '<div class="field"><label>ODKAZ PRE KLIENTA</label><input id="createdLinkUrl" readonly></div>'
+        + '<button class="btn-ghost" id="copyLinkBtn" style="width:100%; margin-top:8px;">Kopírovať odkaz</button>'
+      + '</div>'
+    + '</div>'
+    + '<div class="contact-card" id="clientRequestsCard" style="display:none;">'
+      + '<h3>Žiadosti od klientov</h3>'
+      + '<p>Klienti, ktorým si poslal/-a odkaz na vyplnenie.</p>'
+      + '<div id="clientRequestsList"></div>'
+    + '</div>';
+
+  const contactOrSubmitHtml = CLIENT_TOKEN ? ''
+    + '<div class="contact-card" id="clientSubmitCard">'
+      + '<h3>Odoslať odpovede poradcovi</h3>'
+      + '<p>Poradca dostane vaše odpovede a spoločne si prejdete konkrétne možnosti.</p>'
+      + '<div class="contact-actions"><button class="btn-primary" id="clientSubmitBtn" style="width:100%;">Odoslať poradcovi</button></div>'
+    + '</div>'
+    + '<div class="contact-card" id="clientThankYou" style="display:none;">'
+      + '<h3 id="thankYouMsg"></h3>'
+      + '<button class="btn-primary" id="clientPdfBtn" style="width:100%; margin-top:8px;">Stiahnuť moje zhrnutie (PDF)</button>'
+    + '</div>'
+    : ''
+    + '<div class="contact-card" id="contactCard">'
+      + '<h3>Dohodnúť konzultáciu s poradcom</h3>'
+      + '<p>Necháš nám na seba kontakt — poradca sa ti ozve a prejde s tebou konkrétne možnosti.</p>'
+      + '<div class="contact-fields">'
+        + '<div class="field" data-k="contactName"><label>MENO A PRIEZVISKO</label><input id="contactName" placeholder="Meno a priezvisko"><span class="err">Zadaj meno</span></div>'
+        + '<div class="field" data-k="contactPhone"><label>TELEFÓN ALEBO E-MAIL</label><input id="contactPhone" placeholder="+421 900 000 000 alebo e-mail"><span class="err">Zadaj telefón alebo e-mail</span></div>'
+        + '<div class="field"><label>POZNÁMKA <span style="font-weight:500;text-transform:none;">(nepovinné)</span></label><textarea id="contactNote" placeholder="napr. najlepšie ma kontaktovať poobede…"></textarea></div>'
+      + '</div>'
+      + '<div class="contact-actions">'
+        + '<button class="btn-primary" id="sendBtn">Dohodnúť konzultáciu</button>'
+        + '<button class="btn-ghost" id="copyBtn">Kopírovať zhrnutie</button>'
+      + '</div>'
+      + '<div class="sent-ok" id="sentOk">✓ Otvára sa e-mailový klient s pripraveným dopytom…</div>'
+    + '</div>';
+
+  $('panel').innerHTML = ''
+    + '<div class="res-head">'
+      + '<div class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg></div>'
+      + '<h2>Odporúčané typy poistenia</h2>'
+      + '<p>Na základe tvojich odpovedí odporúčame prebrať s poradcom nasledovné typy krytia.</p>'
+    + '</div>'
+    + '<div class="rec-list">'+recHtml+'</div>'
+    + pdfCardHtml
+    + sendLinkCardHtml
+    + (CLIENT_TOKEN ? '' : '<a class="gap-link" href="../financna-medzera/">Chcete presne prepočítať, koľko by vám chýbalo? →</a>')
+    + contactOrSubmitHtml
+    + (CLIENT_TOKEN ? '' : '<div class="restart" id="restartBtn">↺ Vyplniť dotazník znova</div>');
+
+  if(!CLIENT_TOKEN){
+    $('contactName').value = state.contactName;
+    $('contactPhone').value = state.contactPhone;
+    $('contactNote').value = state.contactNote;
+    ['contactName','contactPhone','contactNote'].forEach(k=>{
+      $(k).addEventListener('input', e=>{ state[k]=e.target.value; });
+    });
+    $('sendBtn').addEventListener('click', doSend);
+    $('copyBtn').addEventListener('click', doCopy);
+    $('pdfBtn').addEventListener('click', doGeneratePdf);
+    $('restartBtn').addEventListener('click', doRestart);
+    $('createLinkBtn').addEventListener('click', doCreateLink);
+    $('copyLinkBtn').addEventListener('click', ()=>{
+      const input = $('createdLinkUrl');
+      input.select();
+      try{ if(navigator.clipboard) navigator.clipboard.writeText(input.value); }catch(e){}
+      const b=$('copyLinkBtn'); const orig=b.textContent; b.textContent='Skopírované ✓'; setTimeout(()=>b.textContent=orig,1600);
+    });
+    loadClientRequests();
+  } else {
+    $('clientSubmitBtn').addEventListener('click', doClientSubmit);
+    $('clientPdfBtn').addEventListener('click', doGeneratePdf);
+  }
+}
+
+function render(){
+  updateProgress();
+  if(state.step < QUESTIONS.length) renderQuestion(); else renderResults();
+}
+
+/* ===========================================================================
+   KONTAKT — odoslanie / kopírovanie
+=========================================================================== */
+function buildSummaryText(){
+  const recs = computeRecommendations();
+  const a = state.answers;
+  const insLabel = { zamestnanec:'Zamestnanec/-kyňa', szco:'SZČO', majitel:'Majiteľ/-ka firmy' };
+  const lines = [
+    'DOPYT Z WIZARDU „AKÉ POISTENIE POTREBUJEM"', '',
+    'Kontakt: '+(state.contactName||'…')+' — '+(state.contactPhone||'…'),
+    state.contactNote.trim() ? ('Poznámka: '+state.contactNote.trim()) : '',
+    '',
+    'Pracovný status: '+(insLabel[a.status]||a.status),
+    'Závislé osoby: '+(a.hasDependents==='ano'?'áno':'nie'),
+    'Hypotéka/úver: '+(a.hasLoan==='ano'?'áno':'nie'),
+    'Nehnuteľnosť: '+(a.property||'—'),
+    'Existujúce poistenie: '+(a.existingIns.length?a.existingIns.join(', '):'žiadne'),
+    'Najviac zaujíma: '+(a.concern||'—'),
+    '',
+    'Odporúčané typy poistenia:',
+  ].concat(recs.map((r,i)=>(i+1)+'. '+r.title)).filter(Boolean);
+  return lines.join('\n');
+}
+
+function validateContact(){
+  const e = {};
+  if(!state.contactName.trim()) e.contactName='Zadaj meno';
+  if(!state.contactPhone.trim()) e.contactPhone='Zadaj telefón alebo e-mail';
+  return e;
+}
+
+/* ===========================================================================
+   PDF PRE KLIENTA (server-side Dompdf cez zdieľaný ../pdf.php, presné A4)
+   -------------------------------------------------------------------------
+   Vlastná jednoduchá HTML/CSS podmnožina (tabuľky, mm jednotky, DejaVu fonty) —
+   Dompdf nepodporuje CSS premenné/flexbox spoľahlivo, preto farby natvrdo v hex.
+=========================================================================== */
+const SK_MONTHS = ['január','február','marec','apríl','máj','jún','júl','august','september','október','november','december'];
+function fmtDateSk(d){ return d.getDate()+'. '+SK_MONTHS[d.getMonth()]+' '+d.getFullYear(); }
+
+const REC_BADGES = {
+  zivotne:{ letter:'Ž', cls:'warm' },
+  invalidita:{ letter:'I', cls:'teal' },
+  uver:{ letter:'Ú', cls:'teal' },
+  domacnost:{ letter:'M', cls:'warm' },
+  prenajom:{ letter:'N', cls:'warm' },
+  pn:{ letter:'PN', cls:'warm' },
+  zodpovednost:{ letter:'F', cls:'teal' },
+  zaklad:{ letter:'Ž', cls:'warm' },
+};
+
+function profileChips(){
+  const a = state.answers;
+  const insLabel = { zamestnanec:'Zamestnanec/-kyňa', szco:'SZČO', majitel:'Majiteľ/-ka firmy' };
+  const chips = [{ label:insLabel[a.status]||a.status, cls:'teal' }];
+  if(a.hasDependents==='ano') chips.push({ label:'Deti / závislé osoby', cls:'warm' });
+  if(a.hasLoan==='ano') chips.push({ label:'Hypotéka / úver', cls:'warm' });
+  if(a.property==='obyvam') chips.push({ label:'Vlastní byt', cls:'teal' });
+  if(a.property==='prenajimam') chips.push({ label:'Prenajíma nehnuteľnosť', cls:'teal' });
+  return chips;
+}
+
+function buildReportHtml(){
+  const recs = computeRecommendations();
+  const fontBase = '../vendor/dompdf/lib/fonts/';
+  const clientName = clientLinkLabel || state.contactName.trim() || 'Klient';
+
+  const chipsHtml = profileChips().map(c => '<span class="chip '+c.cls+'">'+escapeHtml(c.label)+'</span>').join('');
+
+  const recsHtml = recs.map(r => {
+    const b = REC_BADGES[r.key] || { letter:'?', cls:'teal' };
+    return ''
+      + '<div class="rec">'
+      + '<table class="rec-t"><tr>'
+      + '<td class="badge-cell"><div class="badge '+b.cls+'">'+b.letter+'</div></td>'
+      + '<td><div class="rec-title">'+escapeHtml(r.title)+'</div><div class="rec-why">'+escapeHtml(r.why)+'</div></td>'
+      + '</tr></table>'
+      + '</div>';
+  }).join('');
+
+  const css = `
+    @font-face { font-family:'DejaVu Sans'; src:url('`+fontBase+`DejaVuSans.ttf'); }
+    @font-face { font-family:'DejaVu Sans'; font-weight:bold; src:url('`+fontBase+`DejaVuSans-Bold.ttf'); }
+    @font-face { font-family:'DejaVu Serif'; font-weight:bold; src:url('`+fontBase+`DejaVuSerif-Bold.ttf'); }
+    @font-face { font-family:'DejaVu Sans Mono'; src:url('`+fontBase+`DejaVuSansMono.ttf'); }
+    * { box-sizing:border-box; }
+    div,p,table,tr,td,th,strong,span { margin:0; padding:0; }
+    body { margin:0; padding:0; font-family:'DejaVu Sans',sans-serif; font-size:10pt; line-height:1.38; color:#12232b; background:#fff; }
+    .mono { font-family:'DejaVu Sans Mono',monospace; }
+    .serif { font-family:'DejaVu Serif',serif; }
+    table.lh { width:100%; margin-bottom:6mm; }
+    table.lh td { vertical-align:top; }
+    .lh-eyebrow { font-size:7.5pt; font-weight:bold; letter-spacing:1.2pt; text-transform:uppercase; color:#0e9c90; }
+    .lh-name { font-size:9.5pt; font-weight:bold; margin-top:1.5mm; }
+    .lh-org { font-size:8.5pt; color:#5c6f75; margin-top:0.5mm; }
+    .lh-right { text-align:right; }
+    .lh-client { font-size:9.5pt; font-weight:bold; }
+    .lh-date { font-size:8.5pt; color:#5c6f75; margin-top:0.5mm; }
+    .chips { margin-bottom:5mm; }
+    .chip { display:inline-block; padding:1.8mm 4mm; border-radius:6mm; font-size:8.5pt; font-weight:bold; margin-right:2.5mm; margin-bottom:2mm; }
+    .chip.teal { background:#e1f5f2; color:#0e9c90; }
+    .chip.warm { background:#ffe4da; color:#ff6f4d; }
+    .lede { font-size:11.5pt; font-weight:bold; max-width:150mm; margin-bottom:6mm; }
+    .section-tag { font-size:7.5pt; font-weight:bold; letter-spacing:1.2pt; text-transform:uppercase; color:#5c6f75; margin:0 0 3mm; }
+    .rec { border-top:0.5pt solid #dfe6e5; padding-top:3mm; margin-top:3mm; }
+    .rec:first-child { border-top:none; padding-top:0; margin-top:0; }
+    table.rec-t { width:100%; }
+    table.rec-t td { vertical-align:top; }
+    td.badge-cell { width:11mm; }
+    .badge { width:8mm; height:8mm; border-radius:4mm; text-align:center; line-height:8mm; font-size:8pt; font-weight:bold; color:#fff; }
+    .badge.warm { background:#ff6f4d; }
+    .badge.teal { background:#0e9c90; }
+    .rec-title { font-size:10.5pt; font-weight:bold; margin-bottom:1mm; }
+    .rec-why { font-size:8.5pt; color:#5c6f75; max-width:150mm; }
+    .next-step { background:#e1f5f2; padding:3mm 5mm; margin-top:4mm; border-radius:2mm; }
+    .next-step p { font-size:9pt; }
+    .next-step b { color:#0e9c90; }
+    table.signoff { width:100%; margin-top:4mm; padding-top:3mm; border-top:0.5pt solid #b9c7c5; }
+    .signoff-n { font-size:9.5pt; font-weight:bold; }
+    .signoff-o { font-size:8.5pt; color:#5c6f75; }
+    .signoff-c { font-size:8.5pt; margin-top:1mm; }
+    td.signoff-cta { text-align:right; vertical-align:middle; }
+    .cta-box { display:inline-block; background:#ff6f4d; color:#fff; font-size:9pt; font-weight:bold; padding:3mm 5mm; border-radius:2mm; }
+    .fineprint { font-size:7.5pt; color:#5c6f75; text-align:center; margin-top:3mm; }
+    @page { margin:14mm 18mm 14mm 18mm; }
+  `;
+
+  return '<!DOCTYPE html><html lang="sk"><head>'
+    + '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
+    + '<title>Váš poistný profil</title><style>'+css+'</style></head><body>'
+    + '<table class="lh"><tr>'
+      + '<td><div class="lh-eyebrow">Váš poistný profil</div>'
+      + '<div class="lh-name">Pripravil/-a '+escapeHtml(ADVISOR.name)+'</div>'
+      + (ADVISOR.org ? '<div class="lh-org">'+escapeHtml(ADVISOR.org)+'</div>' : '') + '</td>'
+      + '<td class="lh-right"><div class="lh-client">'+escapeHtml(clientName)+'</div>'
+      + '<div class="lh-date mono">'+fmtDateSk(TODAY)+'</div></td>'
+    + '</tr></table>'
+    + '<div class="chips">'+chipsHtml+'</div>'
+    + '<div class="lede serif">Na základe vašich odpovedí odporúčame prebrať s poradcom '+recs.length+' '
+      + (recs.length===1?'typ krytia':'typov krytia')+' &mdash; v poradí podľa toho, čo vás najviac trápi.</div>'
+    + '<div class="section-tag">Odporúčané typy poistenia</div>'
+    + recsHtml
+    + '<div class="next-step"><p>Chcete presné čísla namiesto typov? Poradca s vami prejde aj <b>Kalkulačku finančnej medzery</b>.</p></div>'
+    + '<table class="signoff"><tr>'
+      + '<td><div class="signoff-n">'+escapeHtml(ADVISOR.name)+'</div>'
+      + (ADVISOR.org ? '<div class="signoff-o">'+escapeHtml(ADVISOR.org)+'</div>' : '')
+      + '<div class="signoff-c mono">'+escapeHtml(ADVISOR.email)+(ADVISOR.phone ? ' &middot; '+escapeHtml(ADVISOR.phone) : '')+'</div></td>'
+      + '<td class="signoff-cta"><span class="cta-box">Dohodnúť konzultáciu</span></td>'
+    + '</tr></table>'
+    + '<div class="fineprint">Odporúčanie typu poistenia, nie konkrétneho produktu. Konečný rozsah krytia určí poradca.</div>'
+    + '</body></html>';
+}
+
+function doGeneratePdf(){
+  const btn = $('pdfBtn') || $('clientPdfBtn');
+  const orig = btn.textContent;
+  btn.textContent = 'Generujem…'; btn.disabled = true;
+
+  const html = buildReportHtml();
+  const clientName = clientLinkLabel || state.contactName.trim() || 'klient';
+  const filename = 'Poistny_profil_'+clientName.replace(/\s+/g,'_');
+
+  fetch('../pdf.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ html: html, filename: filename })
+  })
+  .then(function(r){
+    const ct = r.headers.get('Content-Type') || '';
+    if (ct.includes('application/json') || ct.includes('text/')) {
+      return r.text().then(function(t){ throw new Error('Server: ' + t); });
+    }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.blob();
+  })
+  .then(function(blob){
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename+'.pdf';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    btn.textContent = orig; btn.disabled = false;
+    logDocument(clientName);
+  })
+  .catch(function(e){
+    console.error(e);
+    btn.textContent = orig; btn.disabled = false;
+    alert('Chyba PDF:\n' + e.message);
+  });
+}
+
+function logDocument(clientLabel){
+  try{
+    fetch('../api/log-document.php', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        tool: TOOL_NAME,
+        clientLabel: clientLabel,
+        formData: state,
+        token: CLIENT_TOKEN || undefined,
+      })
+    }).catch(()=>{});
+  }catch(e){}
+}
+
+function doSend(){
+  state.touched=true;
+  const errs = validateContact();
+  document.querySelectorAll('#contactCard .field[data-k]').forEach(f=>{
+    const k=f.dataset.k; const bad=errs[k];
+    f.classList.toggle('invalid', !!bad);
+    const err=f.querySelector('.err'); if(err && errs[k]) err.textContent=errs[k];
+  });
+  if(Object.keys(errs).length>0) return;
+
+  const subject = 'Dopyt z wizardu „Aké poistenie potrebujem" — '+state.contactName;
+  const body = buildSummaryText();
+  window.location.href = 'mailto:'+encodeURIComponent(ADVISOR.email)+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+  $('sentOk').classList.add('show');
+}
+
+function doCopy(){
+  const txt = buildSummaryText();
+  try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
+  const b=$('copyBtn'); const orig=b.textContent; b.textContent='Skopírované ✓'; setTimeout(()=>b.textContent=orig,1600);
+}
+
+function doRestart(){
+  state.step=0;
+  state.answers={ status:'', hasDependents:'', hasLoan:'', property:'', existingIns:[], concern:'' };
+  state.contactName=''; state.contactPhone=''; state.contactNote=''; state.touched=false;
+  render();
+}
+
+/* ===========================================================================
+   ŽIADOSTI OD KLIENTOV (poradcovský pohľad — história odkazov)
+=========================================================================== */
+async function loadClientRequests(){
+  try{
+    const r = await fetch('../api/my-client-links.php?tool='+TOOL_NAME);
+    const rows = await r.json();
+    if(!Array.isArray(rows) || !rows.length || !$('clientRequestsCard')) return;
+    $('clientRequestsCard').style.display = 'block';
+    $('clientRequestsList').innerHTML = rows.map(function(row){
+      const statusLabel = row.status==='submitted' ? 'Vyplnené' : 'Čaká na klienta';
+      const date = (row.submitted_at || row.created_at || '').slice(0,10);
+      const canLoad = row.status==='submitted' && row.form_data;
+      return '<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 0; border-top:1px solid var(--border);">'
+        + '<div><div style="font-weight:700; font-size:13.5px;">'+escapeHtml(row.client_label)+'</div>'
+        + '<div style="font-size:12px;color:var(--muted);">'+statusLabel+' · '+date+'</div></div>'
+        + (canLoad ? '<button type="button" class="btn-ghost" data-load-id="'+row.id+'" style="padding:8px 14px;">Načítať</button>' : '')
+        + '</div>';
+    }).join('');
+    $('clientRequestsList').querySelectorAll('[data-load-id]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const row = rows.find(x=>String(x.id)===btn.dataset.loadId);
+        if(!row || !row.form_data) return;
+        Object.assign(state, JSON.parse(row.form_data));
+        state.step = QUESTIONS.length;
+        render();
+        window.scrollTo({top:0, behavior:'smooth'});
+      });
+    });
+  }catch(e){ /* ticho ignoruj */ }
+}
+
+/* ===========================================================================
+   ODKAZ PRE KLIENTA (poradcovský pohľad — vytvorenie jedinečného odkazu)
+=========================================================================== */
+function doCreateLink(){
+  const label = $('clientLinkLabel').value.trim();
+  const field = document.querySelector('[data-k="clientLinkLabel"]');
+  if(!label){ field.classList.add('invalid'); return; }
+  field.classList.remove('invalid');
+
+  const btn = $('createLinkBtn');
+  const orig = btn.textContent;
+  btn.textContent = 'Vytváram…'; btn.disabled = true;
+
+  fetch('../api/client-link-create.php', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ tool: TOOL_NAME, clientLabel: label })
+  })
+  .then(r=>r.json())
+  .then(d=>{
+    if(!d.url) throw new Error('Nepodarilo sa vytvoriť odkaz.');
+    $('createdLinkUrl').value = location.origin + d.url;
+    $('createdLinkBox').style.display = 'block';
+    btn.textContent = orig; btn.disabled = false;
+  })
+  .catch(e=>{
+    btn.textContent = orig; btn.disabled = false;
+    alert('Chyba: '+e.message);
+  });
+}
+
+/* ===========================================================================
+   KLIENTSKY REŽIM S TOKENOM
+=========================================================================== */
+async function loadClientSession(){
+  try{
+    const r = await fetch('../api/client-session.php?token='+encodeURIComponent(CLIENT_TOKEN)+'&tool='+TOOL_NAME);
+    const d = await r.json();
+    if(!d.ok){ showInvalidLink(); return; }
+    if(d.advisor && d.advisor.name) Object.assign(ADVISOR, d.advisor);
+    if(d.clientLabel) clientLinkLabel = d.clientLabel;
+    if(d.formData) Object.assign(state, d.formData);
+    render();
+  }catch(e){ showInvalidLink(); }
+}
+
+function showInvalidLink(){
+  document.querySelector('.app').innerHTML = '<div style="padding:60px 30px;text-align:center;">'
+    + '<h2>Tento odkaz už nie je platný</h2>'
+    + '<p style="color:var(--muted);">Požiadaj poradcu o nový odkaz na vyplnenie.</p></div>';
+}
+
+function doClientSubmit(){
+  const btn = $('clientSubmitBtn');
+  const orig = btn.textContent;
+  btn.textContent = 'Odosielam…'; btn.disabled = true;
+
+  fetch('../api/client-submit.php', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ token: CLIENT_TOKEN, tool: TOOL_NAME, formData: state })
+  })
+  .then(r=>r.json())
+  .then(d=>{
+    if(!d.ok) throw new Error('Odoslanie zlyhalo.');
+    $('clientSubmitCard').style.display = 'none';
+    $('thankYouMsg').textContent = 'Ďakujeme! Spoločne si to čoskoro prejdeme. — '+ADVISOR.name;
+    $('clientThankYou').style.display = 'block';
+  })
+  .catch(e=>{
+    btn.textContent = orig; btn.disabled = false;
+    alert('Chyba: '+e.message);
+  });
+}
+
+/* ===========================================================================
+   ŠTART
+=========================================================================== */
+loadAdvisor();
+if(CLIENT_TOKEN){ loadClientSession(); }
+render();
+</script>
+
+</body></html>

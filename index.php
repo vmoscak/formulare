@@ -1,3 +1,36 @@
+<?php
+require_once __DIR__ . '/db.php';
+
+// Kliknutie na dlaždicu poradcu — nastaví "kto som" na 365 dní, žiadne
+// obmedzenie medzi poradcami (vzájomný prístup je zámerne povolený).
+if (isset($_GET['adv'])) {
+    try {
+        $advId = (int)$_GET['adv'];
+        $stmt = db()->prepare('SELECT id FROM formulare_advisors WHERE id = ? AND active = 1');
+        $stmt->execute([$advId]);
+        if ($stmt->fetch()) {
+            setcookie('cur_advisor', (string)$advId, [
+                'expires' => time() + 365 * 86400,
+                'path' => '/',
+                'secure' => !empty($_SERVER['HTTPS']),
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]);
+        }
+    } catch (Throwable $e) { /* DB nedostupná — pokračuj bez nastavenia poradcu */ }
+    header('Location: /');
+    exit;
+}
+
+// Ak je DB dočasne nedostupná, zvyšok stránky (existujúce nástroje) musí
+// ostať funkčný — jednoducho sa nezobrazia dlaždice poradcov.
+try {
+    $advisors = db()->query('SELECT id, name, org FROM formulare_advisors WHERE active = 1 ORDER BY name')->fetchAll();
+} catch (Throwable $e) {
+    $advisors = [];
+}
+$curAdvisorId = isset($_COOKIE['cur_advisor']) ? (int)$_COOKIE['cur_advisor'] : null;
+?>
 <!DOCTYPE html>
 <html lang="sk">
 <head>
@@ -265,6 +298,36 @@
   </div>
 
   <!-- ============================================================
+       KATEGÓRIA: Poradcovia
+  ============================================================ -->
+  <div class="cat">
+    <div class="cat-head">
+      <div class="cat-ic">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <span class="cat-title">Poradcovia</span>
+      <span class="cat-count"><?= count($advisors) ?></span>
+      <span class="cat-line"></span>
+    </div>
+    <div class="grid">
+      <?php foreach ($advisors as $adv): ?>
+      <a class="card" href="?adv=<?= (int)$adv['id'] ?>">
+        <div class="ic">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+        <h2><?= htmlspecialchars($adv['name']) ?></h2>
+        <p><?= htmlspecialchars($adv['org']) ?><?= $adv['id'] == $curAdvisorId ? ' — aktuálne prihlásený/-á' : '' ?></p>
+        <span class="go">Vstúpiť ako <?= htmlspecialchars(explode(' ', $adv['name'])[0]) ?>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </span>
+      </a>
+      <?php endforeach; ?>
+    </div>
+  </div>
+
+  <!-- ============================================================
        KATEGÓRIA: Hlavné nástroje
   ============================================================ -->
   <div class="cat">
@@ -273,7 +336,7 @@
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
       </div>
       <span class="cat-title">Hlavné nástroje</span>
-      <span class="cat-count">2</span>
+      <span class="cat-count">4</span>
       <span class="cat-line"></span>
     </div>
     <div class="grid">
@@ -301,6 +364,34 @@
         </div>
         <h2>Checklist – výstup z analýzy</h2>
         <p>Kontrolný zoznam krokov a odporúčaní po dokončení Finančnej analýzy, s termínmi a zodpovednosťou.</p>
+        <span class="go">Otvoriť
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </span>
+      </a>
+
+      <!-- Kalkulačka finančnej medzery – AKTÍVNA -->
+      <a class="card" href="financna-medzera/">
+        <div class="ic">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>
+          </svg>
+        </div>
+        <h2>Kalkulačka finančnej medzery</h2>
+        <p>Koľko by rodine chýbalo pri úmrtí, invalidite alebo dlhodobej PN – odporúčané krytie vs. existujúce poistenie. Poradcovský aj klientsky režim.</p>
+        <span class="go">Otvoriť
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </span>
+      </a>
+
+      <!-- Wizard "Aké poistenie potrebujem" – AKTÍVNA -->
+      <a class="card" href="wizard-poistenie/">
+        <div class="ic">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/><circle cx="12" cy="12" r="10"/>
+          </svg>
+        </div>
+        <h2>Aké poistenie potrebujem</h2>
+        <p>Krátky dotazník na 6 otázok – odporúčanie typov poistenia s vysvetlením „prečo" a odkazom na konzultáciu.</p>
         <span class="go">Otvoriť
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </span>
