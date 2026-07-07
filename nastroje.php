@@ -6,11 +6,18 @@ $curAdvisorId = isset($_COOKIE['cur_advisor']) ? (int)$_COOKIE['cur_advisor'] : 
 if (!$curAdvisorId) { header('Location: /'); exit; }
 
 try {
-    $stmt = db()->prepare('SELECT name FROM formulare_advisors WHERE id = ? AND active = 1');
+    $stmt = db()->prepare('SELECT name, color FROM formulare_advisors WHERE id = ? AND active = 1');
     $stmt->execute([$curAdvisorId]);
     $me = $stmt->fetch();
 } catch (Throwable $e) { $me = null; }
 if (!$me) { header('Location: /'); exit; }
+
+function advisorInitials(string $name): string {
+    $parts = preg_split('/\s+/', trim($name));
+    $first = mb_substr($parts[0] ?? '', 0, 1);
+    $last = count($parts) > 1 ? mb_substr($parts[count($parts) - 1], 0, 1) : '';
+    return mb_strtoupper($first . $last);
+}
 ?>
 <!DOCTYPE html>
 <html lang="sk">
@@ -103,17 +110,16 @@ if (!$me) { header('Location: /'); exit; }
   }
   .logo{
     width:56px; height:56px; border-radius:16px; flex-shrink:0;
-    background:linear-gradient(140deg,var(--accent),var(--accent2));
     color:#fff;
     display:flex; align-items:center; justify-content:center;
-    box-shadow:0 10px 26px rgba(31,95,209,.32), inset 0 1px 0 rgba(255,255,255,.25);
+    box-shadow:0 10px 26px rgba(20,24,36,.28), inset 0 1px 0 rgba(255,255,255,.25);
     position:relative;
   }
   .logo::after{
     content:'';
     position:absolute; inset:-7px;
     border-radius:20px;
-    border:1.5px solid rgba(31,95,209,.18);
+    border:1.5px solid rgba(20,24,36,.14);
     animation:pulseRing 2.8s ease-in-out infinite;
   }
   .head h1{
@@ -267,10 +273,8 @@ if (!$me) { header('Location: /'); exit; }
 <div class="wrap">
 
   <div class="head">
-    <div class="logo">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15l2 2 4-4"/>
-      </svg>
+    <div class="logo" style="background:<?= htmlspecialchars($me['color']) ?>; font-size:19px; font-weight:800;">
+      <?= htmlspecialchars(advisorInitials($me['name'])) ?>
     </div>
     <div>
       <h1>Formuláre</h1>

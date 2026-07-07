@@ -26,6 +26,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (isset($_POST['toggle_id'])) {
         $id = (int)$_POST['toggle_id'];
         db()->prepare('UPDATE formulare_advisors SET active = 1 - active WHERE id = ?')->execute([$id]);
+    } elseif (isset($_POST['color_id'])) {
+        $id = (int)$_POST['color_id'];
+        $color = (string)($_POST['color'] ?? '');
+        if (preg_match('/^#[0-9a-fA-F]{6}$/', $color)) {
+            db()->prepare('UPDATE formulare_advisors SET color = ? WHERE id = ?')->execute([$color, $id]);
+        }
     }
     header('Location: /admin.php');
     exit;
@@ -69,6 +75,9 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
   .add-form input{ padding:9px 11px; border:1.5px solid var(--border); border-radius:10px; font-size:13px; }
   .add-form button{ padding:9px 16px; border:none; border-radius:10px; background:var(--accent); color:#fff; font-weight:700; cursor:pointer; }
   .toggle-btn{ padding:5px 10px; border:1.5px solid var(--border); border-radius:8px; background:#fff; font-size:12px; cursor:pointer; }
+  .color-form{ display:flex; align-items:center; gap:6px; margin:0; }
+  .color-form input[type=color]{ width:30px; height:30px; padding:0; border:1.5px solid var(--border); border-radius:8px; cursor:pointer; background:#fff; }
+  .color-form button{ padding:5px 8px; border:1.5px solid var(--border); border-radius:8px; background:#fff; font-size:11px; cursor:pointer; }
   @media (max-width:720px){ .add-form{ grid-template-columns:1fr; } table{ display:block; overflow-x:auto; } }
 </style>
 </head><body>
@@ -79,9 +88,15 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
   <div class="card">
     <h2>Poradcovia</h2>
     <table>
-      <tr><th>Meno</th><th>Organizácia</th><th>E-mail</th><th>Telefón</th><th>Stav</th><th></th></tr>
+      <tr><th>Farba</th><th>Meno</th><th>Organizácia</th><th>E-mail</th><th>Telefón</th><th>Stav</th><th></th></tr>
       <?php foreach ($advisors as $a): ?>
       <tr class="<?= $a['active'] ? '' : 'inactive' ?>">
+        <td>
+          <form method="post" class="color-form">
+            <input type="hidden" name="color_id" value="<?= (int)$a['id'] ?>">
+            <input type="color" name="color" value="<?= h($a['color']) ?>" onchange="this.form.requestSubmit()" title="Farba poradcu">
+          </form>
+        </td>
         <td><?= h($a['name']) ?><?= $a['is_admin'] ? ' (admin)' : '' ?></td>
         <td><?= h($a['org']) ?></td>
         <td><?= h($a['email']) ?></td>

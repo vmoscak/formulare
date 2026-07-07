@@ -33,6 +33,7 @@ function dbInitSqlite(PDO $pdo): void {
         org TEXT NOT NULL DEFAULT '',
         email TEXT NOT NULL,
         phone TEXT NOT NULL DEFAULT '',
+        color TEXT NOT NULL DEFAULT '#1f5fd1',
         is_admin INTEGER NOT NULL DEFAULT 0,
         active INTEGER NOT NULL DEFAULT 1,
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
