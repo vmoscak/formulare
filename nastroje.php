@@ -168,81 +168,56 @@ function advisorInitials(string $name): string {
 
   .cat.soon .cat-ic{ background:#f0f2f7; color:#a8b0bd; }
 
-  /* ── Mriežka formulárov ── */
-  .grid{
-    display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
-    gap:18px;
-  }
-
-  .card{
-    background:#fff; border:1px solid var(--border); border-radius:var(--radius);
-    padding:24px 24px 22px; position:relative;
-    display:flex; flex-direction:column; gap:14px;
-    box-shadow:0 6px 22px rgba(30,38,56,.055);
-    transition:transform .28s cubic-bezier(.22,1,.36,1), box-shadow .28s ease, border-color .28s ease;
+  /* ── Zoznam nástrojov (kompaktné riadky, odlišné od dlaždíc poradcov) ── */
+  .tool-list{
+    background:#fff; border:1px solid var(--border); border-radius:16px;
     overflow:hidden;
-    opacity:0; transform:translateY(18px);
-    animation:cardIn .55s cubic-bezier(.22,1,.36,1) forwards;
+    box-shadow:0 4px 16px rgba(30,38,56,.045);
+    opacity:0; transform:translateY(14px);
+    animation:listIn .5s cubic-bezier(.22,1,.36,1) forwards;
   }
-  .card:nth-child(1){animation-delay:.08s;}
-  .card:nth-child(2){animation-delay:.16s;}
-  .card:nth-child(3){animation-delay:.24s;}
-  .card:nth-child(4){animation-delay:.32s;}
-  @keyframes cardIn{ to{opacity:1; transform:translateY(0);} }
+  .cat:nth-of-type(1) .tool-list{animation-delay:.06s;}
+  .cat:nth-of-type(2) .tool-list{animation-delay:.10s;}
+  .cat:nth-of-type(3) .tool-list{animation-delay:.14s;}
+  .cat:nth-of-type(4) .tool-list{animation-delay:.18s;}
+  .cat:nth-of-type(5) .tool-list{animation-delay:.22s;}
+  @keyframes listIn{ to{opacity:1; transform:translateY(0);} }
 
-  /* jemný lesk pri hoveri */
-  .card::before{
-    content:'';
-    position:absolute; inset:0;
-    background:linear-gradient(120deg, transparent 40%, rgba(31,95,209,.06) 50%, transparent 60%);
-    transform:translateX(-120%);
-    transition:transform .65s ease;
-    pointer-events:none;
+  .tool-row{
+    display:flex; align-items:center; gap:14px;
+    padding:13px 20px;
+    border-bottom:1px solid var(--border);
+    transition:background-color .18s ease, padding-left .18s ease;
   }
-  a.card:hover::before{ transform:translateX(120%); }
+  .tool-row:last-child{ border-bottom:none; }
+  a.tool-row:hover{ background-color:var(--accent-soft); padding-left:26px; }
+  a.tool-row:active{ background-color:#e2ecfb; }
 
-  a.card:hover{
-    transform:translateY(-5px);
-    box-shadow:0 20px 44px rgba(31,95,209,.16);
-    border-color:var(--accent-line);
-  }
-  a.card:active{ transform:translateY(-2px); }
-
-  .card .ic{
-    width:46px; height:46px; border-radius:13px;
+  .tool-row .ic{
+    width:32px; height:32px; border-radius:9px; flex-shrink:0;
     background:var(--accent-soft); color:var(--accent);
     display:flex; align-items:center; justify-content:center;
-    transition:transform .32s cubic-bezier(.22,1,.36,1), background .32s ease, color .32s ease;
-    flex-shrink:0;
+    transition:transform .22s ease;
   }
-  a.card:hover .ic{
-    transform:scale(1.08) rotate(-6deg);
-    background:linear-gradient(140deg,var(--accent),var(--accent2));
-    color:#fff;
-  }
+  a.tool-row:hover .ic{ transform:scale(1.1); }
 
-  .card h2{font-size:16.5px; font-weight:800; margin:0; letter-spacing:-.01em;}
-  .card p{font-size:13px; color:var(--muted); margin:0; line-height:1.6; flex:1;}
-
-  .card .go{
-    display:inline-flex; align-items:center; gap:6px;
-    font-size:13.5px; font-weight:700; color:var(--accent);
+  .tool-row .body{ flex:1; min-width:0; }
+  .tool-row h2{ font-size:14px; font-weight:700; margin:0; letter-spacing:-.005em; }
+  .tool-row p{
+    font-size:12px; color:var(--muted); margin:2px 0 0; line-height:1.4;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
   }
-  .card .go svg{ transition:transform .25s cubic-bezier(.22,1,.36,1); }
-  a.card:hover .go svg{ transform:translateX(4px); }
+  .tool-row .arrow{ color:var(--muted); flex-shrink:0; transition:transform .2s ease, color .2s ease; }
+  a.tool-row:hover .arrow{ color:var(--accent); transform:translateX(3px); }
 
   /* ── Pripravujeme ── */
-  .card.soon{
-    background:repeating-linear-gradient(135deg,#fff,#fff 12px,#fbfcfe 12px,#fbfcfe 24px);
-    border:1.5px dashed var(--border);
-    box-shadow:none;
-  }
-  .card.soon .ic{background:#f0f2f7; color:#a8b0bd;}
-  .badge{
-    position:absolute; top:16px; right:16px;
-    font-size:10px; font-weight:800; letter-spacing:.06em; text-transform:uppercase;
-    color:var(--muted); background:#fff; border:1px solid var(--border);
-    padding:5px 10px; border-radius:999px;
+  .tool-row.soon{ cursor:default; }
+  .tool-row.soon .ic{ background:#f0f2f7; color:#a8b0bd; }
+  .tool-row.soon p{ white-space:normal; }
+  .badge-soon{
+    font-size:10px; font-weight:800; letter-spacing:.05em; text-transform:uppercase;
+    color:var(--muted); background:#f3f4f8; border:1px solid var(--border);
+    padding:4px 9px; border-radius:999px; flex-shrink:0;
   }
 
   @media(max-width:520px){
@@ -251,13 +226,16 @@ function advisorInitials(string $name): string {
     .logo{width:48px; height:48px; border-radius:14px;}
     .head h1{font-size:24px;}
     .blob{ filter:blur(50px); }
+    .tool-row{ padding:12px 16px; gap:12px; }
+    a.tool-row:hover{ padding-left:19px; }
+    .tool-row p{ white-space:normal; }
   }
 
   @media(prefers-reduced-motion:reduce){
-    .head, .card, .cat-head{animation:none; opacity:1; transform:none;}
+    .head, .tool-list, .cat-head{animation:none; opacity:1; transform:none;}
     .logo::after{animation:none;}
-    .card::before{display:none;}
     .blob{animation:none!important;}
+    a.tool-row:hover{ padding-left:20px; }
   }
 </style>
 </head>
@@ -294,62 +272,62 @@ function advisorInitials(string $name): string {
       <span class="cat-count">4</span>
       <span class="cat-line"></span>
     </div>
-    <div class="grid">
+    <div class="tool-list">
 
       <!-- Finančná analýza – AKTÍVNA -->
-      <a class="card" href="financna-analyza/">
+      <a class="tool-row" href="financna-analyza/">
         <div class="ic">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
           </svg>
         </div>
+        <div class="body">
         <h2>Finančná analýza</h2>
         <p>Kompletná analýza klienta – rozpočet, ciele, poistenie, scenáre. Výstup pre poradcu, pre klienta aj prezentácia.</p>
-        <span class="go">Otvoriť
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </span>
+        </div>
+        <span class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
       </a>
 
       <!-- Checklist – výstup z analýzy – AKTÍVNA -->
-      <a class="card" href="checklist-analyza/">
+      <a class="tool-row" href="checklist-analyza/">
         <div class="ic">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
           </svg>
         </div>
+        <div class="body">
         <h2>Checklist – výstup z analýzy</h2>
         <p>Kontrolný zoznam krokov a odporúčaní po dokončení Finančnej analýzy, s termínmi a zodpovednosťou.</p>
-        <span class="go">Otvoriť
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </span>
+        </div>
+        <span class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
       </a>
 
       <!-- Kalkulačka finančnej medzery – AKTÍVNA -->
-      <a class="card" href="financna-medzera/">
+      <a class="tool-row" href="financna-medzera/">
         <div class="ic">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>
           </svg>
         </div>
+        <div class="body">
         <h2>Kalkulačka finančnej medzery</h2>
         <p>Koľko by rodine chýbalo pri úmrtí, invalidite alebo dlhodobej PN – odporúčané krytie vs. existujúce poistenie. Poradcovský aj klientsky režim.</p>
-        <span class="go">Otvoriť
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </span>
+        </div>
+        <span class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
       </a>
 
       <!-- Wizard "Aké poistenie potrebujem" – AKTÍVNA -->
-      <a class="card" href="wizard-poistenie/">
+      <a class="tool-row" href="wizard-poistenie/">
         <div class="ic">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/><circle cx="12" cy="12" r="10"/>
           </svg>
         </div>
+        <div class="body">
         <h2>Aké poistenie potrebujem</h2>
         <p>Krátky dotazník na 6 otázok – odporúčanie typov poistenia s vysvetlením „prečo" a odkazom na konzultáciu.</p>
-        <span class="go">Otvoriť
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </span>
+        </div>
+        <span class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
       </a>
 
     </div>
@@ -367,62 +345,62 @@ function advisorInitials(string $name): string {
       <span class="cat-count">4</span>
       <span class="cat-line"></span>
     </div>
-    <div class="grid">
+    <div class="tool-list">
 
       <!-- Splnomocnenie – AKTÍVNA -->
-      <a class="card" href="splnomocnenie/">
+      <a class="tool-row" href="splnomocnenie/">
         <div class="ic">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/>
           </svg>
         </div>
+        <div class="body">
         <h2>Všeobecné splnomocnenie</h2>
         <p>Rozsah oprávnení, splnomocniteľ/-ka a splnomocnenec/-kyňa, platnosť – text sa doplní automaticky.</p>
-        <span class="go">Otvoriť
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </span>
+        </div>
+        <span class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
       </a>
 
       <!-- Výpoveď poistnej zmluvy – AKTÍVNA -->
-      <a class="card" href="vypoved-poistenia/">
+      <a class="tool-row" href="vypoved-poistenia/">
         <div class="ic">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15l2 2 4-4"/>
           </svg>
         </div>
+        <div class="body">
         <h2>Výpoveď poistnej zmluvy</h2>
         <p>Výber poisťovne, dôvodu a termínu – text výpovede sa doplní automaticky.</p>
-        <span class="go">Otvoriť
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </span>
+        </div>
+        <span class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
       </a>
 
       <!-- Preberací / odovzdávací protokol – AKTÍVNA -->
-      <a class="card" href="preberaci-protokol/">
+      <a class="tool-row" href="preberaci-protokol/">
         <div class="ic">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M16 3H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"/><path d="M9 3v4h6V3"/>
           </svg>
         </div>
+        <div class="body">
         <h2>Preberací protokol</h2>
         <p>Všeobecný preberací / odovzdávací protokol na dokumentáciu – zoznam odovzdávaných dokumentov, obe strany a podpisy.</p>
-        <span class="go">Otvoriť
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </span>
+        </div>
+        <span class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
       </a>
 
       <!-- Univerzálna žiadosť o zmenu – AKTÍVNA -->
-      <a class="card" href="univerzalna-ziadost-zmena/">
+      <a class="tool-row" href="univerzalna-ziadost-zmena/">
         <div class="ic">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/>
           </svg>
         </div>
+        <div class="body">
         <h2>Univerzálna žiadosť o zmenu</h2>
         <p>Zmena osobných údajov, adresy alebo oprávnenej osoby v existujúcej zmluve – jeden formulár na všetko.</p>
-        <span class="go">Otvoriť
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </span>
+        </div>
+        <span class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
       </a>
 
     </div>
@@ -440,62 +418,62 @@ function advisorInitials(string $name): string {
       <span class="cat-count">4</span>
       <span class="cat-line"></span>
     </div>
-    <div class="grid">
+    <div class="tool-list">
 
       <!-- Žiadosť o náhradu škody z poistenia zodpovednosti – AKTÍVNA -->
-      <a class="card" href="nahrada-skody-zodpovednost/">
+      <a class="tool-row" href="nahrada-skody-zodpovednost/">
         <div class="ic">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
           </svg>
         </div>
+        <div class="body">
         <h2>Žiadosť o náhradu škody</h2>
         <p>Z poistenia zodpovednosti škodcu/-kyne – typ škody, poisťovňa, popis udalosti a výška škody.</p>
-        <span class="go">Otvoriť
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </span>
+        </div>
+        <span class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
       </a>
 
       <!-- Čestné prehlásenie o neuplatňovaní si náhrady z iného poistenia – AKTÍVNA -->
-      <a class="card" href="cestne-vyhlasenie-inej-poistky/">
+      <a class="tool-row" href="cestne-vyhlasenie-inej-poistky/">
         <div class="ic">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/>
           </svg>
         </div>
+        <div class="body">
         <h2>Čestné prehlásenie</h2>
         <p>O neuplatňovaní si náhrady z iného poistenia – vyhlasujúci/-a, súvisiaca škoda, poisťovňa.</p>
-        <span class="go">Otvoriť
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </span>
+        </div>
+        <span class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
       </a>
 
       <!-- Čestné prehlásenie o kúpe / vlastníctve veci – AKTÍVNA -->
-      <a class="card" href="cestne-vyhlasenie-kupa-veci/">
+      <a class="tool-row" href="cestne-vyhlasenie-kupa-veci/">
         <div class="ic">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M14 2v6h6"/><path d="M9 15l2 2 4-4"/>
           </svg>
         </div>
+        <div class="body">
         <h2>Čestné prehlásenie o kúpe veci</h2>
         <p>Pre prípad, že chýbajú pôvodné bloky/doklady o kúpe – popis veci, dátum a dôvod chýbajúceho dokladu.</p>
-        <span class="go">Otvoriť
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </span>
+        </div>
+        <span class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
       </a>
 
       <!-- Súhlas poškodeného s výplatou poistného plnenia na iný účet – AKTÍVNA -->
-      <a class="card" href="suhlas-vyplata-inemu-uctu/">
+      <a class="tool-row" href="suhlas-vyplata-inemu-uctu/">
         <div class="ic">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M17 8l4 4-4 4M3 12h18"/><path d="M7 4l-4 4 4 4"/>
           </svg>
         </div>
+        <div class="body">
         <h2>Súhlas s výplatou na iný účet</h2>
         <p>Súhlas poškodeného/-ej s výplatou poistného plnenia na účet tretej osoby, napr. priamo autoservisu.</p>
-        <span class="go">Otvoriť
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </span>
+        </div>
+        <span class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
       </a>
 
     </div>
@@ -513,48 +491,48 @@ function advisorInitials(string $name): string {
       <span class="cat-count">3</span>
       <span class="cat-line"></span>
     </div>
-    <div class="grid">
+    <div class="tool-list">
 
       <!-- Žiadosť o vrátenie preplatku / nespotrebovaného poistného – AKTÍVNA -->
-      <a class="card" href="ziadost-vratenie-preplatku/">
+      <a class="tool-row" href="ziadost-vratenie-preplatku/">
         <div class="ic">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
           </svg>
         </div>
+        <div class="body">
         <h2>Vrátenie preplatku</h2>
         <p>Žiadosť o vrátenie preplatku / nespotrebovaného poistného pre zrušené alebo zmenené zmluvy, s IBANom na vrátenie.</p>
-        <span class="go">Otvoriť
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </span>
+        </div>
+        <span class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
       </a>
 
       <!-- Nesúhlas s výsledkom likvidácie / odvolanie voči zamietnutiu plnenia – AKTÍVNA -->
-      <a class="card" href="odvolanie-zamietnutie-plnenia/">
+      <a class="tool-row" href="odvolanie-zamietnutie-plnenia/">
         <div class="ic">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
           </svg>
         </div>
+        <div class="body">
         <h2>Odvolanie voči likvidácii</h2>
         <p>Nesúhlas s výsledkom likvidácie alebo zamietnutím poistného plnenia – odôvodnenie a požadovaný postup.</p>
-        <span class="go">Otvoriť
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </span>
+        </div>
+        <span class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
       </a>
 
       <!-- Oficiálna reklamácia / sťažnosť voči postupu inštitúcie – AKTÍVNA -->
-      <a class="card" href="reklamacia-postup-institucie/">
+      <a class="tool-row" href="reklamacia-postup-institucie/">
         <div class="ic">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
           </svg>
         </div>
+        <div class="body">
         <h2>Reklamácia / sťažnosť</h2>
         <p>Oficiálna reklamácia alebo sťažnosť voči postupu inštitúcie – predmet, popis a požadovaná náprava.</p>
-        <span class="go">Otvoriť
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </span>
+        </div>
+        <span class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
       </a>
 
     </div>
@@ -571,18 +549,19 @@ function advisorInitials(string $name): string {
       <span class="cat-title">Pripravujeme</span>
       <span class="cat-line"></span>
     </div>
-    <div class="grid">
+    <div class="tool-list">
 
-      <div class="card soon">
-        <span class="badge">Pripravujeme</span>
+      <div class="tool-row soon">
         <div class="ic">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M12 5v14M5 12h14"/>
           </svg>
         </div>
+        <div class="body">
         <h2>Ďalšie formuláre</h2>
         <p>Postupne pribudnú ďalšie vzory a žiadosti.</p>
-        <span class="go" style="color:var(--muted);">Čoskoro</span>
+        </div>
+        <span class="badge-soon">Čoskoro</span>
       </div>
 
     </div>
