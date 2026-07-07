@@ -26,11 +26,18 @@ if (isset($_GET['adv'])) {
 // Ak je DB dočasne nedostupná, stránka musí ostať funkčná — jednoducho sa
 // nezobrazia žiadne dlaždice poradcov.
 try {
-    $advisors = db()->query('SELECT id, name, org FROM formulare_advisors WHERE active = 1 ORDER BY name')->fetchAll();
+    $advisors = db()->query('SELECT id, name, org, color FROM formulare_advisors WHERE active = 1 ORDER BY name')->fetchAll();
 } catch (Throwable $e) {
     $advisors = [];
 }
 $curAdvisorId = isset($_COOKIE['cur_advisor']) ? (int)$_COOKIE['cur_advisor'] : null;
+
+function advisorInitials(string $name): string {
+    $parts = preg_split('/\s+/', trim($name));
+    $first = mb_substr($parts[0] ?? '', 0, 1);
+    $last = count($parts) > 1 ? mb_substr($parts[count($parts) - 1], 0, 1) : '';
+    return mb_strtoupper($first . $last);
+}
 ?>
 <!DOCTYPE html>
 <html lang="sk">
@@ -224,15 +231,14 @@ $curAdvisorId = isset($_COOKIE['cur_advisor']) ? (int)$_COOKIE['cur_advisor'] : 
 
   .card .ic{
     width:46px; height:46px; border-radius:13px;
-    background:var(--accent-soft); color:var(--accent);
+    background:var(--tile, var(--accent-soft)); color:var(--tile-ink, var(--accent));
     display:flex; align-items:center; justify-content:center;
-    transition:transform .32s cubic-bezier(.22,1,.36,1), background .32s ease, color .32s ease;
+    transition:transform .32s cubic-bezier(.22,1,.36,1);
     flex-shrink:0;
   }
+  .card .ic.avatar{ font-size:15.5px; font-weight:800; letter-spacing:.02em; }
   a.card:hover .ic{
     transform:scale(1.08) rotate(-6deg);
-    background:linear-gradient(140deg,var(--accent),var(--accent2));
-    color:#fff;
   }
 
   .card h2{font-size:16.5px; font-weight:800; margin:0; letter-spacing:-.01em;}
@@ -312,12 +318,8 @@ $curAdvisorId = isset($_COOKIE['cur_advisor']) ? (int)$_COOKIE['cur_advisor'] : 
     </div>
     <div class="grid">
       <?php foreach ($advisors as $adv): ?>
-      <a class="card" href="?adv=<?= (int)$adv['id'] ?>">
-        <div class="ic">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-          </svg>
-        </div>
+      <a class="card" href="?adv=<?= (int)$adv['id'] ?>" style="--tile:<?= htmlspecialchars($adv['color']) ?>; --tile-ink:#fff;">
+        <div class="ic avatar"><?= htmlspecialchars(advisorInitials($adv['name'])) ?></div>
         <h2><?= htmlspecialchars($adv['name']) ?></h2>
         <p><?= htmlspecialchars($adv['org']) ?><?= $adv['id'] == $curAdvisorId ? ' — aktuálne prihlásený/-á' : '' ?></p>
         <span class="go">Vstúpiť ako <?= htmlspecialchars(explode(' ', $adv['name'])[0]) ?>

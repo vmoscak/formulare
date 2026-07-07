@@ -12,7 +12,7 @@ $advisorId = isset($_COOKIE['cur_advisor']) ? (int)$_COOKIE['cur_advisor'] : 0;
 if (!$advisorId) { echo '{}'; exit; }
 
 try {
-    $stmt = db()->prepare('SELECT id, name, org, email, phone FROM formulare_advisors WHERE id = ? AND active = 1');
+    $stmt = db()->prepare('SELECT id, name, org, email, phone, color FROM formulare_advisors WHERE id = ? AND active = 1');
     $stmt->execute([$advisorId]);
     $advisor = $stmt->fetch();
 } catch (Throwable $e) { $advisor = null; }

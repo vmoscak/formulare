@@ -15,7 +15,7 @@ if (!preg_match('/^[a-f0-9]{64}$/', $token) || $tool === '') {
 
 $stmt = db()->prepare(
     'SELECT cl.client_label, cl.form_data, cl.status, cl.expires_at,
-            a.name AS advisor_name, a.org AS advisor_org, a.email AS advisor_email, a.phone AS advisor_phone
+            a.name AS advisor_name, a.org AS advisor_org, a.email AS advisor_email, a.phone AS advisor_phone, a.color AS advisor_color
      FROM formulare_client_links cl JOIN formulare_advisors a ON a.id = cl.advisor_id
      WHERE cl.token = ? AND cl.tool = ?'
 );
@@ -35,5 +35,6 @@ echo json_encode([
         'org' => $row['advisor_org'],
         'email' => $row['advisor_email'],
         'phone' => $row['advisor_phone'],
+        'color' => $row['advisor_color'],
     ],
 ]);

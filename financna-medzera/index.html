@@ -376,7 +376,7 @@
 /* ===========================================================================
    KONTAKT NA PORADCU (mailto fallback, bez potreby servera)
 =========================================================================== */
-const ADVISOR = { name:'Vladimír Moščák', org:'', email:'vmfin@vmfin.sk', phone:'+421 910 491 768' };
+const ADVISOR = { name:'Vladimír Moščák', org:'', email:'vmfin@vmfin.sk', phone:'+421 910 491 768', color:'#1f5fd1' };
 
 /* Prepíše ADVISOR reálnou identitou aktuálneho poradcu (podľa cur_advisor
    cookie na hlavnej stránke). Zlyhanie = ticho ostane natvrdo napísaný fallback. */
@@ -747,10 +747,21 @@ function riskRowHtml(letter, badgeClass, name, r, note, masked){
     + '</div>';
 }
 
+/* Zmieša hex farbu s bielou (napr. na svetlé pozadie zvýraznenia) — Dompdf
+   nepodporuje CSS color-mix(), preto počítame ručne. */
+function hexTint(hex, ratio){
+  const n = parseInt(hex.replace('#',''), 16);
+  const r = (n>>16)&255, g = (n>>8)&255, b = n&255;
+  const mix = c => Math.round(c + (255-c)*ratio);
+  return 'rgb('+mix(r)+','+mix(g)+','+mix(b)+')';
+}
+
 function buildReportHtml(mode){
   mode = mode || 'poradca';
   const masked = mode === 'klient';
   const g = computeGaps();
+  const accent = ADVISOR.color || '#1f5fd1';
+  const accentSoft = hexTint(accent, 0.9);
   const fontBase = '../vendor/dompdf/lib/fonts/';
   const clientName = clientLinkLabel || state.contactName.trim() || 'Klient';
 
@@ -816,7 +827,7 @@ function buildReportHtml(mode){
     .serif { font-family:'DejaVu Serif',serif; }
     table.lh { width:100%; margin-bottom:6mm; }
     table.lh td { vertical-align:top; }
-    .lh-eyebrow { font-size:7.5pt; font-weight:bold; letter-spacing:1.2pt; text-transform:uppercase; color:#0e9c90; }
+    .lh-eyebrow { font-size:7.5pt; font-weight:bold; letter-spacing:1.2pt; text-transform:uppercase; color:`+accent+`; }
     .lh-name { font-size:9.5pt; font-weight:bold; margin-top:1.5mm; }
     .lh-org { font-size:8.5pt; color:#5c6f75; margin-top:0.5mm; }
     .lh-right { text-align:right; }
@@ -824,7 +835,7 @@ function buildReportHtml(mode){
     .lh-date { font-size:8.5pt; color:#5c6f75; margin-top:0.5mm; }
     .thesis-lede { font-size:9.5pt; color:#5c6f75; margin-bottom:4mm; max-width:130mm; }
     .hero { font-size:26pt; font-weight:bold; margin-bottom:2mm; }
-    .hero-rule { width:22mm; height:1mm; background:#ff6f4d; margin-bottom:3mm; }
+    .hero-rule { width:22mm; height:1mm; background:`+accent+`; margin-bottom:3mm; }
     .thesis-sub { font-size:9.5pt; max-width:140mm; }
     .section-tag { font-size:7.5pt; font-weight:bold; letter-spacing:1.2pt; text-transform:uppercase; color:#5c6f75; margin:5mm 0 3mm; }
     .risk { border-top:0.5pt solid #dfe6e5; padding-top:2.5mm; margin-top:2.5mm; }
@@ -847,15 +858,15 @@ function buildReportHtml(mode){
     table.risk-nums { width:100%; font-size:8.5pt; color:#5c6f75; margin-bottom:2mm; }
     table.risk-nums td.r { text-align:right; }
     .risk-note { font-size:8.5pt; color:#5c6f75; max-width:145mm; }
-    .next-step { background:#e1f5f2; padding:3mm 5mm; margin-top:3mm; border-radius:2mm; }
+    .next-step { background:`+accentSoft+`; padding:3mm 5mm; margin-top:3mm; border-radius:2mm; }
     .next-step p { font-size:9pt; }
-    .next-step b { color:#0e9c90; }
+    .next-step b { color:`+accent+`; }
     table.signoff { width:100%; margin-top:3mm; padding-top:2mm; border-top:0.5pt solid #b9c7c5; }
     .signoff-n { font-size:9.5pt; font-weight:bold; }
     .signoff-o { font-size:8.5pt; color:#5c6f75; }
     .signoff-c { font-size:8.5pt; margin-top:1mm; }
     td.signoff-cta { text-align:right; vertical-align:middle; }
-    .cta-box { display:inline-block; background:#ff6f4d; color:#fff; font-size:9pt; font-weight:bold; padding:3mm 5mm; border-radius:2mm; }
+    .cta-box { display:inline-block; background:`+accent+`; color:#fff; font-size:9pt; font-weight:bold; padding:3mm 5mm; border-radius:2mm; }
     .fineprint { font-size:7.5pt; color:#5c6f75; text-align:center; margin-top:2mm; }
     @page { margin:12mm 18mm 12mm 18mm; }
   `;
