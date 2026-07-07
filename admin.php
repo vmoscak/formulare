@@ -32,6 +32,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (preg_match('/^#[0-9a-fA-F]{6}$/', $color)) {
             db()->prepare('UPDATE formulare_advisors SET color = ? WHERE id = ?')->execute([$color, $id]);
         }
+    } elseif (isset($_POST['edit_id'])) {
+        $id = (int)$_POST['edit_id'];
+        $name = trim((string)($_POST['edit_name'] ?? ''));
+        $org = trim((string)($_POST['edit_org'] ?? ''));
+        $email = trim((string)($_POST['edit_email'] ?? ''));
+        $phone = trim((string)($_POST['edit_phone'] ?? ''));
+        if ($name !== '' && $email !== '') {
+            $stmt = db()->prepare('UPDATE formulare_advisors SET name = ?, org = ?, email = ?, phone = ? WHERE id = ?');
+            $stmt->execute([$name, $org, $email, $phone, $id]);
+        }
+    } elseif (isset($_POST['delete_doc_id'])) {
+        $id = (int)$_POST['delete_doc_id'];
+        db()->prepare('DELETE FROM formulare_generated_documents WHERE id = ?')->execute([$id]);
     }
     header('Location: /admin.php');
     exit;
@@ -120,7 +133,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
     <table>
       <tr><th>Farba</th><th>Meno</th><th>Organizácia</th><th>E-mail</th><th>Telefón</th><th>Stav</th><th></th></tr>
       <?php foreach ($advisors as $a): ?>
-      <tr class="<?= $a['active'] ? '' : 'inactive' ?>">
+      <tr id="view-<?= (int)$a['id'] ?>" class="<?= $a['active'] ? '' : 'inactive' ?>">
         <td>
           <form method="post" class="color-form">
             <input type="hidden" name="color_id" value="<?= (int)$a['id'] ?>">
@@ -132,10 +145,24 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
         <td><?= h($a['email']) ?></td>
         <td><?= h($a['phone']) ?></td>
         <td><?= $a['active'] ? 'aktívny' : 'neaktívny' ?></td>
-        <td>
+        <td style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button type="button" class="toggle-btn" onclick="editAdvisor(<?= (int)$a['id'] ?>)">Upraviť</button>
           <form method="post" style="margin:0;">
             <input type="hidden" name="toggle_id" value="<?= (int)$a['id'] ?>">
             <button type="submit" class="toggle-btn"><?= $a['active'] ? 'Deaktivovať' : 'Aktivovať' ?></button>
+          </form>
+        </td>
+      </tr>
+      <tr id="edit-<?= (int)$a['id'] ?>" style="display:none;">
+        <td colspan="7">
+          <form method="post" class="add-form" style="display:flex; flex-wrap:wrap; gap:10px;">
+            <input type="hidden" name="edit_id" value="<?= (int)$a['id'] ?>">
+            <input name="edit_name" value="<?= h($a['name']) ?>" placeholder="Meno" required>
+            <input name="edit_org" value="<?= h($a['org']) ?>" placeholder="Organizácia">
+            <input name="edit_email" type="email" value="<?= h($a['email']) ?>" placeholder="E-mail" required>
+            <input name="edit_phone" value="<?= h($a['phone']) ?>" placeholder="Telefón">
+            <button type="submit">Uložiť</button>
+            <button type="button" class="toggle-btn" onclick="cancelEdit(<?= (int)$a['id'] ?>)">Zrušiť</button>
           </form>
         </td>
       </tr>
@@ -153,7 +180,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
   <div class="card">
     <h2>Vygenerované dokumenty (posledných 200)</h2>
     <table>
-      <tr><th>Poradca</th><th>Klient</th><th>Nástroj</th><th>Zdroj</th><th>Kedy</th></tr>
+      <tr><th>Poradca</th><th>Klient</th><th>Nástroj</th><th>Zdroj</th><th>Kedy</th><th></th></tr>
       <?php foreach ($docs as $d): ?>
       <tr>
         <td><?= h($d['advisor_name']) ?></td>
@@ -161,9 +188,15 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
         <td><?= h($d['tool']) ?></td>
         <td><?= $d['source'] === 'client' ? 'klient' : 'poradca' ?></td>
         <td><?= h($d['generated_at']) ?></td>
+        <td>
+          <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj zmazať tento dokument?');">
+            <input type="hidden" name="delete_doc_id" value="<?= (int)$d['id'] ?>">
+            <button type="submit" class="toggle-btn">Zmazať</button>
+          </form>
+        </td>
       </tr>
       <?php endforeach; ?>
-      <?php if (!$docs): ?><tr><td colspan="5" style="color:var(--muted);">Zatiaľ žiadne dokumenty.</td></tr><?php endif; ?>
+      <?php if (!$docs): ?><tr><td colspan="6" style="color:var(--muted);">Zatiaľ žiadne dokumenty.</td></tr><?php endif; ?>
     </table>
   </div>
 
@@ -184,4 +217,14 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
     </table>
   </div>
 </div>
+<script>
+function editAdvisor(id){
+  document.getElementById('view-'+id).style.display = 'none';
+  document.getElementById('edit-'+id).style.display = 'table-row';
+}
+function cancelEdit(id){
+  document.getElementById('edit-'+id).style.display = 'none';
+  document.getElementById('view-'+id).style.display = '';
+}
+</script>
 </body></html>
