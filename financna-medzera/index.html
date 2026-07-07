@@ -104,9 +104,12 @@
 
   /* dynamické zoznamy (záväzky / deti) */
   .items{display:flex; flex-direction:column; gap:10px;}
-  .item{border:1.5px solid var(--border); border-radius:14px; padding:12px 14px; background:#fff;}
+  .item{border:1.5px solid var(--border); border-radius:14px; padding:12px 14px; background:#fbfbfd;}
   .item-top{display:flex; align-items:flex-start; gap:10px;}
   .item-body{flex:1; display:flex; flex-direction:column; gap:8px;}
+  .item-body input{width:100%; padding:10px 12px; border:1.5px solid var(--border); border-radius:10px;
+      background:#fff; font-size:13.5px; color:var(--ink);}
+  .item-body input:focus{border-color:var(--accent);}
   .item-meta{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
   .item-meta.single{grid-template-columns:1fr;}
   .item-del{flex:none; width:28px; height:28px; border-radius:8px; border:1.5px solid #dde1ea; background:#fff;
@@ -203,7 +206,7 @@
 <div class="app">
   <div class="head">
     <div class="head-left">
-      <a href="../" class="back-btn" title="Späť na formuláre">
+      <a href="../nastroje.php" class="back-btn" title="Späť na formuláre">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
       </a>
       <div class="brand">
@@ -321,6 +324,13 @@
       <div class="risk-card" id="riskDisability"></div>
       <div class="risk-card" id="riskPn"></div>
 
+      <div class="contact-card" id="clientNameCard">
+        <div class="field" data-k="contactName">
+          <label>MENO KLIENTA <span style="font-weight:500;text-transform:none;">(pre PDF a odkaz)</span></label>
+          <input id="contactName" placeholder="napr. Ján Novák">
+        </div>
+      </div>
+
       <div class="contact-card" id="pdfCard">
         <h3>PDF pre klienta</h3>
         <p>Jednostranový A4 prehľad s odporúčaným krytím pre všetky tri riziká — na vytlačenie alebo poslanie klientovi.</p>
@@ -330,13 +340,6 @@
       <div class="contact-card" id="sendLinkCard">
         <h3>Poslať klientovi na vyplnenie</h3>
         <p>Klient dostane odkaz na tento istý formulár (bez presných čísel) — vyplní si údaje sám, vy sa k tomu kedykoľvek vrátite.</p>
-        <div class="contact-fields">
-          <div class="field" data-k="clientLinkLabel">
-            <label>MENO KLIENTA</label>
-            <input id="clientLinkLabel" placeholder="napr. Ján Novák">
-            <span class="err">Zadaj meno klienta</span>
-          </div>
-        </div>
         <div class="contact-actions">
           <button class="btn-primary" id="createLinkBtn" style="width:100%;">Vytvoriť odkaz</button>
         </div>
@@ -365,31 +368,6 @@
         <button class="btn-primary" id="clientPdfBtn" style="width:100%; margin-top:8px;">Stiahnuť moje zhrnutie (PDF)</button>
       </div>
 
-      <div class="contact-card" id="contactCard">
-        <h3>Chcem to prebrať s poradcom</h3>
-        <p>Necháš nám na seba kontakt — poradca sa ti ozve a preberie výsledok aj možnosti krytia.</p>
-        <div class="contact-fields">
-          <div class="field" data-k="contactName">
-            <label>MENO A PRIEZVISKO</label>
-            <input id="contactName" placeholder="Meno a priezvisko">
-            <span class="err">Zadaj meno</span>
-          </div>
-          <div class="field" data-k="contactPhone">
-            <label>TELEFÓN ALEBO E-MAIL</label>
-            <input id="contactPhone" placeholder="+421 900 000 000 alebo e-mail">
-            <span class="err">Zadaj telefón alebo e-mail</span>
-          </div>
-          <div class="field">
-            <label>POZNÁMKA <span style="font-weight:500;text-transform:none;">(nepovinné)</span></label>
-            <textarea id="contactNote" placeholder="napr. najlepšie ma kontaktovať poobede…"></textarea>
-          </div>
-        </div>
-        <div class="contact-actions">
-          <button class="btn-primary" id="sendBtn">Odoslať poradcovi</button>
-          <button class="btn-ghost" id="copyBtn">Kopírovať zhrnutie</button>
-        </div>
-        <div class="sent-ok" id="sentOk">✓ Otvára sa e-mailový klient s pripraveným dopytom…</div>
-      </div>
     </div>
   </div>
 </div>
@@ -427,7 +405,7 @@ const state = {
   children: [],
   existingLife:'', existingDisability:'', existingPn:'',
   savings:'',
-  contactName:'', contactPhone:'', contactNote:'',
+  contactName:'',
   touched:false,
 };
 
@@ -578,7 +556,7 @@ function render(){
   const g = computeGaps();
 
   if($('clientBanner')) $('clientBanner').style.display = state.mode==='klient' ? 'flex' : 'none';
-  if($('contactCard')) $('contactCard').classList.toggle('emph', state.mode==='klient');
+  if($('clientNameCard')) $('clientNameCard').style.display = state.mode==='klient' ? 'none' : 'block';
   if($('pdfCard')) $('pdfCard').style.display = state.mode==='klient' ? 'none' : 'block';
   if($('sendLinkCard')) $('sendLinkCard').style.display = state.mode==='klient' ? 'none' : 'block';
 
@@ -593,8 +571,6 @@ function render(){
   $('riskPn').innerHTML = riskCardHtml('pn','PN / dlhodobá práceneschopnosť', g.pn,
     'Vychádza z rozdielu mesačných výdavkov a odhadovaného nemocenského ('+Math.round(STATE_SICKPAY_RATIO*100)+' % príjmu) na odporúčaných '+PN_MONTHS+' mesiacov krytia'
     + (g.pn.monthlyShortfall>0 ? ' (mesačný rozdiel '+eur(g.pn.monthlyShortfall)+').' : '.'));
-
-  $('sentOk').classList.remove('show');
 }
 
 /* ===========================================================================
@@ -607,59 +583,12 @@ function validate(){
   return e;
 }
 
-function validateContact(){
-  const e = {};
-  if(!state.contactName.trim()) e.contactName='Zadaj meno';
-  if(!state.contactPhone.trim()) e.contactPhone='Zadaj telefón alebo e-mail';
-  return e;
-}
-
-/* ===========================================================================
-   AKCIE
-=========================================================================== */
-function buildSummaryText(){
-  const g = computeGaps();
-  const lines = [
-    'DOPYT Z KALKULAČKY FINANČNEJ MEDZERY', '',
-    'Kontakt: '+(state.contactName||'…')+' — '+(state.contactPhone||'…'),
-    state.contactNote.trim() ? ('Poznámka: '+state.contactNote.trim()) : '',
-    '',
-    'Mesačný príjem domácnosti: '+eur(num(state.income)),
-    'Mesačné výdavky domácnosti: '+eur(num(state.expenses)),
-    'Existujúce záväzky spolu: '+eur(g.inputs.debtsTotal),
-    'Počet detí: '+g.inputs.childCount,
-    'Dostupné úspory: '+eur(g.inputs.savings),
-    '',
-    'Úmrtie — odporúčané: '+eur(g.death.need)+', kryté: '+eur(g.death.covered)+', medzera: '+eur(g.death.gap),
-    'Invalidita — odporúčané: '+eur(g.disability.need)+', kryté: '+eur(g.disability.covered)+', medzera: '+eur(g.disability.gap),
-    'PN — odporúčané: '+eur(g.pn.need)+', kryté: '+eur(g.pn.covered)+', medzera: '+eur(g.pn.gap),
-  ].filter(Boolean);
-  return lines.join('\n');
-}
-
-function doSend(){
-  state.touched=true; render();
-  const errs = validateContact();
-  document.querySelectorAll('#contactCard .field[data-k]').forEach(f=>{
-    const k=f.dataset.k; const bad=errs[k];
-    f.classList.toggle('invalid', !!bad);
-    const err=f.querySelector('.err'); if(err && errs[k]) err.textContent=errs[k];
-  });
-  if(Object.keys(errs).length>0) return;
-
-  const subject = 'Dopyt z Kalkulačky finančnej medzery — '+state.contactName;
-  const body = buildSummaryText();
-  const url = 'mailto:'+encodeURIComponent(ADVISOR.email)+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
-  window.location.href = url;
-  $('sentOk').classList.add('show');
-}
-
 /* ===========================================================================
    ODKAZ PRE KLIENTA (poradcovský pohľad — vytvorenie jedinečného odkazu)
 =========================================================================== */
 function doCreateLink(){
-  const label = $('clientLinkLabel').value.trim();
-  const field = document.querySelector('[data-k="clientLinkLabel"]');
+  const label = state.contactName.trim();
+  const field = document.querySelector('[data-k="contactName"]');
   if(!label){ field.classList.add('invalid'); return; }
   field.classList.remove('invalid');
 
@@ -1012,26 +941,20 @@ function logDocument(mode, clientLabel){
   }catch(e){}
 }
 
-function doCopy(){
-  const txt = buildSummaryText();
-  try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
-  const b=$('copyBtn'); const orig=b.textContent; b.textContent='Skopírované ✓'; setTimeout(()=>b.textContent=orig,1600);
-}
-
 function doReset(){
   Object.assign(state,{
     income:'', expenses:'',
     debts:[withId({ desc:'', balance:'', payment:'' })],
     children:[],
     existingLife:'', existingDisability:'', existingPn:'',
-    savings:'', contactName:'', contactPhone:'', contactNote:'',
+    savings:'', contactName:'',
     touched:false,
   });
   syncInputs(); render();
 }
 
 function syncInputs(){
-  ['income','expenses','existingLife','existingDisability','existingPn','savings','contactName','contactPhone','contactNote']
+  ['income','expenses','existingLife','existingDisability','existingPn','savings','contactName']
     .forEach(k=>{ if($(k)) $(k).value = state[k]; });
 }
 
@@ -1046,7 +969,7 @@ function setMode(mode){
    UDALOSTI
 =========================================================================== */
 function bind(){
-  ['income','expenses','existingLife','existingDisability','existingPn','savings','contactName','contactPhone','contactNote'].forEach(k=>{
+  ['income','expenses','existingLife','existingDisability','existingPn','savings','contactName'].forEach(k=>{
     if($(k)) $(k).addEventListener('input', e=>{ state[k]=e.target.value; render(); });
   });
 
@@ -1082,8 +1005,6 @@ function bind(){
 
   $('calcBtn').addEventListener('click', ()=>{ state.touched=true; render(); });
   $('resetBtn').addEventListener('click', doReset);
-  $('sendBtn').addEventListener('click', doSend);
-  $('copyBtn').addEventListener('click', doCopy);
   $('pdfBtn').addEventListener('click', doGeneratePdf);
   $('createLinkBtn').addEventListener('click', doCreateLink);
   $('copyLinkBtn').addEventListener('click', ()=>{
@@ -1111,7 +1032,7 @@ function bind(){
     const toggle = $('modeToggleWrap'); if(toggle) toggle.remove();
     const pdfCard = $('pdfCard'); if(pdfCard) pdfCard.remove();
     const sendLinkCard = $('sendLinkCard'); if(sendLinkCard) sendLinkCard.remove();
-    if($('contactCard')) $('contactCard').style.display = 'none';
+    const clientNameCard = $('clientNameCard'); if(clientNameCard) clientNameCard.remove();
     $('clientSubmitCard').style.display = 'block';
     render();
     loadClientSession();

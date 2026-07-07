@@ -56,6 +56,9 @@
   .brand b{font-size:16px; font-weight:800; letter-spacing:-.01em;}
   .brand small{font-size:11.5px; color:var(--muted);}
 
+  .send-link-panel{padding:16px 26px; border-bottom:1px solid #e8ebf2; background:var(--accent-soft);}
+  .send-link-panel p{margin:0 0 12px; font-size:12.5px; color:var(--muted); line-height:1.5;}
+
   .progress-wrap{padding:18px 26px 0;}
   .progress-label{display:flex; justify-content:space-between; font-size:11.5px; font-weight:700;
       color:var(--muted); letter-spacing:.04em; text-transform:uppercase; margin-bottom:8px;}
@@ -139,7 +142,7 @@
 
 <div class="app">
   <div class="head">
-    <a href="../" class="back-btn" title="Späť na formuláre">
+    <a href="../nastroje.php" class="back-btn" title="Späť na formuláre">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
     </a>
     <div class="brand">
@@ -148,6 +151,19 @@
         <b>Aké poistenie potrebujem</b><br>
         <small>Krátky dotazník s odporúčaním typu krytia</small>
       </div>
+    </div>
+    <button type="button" class="btn-ghost" id="headerSendLinkBtn" style="margin-left:auto; padding:10px 16px; font-size:13px;">Poslať klientovi</button>
+  </div>
+
+  <div class="send-link-panel" id="sendLinkPanel" style="display:none;">
+    <p>Klient dostane odkaz na tento istý dotazník — vyplní si ho sám, vy sa k odpovediam kedykoľvek vrátite.</p>
+    <div class="contact-fields">
+      <div class="field" data-k="clientLinkLabel"><label>MENO KLIENTA</label><input id="clientLinkLabel" placeholder="napr. Ján Novák"><span class="err">Zadaj meno klienta</span></div>
+    </div>
+    <div class="contact-actions"><button class="btn-primary" id="createLinkBtn" style="width:100%;">Vytvoriť odkaz</button></div>
+    <div id="createdLinkBox" style="display:none; margin-top:14px;">
+      <div class="field"><label>ODKAZ PRE KLIENTA</label><input id="createdLinkUrl" readonly></div>
+      <button class="btn-ghost" id="copyLinkBtn" style="width:100%; margin-top:8px;">Kopírovať odkaz</button>
     </div>
   </div>
 
@@ -223,7 +239,7 @@ const QUESTIONS = [
 const state = {
   step: 0, // 0..QUESTIONS.length-1 = otázky, QUESTIONS.length = výsledky
   answers: { status:'', hasDependents:'', hasLoan:'', property:'', existingIns:[], concern:'' },
-  contactName:'', contactPhone:'', contactNote:'', touched:false,
+  contactName:'', touched:false,
 };
 
 /* ===========================================================================
@@ -374,19 +390,7 @@ function renderResults(){
       + '<button class="btn-primary" id="pdfBtn" style="width:100%;">Generovať PDF pre klienta</button>'
     + '</div>';
 
-  const sendLinkCardHtml = CLIENT_TOKEN ? '' : ''
-    + '<div class="contact-card" id="sendLinkCard">'
-      + '<h3>Poslať klientovi na vyplnenie</h3>'
-      + '<p>Klient dostane odkaz na tento istý dotazník — vyplní si ho sám, vy sa k odpovediam kedykoľvek vrátite.</p>'
-      + '<div class="contact-fields">'
-        + '<div class="field" data-k="clientLinkLabel"><label>MENO KLIENTA</label><input id="clientLinkLabel" placeholder="napr. Ján Novák"><span class="err">Zadaj meno klienta</span></div>'
-      + '</div>'
-      + '<div class="contact-actions"><button class="btn-primary" id="createLinkBtn" style="width:100%;">Vytvoriť odkaz</button></div>'
-      + '<div id="createdLinkBox" style="display:none; margin-top:14px;">'
-        + '<div class="field"><label>ODKAZ PRE KLIENTA</label><input id="createdLinkUrl" readonly></div>'
-        + '<button class="btn-ghost" id="copyLinkBtn" style="width:100%; margin-top:8px;">Kopírovať odkaz</button>'
-      + '</div>'
-    + '</div>'
+  const clientRequestsHtml = CLIENT_TOKEN ? '' : ''
     + '<div class="contact-card" id="clientRequestsCard" style="display:none;">'
       + '<h3>Žiadosti od klientov</h3>'
       + '<p>Klienti, ktorým si poslal/-a odkaz na vyplnenie.</p>'
@@ -403,21 +407,7 @@ function renderResults(){
       + '<h3 id="thankYouMsg"></h3>'
       + '<button class="btn-primary" id="clientPdfBtn" style="width:100%; margin-top:8px;">Stiahnuť moje zhrnutie (PDF)</button>'
     + '</div>'
-    : ''
-    + '<div class="contact-card" id="contactCard">'
-      + '<h3>Dohodnúť konzultáciu s poradcom</h3>'
-      + '<p>Necháš nám na seba kontakt — poradca sa ti ozve a prejde s tebou konkrétne možnosti.</p>'
-      + '<div class="contact-fields">'
-        + '<div class="field" data-k="contactName"><label>MENO A PRIEZVISKO</label><input id="contactName" placeholder="Meno a priezvisko"><span class="err">Zadaj meno</span></div>'
-        + '<div class="field" data-k="contactPhone"><label>TELEFÓN ALEBO E-MAIL</label><input id="contactPhone" placeholder="+421 900 000 000 alebo e-mail"><span class="err">Zadaj telefón alebo e-mail</span></div>'
-        + '<div class="field"><label>POZNÁMKA <span style="font-weight:500;text-transform:none;">(nepovinné)</span></label><textarea id="contactNote" placeholder="napr. najlepšie ma kontaktovať poobede…"></textarea></div>'
-      + '</div>'
-      + '<div class="contact-actions">'
-        + '<button class="btn-primary" id="sendBtn">Dohodnúť konzultáciu</button>'
-        + '<button class="btn-ghost" id="copyBtn">Kopírovať zhrnutie</button>'
-      + '</div>'
-      + '<div class="sent-ok" id="sentOk">✓ Otvára sa e-mailový klient s pripraveným dopytom…</div>'
-    + '</div>';
+    : '';
 
   $('panel').innerHTML = ''
     + '<div class="res-head">'
@@ -427,29 +417,14 @@ function renderResults(){
     + '</div>'
     + '<div class="rec-list">'+recHtml+'</div>'
     + pdfCardHtml
-    + sendLinkCardHtml
+    + clientRequestsHtml
     + (CLIENT_TOKEN ? '' : '<a class="gap-link" href="../financna-medzera/">Chcete presne prepočítať, koľko by vám chýbalo? →</a>')
     + contactOrSubmitHtml
     + (CLIENT_TOKEN ? '' : '<div class="restart" id="restartBtn">↺ Vyplniť dotazník znova</div>');
 
   if(!CLIENT_TOKEN){
-    $('contactName').value = state.contactName;
-    $('contactPhone').value = state.contactPhone;
-    $('contactNote').value = state.contactNote;
-    ['contactName','contactPhone','contactNote'].forEach(k=>{
-      $(k).addEventListener('input', e=>{ state[k]=e.target.value; });
-    });
-    $('sendBtn').addEventListener('click', doSend);
-    $('copyBtn').addEventListener('click', doCopy);
     $('pdfBtn').addEventListener('click', doGeneratePdf);
     $('restartBtn').addEventListener('click', doRestart);
-    $('createLinkBtn').addEventListener('click', doCreateLink);
-    $('copyLinkBtn').addEventListener('click', ()=>{
-      const input = $('createdLinkUrl');
-      input.select();
-      try{ if(navigator.clipboard) navigator.clipboard.writeText(input.value); }catch(e){}
-      const b=$('copyLinkBtn'); const orig=b.textContent; b.textContent='Skopírované ✓'; setTimeout(()=>b.textContent=orig,1600);
-    });
     loadClientRequests();
   } else {
     $('clientSubmitBtn').addEventListener('click', doClientSubmit);
@@ -465,34 +440,6 @@ function render(){
 /* ===========================================================================
    KONTAKT — odoslanie / kopírovanie
 =========================================================================== */
-function buildSummaryText(){
-  const recs = computeRecommendations();
-  const a = state.answers;
-  const insLabel = { zamestnanec:'Zamestnanec/-kyňa', szco:'SZČO', majitel:'Majiteľ/-ka firmy' };
-  const lines = [
-    'DOPYT Z WIZARDU „AKÉ POISTENIE POTREBUJEM"', '',
-    'Kontakt: '+(state.contactName||'…')+' — '+(state.contactPhone||'…'),
-    state.contactNote.trim() ? ('Poznámka: '+state.contactNote.trim()) : '',
-    '',
-    'Pracovný status: '+(insLabel[a.status]||a.status),
-    'Závislé osoby: '+(a.hasDependents==='ano'?'áno':'nie'),
-    'Hypotéka/úver: '+(a.hasLoan==='ano'?'áno':'nie'),
-    'Nehnuteľnosť: '+(a.property||'—'),
-    'Existujúce poistenie: '+(a.existingIns.length?a.existingIns.join(', '):'žiadne'),
-    'Najviac zaujíma: '+(a.concern||'—'),
-    '',
-    'Odporúčané typy poistenia:',
-  ].concat(recs.map((r,i)=>(i+1)+'. '+r.title)).filter(Boolean);
-  return lines.join('\n');
-}
-
-function validateContact(){
-  const e = {};
-  if(!state.contactName.trim()) e.contactName='Zadaj meno';
-  if(!state.contactPhone.trim()) e.contactPhone='Zadaj telefón alebo e-mail';
-  return e;
-}
-
 /* ===========================================================================
    PDF PRE KLIENTA (server-side Dompdf cez zdieľaný ../pdf.php, presné A4)
    -------------------------------------------------------------------------
@@ -668,32 +615,10 @@ function logDocument(clientLabel){
   }catch(e){}
 }
 
-function doSend(){
-  state.touched=true;
-  const errs = validateContact();
-  document.querySelectorAll('#contactCard .field[data-k]').forEach(f=>{
-    const k=f.dataset.k; const bad=errs[k];
-    f.classList.toggle('invalid', !!bad);
-    const err=f.querySelector('.err'); if(err && errs[k]) err.textContent=errs[k];
-  });
-  if(Object.keys(errs).length>0) return;
-
-  const subject = 'Dopyt z wizardu „Aké poistenie potrebujem" — '+state.contactName;
-  const body = buildSummaryText();
-  window.location.href = 'mailto:'+encodeURIComponent(ADVISOR.email)+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
-  $('sentOk').classList.add('show');
-}
-
-function doCopy(){
-  const txt = buildSummaryText();
-  try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
-  const b=$('copyBtn'); const orig=b.textContent; b.textContent='Skopírované ✓'; setTimeout(()=>b.textContent=orig,1600);
-}
-
 function doRestart(){
   state.step=0;
   state.answers={ status:'', hasDependents:'', hasLoan:'', property:'', existingIns:[], concern:'' };
-  state.contactName=''; state.contactPhone=''; state.contactNote=''; state.touched=false;
+  state.contactName=''; state.touched=false;
   render();
 }
 
@@ -805,9 +730,32 @@ function doClientSubmit(){
 }
 
 /* ===========================================================================
+   HLAVIČKOVÝ PANEL "Poslať klientovi" — dostupný od 1. otázky, nie len na konci
+=========================================================================== */
+function initSendLinkPanel(){
+  if(CLIENT_TOKEN){
+    const btn = $('headerSendLinkBtn'); if(btn) btn.remove();
+    const panel = $('sendLinkPanel'); if(panel) panel.remove();
+    return;
+  }
+  $('headerSendLinkBtn').addEventListener('click', ()=>{
+    const panel = $('sendLinkPanel');
+    panel.style.display = panel.style.display==='none' ? 'block' : 'none';
+  });
+  $('createLinkBtn').addEventListener('click', doCreateLink);
+  $('copyLinkBtn').addEventListener('click', ()=>{
+    const input = $('createdLinkUrl');
+    input.select();
+    try{ if(navigator.clipboard) navigator.clipboard.writeText(input.value); }catch(e){}
+    const b=$('copyLinkBtn'); const orig=b.textContent; b.textContent='Skopírované ✓'; setTimeout(()=>b.textContent=orig,1600);
+  });
+}
+
+/* ===========================================================================
    ŠTART
 =========================================================================== */
 loadAdvisor();
+initSendLinkPanel();
 if(CLIENT_TOKEN){ loadClientSession(); }
 render();
 </script>
