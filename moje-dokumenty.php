@@ -14,6 +14,13 @@ $stmt->execute([$advisorId]);
 $me = $stmt->fetch();
 if (!$me) { header('Location: /'); exit; }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
+    $id = (int)$_POST['delete_id'];
+    db()->prepare('DELETE FROM formulare_generated_documents WHERE id = ? AND advisor_id = ?')->execute([$id, $advisorId]);
+    header('Location: /moje-dokumenty.php');
+    exit;
+}
+
 $docs = db()->prepare(
     'SELECT * FROM formulare_generated_documents WHERE advisor_id = ? ORDER BY generated_at DESC LIMIT 200'
 );
@@ -64,6 +71,11 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
   .pill{ display:inline-block; padding:2px 9px; border-radius:999px; font-size:11px; font-weight:700; }
   .pill.submitted{ background:#e5f7e5; color:#0ca30c; }
   .pill.pending{ background:#fdf3e5; color:#c98500; }
+  .toggle-btn{
+    padding:5px 10px; border:1.5px solid var(--border); border-radius:8px; background:#fff; font-size:12px; cursor:pointer;
+    transition:border-color .18s ease, transform .18s ease;
+  }
+  .toggle-btn:hover{ border-color:var(--accent); transform:translateY(-1px); }
   @media (max-width:720px){ table{ display:block; overflow-x:auto; } }
 </style>
 </head><body>
@@ -74,16 +86,22 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
   <div class="card">
     <h2>Vygenerované dokumenty (posledných 200)</h2>
     <table>
-      <tr><th>Klient</th><th>Nástroj</th><th>Zdroj</th><th>Kedy</th></tr>
+      <tr><th>Klient</th><th>Nástroj</th><th>Zdroj</th><th>Kedy</th><th></th></tr>
       <?php foreach ($docs as $d): ?>
       <tr>
         <td><?= h($d['client_label']) ?></td>
         <td><?= h($d['tool']) ?></td>
         <td><?= $d['source'] === 'client' ? 'klient' : 'poradca' ?></td>
         <td><?= h($d['generated_at']) ?></td>
+        <td>
+          <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj zmazať tento dokument?');">
+            <input type="hidden" name="delete_id" value="<?= (int)$d['id'] ?>">
+            <button type="submit" class="toggle-btn">Zmazať</button>
+          </form>
+        </td>
       </tr>
       <?php endforeach; ?>
-      <?php if (!$docs): ?><tr><td colspan="4" style="color:var(--muted);">Zatiaľ žiadne dokumenty.</td></tr><?php endif; ?>
+      <?php if (!$docs): ?><tr><td colspan="5" style="color:var(--muted);">Zatiaľ žiadne dokumenty.</td></tr><?php endif; ?>
     </table>
   </div>
 
