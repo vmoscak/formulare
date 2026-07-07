@@ -175,6 +175,7 @@
   <div class="panel" id="panel"></div>
 </div>
 
+<script src="../assets/advisor-panel.js"></script>
 <script>
 /* ===========================================================================
    KONTAKT NA PORADCU (mailto fallback, bez potreby servera)
@@ -191,7 +192,6 @@ async function loadAdvisor(){
 }
 
 const TODAY = new Date();
-function escapeHtml(x){ return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 const params = new URLSearchParams(location.search);
 const TOOL_NAME = 'wizard-poistenie';
@@ -611,28 +611,13 @@ function doGeneratePdf(){
     document.body.appendChild(a); a.click();
     setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
     btn.textContent = orig; btn.disabled = false;
-    logDocument(clientName);
+    logDocument(TOOL_NAME, clientName, state, CLIENT_TOKEN);
   })
   .catch(function(e){
     console.error(e);
     btn.textContent = orig; btn.disabled = false;
     alert('Chyba PDF:\n' + e.message);
   });
-}
-
-function logDocument(clientLabel){
-  try{
-    fetch('../api/log-document.php', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        tool: TOOL_NAME,
-        clientLabel: clientLabel,
-        formData: state,
-        token: CLIENT_TOKEN || undefined,
-      })
-    }).catch(()=>{});
-  }catch(e){}
 }
 
 function doRestart(){
@@ -644,64 +629,53 @@ function doRestart(){
 
 /* ===========================================================================
    ŽIADOSTI OD KLIENTOV (poradcovský pohľad — história odkazov)
+   MOJE VYGENEROVANÉ DOKUMENTY (poradcovský pohľad — návrat k PDF)
+   Zdieľané loadHistoryList/logDocument/escapeHtml — assets/advisor-panel.js
 =========================================================================== */
-async function loadClientRequests(){
-  try{
-    const r = await fetch('../api/my-client-links.php?tool='+TOOL_NAME);
-    const rows = await r.json();
-    if(!Array.isArray(rows) || !rows.length || !$('clientRequestsCard')) return;
-    $('clientRequestsCard').style.display = 'block';
-    $('clientRequestsList').innerHTML = rows.map(function(row){
+function openHistoryRow(row){
+  if(!row || !row.form_data) return;
+  Object.assign(state, JSON.parse(row.form_data));
+  state.step = QUESTIONS.length;
+  render();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function loadClientRequests(){
+  loadHistoryList({
+    endpoint: '../api/my-client-links.php',
+    tool: TOOL_NAME,
+    cardId: 'clientRequestsCard',
+    listId: 'clientRequestsList',
+    rowHtml: function(row){
       const statusLabel = row.status==='submitted' ? 'Vyplnené' : 'Čaká na klienta';
       const date = (row.submitted_at || row.created_at || '').slice(0,10);
       const canLoad = row.status==='submitted' && row.form_data;
       return '<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 0; border-top:1px solid var(--border);">'
         + '<div><div style="font-weight:700; font-size:13.5px;">'+escapeHtml(row.client_label)+'</div>'
         + '<div style="font-size:12px;color:var(--muted);">'+statusLabel+' · '+date+'</div></div>'
-        + (canLoad ? '<button type="button" class="btn-ghost" data-load-id="'+row.id+'" style="padding:8px 14px;">Načítať</button>' : '')
+        + (canLoad ? '<button type="button" class="btn-ghost" data-open-id="'+row.id+'" style="padding:8px 14px;">Načítať</button>' : '')
         + '</div>';
-    }).join('');
-    $('clientRequestsList').querySelectorAll('[data-load-id]').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        const row = rows.find(x=>String(x.id)===btn.dataset.loadId);
-        if(!row || !row.form_data) return;
-        Object.assign(state, JSON.parse(row.form_data));
-        state.step = QUESTIONS.length;
-        render();
-        window.scrollTo({top:0, behavior:'smooth'});
-      });
-    });
-  }catch(e){ /* ticho ignoruj */ }
+    },
+    onOpen: openHistoryRow,
+  });
 }
 
-/* ===========================================================================
-   MOJE VYGENEROVANÉ DOKUMENTY (poradcovský pohľad — návrat k PDF)
-=========================================================================== */
-async function loadMyDocuments(){
-  try{
-    const r = await fetch('../api/my-documents.php?tool='+TOOL_NAME);
-    const rows = await r.json();
-    if(!Array.isArray(rows) || !rows.length || !$('myDocumentsCard')) return;
-    $('myDocumentsCard').style.display = 'block';
-    $('myDocumentsList').innerHTML = rows.map(function(row){
+function loadMyDocuments(){
+  loadHistoryList({
+    endpoint: '../api/my-documents.php',
+    tool: TOOL_NAME,
+    cardId: 'myDocumentsCard',
+    listId: 'myDocumentsList',
+    rowHtml: function(row){
       const date = (row.generated_at || '').slice(0,10);
       return '<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 0; border-top:1px solid var(--border);">'
         + '<div><div style="font-weight:700; font-size:13.5px;">'+escapeHtml(row.client_label)+'</div>'
         + '<div style="font-size:12px;color:var(--muted);">'+date+'</div></div>'
-        + '<button type="button" class="btn-ghost" data-load-doc-id="'+row.id+'" style="padding:8px 14px;">Otvoriť</button>'
+        + '<button type="button" class="btn-ghost" data-open-id="'+row.id+'" style="padding:8px 14px;">Otvoriť</button>'
         + '</div>';
-    }).join('');
-    $('myDocumentsList').querySelectorAll('[data-load-doc-id]').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        const row = rows.find(x=>String(x.id)===btn.dataset.loadDocId);
-        if(!row || !row.form_data) return;
-        Object.assign(state, JSON.parse(row.form_data));
-        state.step = QUESTIONS.length;
-        render();
-        window.scrollTo({top:0, behavior:'smooth'});
-      });
-    });
-  }catch(e){ /* ticho ignoruj */ }
+    },
+    onOpen: openHistoryRow,
+  });
 }
 
 /* ===========================================================================

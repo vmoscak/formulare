@@ -14,6 +14,7 @@
 <IfModule mod_rewrite.c>
     # 1) Vždy verejné infraštruktúrne endpointy — nikdy za bránou
     RewriteRule ^(brana\.php|pdf\.php|api/client-session\.php|api/client-submit\.php|api/log-document\.php)$ - [L]
+    RewriteRule ^assets/.*\.js$ - [L]
 
     # 2) Klientský odkaz s jedinečným tokenom — pustí dnu len konkrétne
     #    nástroje, ktoré majú klientský režim (nie celý web)
