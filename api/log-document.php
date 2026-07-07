@@ -34,7 +34,7 @@ if ($token !== '' && preg_match('/^[a-f0-9]{64}$/', $token)) {
     }
 }
 if ($advisorId === null) {
-    $advisorId = isset($_COOKIE['cur_advisor']) ? (int)$_COOKIE['cur_advisor'] : 0;
+    $advisorId = curAdvisorId();
 }
 if (!$advisorId) { echo '{"ok":false,"reason":"no_advisor"}'; exit; }
 

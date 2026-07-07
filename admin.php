@@ -6,7 +6,7 @@
  */
 require_once __DIR__ . '/db.php';
 
-$advisorId = isset($_COOKIE['cur_advisor']) ? (int)$_COOKIE['cur_advisor'] : 0;
+$advisorId = curAdvisorId();
 $stmt = db()->prepare('SELECT * FROM formulare_advisors WHERE id = ? AND is_admin = 1 AND active = 1');
 $stmt->execute([$advisorId]);
 $me = $stmt->fetch();

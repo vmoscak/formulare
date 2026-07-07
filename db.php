@@ -6,6 +6,24 @@
 
 require_once __DIR__ . '/config.local.php';
 
+/**
+ * Podpísaná hodnota cur_advisor cookie ("id.podpis") — HMAC kľúčom GATE_TOKEN.
+ * Bráni tomu, aby si poradca len zmenou cookie v prehliadači vydával za iného
+ * poradcu (napr. mazal jeho dokumenty). Nevyžaduje žiadne dodatočné heslo.
+ */
+function signAdvisorId(int $id): string {
+    return $id . '.' . substr(hash_hmac('sha256', (string)$id, GATE_TOKEN), 0, 20);
+}
+
+function curAdvisorId(): int {
+    $raw = $_COOKIE['cur_advisor'] ?? '';
+    if (!is_string($raw) || !str_contains($raw, '.')) return 0;
+    [$id, $sig] = explode('.', $raw, 2);
+    if (!ctype_digit($id)) return 0;
+    $expected = substr(hash_hmac('sha256', $id, GATE_TOKEN), 0, 20);
+    return hash_equals($expected, $sig) ? (int)$id : 0;
+}
+
 function db(): PDO {
     static $pdo = null;
     if ($pdo === null) {
