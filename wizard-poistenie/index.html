@@ -397,6 +397,13 @@ function renderResults(){
       + '<div id="clientRequestsList"></div>'
     + '</div>';
 
+  const myDocumentsHtml = CLIENT_TOKEN ? '' : ''
+    + '<div class="contact-card" id="myDocumentsCard" style="display:none;">'
+      + '<h3>Moje vygenerované dokumenty</h3>'
+      + '<p>Vráť sa k už vygenerovanému PDF a znova si ho stiahni.</p>'
+      + '<div id="myDocumentsList"></div>'
+    + '</div>';
+
   const contactOrSubmitHtml = CLIENT_TOKEN ? ''
     + '<div class="contact-card" id="clientSubmitCard">'
       + '<h3>Odoslať odpovede poradcovi</h3>'
@@ -418,6 +425,7 @@ function renderResults(){
     + '<div class="rec-list">'+recHtml+'</div>'
     + pdfCardHtml
     + clientRequestsHtml
+    + myDocumentsHtml
     + (CLIENT_TOKEN ? '' : '<a class="gap-link" href="../financna-medzera/">Chcete presne prepočítať, koľko by vám chýbalo? →</a>')
     + contactOrSubmitHtml
     + (CLIENT_TOKEN ? '' : '<div class="restart" id="restartBtn">↺ Vyplniť dotazník znova</div>');
@@ -426,6 +434,7 @@ function renderResults(){
     $('pdfBtn').addEventListener('click', doGeneratePdf);
     $('restartBtn').addEventListener('click', doRestart);
     loadClientRequests();
+    loadMyDocuments();
   } else {
     $('clientSubmitBtn').addEventListener('click', doClientSubmit);
     $('clientPdfBtn').addEventListener('click', doGeneratePdf);
@@ -655,6 +664,36 @@ async function loadClientRequests(){
     $('clientRequestsList').querySelectorAll('[data-load-id]').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         const row = rows.find(x=>String(x.id)===btn.dataset.loadId);
+        if(!row || !row.form_data) return;
+        Object.assign(state, JSON.parse(row.form_data));
+        state.step = QUESTIONS.length;
+        render();
+        window.scrollTo({top:0, behavior:'smooth'});
+      });
+    });
+  }catch(e){ /* ticho ignoruj */ }
+}
+
+/* ===========================================================================
+   MOJE VYGENEROVANÉ DOKUMENTY (poradcovský pohľad — návrat k PDF)
+=========================================================================== */
+async function loadMyDocuments(){
+  try{
+    const r = await fetch('../api/my-documents.php?tool='+TOOL_NAME);
+    const rows = await r.json();
+    if(!Array.isArray(rows) || !rows.length || !$('myDocumentsCard')) return;
+    $('myDocumentsCard').style.display = 'block';
+    $('myDocumentsList').innerHTML = rows.map(function(row){
+      const date = (row.generated_at || '').slice(0,10);
+      return '<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 0; border-top:1px solid var(--border);">'
+        + '<div><div style="font-weight:700; font-size:13.5px;">'+escapeHtml(row.client_label)+'</div>'
+        + '<div style="font-size:12px;color:var(--muted);">'+date+'</div></div>'
+        + '<button type="button" class="btn-ghost" data-load-doc-id="'+row.id+'" style="padding:8px 14px;">Otvoriť</button>'
+        + '</div>';
+    }).join('');
+    $('myDocumentsList').querySelectorAll('[data-load-doc-id]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const row = rows.find(x=>String(x.id)===btn.dataset.loadDocId);
         if(!row || !row.form_data) return;
         Object.assign(state, JSON.parse(row.form_data));
         state.step = QUESTIONS.length;
