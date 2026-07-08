@@ -24,6 +24,32 @@ function curAdvisorId(): int {
     return hash_equals($expected, $sig) ? (int)$id : 0;
 }
 
+/**
+ * Ľudsky čitateľný názov nástroja podľa slugu priečinka — používa sa v tabuľkách
+ * histórie dokumentov (admin.php, moje-dokumenty.php), kde sa inak zobrazoval
+ * surový slug ako "nahrada-skody-zodpovednost".
+ */
+function toolLabel(string $slug): string {
+    static $labels = [
+        'wizard-poistenie' => 'Aké poistenie potrebujem',
+        'financna-medzera' => 'Kalkulačka finančnej medzery',
+        'financna-analyza' => 'Finančná analýza (staršia verzia)',
+        'checklist-analyza' => 'Checklist – výstup z analýzy',
+        'splnomocnenie' => 'Všeobecné splnomocnenie',
+        'vypoved-poistenia' => 'Výpoveď poistnej zmluvy',
+        'preberaci-protokol' => 'Preberací protokol',
+        'univerzalna-ziadost-zmena' => 'Univerzálna žiadosť o zmenu',
+        'nahrada-skody-zodpovednost' => 'Žiadosť o náhradu škody',
+        'cestne-vyhlasenie-inej-poistky' => 'Čestné prehlásenie',
+        'cestne-vyhlasenie-kupa-veci' => 'Čestné prehlásenie o kúpe veci',
+        'suhlas-vyplata-inemu-uctu' => 'Súhlas s výplatou na iný účet',
+        'ziadost-vratenie-preplatku' => 'Vrátenie preplatku',
+        'odvolanie-zamietnutie-plnenia' => 'Odvolanie voči likvidácii',
+        'reklamacia-postup-institucie' => 'Reklamácia / sťažnosť',
+    ];
+    return $labels[$slug] ?? $slug;
+}
+
 function db(): PDO {
     static $pdo = null;
     if ($pdo === null) {

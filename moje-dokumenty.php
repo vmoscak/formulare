@@ -41,11 +41,12 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 <meta name="robots" content="noindex,nofollow">
 <title>Moje dokumenty</title>
 <style>
-  :root{ --accent:<?= h($me['color']) ?>; --accent-soft:#eaf1fc; --ink:#1d2536; --muted:#8b94a3; --border:#e2e6ee; --bg:#eef1f6; }
+  :root{ --accent:<?= h($me['color']) ?>; --accent-soft:#e3efee; --ink:#262523; --muted:#a5a096; --border:#efebe2; --bg:#faf8f3; --serif:Georgia,'Iowan Old Style','Palatino Linotype',Palatino,serif; }
   *{box-sizing:border-box;}
-  body{ margin:0; background:var(--bg); color:var(--ink); font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; padding:24px; }
+  body{ margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; padding:24px; }
   .wrap{ max-width:1100px; margin:0 auto; display:flex; flex-direction:column; gap:24px; }
   h1{
+    font-family:var(--serif); font-weight:700;
     font-size:22px; margin:0;
     opacity:0; transform:translateY(10px);
     animation:riseIn .5s cubic-bezier(.22,1,.36,1) forwards;
@@ -91,7 +92,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
       <?php foreach ($docs as $d): ?>
       <tr>
         <td><?= h($d['client_label']) ?></td>
-        <td><?= h($d['tool']) ?></td>
+        <td><?= h(toolLabel($d['tool'])) ?></td>
         <td><?= $d['source'] === 'client' ? 'klient' : 'poradca' ?></td>
         <td><?= h($d['generated_at']) ?></td>
         <td style="display:flex; gap:6px;">
