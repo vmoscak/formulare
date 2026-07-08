@@ -368,7 +368,6 @@ function refreshPreview(){
 function buildLetterHtml(previewMode){
   const analysisDate = parseDate(state.analysisDate) ? fmt(parseDate(state.analysisDate)) : '…';
   const followupDate = parseDate(state.followupDate) ? fmt(parseDate(state.followupDate)) : '';
-  const doneCount = state.items.filter(function(it){ return it.done; }).length;
 
   const rows = state.items.map(function(it){
     const due = parseDate(it.due) ? fmt(parseDate(it.due)) : '—';
@@ -391,7 +390,6 @@ function buildLetterHtml(previewMode){
       <thead><tr><th></th><th>Úloha / odporúčanie</th><th>Zodpovedný</th><th>Termín</th></tr></thead>
       <tbody>${rows || '<tr><td colspan="4" style="color:#8b94a3;">Žiadne úlohy</td></tr>'}</tbody>
     </table>
-    <div class="progress">Splnené: ${doneCount} z ${state.items.length}</div>
     ${followupDate ? '<div class="followup"><strong>Ďalšie stretnutie:</strong> '+escapeHtml(followupDate)+'</div>' : ''}
     ${state.note.trim() ? '<div class="note"><strong>Poznámka:</strong> '+escapeHtml(state.note.trim())+'</div>' : ''}
     <div class="footer-bar">
@@ -418,7 +416,6 @@ function buildLetterHtml(previewMode){
       line-height:4mm; font-size:8pt; font-weight:bold; }
     td.ow { width:26mm; color:#515a6b; }
     td.du { width:26mm; color:#515a6b; }
-    .progress { font-size:10pt; color:#515a6b; margin-bottom:6mm; }
     .followup, .note { font-size:10.5pt; margin-bottom:4mm; }
     .footer-bar table { width:100%; border-collapse:collapse; }
     .footer-bar td.fr { text-align:right; }
