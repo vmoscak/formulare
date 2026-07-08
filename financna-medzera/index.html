@@ -4,7 +4,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kalkulačka finančnej medzery</title>
 
-
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
 <!-- =========================================================================
      KALKULAČKA FINANČNEJ MEDZERY
@@ -25,66 +27,77 @@
 
 <style>
   :root{
-    --accent:#1f5fd1;
-    --accent-soft:#eaf1fc;
-    --accent-line:#cfe0fb;
-    --ink:#1d2536;
-    --muted:#8b94a3;
-    --label:#515a6b;
-    --border:#e2e6ee;
-    --bg:#eef1f6;
+    --accent:#3452e0;
+    --accent-ink:#28399e;
+    --accent-soft:#eef1fd;
+    --accent-line:#d7ddf9;
+    --ink:#191d2b;
+    --muted:#8a8fa3;
+    --label:#565c74;
+    --border:#e6e7f0;
+    --bg:#f6f6fa;
     --err:#d9362b;
-    --good:#0ca30c;
-    --good-soft:#e5f7e5;
-    --critical:#d03b3b;
-    --critical-soft:#fdeaea;
+    --good:#12946f;
+    --good-soft:#e5f6ef;
+    --critical:#c53434;
+    --critical-soft:#fbeaea;
+    --sec-klient:#3452e0;
+    --sec-partner:#9350c9;
+    --sec-deti:#d97a1f;
+    --sec-rezerva:#12946f;
+    --radius-lg:18px;
+    --radius-md:13px;
+    --shadow-card:0 1px 2px rgba(23,26,45,.04), 0 10px 24px -16px rgba(23,26,45,.18);
   }
   *{box-sizing:border-box;}
   body{
     margin:0; background:var(--bg); color:var(--ink);
     font-family:'Plus Jakarta Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-    -webkit-font-smoothing:antialiased;
-    padding:24px;
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    padding:28px;
   }
   input,select,textarea{font-family:inherit; outline:none;}
-  input:focus,select:focus,textarea:focus{border-color:var(--accent)!important;}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent)!important; box-shadow:0 0 0 3px var(--accent-soft);}
 
-  .app{max-width:1260px; margin:0 auto; background:#fff; border-radius:20px; overflow:hidden;
-       box-shadow:0 12px 44px rgba(30,38,56,.10);}
+  .app{max-width:1280px; margin:0 auto; background:#fff; border-radius:24px; overflow:hidden;
+       box-shadow:0 24px 64px -24px rgba(23,26,45,.22), 0 2px 8px rgba(23,26,45,.05);
+       border:1px solid rgba(23,26,45,.05);}
 
   .head{display:flex; align-items:center; justify-content:space-between; gap:12px;
-        flex-wrap:wrap; padding:16px 26px; border-bottom:1px solid #e8ebf2;}
+        flex-wrap:wrap; padding:18px 30px; border-bottom:1px solid var(--border);}
   .head-left{display:flex; align-items:center; gap:14px; min-width:0;}
-  .back-btn{width:38px; height:38px; border-radius:11px; border:1.5px solid #dde1ea; background:#fff;
-        display:flex; align-items:center; justify-content:center; color:#4a5160; flex-shrink:0;
-        text-decoration:none; transition:border-color .15s, color .15s;}
-  .back-btn:hover{border-color:var(--accent); color:var(--accent);}
-  .brand{display:flex; align-items:center; gap:11px; min-width:0;}
-  .logo{width:36px; height:36px; border-radius:12px; background:var(--accent); color:#fff;
-        display:flex; align-items:center; justify-content:center; font-weight:800; font-size:17px; flex-shrink:0;}
-  .brand b{font-size:16px; font-weight:800; letter-spacing:-.01em;}
-  .brand small{font-size:11.5px; color:var(--muted);}
+  .back-btn{width:38px; height:38px; border-radius:12px; border:1.5px solid var(--border); background:#fff;
+        display:flex; align-items:center; justify-content:center; color:var(--label); flex-shrink:0;
+        text-decoration:none; transition:border-color .15s, color .15s, background .15s;}
+  .back-btn:hover{border-color:var(--accent); color:var(--accent); background:var(--accent-soft);}
+  .brand{display:flex; align-items:center; gap:12px; min-width:0;}
+  .logo{width:38px; height:38px; border-radius:13px; background:linear-gradient(155deg,var(--accent),var(--accent-ink));
+        color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:17px;
+        flex-shrink:0; box-shadow:0 6px 14px -4px rgba(52,82,224,.5);}
+  .brand b{font-size:16.5px; font-weight:800; letter-spacing:-.015em;}
+  .brand small{font-size:11.5px; color:var(--muted); font-weight:500;}
   .head-actions{display:flex; align-items:center; gap:10px; flex-shrink:0;}
 
-  .mode-toggle{display:flex; align-items:center; gap:8px; padding:6px 8px 6px 12px;
-      border:1.5px solid var(--border); border-radius:999px; background:#fbfcfe;}
+  .mode-toggle{display:flex; align-items:center; gap:8px; padding:6px 8px 6px 13px;
+      border:1.5px solid var(--border); border-radius:999px; background:#fbfbfd;}
   .mode-toggle span{font-size:11.5px; font-weight:700; color:var(--label); white-space:nowrap;}
-  .mode-switch{position:relative; width:44px; height:25px; border-radius:999px; background:#cdd3df;
-          cursor:pointer; transition:all .15s; flex:none;}
+  .mode-switch{position:relative; width:42px; height:24px; border-radius:999px; background:#d7d9e5;
+          cursor:pointer; transition:background .15s; flex:none;}
   .mode-switch.on{background:var(--accent);}
-  .mode-switch i{position:absolute; top:2.5px; left:2.5px; width:20px; height:20px; border-radius:50%;
-            background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.25); transition:all .15s; display:block;}
-  .mode-switch.on i{left:21.5px;}
+  .mode-switch i{position:absolute; top:2.5px; left:2.5px; width:19px; height:19px; border-radius:50%;
+            background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.25); transition:left .15s; display:block;}
+  .mode-switch.on i{left:20.5px;}
 
   .body{display:flex; flex-wrap:wrap; align-items:stretch;}
-  .form{flex:1 1 480px; min-width:0; padding:28px 30px; display:flex; flex-direction:column; gap:30px;}
-  .preview{flex:1 1 420px; min-width:0; background:var(--bg); padding:26px 30px;
-           border-left:1px solid #e8ebf2; display:flex; flex-direction:column; gap:20px;}
+  .form{flex:1 1 480px; min-width:0; padding:32px 32px; display:flex; flex-direction:column; gap:34px;}
+  .preview{flex:1 1 420px; min-width:0; background:var(--bg); padding:28px 32px;
+           border-left:1px solid var(--border); display:flex; flex-direction:column; gap:16px;}
 
-  .step-head{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
-  .step-num{width:24px; height:24px; border-radius:8px; background:var(--accent-soft); color:var(--accent);
-            font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
-  .step-title{font-size:13px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--label);}
+  .step-head{display:flex; align-items:center; gap:11px; margin-bottom:16px;}
+  .step-num{width:25px; height:25px; border-radius:50%; background:#fff; color:var(--accent);
+            border:1.5px solid var(--accent-line);
+            font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .step-title{font-size:12.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--label);}
 
   .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
   .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;}
@@ -92,79 +105,88 @@
   .col-full{grid-column:1 / -1;}
 
   .field{display:flex; flex-direction:column; gap:6px;}
-  .field > label{font-size:11px; font-weight:700; color:var(--muted); letter-spacing:.04em;}
+  .field > label{font-size:10.5px; font-weight:700; color:var(--muted); letter-spacing:.05em;}
   .field input,.field select,.field textarea{
-    padding:11px 13px; border:1.5px solid var(--border); border-radius:12px; background:#fff;
-    font-size:14px; color:var(--ink);}
+    padding:11px 13px; border:1.5px solid var(--border); border-radius:var(--radius-md); background:#fff;
+    font-size:14px; color:var(--ink); transition:border-color .15s, box-shadow .15s;}
   .field textarea{min-height:70px; resize:vertical; line-height:1.5;}
-  .field .hint{font-size:11px; color:var(--muted);}
+  .field .hint{font-size:11px; color:var(--muted); line-height:1.5;}
   .field .err{font-size:11px; color:#c0392b; font-weight:600; display:none;}
   .field.invalid input,.field.invalid textarea{border-color:var(--err);}
   .field.invalid .err{display:block;}
 
   /* dynamické zoznamy (záväzky / deti) */
   .items{display:flex; flex-direction:column; gap:10px;}
-  .item{border:1.5px solid var(--border); border-radius:14px; padding:12px 14px; background:#fbfbfd;}
+  .item{border:1.5px solid var(--border); border-radius:var(--radius-md); padding:13px 14px; background:#fbfbfd;}
   .item-top{display:flex; align-items:flex-start; gap:10px;}
   .item-body{flex:1; display:flex; flex-direction:column; gap:8px;}
   .item-body input{width:100%; padding:10px 12px; border:1.5px solid var(--border); border-radius:10px;
-      background:#fff; font-size:13.5px; color:var(--ink);}
-  .item-body input:focus{border-color:var(--accent);}
+      background:#fff; font-size:13.5px; color:var(--ink); transition:border-color .15s, box-shadow .15s;}
+  .item-body input:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);}
   .item-meta{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
   .item-meta.single{grid-template-columns:1fr;}
   .item-meta.triple{grid-template-columns:1fr 1fr 1fr; margin-top:8px;}
-  .item-del{flex:none; width:28px; height:28px; border-radius:8px; border:1.5px solid #dde1ea; background:#fff;
-      color:#9aa2b1; display:flex; align-items:center; justify-content:center; cursor:pointer;}
-  .item-del:hover{border-color:var(--err); color:var(--err);}
-  .add-item{align-self:flex-start; padding:10px 16px; border-radius:11px; border:1.5px dashed #c7cdd9;
-      background:#fff; color:var(--label); font-weight:600; font-size:13px; cursor:pointer;}
-  .add-item:hover{border-color:var(--accent); color:var(--accent);}
+  .item-del{flex:none; width:28px; height:28px; border-radius:9px; border:1.5px solid var(--border); background:#fff;
+      color:#a3a7ba; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .15s;}
+  .item-del:hover{border-color:var(--err); color:var(--err); background:var(--critical-soft);}
+  .add-item{align-self:flex-start; padding:10px 16px; border-radius:11px; border:1.5px dashed #cdd0e0;
+      background:#fff; color:var(--label); font-weight:700; font-size:13px; cursor:pointer; transition:all .15s;}
+  .add-item:hover{border-color:var(--accent); color:var(--accent); background:var(--accent-soft);}
   .empty-hint{font-size:13px; color:var(--muted);}
 
-  .alert{display:flex; gap:10px; align-items:flex-start; padding:12px 14px; border-radius:12px;
-         background:#fdecea; border:1.5px solid #f3c0b8; margin-top:12px;}
+  .alert{display:flex; gap:10px; align-items:flex-start; padding:13px 14px; border-radius:var(--radius-md);
+         background:var(--critical-soft); border:1.5px solid #f1c3bd; margin-top:12px;}
   .alert .bang{flex:none; width:20px; height:20px; border-radius:50%; background:var(--err); color:#fff;
                font-size:13px; font-weight:800; display:flex; align-items:center; justify-content:center;}
-  .alert .msg{font-size:12.5px; line-height:1.45; color:#9a2a20;}
+  .alert .msg{font-size:12.5px; line-height:1.45; color:#8f2c22;}
 
   .actions{display:flex; gap:12px; padding-top:2px;}
-  .btn-primary{flex:1; text-align:center; padding:15px; border-radius:14px; background:var(--accent);
+  .btn-primary{flex:1; text-align:center; padding:15px; border-radius:var(--radius-md);
+       background:linear-gradient(155deg,var(--accent),var(--accent-ink));
        color:#fff; font-weight:700; font-size:14.5px; cursor:pointer; border:none;
-       box-shadow:0 8px 18px rgba(31,95,209,.30);}
-  .btn-primary:disabled{opacity:.6; cursor:default;}
-  .btn-ghost{padding:15px 20px; border-radius:14px; border:1.5px solid #dde1ea; background:#fff;
-       color:var(--label); font-weight:600; font-size:14px; cursor:pointer;}
+       box-shadow:0 10px 22px -8px rgba(52,82,224,.55); transition:transform .1s, box-shadow .15s;}
+  .btn-primary:hover{box-shadow:0 14px 26px -8px rgba(52,82,224,.6);}
+  .btn-primary:active{transform:translateY(1px);}
+  .btn-primary:disabled{opacity:.6; cursor:default; transform:none;}
+  .btn-ghost{padding:15px 20px; border-radius:var(--radius-md); border:1.5px solid var(--border); background:#fff;
+       color:var(--label); font-weight:700; font-size:14px; cursor:pointer; transition:all .15s;}
+  .btn-ghost:hover{border-color:#c7cadd; background:#fbfbfd;}
 
   /* ── výsledky ── */
   .preview-head{display:flex; align-items:center; justify-content:space-between;}
-  .preview-head .t{font-size:13px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--label);}
-  .live{display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--muted);}
-  .live i{width:7px; height:7px; border-radius:50%; background:#3a9b6e; display:inline-block;}
+  .preview-head .t{font-size:12.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--label);}
+  .live{display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--muted); font-weight:600;}
+  .live i{width:6px; height:6px; border-radius:50%; background:var(--good); display:inline-block;
+      box-shadow:0 0 0 3px var(--good-soft);}
 
-  .legend{display:flex; align-items:center; gap:16px; font-size:12px; color:var(--label); font-weight:600;}
-  .legend .dot{width:10px; height:10px; border-radius:3px; display:inline-block; margin-right:6px; vertical-align:-1px;}
+  .legend{display:flex; align-items:center; gap:18px; font-size:12px; color:var(--label); font-weight:700;}
+  .legend .dot{width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:6px; vertical-align:1px;}
   .legend .dot.good{background:var(--good);}
   .legend .dot.crit{background:var(--critical);}
 
-  .risk-card{background:#fff; border:1px solid var(--border); border-radius:16px; padding:18px 20px;}
-  .risk-head{display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:10px;}
-  .risk-name{font-size:14.5px; font-weight:800;}
-  .risk-gap{font-size:13px; font-weight:800;}
-  .risk-gap.zero{color:var(--good);}
-  .risk-gap.some{color:var(--critical);}
+  .risk-card{background:#fff; border:1px solid var(--border); border-left:3px solid var(--card-acc, var(--accent));
+      border-radius:var(--radius-md); padding:18px 20px; box-shadow:var(--shadow-card);}
+  .risk-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px;}
+  .risk-name{font-size:14.5px; font-weight:800; letter-spacing:-.01em;}
+  .risk-gap{font-size:12.5px; font-weight:800; padding:4px 11px; border-radius:999px; white-space:nowrap;}
+  .risk-gap.zero{color:var(--good); background:var(--good-soft);}
+  .risk-gap.some{color:var(--critical); background:var(--critical-soft);}
 
-  .bar-track{height:16px; border-radius:8px; background:#eef1f6; overflow:hidden; display:flex; gap:2px;}
-  .bar-seg{height:100%; border-radius:6px;}
+  .bar-track{height:9px; border-radius:999px; background:#eef0f5; overflow:hidden; display:flex; gap:2px;}
+  .bar-seg{height:100%;}
   .bar-seg.good{background:var(--good);}
   .bar-seg.crit{background:var(--critical);}
-  .bar-nums{display:flex; justify-content:space-between; font-size:11.5px; color:var(--muted); margin-top:7px;}
+  .bar-nums{display:flex; justify-content:space-between; font-size:11.5px; color:var(--muted); margin-top:8px; font-weight:500;}
   .bar-nums b{color:var(--ink); font-weight:700;}
 
-  .risk-note{font-size:11.5px; color:var(--muted); margin-top:10px; line-height:1.5;}
-  #riskResults{display:flex; flex-direction:column; gap:14px;}
-  .risk-section-label{font-size:11.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase;
-      color:var(--accent); margin:6px 0 -6px;}
-  .risk-section-label:first-child{margin-top:0;}
+  .risk-note{font-size:11.5px; color:var(--muted); margin-top:11px; line-height:1.55;}
+  #riskResults{display:flex; flex-direction:column; gap:12px;}
+  .risk-section-label{display:flex; align-items:center; gap:8px; font-size:11px; font-weight:800;
+      letter-spacing:.07em; text-transform:uppercase; color:var(--label); margin:10px 0 -2px;}
+  .risk-section-label:first-child{margin-top:2px;}
+  .risk-section-label::before{content:''; width:7px; height:7px; border-radius:50%;
+      background:var(--sec-dot, var(--accent)); flex:none;}
+  .risk-section-label::after{content:''; flex:1; height:1px; background:var(--border);}
 
   .risk-blur{filter:blur(7px); user-select:none; pointer-events:none;}
   .risk-mask{position:relative;}
@@ -176,15 +198,16 @@
 
   .client-banner{
     background:linear-gradient(135deg,var(--accent-soft),#fff); border:1.5px solid var(--accent-line);
-    border-radius:16px; padding:18px 20px; display:flex; flex-direction:column; gap:8px;
+    border-radius:var(--radius-lg); padding:18px 20px; display:flex; flex-direction:column; gap:8px;
   }
   .client-banner h3{margin:0; font-size:15px; font-weight:800; color:var(--ink);}
   .client-banner p{margin:0; font-size:13px; color:var(--label); line-height:1.55;}
 
-  .contact-card{background:#fff; border:1.5px solid var(--border); border-radius:16px; padding:20px;}
-  .contact-card.emph{border-color:var(--accent); box-shadow:0 10px 28px rgba(31,95,209,.14);}
-  .contact-card h3{margin:0 0 4px; font-size:14.5px; font-weight:800;}
-  .contact-card p{margin:0 0 14px; font-size:12.5px; color:var(--muted); line-height:1.5;}
+  .contact-card{background:#fff; border:1.5px solid var(--border); border-radius:var(--radius-lg); padding:20px;
+      box-shadow:var(--shadow-card);}
+  .contact-card.emph{border-color:var(--accent); box-shadow:0 10px 28px -12px rgba(52,82,224,.35);}
+  .contact-card h3{margin:0 0 4px; font-size:14.5px; font-weight:800; letter-spacing:-.01em;}
+  .contact-card p{margin:0 0 14px; font-size:12.5px; color:var(--muted); line-height:1.55;}
   .contact-fields{display:flex; flex-direction:column; gap:10px;}
   .contact-actions{display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;}
   .contact-actions .btn-primary,.contact-actions .btn-ghost{flex:1 1 160px;}
@@ -571,7 +594,7 @@ function computeSingleAdultRisks(income, expenses, debtsPaymentTotal, existing){
 
   const needDeath = FUNERAL_COST + debtsPaymentTotal*DEATH_DEBT_MONTHS;
   const needDisability = expenses*DISABILITY_EXPENSE_MONTHS;
-  const needCriticalIllness = expenses*CRITICAL_ILLNESS_EXPENSE_MONTHS + CRITICAL_ILLNESS_ABROAD_DEFAULT;
+  const needCriticalIllness = expenses*CRITICAL_ILLNESS_EXPENSE_MONTHS;
   const needPermanentInjury = expenses*PERMANENT_INJURY_EXPENSE_MONTHS;
 
   const statePnBenefit = grossIncome*STATE_SICKPAY_RATIO;
@@ -597,7 +620,7 @@ function computeCoupleAdultRisks(personIncome, partnerIncome, expenses, existing
 
   const needDeath = FUNERAL_COST + sharedShortfall*DEATH_SHORTFALL_MONTHS_PARTNER;
   const needDisability = sharedShortfall*DISABILITY_EXPENSE_MONTHS;
-  const needCriticalIllness = sharedShortfall*CRITICAL_ILLNESS_EXPENSE_MONTHS + CRITICAL_ILLNESS_ABROAD_DEFAULT;
+  const needCriticalIllness = sharedShortfall*CRITICAL_ILLNESS_EXPENSE_MONTHS;
   const needPermanentInjury = sharedShortfall*PERMANENT_INJURY_EXPENSE_MONTHS;
 
   const statePnBenefit = grossIncome*STATE_SICKPAY_RATIO;
@@ -679,19 +702,19 @@ function buildRiskEntries(g){
   const entries = [];
 
   function pushAdult(adult, section){
-    entries.push({ section, badge:'warm', name:'Úmrtie', r:adult.death, fmt:eur, lump:true,
+    entries.push({ section, name:'Úmrtie', r:adult.death, fmt:eur, lump:true,
       note: g.hasPartner
         ? 'Pohrebné náklady (3 000 €) + 60-násobok sumy, ktorú by partner musel priniesť mesačne do rozpočtu pri výpadku oboch príjmov naraz — najhorší scenár.'
         : 'Pohrebné náklady (3 000 €, vyplatiteľné do 2-3 dní) + 12-násobok mesačnej splátky záväzkov ('+eur(g.inputs.debtsPaymentTotal)+') — preklenutie obdobia dedičského konania.' });
-    entries.push({ section, badge:'teal', name:'Invalidita (čiastočná)', r:adult.disability, fmt:eur, lump:true,
+    entries.push({ section, name:'Invalidita (čiastočná)', r:adult.disability, fmt:eur, lump:true,
       note: g.hasPartner
-        ? '36-násobok sumy, ktorú by partner musel priniesť mesačne do rozpočtu pri výpadku oboch príjmov naraz — najhorší scenár.'
-        : '36-násobok mesačných výdavkov. Pri čiastočnej invalidite sa spravidla vypláca pomerná časť poistnej sumy.' });
-    entries.push({ section, badge:'warm', name:'Kritické choroby', r:adult.criticalIllness, fmt:eur, lump:true,
-      note:'36-násobok '+(g.hasPartner?'referenčnej sumy':'mesačných výdavkov')+' + orientačne '+eur(CRITICAL_ILLNESS_ABROAD_DEFAULT)+' na prípadnú liečbu v zahraničí (spresní sa individuálne pri ponuke).' });
-    entries.push({ section, badge:'teal', name:'Trvalé následky úrazom', r:adult.permanentInjury, fmt:eur, lump:true,
+        ? '36-násobok sumy, ktorú by partner musel priniesť mesačne do rozpočtu pri výpadku oboch príjmov naraz — najhorší scenár. Vypláca sa dohodnutá poistná suma (PS).'
+        : '36-násobok mesačných výdavkov. Vypláca sa dohodnutá poistná suma (PS).' });
+    entries.push({ section, name:'Kritické choroby', r:adult.criticalIllness, fmt:eur, lump:true,
+      note:'36-násobok '+(g.hasPartner?'referenčnej sumy':'mesačných výdavkov')+'. Suma na prípadnú liečbu v zahraničí (orientačne '+eur(CRITICAL_ILLNESS_ABROAD_DEFAULT)+') tu nie je zahrnutá — dá sa dopočítať a pripoistiť zvlášť podľa záujmu.' });
+    entries.push({ section, name:'Trvalé následky úrazom', r:adult.permanentInjury, fmt:eur, lump:true,
       note:'Referenčná suma — 60-násobok '+(g.hasPartner?'referenčnej sumy':'mesačných výdavkov')+'. Produkt má progresívne plnenie do 1000 %, presnú poistnú sumu nastaví poradca individuálne.' });
-    entries.push({ section, badge:'teal', name:'PN / práceneschopnosť', r:adult.pn, fmt:eurDay, lump:false,
+    entries.push({ section, name:'PN / práceneschopnosť', r:adult.pn, fmt:eurDay, lump:false,
       note:'Rozdiel mesačných výdavkov'+(g.hasPartner?' a príjmu partnera/-ky':'')+' a štátneho nemocenského (55 % z hrubého príjmu, cca '+eur(adult.pn.grossIncome)+'), vyjadrený ako denná dávka'
         + (adult.pn.monthlyShortfall>0 ? ' (mesačný rozdiel '+eur(adult.pn.monthlyShortfall)+').' : '.') });
   }
@@ -702,19 +725,19 @@ function buildRiskEntries(g){
   if(g.children){
     const c = g.children;
     const label = 'Deti ('+c.count+')';
-    entries.push({ section:label, badge:'warm', name:'Úmrtie dieťaťa', r:c.death, fmt:eur, lump:true,
+    entries.push({ section:label, name:'Úmrtie dieťaťa', r:c.death, fmt:eur, lump:true,
       note:'Pohrebné náklady 3 000 € na dieťa — príjem sa u detí nerieši; bežne súčasť pripoistenia k zmluve rodiča.' });
-    entries.push({ section:label, badge:'teal', name:'Kritické choroby', r:c.criticalIllness, fmt:eur, lump:true,
+    entries.push({ section:label, name:'Kritické choroby', r:c.criticalIllness, fmt:eur, lump:true,
       note:'Orientačná suma 50 000 € na dieťa (spolu za všetky deti).' });
-    entries.push({ section:label, badge:'warm', name:'Trvalé následky úrazom', r:c.permanentInjury, fmt:eur, lump:true,
+    entries.push({ section:label, name:'Trvalé následky úrazom', r:c.permanentInjury, fmt:eur, lump:true,
       note:'Referenčná suma 50 000 € na dieťa (spolu za všetky deti).' });
-    entries.push({ section:label, badge:'teal', name:'Invalidita (úplná)', r:c.invalidity, fmt:eur, lump:true,
+    entries.push({ section:label, name:'Invalidita (úplná)', r:c.invalidity, fmt:eur, lump:true,
       note:'Orientačná suma 50 000 € na dieťa — čiastočná invalidita pri deťoch neexistuje; plnenie až po dosiahnutí 18 rokov ("invalidita z mladosti").' });
   }
 
-  entries.push({ section:'Rezerva', badge:'teal', name:'Krátkodobá rezerva (úspory)',
+  entries.push({ section:'Rezerva domácnosti', name:'Krátkodobá rezerva (úspory)',
     r:{ need:g.reserve.target, covered:g.reserve.current, gap:g.reserve.gap }, fmt:eur, lump:false,
-    note:'6-násobok mesačných výdavkov ako likvidná rezerva. Posledných 5 rokov pred dôchodkom sa cieľ mení na 36-násobok.' });
+    note:'6-násobok mesačných výdavkov domácnosti ako likvidná rezerva — spoločný cieľ, nevytvára sa samostatne pre deti. Posledných 5 rokov pred dôchodkom sa cieľ mení na 36-násobok.' });
 
   return entries;
 }
@@ -767,7 +790,20 @@ function renderChildren(){
   }).join('');
 }
 
-function riskCardHtml(label, r, note, fmt){
+/* Farba podľa sekcie (osoba/kategória) — nahrádza pôvodné svojvoľné striedanie
+   warm/teal; farba teraz vizuálne zoskupuje karty patriace tej istej osobe. */
+const SECTION_ACCENT = {
+  'Klient': '#3452e0',
+  'Partner/-ka': '#9350c9',
+  'Rezerva domácnosti': '#12946f',
+};
+function sectionAccent(section){
+  if(SECTION_ACCENT[section]) return SECTION_ACCENT[section];
+  if(section && section.indexOf('Deti')===0) return '#d97a1f';
+  return '#3452e0';
+}
+
+function riskCardHtml(label, r, note, fmt, accent){
   fmt = fmt || eur;
   const hideNums = state.mode==='klient';
   const total = Math.max(r.need, r.covered);
@@ -776,7 +812,7 @@ function riskCardHtml(label, r, note, fmt){
   const gapClass = r.gap>0 ? 'some' : 'zero';
   const gapLabel = r.gap>0 ? fmt(r.gap) : 'Kryté';
 
-  return '<div class="risk-card">'
+  return '<div class="risk-card" style="--card-acc:'+(accent||'var(--accent)')+'">'
     + '<div class="risk-head">'
     + '<span class="risk-name">'+label+'</span>'
     + '<span class="risk-gap '+gapClass+' '+(hideNums?'risk-blur':'')+'">'+gapLabel+'</span>'
@@ -798,7 +834,13 @@ function riskCardHtml(label, r, note, fmt){
 function render(){
   renderDebts();
   renderChildren();
+  renderResults();
+}
 
+/* Prepočíta a vykreslí len výsledky (bez prekreslenia zoznamov záväzkov/detí) —
+   volá sa pri písaní do ich polí, aby input políčka nestrácali focus po
+   každom znaku (viď onDebtInput/onChildInput). */
+function renderResults(){
   const errors = validate();
   document.querySelectorAll('.form .field[data-k]').forEach(f=>{
     const k=f.dataset.k;
@@ -823,11 +865,12 @@ function render(){
   let html = '';
   let lastSection = null;
   entries.forEach(function(e){
-    if(showSectionLabels && e.section!=='Rezerva' && e.section!==lastSection){
-      html += '<div class="risk-section-label">'+escapeHtml(e.section)+'</div>';
+    const accent = sectionAccent(e.section);
+    if(showSectionLabels && e.section!==lastSection){
+      html += '<div class="risk-section-label" style="--sec-dot:'+accent+'">'+escapeHtml(e.section)+'</div>';
     }
     lastSection = e.section;
-    html += riskCardHtml(e.name, e.r, e.note, e.fmt);
+    html += riskCardHtml(e.name, e.r, e.note, e.fmt, accent);
   });
   $('riskResults').innerHTML = html;
 }
@@ -853,7 +896,7 @@ function doCreateChecklist(){
   entries.forEach(function(e){
     if(e.r.gap<=0) return;
     const amt = e.fmt(e.r.gap);
-    if(e.section==='Rezerva'){
+    if(e.section==='Rezerva domácnosti'){
       items.push({ text:'Vybudovať krátkodobú finančnú rezervu – chýba cca '+amt, owner:'klient' });
       return;
     }
@@ -1026,7 +1069,7 @@ function maskLabel(coveredPct){
   return { text:'Nedostatočne kryté', cls:'gap' };
 }
 
-function riskRowHtml(badgeClass, name, r, note, masked, fmt){
+function riskRowHtml(color, name, r, note, masked, fmt){
   fmt = fmt || eur;
   const total = Math.max(r.need, r.covered);
   const coveredPct = total>0 ? clamp(r.covered/total*100, 0, 100) : 100;
@@ -1035,17 +1078,17 @@ function riskRowHtml(badgeClass, name, r, note, masked, fmt){
   let statusHtml, numsHtml;
   if(masked){
     const m = maskLabel(coveredPct);
-    statusHtml = '<td class="risk-status '+m.cls+'">'+m.text+'</td>';
+    statusHtml = '<td class="risk-status '+m.cls+'"><span class="pill '+m.cls+'">'+m.text+'</span></td>';
     numsHtml = '';
   } else {
     statusHtml = r.gap>0
-      ? '<td class="risk-status gap">chýba '+fmt(r.gap)+'</td>'
-      : '<td class="risk-status ok">kryté</td>';
+      ? '<td class="risk-status gap"><span class="pill gap">chýba '+fmt(r.gap)+'</span></td>'
+      : '<td class="risk-status ok"><span class="pill ok">kryté</span></td>';
     numsHtml = '<table class="risk-nums"><tr><td>Kryté <b class="mono">'+fmt(r.covered)+'</b></td><td class="r">Odporúčané <b class="mono">'+fmt(r.need)+'</b></td></tr></table>';
   }
 
   return ''
-    + '<div class="risk '+badgeClass+'">'
+    + '<div class="risk" style="border-left-color:'+color+'">'
     + '<table class="risk-top"><tr><td class="risk-name">'+name+'</td>'+statusHtml+'</tr></table>'
     + '<div class="bar-track"><div class="bar-good" style="width:'+coveredPct+'%;"></div><div class="bar-crit" style="width:'+gapPct+'%;"></div><div class="bar-clear"></div></div>'
     + numsHtml
@@ -1109,11 +1152,12 @@ function buildReportHtml(mode){
   let risksHtml = '';
   let lastSection = null;
   entries.forEach(function(e){
-    if(showSectionLabels && e.section!=='Rezerva' && e.section!==lastSection){
-      risksHtml += '<div class="section-tag" style="margin-top:5mm;">'+escapeHtml(e.section)+'</div>';
+    const rowColor = sectionAccent(e.section);
+    if(showSectionLabels && e.section!==lastSection){
+      risksHtml += '<div class="section-tag" style="margin-top:5mm;"><span class="dot" style="background:'+rowColor+'"></span>'+escapeHtml(e.section)+'</div>';
     }
     lastSection = e.section;
-    risksHtml += riskRowHtml(e.badge, e.name, e.r, e.note, masked, e.fmt);
+    risksHtml += riskRowHtml(rowColor, e.name, e.r, e.note, masked, e.fmt);
   });
 
   const css = `
@@ -1135,27 +1179,27 @@ function buildReportHtml(mode){
     .lh-client { font-size:9.5pt; font-weight:bold; }
     .lh-date { font-size:8.5pt; color:#5c6f75; margin-top:0.5mm; }
     .thesis-lede { font-size:9.5pt; color:#5c6f75; margin-bottom:4mm; max-width:130mm; }
-    .hero { font-size:26pt; font-weight:bold; margin-bottom:2mm; }
-    .hero-rule { width:22mm; height:1mm; background:`+accent+`; margin-bottom:3mm; }
+    .hero { font-size:27pt; font-weight:bold; margin-bottom:2.5mm; letter-spacing:-.3pt; }
+    .hero-rule { width:16mm; height:0.9mm; background:`+accent+`; margin-bottom:3.5mm; border-radius:1mm; }
     .thesis-sub { font-size:9.5pt; max-width:140mm; }
-    .section-tag { font-size:7.5pt; font-weight:bold; letter-spacing:1.2pt; text-transform:uppercase; color:#5c6f75; margin:5mm 0 3mm; }
-    .risk { border-top:0.5pt solid #dfe6e5; padding:2.5mm 0 2.5mm 4mm; margin-top:2.5mm; border-left:2.2pt solid #ccc; }
+    .section-tag { font-size:7.5pt; font-weight:bold; letter-spacing:1.2pt; text-transform:uppercase; color:#5c6f75; margin:6mm 0 3mm; }
+    .section-tag .dot { display:inline-block; width:1.8mm; height:1.8mm; border-radius:50%; margin-right:2mm; }
+    .risk { border-top:0.5pt solid #e7e9f0; padding:3mm 0 3mm 4.5mm; margin-top:3mm; border-left:2.4pt solid #ccc; }
     .risk:first-child { border-top:none; padding-top:0; margin-top:0; }
-    .risk.warm { border-left-color:#ff6f4d; }
-    .risk.teal { border-left-color:#0e9c90; }
-    table.risk-top { width:100%; margin-bottom:2mm; }
-    .risk-name { font-size:10.5pt; font-weight:bold; }
-    .risk-status { font-size:8.5pt; font-weight:bold; text-align:right; }
-    .risk-status.gap { color:#d03b3b; }
-    .risk-status.ok { color:#0ca30c; }
-    .bar-track { height:3mm; background:#eef1f0; border-radius:1.5mm; margin-bottom:2mm; }
-    .bar-good { height:3mm; float:left; background:#0ca30c; }
-    .bar-crit { height:3mm; float:left; background:#d03b3b; }
+    table.risk-top { width:100%; margin-bottom:2.2mm; }
+    .risk-name { font-size:10.5pt; font-weight:bold; letter-spacing:-.1pt; }
+    .risk-status { text-align:right; }
+    .pill { display:inline-block; font-size:8pt; font-weight:bold; padding:0.8mm 2.6mm; border-radius:6mm; }
+    .pill.gap { color:#b32e2e; background:#fbeaea; }
+    .pill.ok { color:#0f7a5c; background:#e5f6ef; }
+    .bar-track { height:2.2mm; background:#eef0f5; border-radius:1.2mm; margin-bottom:2.5mm; }
+    .bar-good { height:2.2mm; float:left; background:#12946f; }
+    .bar-crit { height:2.2mm; float:left; background:#c53434; }
     .bar-clear { clear:both; }
     table.risk-nums { width:100%; font-size:8.5pt; color:#5c6f75; margin-bottom:2mm; }
     table.risk-nums td.r { text-align:right; }
     .risk-note { font-size:8.5pt; color:#5c6f75; max-width:145mm; }
-    .next-step { background:`+accentSoft+`; padding:3mm 5mm; margin-top:3mm; border-radius:2mm; }
+    .next-step { background:`+accentSoft+`; padding:3.5mm 5.5mm; margin-top:4mm; border-radius:2.5mm; }
     .next-step p { font-size:9pt; }
     .next-step b { color:`+accent+`; }
     table.signoff { width:100%; margin-top:3mm; padding-top:2mm; border-top:0.5pt solid #b9c7c5; }
@@ -1299,7 +1343,7 @@ function bind(){
     const row=e.target.closest('.item'); if(!row) return;
     const id=Number(row.dataset.id); const d=state.debts.find(x=>x.id===id); if(!d) return;
     const act=e.target.dataset.act; if(act) d[act]=e.target.value;
-    render();
+    renderResults();
   };
   $('debtItems').addEventListener('input', onDebtInput);
 
@@ -1307,7 +1351,7 @@ function bind(){
     const row=e.target.closest('.item'); if(!row) return;
     const id=Number(row.dataset.id); const c=state.children.find(x=>x.id===id); if(!c) return;
     const act=e.target.dataset.act; if(act) c[act]=e.target.value;
-    render();
+    renderResults();
   };
   $('childItems').addEventListener('input', onChildInput);
 
