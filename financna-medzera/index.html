@@ -770,7 +770,7 @@ function maskLabel(coveredPct){
   return { text:'Nedostatočne kryté', cls:'gap' };
 }
 
-function riskRowHtml(letter, badgeClass, name, r, note, masked){
+function riskRowHtml(badgeClass, name, r, note, masked){
   const total = Math.max(r.need, r.covered);
   const coveredPct = total>0 ? clamp(r.covered/total*100, 0, 100) : 100;
   const gapPct = total>0 ? clamp(100-coveredPct, 0, 100) : 0;
@@ -788,16 +788,11 @@ function riskRowHtml(letter, badgeClass, name, r, note, masked){
   }
 
   return ''
-    + '<div class="risk">'
-    + '<table class="risk-t"><tr>'
-    + '<td class="badge-cell"><div class="badge '+badgeClass+'">'+letter+'</div></td>'
-    + '<td>'
+    + '<div class="risk '+badgeClass+'">'
     + '<table class="risk-top"><tr><td class="risk-name">'+name+'</td>'+statusHtml+'</tr></table>'
     + '<div class="bar-track"><div class="bar-good" style="width:'+coveredPct+'%;"></div><div class="bar-crit" style="width:'+gapPct+'%;"></div><div class="bar-clear"></div></div>'
     + numsHtml
     + '<div class="risk-note">'+note+'</div>'
-    + '</td>'
-    + '</tr></table>'
     + '</div>';
 }
 
@@ -820,7 +815,7 @@ function buildReportHtml(mode){
   const clientName = clientLinkLabel || state.contactName.trim() || 'Klient';
 
   const risks = [
-    { key:'death', letter:'Ú', badge:'warm', name:'Úmrtie živiteľa/-ky', r:g.death,
+    { key:'death', badge:'warm', name:'Úmrtie živiteľa/-ky', r:g.death,
       note: masked
         ? 'Zohľadňuje splatenie záväzkov, náhradu príjmu na '+g.death.years+' rokov'
           +(g.inputs.childCount ? ' a vzdelávaciu rezervu pre '+g.inputs.childCount+' '+(g.inputs.childCount===1?'dieťa':'deti') : '')
@@ -828,9 +823,9 @@ function buildReportHtml(mode){
         : 'Zohľadňuje splatenie záväzkov ('+eur(g.inputs.debtsTotal)+'), náhradu príjmu na '+g.death.years+' rokov'
           +(g.inputs.childCount ? ' a vzdelávaciu rezervu pre '+g.inputs.childCount+' '+(g.inputs.childCount===1?'dieťa':'deti') : '')
           +', vrátane inflácie '+INFLATION_PA+' % p.a. na danom horizonte.' },
-    { key:'disability', letter:'I', badge:'teal', name:'Invalidita (čiastočná/plná)', r:g.disability,
+    { key:'disability', badge:'teal', name:'Invalidita (čiastočná/plná)', r:g.disability,
       note:'Kratší horizont ('+g.disability.years+' rokov) a nižší podiel príjmu — časť výpadku čiastočne nahradí invalidný dôchodok zo Sociálnej poisťovne.' },
-    { key:'pn', letter:'PN', badge:'teal', name:'PN / dlhodobá práceneschopnosť', r:g.pn,
+    { key:'pn', badge:'teal', name:'PN / dlhodobá práceneschopnosť', r:g.pn,
       note:'Rozdiel medzi mesačnými výdavkami a odhadovaným nemocenským ('+Math.round(STATE_SICKPAY_RATIO*100)+' % príjmu) na odporúčaných '+PN_MONTHS+' mesiacov krytia.' },
   ];
 
@@ -867,7 +862,7 @@ function buildReportHtml(mode){
       ? '<div class="next-step"><p>Toto je orientačný náhľad bez presných súm. <b>'+escapeHtml(ADVISOR.name)+'</b> sa vám ozve a prejdete si to spoločne.</p></div>'
       : '');
 
-  const risksHtml = risks.map(x => riskRowHtml(x.letter, x.badge, x.name, x.r, x.note, masked)).join('');
+  const risksHtml = risks.map(x => riskRowHtml(x.badge, x.name, x.r, x.note, masked)).join('');
 
   const css = `
     @font-face { font-family:'DejaVu Sans'; src:url('`+fontBase+`DejaVuSans.ttf'); }
@@ -892,14 +887,10 @@ function buildReportHtml(mode){
     .hero-rule { width:22mm; height:1mm; background:`+accent+`; margin-bottom:3mm; }
     .thesis-sub { font-size:9.5pt; max-width:140mm; }
     .section-tag { font-size:7.5pt; font-weight:bold; letter-spacing:1.2pt; text-transform:uppercase; color:#5c6f75; margin:5mm 0 3mm; }
-    .risk { border-top:0.5pt solid #dfe6e5; padding-top:2.5mm; margin-top:2.5mm; }
+    .risk { border-top:0.5pt solid #dfe6e5; padding:2.5mm 0 2.5mm 4mm; margin-top:2.5mm; border-left:2.2pt solid #ccc; }
     .risk:first-child { border-top:none; padding-top:0; margin-top:0; }
-    table.risk-t { width:100%; }
-    table.risk-t td { vertical-align:top; }
-    td.badge-cell { width:11mm; }
-    .badge { width:8mm; height:8mm; border-radius:4mm; text-align:center; line-height:8mm; font-size:8pt; font-weight:bold; color:#fff; }
-    .badge.warm { background:#ff6f4d; }
-    .badge.teal { background:#0e9c90; }
+    .risk.warm { border-left-color:#ff6f4d; }
+    .risk.teal { border-left-color:#0e9c90; }
     table.risk-top { width:100%; margin-bottom:2mm; }
     .risk-name { font-size:10.5pt; font-weight:bold; }
     .risk-status { font-size:8.5pt; font-weight:bold; text-align:right; }
