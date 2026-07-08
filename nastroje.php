@@ -269,21 +269,35 @@ function advisorInitials(string $name): string {
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
       </div>
       <span class="cat-title">Hlavné nástroje</span>
-      <span class="cat-count">4</span>
+      <span class="cat-count">3</span>
       <span class="cat-line"></span>
     </div>
     <div class="tool-list">
 
-      <!-- Finančná analýza – AKTÍVNA -->
-      <a class="tool-row" href="financna-analyza/">
+      <!-- Wizard "Aké poistenie potrebujem" – AKTÍVNA -->
+      <a class="tool-row" href="wizard-poistenie/">
         <div class="ic">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/><circle cx="12" cy="12" r="10"/>
           </svg>
         </div>
         <div class="body">
-        <h2>Finančná analýza</h2>
-        <p>Kompletná analýza klienta – rozpočet, ciele, poistenie, scenáre. Výstup pre poradcu, pre klienta aj prezentácia.</p>
+        <h2>Aké poistenie potrebujem</h2>
+        <p>Krátky dotazník na 6 otázok – odporúčanie typov poistenia, s prekliknutím rovno do Kalkulačky finančnej medzery.</p>
+        </div>
+        <span class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+      </a>
+
+      <!-- Kalkulačka finančnej medzery – AKTÍVNA, hlavný nástroj -->
+      <a class="tool-row" href="financna-medzera/">
+        <div class="ic">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>
+          </svg>
+        </div>
+        <div class="body">
+        <h2>Kalkulačka finančnej medzery</h2>
+        <p>Koľko by rodine chýbalo pri úmrtí, invalidite alebo dlhodobej PN – odporúčané krytie vs. existujúce poistenie. Poradcovský aj klientsky režim, výstup aj ako checklist.</p>
         </div>
         <span class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
       </a>
@@ -297,35 +311,7 @@ function advisorInitials(string $name): string {
         </div>
         <div class="body">
         <h2>Checklist – výstup z analýzy</h2>
-        <p>Kontrolný zoznam krokov a odporúčaní po dokončení Finančnej analýzy, s termínmi a zodpovednosťou.</p>
-        </div>
-        <span class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
-      </a>
-
-      <!-- Kalkulačka finančnej medzery – AKTÍVNA -->
-      <a class="tool-row" href="financna-medzera/">
-        <div class="ic">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>
-          </svg>
-        </div>
-        <div class="body">
-        <h2>Kalkulačka finančnej medzery</h2>
-        <p>Koľko by rodine chýbalo pri úmrtí, invalidite alebo dlhodobej PN – odporúčané krytie vs. existujúce poistenie. Poradcovský aj klientsky režim.</p>
-        </div>
-        <span class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
-      </a>
-
-      <!-- Wizard "Aké poistenie potrebujem" – AKTÍVNA -->
-      <a class="tool-row" href="wizard-poistenie/">
-        <div class="ic">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/><circle cx="12" cy="12" r="10"/>
-          </svg>
-        </div>
-        <div class="body">
-        <h2>Aké poistenie potrebujem</h2>
-        <p>Krátky dotazník na 6 otázok – odporúčanie typov poistenia s vysvetlením „prečo" a odkazom na konzultáciu.</p>
+        <p>Kontrolný zoznam krokov a odporúčaní, s termínmi a zodpovednosťou. Dá sa predvyplniť rovno z Kalkulačky finančnej medzery.</p>
         </div>
         <span class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
       </a>

@@ -337,6 +337,12 @@
         <button class="btn-primary" id="pdfBtn" style="width:100%;">Generovať PDF pre klienta</button>
       </div>
 
+      <div class="contact-card" id="checklistCard">
+        <h3>Vytvoriť checklist</h3>
+        <p>Úlohy sa predvyplnia podľa zistených medzier v krytí — pred odoslaním klientovi si ich môžeš upraviť.</p>
+        <button class="btn-ghost" id="checklistBtn" style="width:100%;">Vytvoriť checklist z odporúčaní</button>
+      </div>
+
       <div class="contact-card" id="sendLinkCard">
         <h3>Poslať klientovi na vyplnenie</h3>
         <p>Klient dostane odkaz na tento istý formulár (bez presných čísel) — vyplní si údaje sám, vy sa k tomu kedykoľvek vrátite.</p>
@@ -564,6 +570,7 @@ function render(){
   if($('clientBanner')) $('clientBanner').style.display = state.mode==='klient' ? 'flex' : 'none';
   if($('clientNameCard')) $('clientNameCard').style.display = state.mode==='klient' ? 'none' : 'block';
   if($('pdfCard')) $('pdfCard').style.display = state.mode==='klient' ? 'none' : 'block';
+  if($('checklistCard')) $('checklistCard').style.display = state.mode==='klient' ? 'none' : 'block';
   if($('sendLinkCard')) $('sendLinkCard').style.display = state.mode==='klient' ? 'none' : 'block';
 
   $('riskDeath').innerHTML = riskCardHtml('death','Úmrtie živiteľa/-ky', g.death,
@@ -587,6 +594,25 @@ function validate(){
   if(!state.income || num(state.income)<=0)   e.income='Zadaj mesačný príjem';
   if(state.expenses==='' || num(state.expenses)<0) e.expenses='Zadaj mesačné výdavky';
   return e;
+}
+
+/* ===========================================================================
+   CHECKLIST Z ODPORÚČANÍ (poradcovský pohľad — odovzdanie do checklist-analyza)
+=========================================================================== */
+function doCreateChecklist(){
+  const g = computeGaps();
+  const items = [];
+  if(g.death.gap>0) items.push({ text:'Dojednať/doplniť životné poistenie – chýba cca '+eur(g.death.gap)+' krytia pre prípad úmrtia', owner:'klient' });
+  if(g.disability.gap>0) items.push({ text:'Dojednať/doplniť poistenie invalidity – chýba cca '+eur(g.disability.gap)+' krytia', owner:'klient' });
+  if(g.pn.gap>0) items.push({ text:'Dojednať/doplniť poistenie PN (práceneschopnosti) – chýba cca '+eur(g.pn.gap)+' krytia', owner:'klient' });
+
+  const seed = {
+    clientName: state.contactName.trim(),
+    advisorName: ADVISOR.name || '',
+    items: items,
+  };
+  const url = '../checklist-analyza/index.html?seed=' + encodeURIComponent(JSON.stringify(seed));
+  window.open(url, '_blank');
 }
 
 /* ===========================================================================
@@ -1026,6 +1052,7 @@ function bind(){
   $('calcBtn').addEventListener('click', ()=>{ state.touched=true; render(); });
   $('resetBtn').addEventListener('click', doReset);
   $('pdfBtn').addEventListener('click', doGeneratePdf);
+  $('checklistBtn').addEventListener('click', doCreateChecklist);
   $('createLinkBtn').addEventListener('click', doCreateLink);
   $('copyLinkBtn').addEventListener('click', ()=>{
     const input = $('createdLinkUrl');
@@ -1046,11 +1073,22 @@ function bind(){
 =========================================================================== */
 (function init(){
   loadAdvisor();
+
+  const seedParam = new URLSearchParams(location.search).get('seed');
+  if(seedParam){
+    try{
+      const seed = JSON.parse(seedParam);
+      if(seed.contactName) state.contactName = seed.contactName;
+      if(seed.hasDependents) state.children.push(withId({ age:'' }));
+    }catch(e){ /* ticho ignoruj, formulár ostane prázdny */ }
+  }
+
   syncInputs(); bind();
 
   if(CLIENT_TOKEN){
     const toggle = $('modeToggleWrap'); if(toggle) toggle.remove();
     const pdfCard = $('pdfCard'); if(pdfCard) pdfCard.remove();
+    const checklistCard = $('checklistCard'); if(checklistCard) checklistCard.remove();
     const sendLinkCard = $('sendLinkCard'); if(sendLinkCard) sendLinkCard.remove();
     const clientNameCard = $('clientNameCard'); if(clientNameCard) clientNameCard.remove();
     $('clientSubmitCard').style.display = 'block';
