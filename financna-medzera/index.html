@@ -274,9 +274,19 @@
             <input type="number" min="0" step="100" id="existingDisability" placeholder="0">
             <span class="err"></span>
           </div>
+          <div class="field" data-k="existingCriticalIllness">
+            <label>PRE KRITICKÉ CHOROBY (€)</label>
+            <input type="number" min="0" step="100" id="existingCriticalIllness" placeholder="0">
+            <span class="err"></span>
+          </div>
+          <div class="field" data-k="existingPermanentInjury">
+            <label>PRE TRVALÉ NÁSLEDKY (€)</label>
+            <input type="number" min="0" step="100" id="existingPermanentInjury" placeholder="0">
+            <span class="err"></span>
+          </div>
           <div class="field" data-k="existingPn">
-            <label>PRE PN / DLHODOBÚ PN (€)</label>
-            <input type="number" min="0" step="100" id="existingPn" placeholder="0">
+            <label>PRE PN (€/DEŇ)</label>
+            <input type="number" min="0" step="1" id="existingPn" placeholder="0">
             <span class="err"></span>
           </div>
         </div>
@@ -288,7 +298,7 @@
         <div class="field" data-k="savings">
           <label>SPOLU NA ÚČTOCH / VKLADOCH (€)</label>
           <input type="number" min="0" step="50" id="savings" placeholder="napr. 3000">
-          <span class="hint">Peniaze, ktoré by rodina mohla použiť pri výpadku príjmu</span>
+          <span class="hint">Krátkodobá likvidná rezerva — samostatný cieľ (6-násobok výdavkov), nezapočítava sa ako krytie poistných rizík</span>
         </div>
       </div>
 
@@ -322,7 +332,10 @@
 
       <div class="risk-card" id="riskDeath"></div>
       <div class="risk-card" id="riskDisability"></div>
+      <div class="risk-card" id="riskCriticalIllness"></div>
+      <div class="risk-card" id="riskPermanentInjury"></div>
       <div class="risk-card" id="riskPn"></div>
+      <div class="risk-card" id="reserveInfo"></div>
 
       <div class="contact-card" id="clientNameCard">
         <div class="field" data-k="contactName">
@@ -416,7 +429,7 @@ const state = {
   income:'', expenses:'',
   debts: [withId({ desc:'', balance:'', payment:'' })],
   children: [],
-  existingLife:'', existingDisability:'', existingPn:'',
+  existingLife:'', existingDisability:'', existingCriticalIllness:'', existingPermanentInjury:'', existingPn:'',
   savings:'',
   contactName:'',
   touched:false,
@@ -428,56 +441,93 @@ const state = {
 function num(v){ const n=Number(v); return isFinite(n)&&n>0 ? n : 0; }
 function clamp(v,lo,hi){ return Math.max(lo, Math.min(hi, v)); }
 function eur(n){ return Math.round(n).toLocaleString('sk-SK') + ' €'; }
+function eurDay(n){ return (Math.round(n*100)/100).toLocaleString('sk-SK') + ' €/deň'; }
 
 /* ===========================================================================
-   METODIKA VÝPOČTU MEDZERY
+   METODIKA VÝPOČTU MEDZERY (podľa reálneho postupu poradcu, klient bez
+   partnera/detí — pozri poznámky pri jednotlivých rizikách nižšie; scenár
+   s rodinou má vlastnú metodiku úmrtia, zatiaľ neimplementovanú)
    -------------------------------------------------------------------------
-   Úmrtie:     DIME-podobný prístup — splatenie záväzkov + náhrada príjmu na
-               X rokov (podľa veku najmladšieho dieťaťa, min. 3 roky aj bez
-               detí ako prechodné obdobie) + vzdelávacia rezerva na dieťa,
-               upravené o infláciu 2,5 % p.a. na danom horizonte.
-   Invalidita: kratší horizont (max 10 rokov) a nižší podiel príjmu (60 %),
-               keďže časť vypadnutého príjmu čiastočne nahradí invalidný
-               dôchodok zo Sociálnej poisťovne.
-   PN:         rozdiel medzi výdavkami a odhadovaným nemocenským (60 % príjmu)
-               na odporúčaných 6 mesiacov krytia.
+   Úmrtie:            3 000 € pohrebné (vyplatiteľné do 2-3 dní) + 12x mesačná
+                      splátka záväzkov — preklenutie obdobia dedičského
+                      konania, nie splatenie celého dlhu (klient bez rodiny).
+   Invalidita:        36x mesačné výdavky (počíta sa s čiastočnou invaliditou).
+   Kritické choroby:  36x mesačné výdavky + orientačná suma na liečbu
+                      v zahraničí (bežný štandard, individuálne sa spresní
+                      pri ponuke).
+   Trvalé následky:   referenčná suma 60x mesačné výdavky — produkt má
+                       progresívne plnenie do 1000 %, presné nastavenie
+                       poistnej sumy sa preto rieši individuálne s klientom.
+   PN:                rozdiel mesačných výdavkov a štátnej dávky (55 % z
+                      HRUBÉHO príjmu — nie čistého), vyjadrený ako denná
+                      dávka (mesačný rozdiel / 30).
+   Krátkodobá rezerva: 6x mesačné výdavky (aktívny život) — samostatný cieľ,
+                       úspory sa už nezapočítavajú ako krytie poistných rizík.
 =========================================================================== */
-const INFLATION_PA = 2.5;
-const EDU_RESERVE_PER_CHILD = 8000;
-const STATE_SICKPAY_RATIO = 0.6;
-const PN_MONTHS = 6;
+const FUNERAL_COST = 3000;
+const DEATH_DEBT_MONTHS = 12;
+const DISABILITY_EXPENSE_MONTHS = 36;
+const CRITICAL_ILLNESS_EXPENSE_MONTHS = 36;
+const CRITICAL_ILLNESS_ABROAD_DEFAULT = 50000;
+const PERMANENT_INJURY_EXPENSE_MONTHS = 60;
+const RESERVE_EXPENSE_MONTHS = 6;
+const STATE_SICKPAY_RATIO = 0.55;
+
+/* Prevod čistého mesačného príjmu na hrubý podľa slovenských odvodov a dane
+   pre rok 2026 — 9,4 % sociálne + 5 % zdravotné (dočasná sadzba 2026-2027)
+   odvody zamestnanca, nezdaniteľná časť 497,23 €/mesačne, daň 19 %. Platí
+   pre bežné príjmy (do cca 3 600 € hrubého mesačne, kde je plná nezdaniteľná
+   časť a jednotné 19 % pásmo dane) — orientačné, nie na centy presné. */
+const LEVY_RATE_EMPLOYEE = 0.144;
+const NCZD_MONTHLY_2026 = 497.23;
+const TAX_RATE_BASE = 0.19;
+
+function grossFromNet(net){
+  net = num(net);
+  if(net<=0) return 0;
+  return (net - NCZD_MONTHLY_2026*TAX_RATE_BASE) / ((1-LEVY_RATE_EMPLOYEE)*(1-TAX_RATE_BASE));
+}
 
 function computeGaps(){
   const income = num(state.income);
   const expenses = num(state.expenses);
-  const debtsTotal = state.debts.reduce((s,d)=>s+num(d.balance),0);
-  const savings = num(state.savings);
-  const annualIncome = income*12;
-  const ages = state.children.map(c=>num(c.age)).filter(a=>a>=0 && state.children.find(c=>num(c.age)===a));
-  const childAges = state.children.map(c=>Number(c.age)).filter(a=>isFinite(a)&&a>=0);
+  const debtsPaymentTotal = state.debts.reduce((s,d)=>s+num(d.payment),0);
+  const grossIncome = grossFromNet(income);
 
-  const yearsDeath = childAges.length ? clamp(22-Math.min(...childAges),5,20) : 3;
-  const inflationFactorDeath = Math.pow(1+INFLATION_PA/100, yearsDeath);
-  const needDeath = debtsTotal + (annualIncome*yearsDeath + childAges.length*EDU_RESERVE_PER_CHILD)*inflationFactorDeath;
-  const coveredDeathRaw = num(state.existingLife) + savings;
-  const gapDeath = Math.max(0, needDeath - coveredDeathRaw);
+  const needDeath = FUNERAL_COST + debtsPaymentTotal*DEATH_DEBT_MONTHS;
+  const coveredDeath = num(state.existingLife);
+  const gapDeath = Math.max(0, needDeath - coveredDeath);
 
-  const yearsDisability = Math.min(yearsDeath,10);
-  const inflationFactorDis = Math.pow(1+INFLATION_PA/100, yearsDisability);
-  const needDisability = (debtsTotal*0.5 + annualIncome*yearsDisability*0.6)*inflationFactorDis;
-  const coveredDisabilityRaw = num(state.existingDisability) + savings*0.5;
-  const gapDisability = Math.max(0, needDisability - coveredDisabilityRaw);
+  const needDisability = expenses*DISABILITY_EXPENSE_MONTHS;
+  const coveredDisability = num(state.existingDisability);
+  const gapDisability = Math.max(0, needDisability - coveredDisability);
 
-  const monthlyShortfall = Math.max(0, expenses - income*STATE_SICKPAY_RATIO);
-  const needPn = monthlyShortfall*PN_MONTHS;
-  const coveredPnRaw = num(state.existingPn) + savings;
-  const gapPn = Math.max(0, needPn - coveredPnRaw);
+  const needCriticalIllness = expenses*CRITICAL_ILLNESS_EXPENSE_MONTHS + CRITICAL_ILLNESS_ABROAD_DEFAULT;
+  const coveredCriticalIllness = num(state.existingCriticalIllness);
+  const gapCriticalIllness = Math.max(0, needCriticalIllness - coveredCriticalIllness);
+
+  const needPermanentInjury = expenses*PERMANENT_INJURY_EXPENSE_MONTHS;
+  const coveredPermanentInjury = num(state.existingPermanentInjury);
+  const gapPermanentInjury = Math.max(0, needPermanentInjury - coveredPermanentInjury);
+
+  const statePnBenefit = grossIncome*STATE_SICKPAY_RATIO;
+  const monthlyShortfallPn = Math.max(0, expenses - statePnBenefit);
+  const neededDailyPn = monthlyShortfallPn/30;
+  const coveredDailyPn = num(state.existingPn);
+  const gapDailyPn = Math.max(0, neededDailyPn - coveredDailyPn);
+
+  const reserveTarget = expenses*RESERVE_EXPENSE_MONTHS;
+  const reserveCurrent = num(state.savings);
+  const reserveGap = Math.max(0, reserveTarget - reserveCurrent);
 
   return {
-    death:{ need:needDeath, covered:Math.min(coveredDeathRaw,needDeath), gap:gapDeath, years:yearsDeath },
-    disability:{ need:needDisability, covered:Math.min(coveredDisabilityRaw,needDisability), gap:gapDisability, years:yearsDisability },
-    pn:{ need:needPn, covered:Math.min(coveredPnRaw,needPn), gap:gapPn, monthlyShortfall },
-    inputs:{ income, expenses, debtsTotal, savings, childCount:childAges.length },
+    death:{ need:needDeath, covered:Math.min(coveredDeath,needDeath), gap:gapDeath },
+    disability:{ need:needDisability, covered:Math.min(coveredDisability,needDisability), gap:gapDisability },
+    criticalIllness:{ need:needCriticalIllness, covered:Math.min(coveredCriticalIllness,needCriticalIllness), gap:gapCriticalIllness },
+    permanentInjury:{ need:needPermanentInjury, covered:Math.min(coveredPermanentInjury,needPermanentInjury), gap:gapPermanentInjury },
+    pn:{ need:neededDailyPn, covered:Math.min(coveredDailyPn,neededDailyPn), gap:gapDailyPn, monthlyShortfall:monthlyShortfallPn, grossIncome },
+    reserve:{ target:reserveTarget, current:reserveCurrent, gap:reserveGap },
+    inputs:{ income, expenses, debtsPaymentTotal, grossIncome },
   };
 }
 
@@ -524,13 +574,14 @@ function renderChildren(){
   }).join('');
 }
 
-function riskCardHtml(id, label, r, note){
+function riskCardHtml(id, label, r, note, fmt){
+  fmt = fmt || eur;
   const hideNums = state.mode==='klient';
   const total = Math.max(r.need, r.covered);
   const coveredPct = total>0 ? clamp(r.covered/total*100, 0, 100) : 100;
   const gapPct = total>0 ? clamp(100-coveredPct, 0, 100) : 0;
   const gapClass = r.gap>0 ? 'some' : 'zero';
-  const gapLabel = r.gap>0 ? eur(r.gap) : 'Kryté';
+  const gapLabel = r.gap>0 ? fmt(r.gap) : 'Kryté';
 
   return ''
     + '<div class="risk-head">'
@@ -543,8 +594,8 @@ function riskCardHtml(id, label, r, note){
       + '<div class="bar-seg crit" style="width:'+gapPct+'%"></div>'
     + '</div>'
     + '<div class="bar-nums'+(hideNums?' risk-blur':'')+'">'
-      + '<span>Kryté: <b>'+eur(r.covered)+'</b></span>'
-      + '<span>Odporúčané: <b>'+eur(r.need)+'</b></span>'
+      + '<span>Kryté: <b>'+fmt(r.covered)+'</b></span>'
+      + '<span>Odporúčané: <b>'+fmt(r.need)+'</b></span>'
     + '</div>'
     + '</div>'
     + '<div class="risk-note">'+note+'</div>';
@@ -573,17 +624,25 @@ function render(){
   if($('checklistCard')) $('checklistCard').style.display = state.mode==='klient' ? 'none' : 'block';
   if($('sendLinkCard')) $('sendLinkCard').style.display = state.mode==='klient' ? 'none' : 'block';
 
-  $('riskDeath').innerHTML = riskCardHtml('death','Úmrtie živiteľa/-ky', g.death,
-    'Zohľadňuje splatenie záväzkov ('+eur(g.inputs.debtsTotal)+'), náhradu príjmu na '+g.death.years+' rokov'
-    + (g.inputs.childCount ? ' a vzdelávaciu rezervu pre '+g.inputs.childCount+' '+(g.inputs.childCount===1?'dieťa':'deti') : '')
-    + ', vrátane inflácie '+INFLATION_PA+' % p.a. na danom horizonte.');
+  $('riskDeath').innerHTML = riskCardHtml('death','Úmrtie', g.death,
+    'Pohrebné náklady (3 000 €, vyplatiteľné do 2-3 dní) + 12x mesačná splátka záväzkov ('+eur(g.inputs.debtsPaymentTotal)+') — preklenutie obdobia dedičského konania. Pri partnerovi/deťoch sa metodika mení.');
 
-  $('riskDisability').innerHTML = riskCardHtml('disability','Invalidita (čiastočná/plná)', g.disability,
-    'Počíta s kratším horizontom ('+g.disability.years+' rokov) a nižším podielom príjmu, keďže časť výpadku čiastočne nahradí invalidný dôchodok zo Sociálnej poisťovne. Pri čiastočnej invalidite sa spravidla vypláca pomerná časť poistnej sumy.');
+  $('riskDisability').innerHTML = riskCardHtml('disability','Invalidita (čiastočná)', g.disability,
+    '36-násobok mesačných výdavkov. Pri čiastočnej invalidite sa spravidla vypláca pomerná časť poistnej sumy.');
 
-  $('riskPn').innerHTML = riskCardHtml('pn','PN / dlhodobá práceneschopnosť', g.pn,
-    'Vychádza z rozdielu mesačných výdavkov a odhadovaného nemocenského ('+Math.round(STATE_SICKPAY_RATIO*100)+' % príjmu) na odporúčaných '+PN_MONTHS+' mesiacov krytia'
-    + (g.pn.monthlyShortfall>0 ? ' (mesačný rozdiel '+eur(g.pn.monthlyShortfall)+').' : '.'));
+  $('riskCriticalIllness').innerHTML = riskCardHtml('criticalIllness','Kritické choroby', g.criticalIllness,
+    '36-násobok mesačných výdavkov + orientačne '+eur(CRITICAL_ILLNESS_ABROAD_DEFAULT)+' na prípadnú liečbu v zahraničí (spresní sa individuálne pri ponuke).');
+
+  $('riskPermanentInjury').innerHTML = riskCardHtml('permanentInjury','Trvalé následky úrazom', g.permanentInjury,
+    'Referenčná suma — 60-násobok mesačných výdavkov. Produkt má progresívne plnenie do 1000 %, presnú poistnú sumu s ohľadom na progresiu nastaví poradca individuálne.');
+
+  $('riskPn').innerHTML = riskCardHtml('pn','PN / práceneschopnosť', g.pn,
+    'Rozdiel mesačných výdavkov a štátneho nemocenského ('+Math.round(STATE_SICKPAY_RATIO*100)+' % z hrubého príjmu, cca '+eur(g.inputs.grossIncome)+'), vyjadrený ako denná dávka'
+    + (g.pn.monthlyShortfall>0 ? ' (mesačný rozdiel '+eur(g.pn.monthlyShortfall)+').' : '.'), eurDay);
+
+  if($('reserveInfo')) $('reserveInfo').innerHTML = riskCardHtml('reserve','Krátkodobá rezerva (úspory)',
+    { need:g.reserve.target, covered:g.reserve.current, gap:g.reserve.gap },
+    '6-násobok mesačných výdavkov ako likvidná rezerva. Posledných 5 rokov pred dôchodkom sa cieľ mení na 36-násobok.');
 }
 
 /* ===========================================================================
@@ -604,7 +663,10 @@ function doCreateChecklist(){
   const items = [];
   if(g.death.gap>0) items.push({ text:'Dojednať/doplniť životné poistenie – chýba cca '+eur(g.death.gap)+' krytia pre prípad úmrtia', owner:'klient' });
   if(g.disability.gap>0) items.push({ text:'Dojednať/doplniť poistenie invalidity – chýba cca '+eur(g.disability.gap)+' krytia', owner:'klient' });
-  if(g.pn.gap>0) items.push({ text:'Dojednať/doplniť poistenie PN (práceneschopnosti) – chýba cca '+eur(g.pn.gap)+' krytia', owner:'klient' });
+  if(g.criticalIllness.gap>0) items.push({ text:'Dojednať/doplniť poistenie kritických chorôb – chýba cca '+eur(g.criticalIllness.gap)+' krytia', owner:'klient' });
+  if(g.permanentInjury.gap>0) items.push({ text:'Dojednať/doplniť poistenie trvalých následkov úrazom – referenčne chýba cca '+eur(g.permanentInjury.gap)+' krytia', owner:'klient' });
+  if(g.pn.gap>0) items.push({ text:'Dojednať/doplniť poistenie PN (práceneschopnosti) – chýba cca '+eurDay(g.pn.gap), owner:'klient' });
+  if(g.reserve.gap>0) items.push({ text:'Vybudovať krátkodobú finančnú rezervu – chýba cca '+eur(g.reserve.gap), owner:'klient' });
 
   const seed = {
     clientName: state.contactName.trim(),
@@ -770,7 +832,8 @@ function maskLabel(coveredPct){
   return { text:'Nedostatočne kryté', cls:'gap' };
 }
 
-function riskRowHtml(badgeClass, name, r, note, masked){
+function riskRowHtml(badgeClass, name, r, note, masked, fmt){
+  fmt = fmt || eur;
   const total = Math.max(r.need, r.covered);
   const coveredPct = total>0 ? clamp(r.covered/total*100, 0, 100) : 100;
   const gapPct = total>0 ? clamp(100-coveredPct, 0, 100) : 0;
@@ -782,9 +845,9 @@ function riskRowHtml(badgeClass, name, r, note, masked){
     numsHtml = '';
   } else {
     statusHtml = r.gap>0
-      ? '<td class="risk-status gap">chýba '+eur(r.gap)+'</td>'
+      ? '<td class="risk-status gap">chýba '+fmt(r.gap)+'</td>'
       : '<td class="risk-status ok">kryté</td>';
-    numsHtml = '<table class="risk-nums"><tr><td>Kryté <b class="mono">'+eur(r.covered)+'</b></td><td class="r">Odporúčané <b class="mono">'+eur(r.need)+'</b></td></tr></table>';
+    numsHtml = '<table class="risk-nums"><tr><td>Kryté <b class="mono">'+fmt(r.covered)+'</b></td><td class="r">Odporúčané <b class="mono">'+fmt(r.need)+'</b></td></tr></table>';
   }
 
   return ''
@@ -815,19 +878,20 @@ function buildReportHtml(mode){
   const clientName = clientLinkLabel || state.contactName.trim() || 'Klient';
 
   const risks = [
-    { key:'death', badge:'warm', name:'Úmrtie živiteľa/-ky', r:g.death,
-      note: masked
-        ? 'Zohľadňuje splatenie záväzkov, náhradu príjmu na '+g.death.years+' rokov'
-          +(g.inputs.childCount ? ' a vzdelávaciu rezervu pre '+g.inputs.childCount+' '+(g.inputs.childCount===1?'dieťa':'deti') : '')
-          +', vrátane inflácie na danom horizonte.'
-        : 'Zohľadňuje splatenie záväzkov ('+eur(g.inputs.debtsTotal)+'), náhradu príjmu na '+g.death.years+' rokov'
-          +(g.inputs.childCount ? ' a vzdelávaciu rezervu pre '+g.inputs.childCount+' '+(g.inputs.childCount===1?'dieťa':'deti') : '')
-          +', vrátane inflácie '+INFLATION_PA+' % p.a. na danom horizonte.' },
-    { key:'disability', badge:'teal', name:'Invalidita (čiastočná/plná)', r:g.disability,
-      note:'Kratší horizont ('+g.disability.years+' rokov) a nižší podiel príjmu — časť výpadku čiastočne nahradí invalidný dôchodok zo Sociálnej poisťovne.' },
-    { key:'pn', badge:'teal', name:'PN / dlhodobá práceneschopnosť', r:g.pn,
-      note:'Rozdiel medzi mesačnými výdavkami a odhadovaným nemocenským ('+Math.round(STATE_SICKPAY_RATIO*100)+' % príjmu) na odporúčaných '+PN_MONTHS+' mesiacov krytia.' },
+    { key:'death', badge:'warm', name:'Úmrtie', r:g.death,
+      note:'Pohrebné náklady + 12x mesačná splátka záväzkov — preklenutie obdobia dedičského konania.' },
+    { key:'disability', badge:'teal', name:'Invalidita (čiastočná)', r:g.disability,
+      note:'36-násobok mesačných výdavkov. Pri čiastočnej invalidite sa spravidla vypláca pomerná časť poistnej sumy.' },
+    { key:'criticalIllness', badge:'warm', name:'Kritické choroby', r:g.criticalIllness,
+      note:'36-násobok mesačných výdavkov + orientačná suma na prípadnú liečbu v zahraničí.' },
+    { key:'permanentInjury', badge:'teal', name:'Trvalé následky úrazom', r:g.permanentInjury,
+      note:'Referenčná suma (60-násobok výdavkov) — produkt má progresívne plnenie do 1000 %, presnú poistnú sumu nastaví poradca individuálne.' },
   ];
+  const pnRisk = { badge:'teal', name:'PN / práceneschopnosť', r:g.pn,
+    note:'Rozdiel mesačných výdavkov a štátneho nemocenského (55 % z hrubého príjmu), vyjadrený ako denná dávka.' };
+  const reserveRisk = { badge:'teal', name:'Krátkodobá rezerva (úspory)',
+    r:{ need:g.reserve.target, covered:g.reserve.current, gap:g.reserve.gap },
+    note:'6-násobok mesačných výdavkov ako likvidná rezerva.' };
 
   const worst = risks.reduce((a,b)=> b.r.gap>a.r.gap ? b : a, risks[0]);
   const maxGap = worst.r.gap;
@@ -836,24 +900,23 @@ function buildReportHtml(mode){
   if(maxGap>0){
     if(masked){
       thesisHtml = ''
-        + '<div class="thesis-lede">Na základe zadaných údajov sme prezreli tri riziká — úmrtie, invaliditu a dlhodobú PN:</div>'
+        + '<div class="thesis-lede">Na základe zadaných údajov sme prezreli riziká úmrtia, invalidity, kritických chorôb a trvalých následkov:</div>'
         + '<div class="hero serif" style="font-size:22pt;">Niektoré riziká nie sú dostatočne kryté</div>'
         + '<div class="hero-rule"></div>'
         + '<div class="thesis-sub">Najviac pozornosti potrebuje riziko <b>'+worst.name.toLowerCase()+'</b>. Presné čísla a odporúčané krytie s vami prejde poradca osobne.</div>';
     } else {
       thesisHtml = ''
-        + '<div class="thesis-lede">Ak by dnes vypadol váš príjem &mdash; úmrtím, invaliditou alebo dlhšou PN &mdash; vašej rodine by v najhoršom prípade chýbalo:</div>'
+        + '<div class="thesis-lede">Na základe zadaných údajov by v najhoršom prípade chýbalo:</div>'
         + '<div class="hero serif">'+eur(maxGap)+'</div>'
         + '<div class="hero-rule"></div>'
-        + '<div class="thesis-sub">To zodpovedá riziku <b>'+worst.name.toLowerCase()+'</b> &mdash; ostatné dve riziká majú medzeru '
-        + risks.filter(x=>x.key!==worst.key).map(x=> eur(x.r.gap)).join(' a ')+'.</div>';
+        + '<div class="thesis-sub">To zodpovedá riziku <b>'+worst.name.toLowerCase()+'</b>.</div>';
     }
   } else {
     thesisHtml = ''
       + '<div class="thesis-lede">Na základe zadaných údajov:</div>'
       + '<div class="hero serif" style="color:#0e9c90;">Ste dobre pripravení</div>'
       + '<div class="hero-rule" style="background:#0ca30c;"></div>'
-      + '<div class="thesis-sub">Vaše aktuálne krytie pokrýva odporúčané sumy pre všetky tri preverené riziká. Odporúčame situáciu s poradcom raz ročne prekontrolovať.</div>';
+      + '<div class="thesis-sub">Vaše aktuálne krytie pokrýva odporúčané sumy pre preverené riziká. Odporúčame situáciu s poradcom raz ročne prekontrolovať.</div>';
   }
 
   const nextStepHtml = (maxGap>0 && !masked)
@@ -862,7 +925,9 @@ function buildReportHtml(mode){
       ? '<div class="next-step"><p>Toto je orientačný náhľad bez presných súm. <b>'+escapeHtml(ADVISOR.name)+'</b> sa vám ozve a prejdete si to spoločne.</p></div>'
       : '');
 
-  const risksHtml = risks.map(x => riskRowHtml(x.badge, x.name, x.r, x.note, masked)).join('');
+  const risksHtml = risks.map(x => riskRowHtml(x.badge, x.name, x.r, x.note, masked)).join('')
+    + riskRowHtml(pnRisk.badge, pnRisk.name, pnRisk.r, pnRisk.note, masked, eurDay)
+    + riskRowHtml(reserveRisk.badge, reserveRisk.name, reserveRisk.r, reserveRisk.note, masked);
 
   const css = `
     @font-face { font-family:'DejaVu Sans'; src:url('`+fontBase+`DejaVuSans.ttf'); }
@@ -983,7 +1048,7 @@ function doReset(){
     income:'', expenses:'',
     debts:[withId({ desc:'', balance:'', payment:'' })],
     children:[],
-    existingLife:'', existingDisability:'', existingPn:'',
+    existingLife:'', existingDisability:'', existingCriticalIllness:'', existingPermanentInjury:'', existingPn:'',
     savings:'', contactName:'',
     touched:false,
   });
@@ -991,7 +1056,7 @@ function doReset(){
 }
 
 function syncInputs(){
-  ['income','expenses','existingLife','existingDisability','existingPn','savings','contactName']
+  ['income','expenses','existingLife','existingDisability','existingCriticalIllness','existingPermanentInjury','existingPn','savings','contactName']
     .forEach(k=>{ if($(k)) $(k).value = state[k]; });
 }
 
@@ -1006,7 +1071,7 @@ function setMode(mode){
    UDALOSTI
 =========================================================================== */
 function bind(){
-  ['income','expenses','existingLife','existingDisability','existingPn','savings','contactName'].forEach(k=>{
+  ['income','expenses','existingLife','existingDisability','existingCriticalIllness','existingPermanentInjury','existingPn','savings','contactName'].forEach(k=>{
     if($(k)) $(k).addEventListener('input', e=>{ state[k]=e.target.value; render(); });
   });
 
