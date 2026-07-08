@@ -97,6 +97,7 @@
             border:1.5px solid var(--accent-line);
             font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
   .step-title{font-size:12.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--label);}
+  .step-hint{font-size:11px; color:var(--muted); line-height:1.5; margin:-8px 0 12px;}
 
   .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
   .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;}
@@ -125,6 +126,9 @@
   .item-meta{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
   .item-meta.single{grid-template-columns:1fr;}
   .item-meta.triple{grid-template-columns:1fr 1fr 1fr; margin-top:8px;}
+  .mini-field{display:flex; flex-direction:column; gap:4px; min-width:0;}
+  .mini-field label{font-size:9.5px; font-weight:700; color:var(--muted); letter-spacing:.02em; line-height:1.3;}
+  .mini-field input{width:100%;}
   .item-del{flex:none; width:28px; height:28px; border-radius:9px; border:1.5px solid var(--border); background:#fff;
       color:#a3a7ba; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .15s;}
   .item-del:hover{border-color:var(--err); color:var(--err); background:var(--critical-soft);}
@@ -299,6 +303,7 @@
       <!-- 2. záväzky -->
       <div>
         <div class="step-head"><div class="step-num">2</div><div class="step-title">Existujúce záväzky <span style="font-weight:500;text-transform:none;">(hypotéka, úvery)</span></div></div>
+        <div class="step-hint">Používa sa len pri jednotlivcovi bez detí (preklenutie obdobia dedičského konania po úmrtí). Pri páre alebo klientovi s deťmi sa do výpočtu nezapočítava — nahrádza ho väčší násobok priamo pri riziku úmrtia.</div>
         <div class="items" id="debtItems"></div>
         <button type="button" class="add-item" id="addDebt" style="margin-top:10px;">+ Pridať záväzok</button>
       </div>
@@ -809,9 +814,9 @@ function renderChildren(){
       + '<input type="number" min="0" max="30" placeholder="Vek dieťaťa (roky)" value="'+escapeHtml(c.age)+'" data-act="age">'
       + '</div>'
       + '<div class="item-meta triple">'
-      + '<input type="number" min="0" placeholder="Kryté – kritické (€)" value="'+escapeHtml(c.existingCriticalIllness)+'" data-act="existingCriticalIllness">'
-      + '<input type="number" min="0" placeholder="Kryté – trvalé (€)" value="'+escapeHtml(c.existingPermanentInjury)+'" data-act="existingPermanentInjury">'
-      + '<input type="number" min="0" placeholder="Kryté – invalidita (€)" value="'+escapeHtml(c.existingInvalidity)+'" data-act="existingInvalidity">'
+      + '<div class="mini-field"><label>Kryté – kritické (€)</label><input type="number" min="0" value="'+escapeHtml(c.existingCriticalIllness)+'" data-act="existingCriticalIllness"></div>'
+      + '<div class="mini-field"><label>Kryté – trvalé (€)</label><input type="number" min="0" value="'+escapeHtml(c.existingPermanentInjury)+'" data-act="existingPermanentInjury"></div>'
+      + '<div class="mini-field"><label>Kryté – invalidita (€)</label><input type="number" min="0" value="'+escapeHtml(c.existingInvalidity)+'" data-act="existingInvalidity"></div>'
       + '</div></div>'
       + '<div class="item-del" data-act="del" title="Odstrániť">✕</div>'
       + '</div></div>';
