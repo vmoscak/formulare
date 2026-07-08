@@ -265,6 +265,7 @@
   </div>
 </div>
 
+<script src="../assets/advisor-panel.js"></script>
 <script>
 /* ===========================================================================
    DÁTA — prednastavené položky (dajú sa upraviť / vymazať)
@@ -493,6 +494,7 @@ function doPDF(){
     document.body.appendChild(a); a.click();
     setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
     btn.textContent='Vygenerovať a stiahnuť PDF'; btn.disabled=false;
+    logDocument('preberaci-protokol', state.toName||'Klient', state, undefined);
   })
   .catch(function(e){
     console.error(e);
@@ -570,6 +572,7 @@ function bind(){
 =========================================================================== */
 (function init(){
   syncInputs(); bind(); render();
+  autoOpenSavedDocument(function(d){ Object.assign(state, d); state.touched = true; syncInputs(); render(); }, doPDF);
 })();
 </script>
 

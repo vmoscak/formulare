@@ -323,6 +323,7 @@
   </div>
 </div>
 
+<script src="../assets/advisor-panel.js"></script>
 <script>
 /* ===========================================================================
    DÁTA — tu meníš obsah (poisťovne, dôvody preplatku)
@@ -630,6 +631,7 @@ function doPDF(){
     document.body.appendChild(a); a.click();
     setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
     btn.textContent='Vygenerovať a stiahnuť PDF'; btn.disabled=false;
+    logDocument('ziadost-vratenie-preplatku', state.name||'Klient', state, undefined);
   })
   .catch(function(e){
     console.error(e);
@@ -723,6 +725,7 @@ function bind(){
 =========================================================================== */
 (function init(){
   renderControls(); syncInputs(); bind(); render();
+  autoOpenSavedDocument(function(d){ Object.assign(state, d); state.touched = true; syncInputs(); render(); }, doPDF);
 })();
 </script>
 
