@@ -112,6 +112,7 @@
   .item-body input:focus{border-color:var(--accent);}
   .item-meta{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
   .item-meta.single{grid-template-columns:1fr;}
+  .item-meta.triple{grid-template-columns:1fr 1fr 1fr; margin-top:8px;}
   .item-del{flex:none; width:28px; height:28px; border-radius:8px; border:1.5px solid #dde1ea; background:#fff;
       color:#9aa2b1; display:flex; align-items:center; justify-content:center; cursor:pointer;}
   .item-del:hover{border-color:var(--err); color:var(--err);}
@@ -160,6 +161,10 @@
   .bar-nums b{color:var(--ink); font-weight:700;}
 
   .risk-note{font-size:11.5px; color:var(--muted); margin-top:10px; line-height:1.5;}
+  #riskResults{display:flex; flex-direction:column; gap:14px;}
+  .risk-section-label{font-size:11.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase;
+      color:var(--accent); margin:6px 0 -6px;}
+  .risk-section-label:first-child{margin-top:0;}
 
   .risk-blur{filter:blur(7px); user-select:none; pointer-events:none;}
   .risk-mask{position:relative;}
@@ -196,7 +201,7 @@
     .form,.preview{min-width:0; padding:22px 18px;}
     .fields{grid-template-columns:1fr;}
     .grid2{grid-template-columns:1fr;}
-    .item-meta{grid-template-columns:1fr;}
+    .item-meta,.item-meta.triple{grid-template-columns:1fr;}
     .mode-toggle span{display:none;}
   }
 </style>
@@ -233,12 +238,23 @@
       <div>
         <div class="step-head"><div class="step-num">1</div><div class="step-title">Príjmy a výdavky domácnosti</div></div>
         <div class="fields">
+          <div class="field col-full" style="flex-direction:row; align-items:center;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:12.5px; color:var(--ink); text-transform:none; letter-spacing:0;">
+              <input type="checkbox" id="hasPartner" style="width:16px;height:16px;">
+              Klient má partnera/manželku (spoločná domácnosť)
+            </label>
+          </div>
           <div class="field" data-k="income">
-            <label>MESAČNÝ ČISTÝ PRÍJEM DOMÁCNOSTI (€)</label>
+            <label>MESAČNÝ ČISTÝ PRÍJEM KLIENTA (€)</label>
             <input type="number" min="0" step="10" id="income" placeholder="napr. 1800">
             <span class="err">Zadaj mesačný príjem</span>
           </div>
-          <div class="field" data-k="expenses">
+          <div class="field" id="partnerIncomeField" data-k="partnerIncome" style="display:none;">
+            <label>MESAČNÝ ČISTÝ PRÍJEM PARTNERA/-KY (€)</label>
+            <input type="number" min="0" step="10" id="partnerIncome" placeholder="napr. 900">
+            <span class="err">Zadaj príjem partnera/-ky</span>
+          </div>
+          <div class="field col-full" data-k="expenses">
             <label>MESAČNÉ VÝDAVKY DOMÁCNOSTI (€)</label>
             <input type="number" min="0" step="10" id="expenses" placeholder="napr. 1300">
             <span class="err">Zadaj mesačné výdavky</span>
@@ -255,7 +271,7 @@
 
       <!-- 3. deti -->
       <div>
-        <div class="step-head"><div class="step-num">3</div><div class="step-title">Deti <span style="font-weight:500;text-transform:none;">(počet a vek)</span></div></div>
+        <div class="step-head"><div class="step-num">3</div><div class="step-title">Deti <span style="font-weight:500;text-transform:none;">(vek a existujúce krytie)</span></div></div>
         <div class="items" id="childItems"></div>
         <button type="button" class="add-item" id="addChild" style="margin-top:10px;">+ Pridať dieťa</button>
       </div>
@@ -288,6 +304,36 @@
             <label>PRE PN (€/DEŇ)</label>
             <input type="number" min="0" step="1" id="existingPn" placeholder="0">
             <span class="err"></span>
+          </div>
+        </div>
+        <div id="partnerExistingBlock" style="display:none; margin-top:16px;">
+          <div style="font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--label); margin-bottom:8px;">Partner/-ka</div>
+          <div class="grid3">
+            <div class="field" data-k="existingLifePartner">
+              <label>PRE ÚMRTIE (€)</label>
+              <input type="number" min="0" step="100" id="existingLifePartner" placeholder="0">
+              <span class="err"></span>
+            </div>
+            <div class="field" data-k="existingDisabilityPartner">
+              <label>PRE INVALIDITU (€)</label>
+              <input type="number" min="0" step="100" id="existingDisabilityPartner" placeholder="0">
+              <span class="err"></span>
+            </div>
+            <div class="field" data-k="existingCriticalIllnessPartner">
+              <label>PRE KRITICKÉ CHOROBY (€)</label>
+              <input type="number" min="0" step="100" id="existingCriticalIllnessPartner" placeholder="0">
+              <span class="err"></span>
+            </div>
+            <div class="field" data-k="existingPermanentInjuryPartner">
+              <label>PRE TRVALÉ NÁSLEDKY (€)</label>
+              <input type="number" min="0" step="100" id="existingPermanentInjuryPartner" placeholder="0">
+              <span class="err"></span>
+            </div>
+            <div class="field" data-k="existingPnPartner">
+              <label>PRE PN (€/DEŇ)</label>
+              <input type="number" min="0" step="1" id="existingPnPartner" placeholder="0">
+              <span class="err"></span>
+            </div>
           </div>
         </div>
       </div>
@@ -330,12 +376,7 @@
         <span><span class="dot crit"></span>Chýba (medzera)</span>
       </div>
 
-      <div class="risk-card" id="riskDeath"></div>
-      <div class="risk-card" id="riskDisability"></div>
-      <div class="risk-card" id="riskCriticalIllness"></div>
-      <div class="risk-card" id="riskPermanentInjury"></div>
-      <div class="risk-card" id="riskPn"></div>
-      <div class="risk-card" id="reserveInfo"></div>
+      <div id="riskResults"></div>
 
       <div class="contact-card" id="clientNameCard">
         <div class="field" data-k="contactName">
@@ -427,9 +468,11 @@ function withId(o){ return Object.assign({ id:_idSeq++ }, o); }
 const state = {
   mode: (CLIENT_TOKEN || params.get('klient') === '1') ? 'klient' : 'poradca',
   income:'', expenses:'',
+  hasPartner:false, partnerIncome:'',
   debts: [withId({ desc:'', balance:'', payment:'' })],
   children: [],
   existingLife:'', existingDisability:'', existingCriticalIllness:'', existingPermanentInjury:'', existingPn:'',
+  existingLifePartner:'', existingDisabilityPartner:'', existingCriticalIllnessPartner:'', existingPermanentInjuryPartner:'', existingPnPartner:'',
   savings:'',
   contactName:'',
   touched:false,
@@ -444,13 +487,12 @@ function eur(n){ return Math.round(n).toLocaleString('sk-SK') + ' €'; }
 function eurDay(n){ return (Math.round(n*100)/100).toLocaleString('sk-SK') + ' €/deň'; }
 
 /* ===========================================================================
-   METODIKA VÝPOČTU MEDZERY (podľa reálneho postupu poradcu, klient bez
-   partnera/detí — pozri poznámky pri jednotlivých rizikách nižšie; scenár
-   s rodinou má vlastnú metodiku úmrtia, zatiaľ neimplementovanú)
+   METODIKA VÝPOČTU MEDZERY (podľa reálneho postupu poradcu)
    -------------------------------------------------------------------------
+   KLIENT BEZ PARTNERA (jednotlivec):
    Úmrtie:            3 000 € pohrebné (vyplatiteľné do 2-3 dní) + 12x mesačná
                       splátka záväzkov — preklenutie obdobia dedičského
-                      konania, nie splatenie celého dlhu (klient bez rodiny).
+                      konania, nie splatenie celého dlhu.
    Invalidita:        36x mesačné výdavky (počíta sa s čiastočnou invaliditou).
    Kritické choroby:  36x mesačné výdavky + orientačná suma na liečbu
                       v zahraničí (bežný štandard, individuálne sa spresní
@@ -461,17 +503,48 @@ function eurDay(n){ return (Math.round(n*100)/100).toLocaleString('sk-SK') + ' �
    PN:                rozdiel mesačných výdavkov a štátnej dávky (55 % z
                       HRUBÉHO príjmu — nie čistého), vyjadrený ako denná
                       dávka (mesačný rozdiel / 30).
-   Krátkodobá rezerva: 6x mesačné výdavky (aktívny život) — samostatný cieľ,
-                       úspory sa už nezapočítavajú ako krytie poistných rizík.
+
+   KLIENT S PARTNEROM/MANŽELKOU — vždy počítame s najhorším scenárom (výpadok
+   OBOCH príjmov naraz), preto sa referenčná suma pre oboch partnerov počíta
+   ROVNAKO — polovica mesačných výdavkov domácnosti ("koľko musí partner
+   priniesť mesačne do rozpočtu, aby mali na výdavky", keď druhý vypadne).
+   Úmrtie:            3 000 € pohrebné + 60x táto referenčná suma (u KAŽDÉHO
+                      partnera zvlášť) — dlhodobé zabezpečenie rodiny, nie iba
+                      preklenutie dedičského konania ako pri jednotlivcovi.
+   Invalidita:        36x referenčná suma (u každého partnera zvlášť).
+   Kritické choroby:  36x referenčná suma + orientačná suma na liečbu v zahraničí.
+   Trvalé následky:   referenčná suma 60x referenčná suma (rovnaká logika ako
+                      pri jednotlivcovi, iný základ).
+   PN:                rieši sa OSOBITNE pre každého partnera (druhý naďalej
+                      pracuje) — chýbajúca časť = výdavky − príjem partnera −
+                      štátna dávka (55 % z HRUBÉHO príjmu tejto osoby).
+
+   DETI — príjem sa u detí nerieši vôbec (žiadny násobok výdavkov):
+   Úmrtie:            len 3 000 € pohrebné na dieťa (bežne súčasť pripoistenia
+                      k zmluve rodiča).
+   Kritické choroby:  orientačná suma 50 000 € na dieťa, samostatne.
+   Trvalé následky:   orientačná suma 50 000 € na dieťa, samostatne.
+   Invalidita:        len úplná (čiastočná pri deťoch neexistuje) — orientačne
+                      50 000 € na dieťa ("invalidita z mladosti", plnenie až
+                      po dosiahnutí 18 rokov).
+   PN:                pri deťoch sa nerieši.
+
+   Krátkodobá rezerva: 6x mesačné výdavky domácnosti (aktívny život) —
+                       samostatný cieľ, spoločný pre celú domácnosť, úspory sa
+                       nezapočítavajú ako krytie poistných rizík.
 =========================================================================== */
 const FUNERAL_COST = 3000;
 const DEATH_DEBT_MONTHS = 12;
+const DEATH_SHORTFALL_MONTHS_PARTNER = 60;
 const DISABILITY_EXPENSE_MONTHS = 36;
 const CRITICAL_ILLNESS_EXPENSE_MONTHS = 36;
 const CRITICAL_ILLNESS_ABROAD_DEFAULT = 50000;
 const PERMANENT_INJURY_EXPENSE_MONTHS = 60;
 const RESERVE_EXPENSE_MONTHS = 6;
 const STATE_SICKPAY_RATIO = 0.55;
+const CHILD_CRITICAL_ILLNESS_FLAT = 50000;
+const CHILD_PERMANENT_INJURY_FLAT = 50000;
+const CHILD_INVALIDITY_FLAT = 50000;
 
 /* Prevod čistého mesačného príjmu na hrubý podľa slovenských odvodov a dane
    pre rok 2026 — 9,4 % sociálne + 5 % zdravotné (dočasná sadzba 2026-2027)
@@ -488,47 +561,162 @@ function grossFromNet(net){
   return (net - NCZD_MONTHLY_2026*TAX_RATE_BASE) / ((1-LEVY_RATE_EMPLOYEE)*(1-TAX_RATE_BASE));
 }
 
-function computeGaps(){
-  const income = num(state.income);
-  const expenses = num(state.expenses);
-  const debtsPaymentTotal = state.debts.reduce((s,d)=>s+num(d.payment),0);
+function gapObj(need, covered){
+  return { need:need, covered:Math.min(covered,need), gap:Math.max(0, need-covered) };
+}
+
+/* Jednotlivec (bez partnera) — základ je plný mesačný výdavok domácnosti. */
+function computeSingleAdultRisks(income, expenses, debtsPaymentTotal, existing){
   const grossIncome = grossFromNet(income);
 
   const needDeath = FUNERAL_COST + debtsPaymentTotal*DEATH_DEBT_MONTHS;
-  const coveredDeath = num(state.existingLife);
-  const gapDeath = Math.max(0, needDeath - coveredDeath);
-
   const needDisability = expenses*DISABILITY_EXPENSE_MONTHS;
-  const coveredDisability = num(state.existingDisability);
-  const gapDisability = Math.max(0, needDisability - coveredDisability);
-
   const needCriticalIllness = expenses*CRITICAL_ILLNESS_EXPENSE_MONTHS + CRITICAL_ILLNESS_ABROAD_DEFAULT;
-  const coveredCriticalIllness = num(state.existingCriticalIllness);
-  const gapCriticalIllness = Math.max(0, needCriticalIllness - coveredCriticalIllness);
-
   const needPermanentInjury = expenses*PERMANENT_INJURY_EXPENSE_MONTHS;
-  const coveredPermanentInjury = num(state.existingPermanentInjury);
-  const gapPermanentInjury = Math.max(0, needPermanentInjury - coveredPermanentInjury);
 
   const statePnBenefit = grossIncome*STATE_SICKPAY_RATIO;
   const monthlyShortfallPn = Math.max(0, expenses - statePnBenefit);
   const neededDailyPn = monthlyShortfallPn/30;
-  const coveredDailyPn = num(state.existingPn);
-  const gapDailyPn = Math.max(0, neededDailyPn - coveredDailyPn);
+
+  return {
+    death: gapObj(needDeath, num(existing.life)),
+    disability: gapObj(needDisability, num(existing.disability)),
+    criticalIllness: gapObj(needCriticalIllness, num(existing.criticalIllness)),
+    permanentInjury: gapObj(needPermanentInjury, num(existing.permanentInjury)),
+    pn: Object.assign(gapObj(neededDailyPn, num(existing.pn)), { monthlyShortfall:monthlyShortfallPn, grossIncome }),
+  };
+}
+
+/* Partner v páre — vždy najhorší scenár (výpadok oboch príjmov naraz), preto
+   je referenčná suma pre úmrtie/invaliditu/kritické/TN u OBOCH partnerov
+   rovnaká: polovica mesačných výdavkov domácnosti. PN sa rieši osobitne pre
+   každého, keďže tam druhý partner naďalej pracuje a prináša svoj príjem. */
+function computeCoupleAdultRisks(personIncome, partnerIncome, expenses, existing){
+  const sharedShortfall = expenses/2;
+  const grossIncome = grossFromNet(personIncome);
+
+  const needDeath = FUNERAL_COST + sharedShortfall*DEATH_SHORTFALL_MONTHS_PARTNER;
+  const needDisability = sharedShortfall*DISABILITY_EXPENSE_MONTHS;
+  const needCriticalIllness = sharedShortfall*CRITICAL_ILLNESS_EXPENSE_MONTHS + CRITICAL_ILLNESS_ABROAD_DEFAULT;
+  const needPermanentInjury = sharedShortfall*PERMANENT_INJURY_EXPENSE_MONTHS;
+
+  const statePnBenefit = grossIncome*STATE_SICKPAY_RATIO;
+  const monthlyShortfallPn = Math.max(0, expenses - num(partnerIncome) - statePnBenefit);
+  const neededDailyPn = monthlyShortfallPn/30;
+
+  return {
+    death: gapObj(needDeath, num(existing.life)),
+    disability: gapObj(needDisability, num(existing.disability)),
+    criticalIllness: gapObj(needCriticalIllness, num(existing.criticalIllness)),
+    permanentInjury: gapObj(needPermanentInjury, num(existing.permanentInjury)),
+    pn: Object.assign(gapObj(neededDailyPn, num(existing.pn)), { monthlyShortfall:monthlyShortfallPn, grossIncome }),
+  };
+}
+
+/* Deti — príjem sa nerieši, len flat orientačné sumy; PN sa pri deťoch nerieši. */
+function computeChildrenRisks(children){
+  const count = children.length;
+  const needDeath = count*FUNERAL_COST;
+  const needCriticalIllness = count*CHILD_CRITICAL_ILLNESS_FLAT;
+  const needPermanentInjury = count*CHILD_PERMANENT_INJURY_FLAT;
+  const needInvalidity = count*CHILD_INVALIDITY_FLAT;
+  const coveredCriticalIllness = children.reduce((s,c)=>s+num(c.existingCriticalIllness),0);
+  const coveredPermanentInjury = children.reduce((s,c)=>s+num(c.existingPermanentInjury),0);
+  const coveredInvalidity = children.reduce((s,c)=>s+num(c.existingInvalidity),0);
+
+  return {
+    count,
+    death: gapObj(needDeath, 0),
+    criticalIllness: gapObj(needCriticalIllness, coveredCriticalIllness),
+    permanentInjury: gapObj(needPermanentInjury, coveredPermanentInjury),
+    invalidity: gapObj(needInvalidity, coveredInvalidity),
+  };
+}
+
+function computeGaps(){
+  const income = num(state.income);
+  const expenses = num(state.expenses);
+  const debtsPaymentTotal = state.debts.reduce((s,d)=>s+num(d.payment),0);
+  const hasPartner = !!state.hasPartner;
+  const partnerIncome = num(state.partnerIncome);
+
+  let adult1, adult2 = null;
+  if(hasPartner){
+    adult1 = computeCoupleAdultRisks(income, partnerIncome, expenses, {
+      life: state.existingLife, disability: state.existingDisability,
+      criticalIllness: state.existingCriticalIllness, permanentInjury: state.existingPermanentInjury,
+      pn: state.existingPn,
+    });
+    adult2 = computeCoupleAdultRisks(partnerIncome, income, expenses, {
+      life: state.existingLifePartner, disability: state.existingDisabilityPartner,
+      criticalIllness: state.existingCriticalIllnessPartner, permanentInjury: state.existingPermanentInjuryPartner,
+      pn: state.existingPnPartner,
+    });
+  } else {
+    adult1 = computeSingleAdultRisks(income, expenses, debtsPaymentTotal, {
+      life: state.existingLife, disability: state.existingDisability,
+      criticalIllness: state.existingCriticalIllness, permanentInjury: state.existingPermanentInjury,
+      pn: state.existingPn,
+    });
+  }
+
+  const children = state.children.length ? computeChildrenRisks(state.children) : null;
 
   const reserveTarget = expenses*RESERVE_EXPENSE_MONTHS;
   const reserveCurrent = num(state.savings);
   const reserveGap = Math.max(0, reserveTarget - reserveCurrent);
 
   return {
-    death:{ need:needDeath, covered:Math.min(coveredDeath,needDeath), gap:gapDeath },
-    disability:{ need:needDisability, covered:Math.min(coveredDisability,needDisability), gap:gapDisability },
-    criticalIllness:{ need:needCriticalIllness, covered:Math.min(coveredCriticalIllness,needCriticalIllness), gap:gapCriticalIllness },
-    permanentInjury:{ need:needPermanentInjury, covered:Math.min(coveredPermanentInjury,needPermanentInjury), gap:gapPermanentInjury },
-    pn:{ need:neededDailyPn, covered:Math.min(coveredDailyPn,neededDailyPn), gap:gapDailyPn, monthlyShortfall:monthlyShortfallPn, grossIncome },
+    hasPartner, adult1, adult2, children,
     reserve:{ target:reserveTarget, current:reserveCurrent, gap:reserveGap },
-    inputs:{ income, expenses, debtsPaymentTotal, grossIncome },
+    inputs:{ income, expenses, debtsPaymentTotal, partnerIncome },
   };
+}
+
+/* Zjednotený zoznam všetkých rizikových položiek (dospelí + deti + rezerva) —
+   spoločný zdroj pre náhľad na obrazovke, PDF aj checklist. */
+function buildRiskEntries(g){
+  const entries = [];
+
+  function pushAdult(adult, section){
+    entries.push({ section, badge:'warm', name:'Úmrtie', r:adult.death, fmt:eur, lump:true,
+      note: g.hasPartner
+        ? 'Pohrebné náklady (3 000 €) + 60-násobok sumy, ktorú by partner musel priniesť mesačne do rozpočtu pri výpadku oboch príjmov naraz — najhorší scenár.'
+        : 'Pohrebné náklady (3 000 €, vyplatiteľné do 2-3 dní) + 12-násobok mesačnej splátky záväzkov ('+eur(g.inputs.debtsPaymentTotal)+') — preklenutie obdobia dedičského konania.' });
+    entries.push({ section, badge:'teal', name:'Invalidita (čiastočná)', r:adult.disability, fmt:eur, lump:true,
+      note: g.hasPartner
+        ? '36-násobok sumy, ktorú by partner musel priniesť mesačne do rozpočtu pri výpadku oboch príjmov naraz — najhorší scenár.'
+        : '36-násobok mesačných výdavkov. Pri čiastočnej invalidite sa spravidla vypláca pomerná časť poistnej sumy.' });
+    entries.push({ section, badge:'warm', name:'Kritické choroby', r:adult.criticalIllness, fmt:eur, lump:true,
+      note:'36-násobok '+(g.hasPartner?'referenčnej sumy':'mesačných výdavkov')+' + orientačne '+eur(CRITICAL_ILLNESS_ABROAD_DEFAULT)+' na prípadnú liečbu v zahraničí (spresní sa individuálne pri ponuke).' });
+    entries.push({ section, badge:'teal', name:'Trvalé následky úrazom', r:adult.permanentInjury, fmt:eur, lump:true,
+      note:'Referenčná suma — 60-násobok '+(g.hasPartner?'referenčnej sumy':'mesačných výdavkov')+'. Produkt má progresívne plnenie do 1000 %, presnú poistnú sumu nastaví poradca individuálne.' });
+    entries.push({ section, badge:'teal', name:'PN / práceneschopnosť', r:adult.pn, fmt:eurDay, lump:false,
+      note:'Rozdiel mesačných výdavkov'+(g.hasPartner?' a príjmu partnera/-ky':'')+' a štátneho nemocenského (55 % z hrubého príjmu, cca '+eur(adult.pn.grossIncome)+'), vyjadrený ako denná dávka'
+        + (adult.pn.monthlyShortfall>0 ? ' (mesačný rozdiel '+eur(adult.pn.monthlyShortfall)+').' : '.') });
+  }
+
+  pushAdult(g.adult1, 'Klient');
+  if(g.adult2) pushAdult(g.adult2, 'Partner/-ka');
+
+  if(g.children){
+    const c = g.children;
+    const label = 'Deti ('+c.count+')';
+    entries.push({ section:label, badge:'warm', name:'Úmrtie dieťaťa', r:c.death, fmt:eur, lump:true,
+      note:'Pohrebné náklady 3 000 € na dieťa — príjem sa u detí nerieši; bežne súčasť pripoistenia k zmluve rodiča.' });
+    entries.push({ section:label, badge:'teal', name:'Kritické choroby', r:c.criticalIllness, fmt:eur, lump:true,
+      note:'Orientačná suma 50 000 € na dieťa (spolu za všetky deti).' });
+    entries.push({ section:label, badge:'warm', name:'Trvalé následky úrazom', r:c.permanentInjury, fmt:eur, lump:true,
+      note:'Referenčná suma 50 000 € na dieťa (spolu za všetky deti).' });
+    entries.push({ section:label, badge:'teal', name:'Invalidita (úplná)', r:c.invalidity, fmt:eur, lump:true,
+      note:'Orientačná suma 50 000 € na dieťa — čiastočná invalidita pri deťoch neexistuje; plnenie až po dosiahnutí 18 rokov ("invalidita z mladosti").' });
+  }
+
+  entries.push({ section:'Rezerva', badge:'teal', name:'Krátkodobá rezerva (úspory)',
+    r:{ need:g.reserve.target, covered:g.reserve.current, gap:g.reserve.gap }, fmt:eur, lump:false,
+    note:'6-násobok mesačných výdavkov ako likvidná rezerva. Posledných 5 rokov pred dôchodkom sa cieľ mení na 36-násobok.' });
+
+  return entries;
 }
 
 /* ===========================================================================
@@ -568,13 +756,18 @@ function renderChildren(){
       + '<div class="item-body">'
       + '<div class="item-meta single">'
       + '<input type="number" min="0" max="30" placeholder="Vek dieťaťa (roky)" value="'+escapeHtml(c.age)+'" data-act="age">'
+      + '</div>'
+      + '<div class="item-meta triple">'
+      + '<input type="number" min="0" placeholder="Kryté – kritické (€)" value="'+escapeHtml(c.existingCriticalIllness)+'" data-act="existingCriticalIllness">'
+      + '<input type="number" min="0" placeholder="Kryté – trvalé (€)" value="'+escapeHtml(c.existingPermanentInjury)+'" data-act="existingPermanentInjury">'
+      + '<input type="number" min="0" placeholder="Kryté – invalidita (€)" value="'+escapeHtml(c.existingInvalidity)+'" data-act="existingInvalidity">'
       + '</div></div>'
       + '<div class="item-del" data-act="del" title="Odstrániť">✕</div>'
       + '</div></div>';
   }).join('');
 }
 
-function riskCardHtml(id, label, r, note, fmt){
+function riskCardHtml(label, r, note, fmt){
   fmt = fmt || eur;
   const hideNums = state.mode==='klient';
   const total = Math.max(r.need, r.covered);
@@ -583,7 +776,7 @@ function riskCardHtml(id, label, r, note, fmt){
   const gapClass = r.gap>0 ? 'some' : 'zero';
   const gapLabel = r.gap>0 ? fmt(r.gap) : 'Kryté';
 
-  return ''
+  return '<div class="risk-card">'
     + '<div class="risk-head">'
     + '<span class="risk-name">'+label+'</span>'
     + '<span class="risk-gap '+gapClass+' '+(hideNums?'risk-blur':'')+'">'+gapLabel+'</span>'
@@ -598,7 +791,8 @@ function riskCardHtml(id, label, r, note, fmt){
       + '<span>Odporúčané: <b>'+fmt(r.need)+'</b></span>'
     + '</div>'
     + '</div>'
-    + '<div class="risk-note">'+note+'</div>';
+    + '<div class="risk-note">'+note+'</div>'
+    + '</div>';
 }
 
 function render(){
@@ -624,25 +818,18 @@ function render(){
   if($('checklistCard')) $('checklistCard').style.display = state.mode==='klient' ? 'none' : 'block';
   if($('sendLinkCard')) $('sendLinkCard').style.display = state.mode==='klient' ? 'none' : 'block';
 
-  $('riskDeath').innerHTML = riskCardHtml('death','Úmrtie', g.death,
-    'Pohrebné náklady (3 000 €, vyplatiteľné do 2-3 dní) + 12x mesačná splátka záväzkov ('+eur(g.inputs.debtsPaymentTotal)+') — preklenutie obdobia dedičského konania. Pri partnerovi/deťoch sa metodika mení.');
-
-  $('riskDisability').innerHTML = riskCardHtml('disability','Invalidita (čiastočná)', g.disability,
-    '36-násobok mesačných výdavkov. Pri čiastočnej invalidite sa spravidla vypláca pomerná časť poistnej sumy.');
-
-  $('riskCriticalIllness').innerHTML = riskCardHtml('criticalIllness','Kritické choroby', g.criticalIllness,
-    '36-násobok mesačných výdavkov + orientačne '+eur(CRITICAL_ILLNESS_ABROAD_DEFAULT)+' na prípadnú liečbu v zahraničí (spresní sa individuálne pri ponuke).');
-
-  $('riskPermanentInjury').innerHTML = riskCardHtml('permanentInjury','Trvalé následky úrazom', g.permanentInjury,
-    'Referenčná suma — 60-násobok mesačných výdavkov. Produkt má progresívne plnenie do 1000 %, presnú poistnú sumu s ohľadom na progresiu nastaví poradca individuálne.');
-
-  $('riskPn').innerHTML = riskCardHtml('pn','PN / práceneschopnosť', g.pn,
-    'Rozdiel mesačných výdavkov a štátneho nemocenského ('+Math.round(STATE_SICKPAY_RATIO*100)+' % z hrubého príjmu, cca '+eur(g.inputs.grossIncome)+'), vyjadrený ako denná dávka'
-    + (g.pn.monthlyShortfall>0 ? ' (mesačný rozdiel '+eur(g.pn.monthlyShortfall)+').' : '.'), eurDay);
-
-  if($('reserveInfo')) $('reserveInfo').innerHTML = riskCardHtml('reserve','Krátkodobá rezerva (úspory)',
-    { need:g.reserve.target, covered:g.reserve.current, gap:g.reserve.gap },
-    '6-násobok mesačných výdavkov ako likvidná rezerva. Posledných 5 rokov pred dôchodkom sa cieľ mení na 36-násobok.');
+  const showSectionLabels = g.hasPartner || !!g.children;
+  const entries = buildRiskEntries(g);
+  let html = '';
+  let lastSection = null;
+  entries.forEach(function(e){
+    if(showSectionLabels && e.section!=='Rezerva' && e.section!==lastSection){
+      html += '<div class="risk-section-label">'+escapeHtml(e.section)+'</div>';
+    }
+    lastSection = e.section;
+    html += riskCardHtml(e.name, e.r, e.note, e.fmt);
+  });
+  $('riskResults').innerHTML = html;
 }
 
 /* ===========================================================================
@@ -652,6 +839,7 @@ function validate(){
   const e = {};
   if(!state.income || num(state.income)<=0)   e.income='Zadaj mesačný príjem';
   if(state.expenses==='' || num(state.expenses)<0) e.expenses='Zadaj mesačné výdavky';
+  if(state.hasPartner && (!state.partnerIncome || num(state.partnerIncome)<=0)) e.partnerIncome='Zadaj príjem partnera/-ky';
   return e;
 }
 
@@ -660,13 +848,18 @@ function validate(){
 =========================================================================== */
 function doCreateChecklist(){
   const g = computeGaps();
+  const entries = buildRiskEntries(g);
   const items = [];
-  if(g.death.gap>0) items.push({ text:'Dojednať/doplniť životné poistenie – chýba cca '+eur(g.death.gap)+' krytia pre prípad úmrtia', owner:'klient' });
-  if(g.disability.gap>0) items.push({ text:'Dojednať/doplniť poistenie invalidity – chýba cca '+eur(g.disability.gap)+' krytia', owner:'klient' });
-  if(g.criticalIllness.gap>0) items.push({ text:'Dojednať/doplniť poistenie kritických chorôb – chýba cca '+eur(g.criticalIllness.gap)+' krytia', owner:'klient' });
-  if(g.permanentInjury.gap>0) items.push({ text:'Dojednať/doplniť poistenie trvalých následkov úrazom – referenčne chýba cca '+eur(g.permanentInjury.gap)+' krytia', owner:'klient' });
-  if(g.pn.gap>0) items.push({ text:'Dojednať/doplniť poistenie PN (práceneschopnosti) – chýba cca '+eurDay(g.pn.gap), owner:'klient' });
-  if(g.reserve.gap>0) items.push({ text:'Vybudovať krátkodobú finančnú rezervu – chýba cca '+eur(g.reserve.gap), owner:'klient' });
+  entries.forEach(function(e){
+    if(e.r.gap<=0) return;
+    const amt = e.fmt(e.r.gap);
+    if(e.section==='Rezerva'){
+      items.push({ text:'Vybudovať krátkodobú finančnú rezervu – chýba cca '+amt, owner:'klient' });
+      return;
+    }
+    const who = e.section==='Klient' ? '' : ' – '+e.section;
+    items.push({ text:'Dojednať/doplniť poistenie: '+e.name+who+' – chýba cca '+amt, owner:'klient' });
+  });
 
   const seed = {
     clientName: state.contactName.trim(),
@@ -719,6 +912,7 @@ function openHistoryRow(row){
   Object.assign(state, JSON.parse(row.form_data));
   state.touched = true;
   syncInputs();
+  updatePartnerVisibility();
   render();
   window.scrollTo({top:0, behavior:'smooth'});
 }
@@ -779,7 +973,7 @@ async function loadClientSession(){
     if(!d.ok){ showInvalidLink(); return; }
     if(d.advisor && d.advisor.name) Object.assign(ADVISOR, d.advisor);
     if(d.clientLabel) clientLinkLabel = d.clientLabel;
-    if(d.formData) Object.assign(state, d.formData);
+    if(d.formData){ Object.assign(state, d.formData); syncInputs(); updatePartnerVisibility(); }
     render();
   }catch(e){ showInvalidLink(); }
 }
@@ -877,23 +1071,9 @@ function buildReportHtml(mode){
   const fontBase = '../vendor/dompdf/lib/fonts/';
   const clientName = clientLinkLabel || state.contactName.trim() || 'Klient';
 
-  const risks = [
-    { key:'death', badge:'warm', name:'Úmrtie', r:g.death,
-      note:'Pohrebné náklady + 12x mesačná splátka záväzkov — preklenutie obdobia dedičského konania.' },
-    { key:'disability', badge:'teal', name:'Invalidita (čiastočná)', r:g.disability,
-      note:'36-násobok mesačných výdavkov. Pri čiastočnej invalidite sa spravidla vypláca pomerná časť poistnej sumy.' },
-    { key:'criticalIllness', badge:'warm', name:'Kritické choroby', r:g.criticalIllness,
-      note:'36-násobok mesačných výdavkov + orientačná suma na prípadnú liečbu v zahraničí.' },
-    { key:'permanentInjury', badge:'teal', name:'Trvalé následky úrazom', r:g.permanentInjury,
-      note:'Referenčná suma (60-násobok výdavkov) — produkt má progresívne plnenie do 1000 %, presnú poistnú sumu nastaví poradca individuálne.' },
-  ];
-  const pnRisk = { badge:'teal', name:'PN / práceneschopnosť', r:g.pn,
-    note:'Rozdiel mesačných výdavkov a štátneho nemocenského (55 % z hrubého príjmu), vyjadrený ako denná dávka.' };
-  const reserveRisk = { badge:'teal', name:'Krátkodobá rezerva (úspory)',
-    r:{ need:g.reserve.target, covered:g.reserve.current, gap:g.reserve.gap },
-    note:'6-násobok mesačných výdavkov ako likvidná rezerva.' };
-
-  const worst = risks.reduce((a,b)=> b.r.gap>a.r.gap ? b : a, risks[0]);
+  const entries = buildRiskEntries(g);
+  const lumpEntries = entries.filter(e => e.lump);
+  const worst = lumpEntries.reduce((a,b)=> b.r.gap>a.r.gap ? b : a, lumpEntries[0]);
   const maxGap = worst.r.gap;
 
   let thesisHtml;
@@ -925,9 +1105,16 @@ function buildReportHtml(mode){
       ? '<div class="next-step"><p>Toto je orientačný náhľad bez presných súm. <b>'+escapeHtml(ADVISOR.name)+'</b> sa vám ozve a prejdete si to spoločne.</p></div>'
       : '');
 
-  const risksHtml = risks.map(x => riskRowHtml(x.badge, x.name, x.r, x.note, masked)).join('')
-    + riskRowHtml(pnRisk.badge, pnRisk.name, pnRisk.r, pnRisk.note, masked, eurDay)
-    + riskRowHtml(reserveRisk.badge, reserveRisk.name, reserveRisk.r, reserveRisk.note, masked);
+  const showSectionLabels = g.hasPartner || !!g.children;
+  let risksHtml = '';
+  let lastSection = null;
+  entries.forEach(function(e){
+    if(showSectionLabels && e.section!=='Rezerva' && e.section!==lastSection){
+      risksHtml += '<div class="section-tag" style="margin-top:5mm;">'+escapeHtml(e.section)+'</div>';
+    }
+    lastSection = e.section;
+    risksHtml += riskRowHtml(e.badge, e.name, e.r, e.note, masked, e.fmt);
+  });
 
   const css = `
     @font-face { font-family:'DejaVu Sans'; src:url('`+fontBase+`DejaVuSans.ttf'); }
@@ -1046,18 +1233,29 @@ function doGenerateClientPdf(){ generatePdf('klient', $('clientPdfBtn')); }
 function doReset(){
   Object.assign(state,{
     income:'', expenses:'',
+    hasPartner:false, partnerIncome:'',
     debts:[withId({ desc:'', balance:'', payment:'' })],
     children:[],
     existingLife:'', existingDisability:'', existingCriticalIllness:'', existingPermanentInjury:'', existingPn:'',
+    existingLifePartner:'', existingDisabilityPartner:'', existingCriticalIllnessPartner:'', existingPermanentInjuryPartner:'', existingPnPartner:'',
     savings:'', contactName:'',
     touched:false,
   });
-  syncInputs(); render();
+  syncInputs(); updatePartnerVisibility(); render();
 }
 
 function syncInputs(){
-  ['income','expenses','existingLife','existingDisability','existingCriticalIllness','existingPermanentInjury','existingPn','savings','contactName']
+  ['income','expenses','partnerIncome','existingLife','existingDisability','existingCriticalIllness','existingPermanentInjury','existingPn',
+   'existingLifePartner','existingDisabilityPartner','existingCriticalIllnessPartner','existingPermanentInjuryPartner','existingPnPartner',
+   'savings','contactName']
     .forEach(k=>{ if($(k)) $(k).value = state[k]; });
+  if($('hasPartner')) $('hasPartner').checked = !!state.hasPartner;
+}
+
+function updatePartnerVisibility(){
+  const on = !!state.hasPartner;
+  if($('partnerIncomeField')) $('partnerIncomeField').style.display = on ? 'flex' : 'none';
+  if($('partnerExistingBlock')) $('partnerExistingBlock').style.display = on ? 'block' : 'none';
 }
 
 function setMode(mode){
@@ -1071,12 +1269,20 @@ function setMode(mode){
    UDALOSTI
 =========================================================================== */
 function bind(){
-  ['income','expenses','existingLife','existingDisability','existingCriticalIllness','existingPermanentInjury','existingPn','savings','contactName'].forEach(k=>{
+  ['income','expenses','partnerIncome','existingLife','existingDisability','existingCriticalIllness','existingPermanentInjury','existingPn',
+   'existingLifePartner','existingDisabilityPartner','existingCriticalIllnessPartner','existingPermanentInjuryPartner','existingPnPartner',
+   'savings','contactName'].forEach(k=>{
     if($(k)) $(k).addEventListener('input', e=>{ state[k]=e.target.value; render(); });
   });
 
+  if($('hasPartner')) $('hasPartner').addEventListener('change', e=>{
+    state.hasPartner = e.target.checked;
+    updatePartnerVisibility();
+    render();
+  });
+
   $('addDebt').addEventListener('click', ()=>{ state.debts.push(withId({ desc:'', balance:'', payment:'' })); render(); });
-  $('addChild').addEventListener('click', ()=>{ state.children.push(withId({ age:'' })); render(); });
+  $('addChild').addEventListener('click', ()=>{ state.children.push(withId({ age:'', existingCriticalIllness:'', existingPermanentInjury:'', existingInvalidity:'' })); render(); });
 
   $('debtItems').addEventListener('click', e=>{
     const row=e.target.closest('.item'); if(!row) return;
@@ -1135,11 +1341,11 @@ function bind(){
     try{
       const seed = JSON.parse(seedParam);
       if(seed.contactName) state.contactName = seed.contactName;
-      if(seed.hasDependents) state.children.push(withId({ age:'' }));
+      if(seed.hasDependents) state.children.push(withId({ age:'', existingCriticalIllness:'', existingPermanentInjury:'', existingInvalidity:'' }));
     }catch(e){ /* ticho ignoruj, formulár ostane prázdny */ }
   }
 
-  syncInputs(); bind();
+  syncInputs(); updatePartnerVisibility(); bind();
 
   if(CLIENT_TOKEN){
     const toggle = $('modeToggleWrap'); if(toggle) toggle.remove();
@@ -1158,6 +1364,7 @@ function bind(){
       Object.assign(state, d);
       state.touched = true;
       syncInputs();
+      updatePartnerVisibility();
       render();
     }, doGeneratePdf);
   }
