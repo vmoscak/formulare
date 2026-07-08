@@ -54,33 +54,31 @@ function advisorRgba(string $hex, float $alpha): string {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
 <title>Formuláre</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   :root{
-    --accent:#1f5fd1;
-    --accent2:#5b8def;
-    --accent-soft:#eaf1fc;
-    --accent-line:#cfe0fb;
-    --ink:#1a2136;
-    --muted:#8b94a3;
-    --label:#515a6b;
-    --border:#e5e8f0;
-    --bg:#eef1f6;
+    --accent:#1f6f6b;
+    --accent2:#7a5c8c;
+    --accent-soft:#e3efee;
+    --accent-line:#cfe1de;
+    --ink:#262523;
+    --muted:#a5a096;
+    --label:#6e6a63;
+    --border:#efebe2;
+    --bg:#faf8f3;
     --radius:20px;
+    --serif:Georgia,'Iowan Old Style','Palatino Linotype',Palatino,serif;
   }
   *{box-sizing:border-box;}
   html{scroll-behavior:smooth;}
   body{
     margin:0; color:var(--ink);
-    font-family:'Plus Jakarta Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
     -webkit-font-smoothing:antialiased;
     padding:40px 24px 60px;
     min-height:100vh;
     background:
-      radial-gradient(900px 500px at 12% -8%, rgba(31,95,209,.10), transparent 60%),
-      radial-gradient(700px 460px at 108% 8%, rgba(91,141,239,.12), transparent 55%),
+      radial-gradient(900px 500px at 12% -8%, rgba(31,111,107,.08), transparent 60%),
+      radial-gradient(700px 460px at 108% 8%, rgba(122,92,140,.08), transparent 55%),
       var(--bg);
     position:relative;
     overflow-x:hidden;
@@ -92,22 +90,22 @@ function advisorRgba(string $hex, float $alpha): string {
   .blob{ position:absolute; border-radius:50%; filter:blur(70px); will-change:transform; }
   .blob.b1{
     width:460px; height:460px; top:-140px; left:-120px;
-    background:radial-gradient(circle at 35% 35%, rgba(91,141,239,.40), transparent 70%);
+    background:radial-gradient(circle at 35% 35%, rgba(122,92,140,.28), transparent 70%);
     animation:drift1 22s ease-in-out infinite;
   }
   .blob.b2{
     width:380px; height:380px; top:38%; right:-160px;
-    background:radial-gradient(circle at 60% 40%, rgba(31,95,209,.30), transparent 70%);
+    background:radial-gradient(circle at 60% 40%, rgba(31,111,107,.26), transparent 70%);
     animation:drift2 26s ease-in-out infinite;
   }
   .blob.b3{
     width:340px; height:340px; bottom:-140px; left:26%;
-    background:radial-gradient(circle at 50% 50%, rgba(140,180,250,.32), transparent 70%);
+    background:radial-gradient(circle at 50% 50%, rgba(193,135,58,.22), transparent 70%);
     animation:drift3 24s ease-in-out infinite;
   }
   .blob.b4{
     width:260px; height:260px; top:8%; left:48%;
-    background:radial-gradient(circle at 50% 50%, rgba(31,95,209,.16), transparent 70%);
+    background:radial-gradient(circle at 50% 50%, rgba(31,111,107,.14), transparent 70%);
     animation:drift4 30s ease-in-out infinite;
   }
   @keyframes drift1{
@@ -141,18 +139,19 @@ function advisorRgba(string $hex, float $alpha): string {
     background:linear-gradient(140deg,var(--accent),var(--accent2));
     color:#fff;
     display:flex; align-items:center; justify-content:center;
-    box-shadow:0 10px 26px rgba(31,95,209,.32), inset 0 1px 0 rgba(255,255,255,.25);
+    box-shadow:0 10px 26px rgba(31,111,107,.28), inset 0 1px 0 rgba(255,255,255,.25);
     position:relative;
   }
   .logo::after{
     content:'';
     position:absolute; inset:-7px;
     border-radius:20px;
-    border:1.5px solid rgba(31,95,209,.18);
+    border:1.5px solid rgba(31,111,107,.16);
     animation:pulseRing 2.8s ease-in-out infinite;
   }
   .head h1{
-    font-size:30px; font-weight:900; letter-spacing:-.03em; margin:0;
+    font-family:var(--serif);
+    font-size:30px; font-weight:700; letter-spacing:-.01em; margin:0;
     background:linear-gradient(100deg,var(--ink) 35%,var(--accent) 100%);
     -webkit-background-clip:text; background-clip:text; color:transparent;
     line-height:1.1;
@@ -195,7 +194,7 @@ function advisorRgba(string $hex, float $alpha): string {
   }
   .cat-line{ flex:1; height:1px; background:linear-gradient(90deg, var(--border), transparent); }
 
-  .cat.soon .cat-ic{ background:#f0f2f7; color:#a8b0bd; }
+  .cat.soon .cat-ic{ background:#efece4; color:#b7b2a6; }
 
   /* ── Mriežka formulárov ── */
   .grid{
@@ -223,7 +222,7 @@ function advisorRgba(string $hex, float $alpha): string {
   .card::before{
     content:'';
     position:absolute; inset:0;
-    background:linear-gradient(120deg, transparent 40%, rgba(31,95,209,.06) 50%, transparent 60%);
+    background:linear-gradient(120deg, transparent 40%, rgba(31,111,107,.06) 50%, transparent 60%);
     transform:translateX(-120%);
     transition:transform .65s ease;
     pointer-events:none;
@@ -232,7 +231,7 @@ function advisorRgba(string $hex, float $alpha): string {
 
   a.card:hover{
     transform:translateY(-5px);
-    box-shadow:0 20px 44px var(--tile-shadow, rgba(31,95,209,.16));
+    box-shadow:0 20px 44px var(--tile-shadow, rgba(31,111,107,.14));
     border-color:var(--tile, var(--accent-line));
   }
   a.card:active{ transform:translateY(-2px); }
@@ -266,7 +265,7 @@ function advisorRgba(string $hex, float $alpha): string {
     border:1.5px dashed var(--border);
     box-shadow:none;
   }
-  .card.soon .ic{background:#f0f2f7; color:#a8b0bd;}
+  .card.soon .ic{background:#efece4; color:#b7b2a6;}
   .badge{
     position:absolute; top:16px; right:16px;
     font-size:10px; font-weight:800; letter-spacing:.06em; text-transform:uppercase;
