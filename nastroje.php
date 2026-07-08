@@ -26,33 +26,31 @@ function advisorInitials(string $name): string {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
 <title>Formuláre</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   :root{
-    --accent:#1f5fd1;
-    --accent2:#5b8def;
-    --accent-soft:#eaf1fc;
-    --accent-line:#cfe0fb;
-    --ink:#1a2136;
-    --muted:#8b94a3;
-    --label:#515a6b;
-    --border:#e5e8f0;
-    --bg:#eef1f6;
+    --accent:#1f6f6b;
+    --accent2:#7a5c8c;
+    --accent-soft:#e3efee;
+    --accent-line:#cfe1de;
+    --ink:#262523;
+    --muted:#a5a096;
+    --label:#6e6a63;
+    --border:#efebe2;
+    --bg:#faf8f3;
     --radius:20px;
+    --serif:Georgia,'Iowan Old Style','Palatino Linotype',Palatino,serif;
   }
   *{box-sizing:border-box;}
   html{scroll-behavior:smooth;}
   body{
     margin:0; color:var(--ink);
-    font-family:'Plus Jakarta Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
     -webkit-font-smoothing:antialiased;
     padding:40px 24px 60px;
     min-height:100vh;
     background:
-      radial-gradient(900px 500px at 12% -8%, rgba(31,95,209,.10), transparent 60%),
-      radial-gradient(700px 460px at 108% 8%, rgba(91,141,239,.12), transparent 55%),
+      radial-gradient(900px 500px at 12% -8%, rgba(31,111,107,.08), transparent 60%),
+      radial-gradient(700px 460px at 108% 8%, rgba(122,92,140,.08), transparent 55%),
       var(--bg);
     position:relative;
     overflow-x:hidden;
@@ -64,22 +62,22 @@ function advisorInitials(string $name): string {
   .blob{ position:absolute; border-radius:50%; filter:blur(70px); will-change:transform; }
   .blob.b1{
     width:460px; height:460px; top:-140px; left:-120px;
-    background:radial-gradient(circle at 35% 35%, rgba(91,141,239,.40), transparent 70%);
+    background:radial-gradient(circle at 35% 35%, rgba(122,92,140,.28), transparent 70%);
     animation:drift1 22s ease-in-out infinite;
   }
   .blob.b2{
     width:380px; height:380px; top:38%; right:-160px;
-    background:radial-gradient(circle at 60% 40%, rgba(31,95,209,.30), transparent 70%);
+    background:radial-gradient(circle at 60% 40%, rgba(31,111,107,.26), transparent 70%);
     animation:drift2 26s ease-in-out infinite;
   }
   .blob.b3{
     width:340px; height:340px; bottom:-140px; left:26%;
-    background:radial-gradient(circle at 50% 50%, rgba(140,180,250,.32), transparent 70%);
+    background:radial-gradient(circle at 50% 50%, rgba(193,135,58,.22), transparent 70%);
     animation:drift3 24s ease-in-out infinite;
   }
   .blob.b4{
     width:260px; height:260px; top:8%; left:48%;
-    background:radial-gradient(circle at 50% 50%, rgba(31,95,209,.16), transparent 70%);
+    background:radial-gradient(circle at 50% 50%, rgba(31,111,107,.14), transparent 70%);
     animation:drift4 30s ease-in-out infinite;
   }
   @keyframes drift1{
@@ -123,7 +121,8 @@ function advisorInitials(string $name): string {
     animation:pulseRing 2.8s ease-in-out infinite;
   }
   .head h1{
-    font-size:30px; font-weight:900; letter-spacing:-.03em; margin:0;
+    font-family:var(--serif);
+    font-size:30px; font-weight:700; letter-spacing:-.01em; margin:0;
     background:linear-gradient(100deg,var(--ink) 35%,var(--accent) 100%);
     -webkit-background-clip:text; background-clip:text; color:transparent;
     line-height:1.1;
@@ -166,7 +165,7 @@ function advisorInitials(string $name): string {
   }
   .cat-line{ flex:1; height:1px; background:linear-gradient(90deg, var(--border), transparent); }
 
-  .cat.soon .cat-ic{ background:#f0f2f7; color:#a8b0bd; }
+  .cat.soon .cat-ic{ background:#efece4; color:#b7b2a6; }
 
   /* ── Zoznam nástrojov (kompaktné riadky, odlišné od dlaždíc poradcov) ── */
   .tool-list{
@@ -191,7 +190,7 @@ function advisorInitials(string $name): string {
   }
   .tool-row:last-child{ border-bottom:none; }
   a.tool-row:hover{ background-color:var(--accent-soft); padding-left:26px; }
-  a.tool-row:active{ background-color:#e2ecfb; }
+  a.tool-row:active{ background-color:#dbe9e7; }
 
   .tool-row .ic{
     width:32px; height:32px; border-radius:9px; flex-shrink:0;
@@ -212,7 +211,7 @@ function advisorInitials(string $name): string {
 
   /* ── Pripravujeme ── */
   .tool-row.soon{ cursor:default; }
-  .tool-row.soon .ic{ background:#f0f2f7; color:#a8b0bd; }
+  .tool-row.soon .ic{ background:#efece4; color:#b7b2a6; }
   .tool-row.soon p{ white-space:normal; }
   .badge-soon{
     font-size:10px; font-weight:800; letter-spacing:.05em; text-transform:uppercase;
