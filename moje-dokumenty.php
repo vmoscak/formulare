@@ -40,53 +40,27 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
 <title>Moje dokumenty</title>
-<style>
-  :root{ --accent:<?= h($me['color']) ?>; --accent-soft:#e3efee; --ink:#262523; --muted:#a5a096; --border:#efebe2; --bg:#faf8f3; --serif:Georgia,'Iowan Old Style','Palatino Linotype',Palatino,serif; }
-  *{box-sizing:border-box;}
-  body{ margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; padding:24px; }
-  .wrap{ max-width:1100px; margin:0 auto; display:flex; flex-direction:column; gap:24px; }
-  h1{
-    font-family:var(--serif); font-weight:700;
-    font-size:22px; margin:0;
-    opacity:0; transform:translateY(10px);
-    animation:riseIn .5s cubic-bezier(.22,1,.36,1) forwards;
-  }
-  .back{ font-size:13px; color:var(--accent); text-decoration:none; transition:opacity .2s ease; }
-  .back:hover{ opacity:.7; }
-  .card{
-    background:#fff; border:1px solid var(--border); border-radius:16px; padding:22px 24px;
-    opacity:0; transform:translateY(16px);
-    animation:riseIn .5s cubic-bezier(.22,1,.36,1) forwards;
-  }
-  .card:nth-of-type(1){ animation-delay:.05s; }
-  .card:nth-of-type(2){ animation-delay:.12s; }
-  @keyframes riseIn{ to{ opacity:1; transform:translateY(0); } }
-  @media(prefers-reduced-motion:reduce){ h1,.card{ animation:none; opacity:1; transform:none; } }
-  .card h2{ font-size:15px; margin:0 0 14px; }
-  table{ width:100%; border-collapse:collapse; font-size:13px; }
-  th{ text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted);
-      border-bottom:1px solid var(--border); padding:8px 10px; }
-  td{ padding:8px 10px; border-bottom:1px solid #f0f1f5; vertical-align:top; }
-  tbody tr{ transition:background-color .18s ease; }
-  tbody tr:hover{ background-color:#f7f9fc; }
-  .pill{ display:inline-block; padding:2px 9px; border-radius:999px; font-size:11px; font-weight:700; }
-  .pill.submitted{ background:#e5f7e5; color:#0ca30c; }
-  .pill.pending{ background:#fdf3e5; color:#c98500; }
-  .toggle-btn{
-    display:inline-block; padding:5px 10px; border:1.5px solid var(--border); border-radius:8px; background:#fff;
-    font-size:12px; cursor:pointer; color:var(--ink); text-decoration:none;
-    transition:border-color .18s ease, transform .18s ease;
-  }
-  .toggle-btn:hover{ border-color:var(--accent); transform:translateY(-1px); }
-  @media (max-width:720px){ table{ display:block; overflow-x:auto; } }
-</style>
+<link rel="stylesheet" href="/assets/panel.css?v=1">
 </head><body>
 <div class="wrap">
-  <div><a href="/nastroje.php" class="back">← Späť na nástroje</a></div>
-  <h1>Moje dokumenty</h1>
+
+  <div class="topbar">
+    <div class="mark">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15l2 2 4-4"/>
+      </svg>
+    </div>
+    <span class="wordmark">Formuláre</span>
+    <a href="/nastroje.php" class="back">← Späť na nástroje</a>
+  </div>
+
+  <div>
+    <div class="kicker">Archív poradcu · <?= h($me['name']) ?></div>
+    <h1>Moje dokumenty</h1>
+  </div>
 
   <div class="card">
-    <h2>Vygenerované dokumenty (posledných 200)</h2>
+    <h2>Vygenerované dokumenty · posledných 200</h2>
     <table>
       <tr><th>Klient</th><th>Nástroj</th><th>Zdroj</th><th>Kedy</th><th></th></tr>
       <?php foreach ($docs as $d): ?>
@@ -94,7 +68,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
         <td><?= h($d['client_label']) ?></td>
         <td><?= h(toolLabel($d['tool'])) ?></td>
         <td><?= $d['source'] === 'client' ? 'klient' : 'poradca' ?></td>
-        <td><?= h($d['generated_at']) ?></td>
+        <td class="date"><?= h($d['generated_at']) ?></td>
         <td style="display:flex; gap:6px;">
           <a class="toggle-btn" href="/<?= rawurlencode($d['tool']) ?>/index.html?loadDoc=<?= (int)$d['id'] ?>" target="_blank">PDF</a>
           <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj zmazať tento dokument?');">
@@ -117,7 +91,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
         <td><?= h($l['client_label']) ?></td>
         <td><?= h($l['tool']) ?></td>
         <td><span class="pill <?= $l['status'] ?>"><?= $l['status']==='submitted' ? 'Vyplnené' : 'Čaká' ?></span></td>
-        <td><?= h($l['created_at']) ?></td>
+        <td class="date"><?= h($l['created_at']) ?></td>
       </tr>
       <?php endforeach; ?>
       <?php if (!$links): ?><tr><td colspan="4" style="color:var(--muted);">Zatiaľ žiadne odkazy.</td></tr><?php endif; ?>

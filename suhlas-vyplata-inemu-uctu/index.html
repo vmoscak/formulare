@@ -14,133 +14,13 @@
      endpoint ako v ostatných formulároch.
 
      KDE ČO UPRAVIŤ:
-       • Farby / vzhľad ........ sekcia <style>, premenné :root (--accent atď.)
+       • Farby / vzhľad ........ zdieľaný dizajnový systém ../assets/ui.css
        • Zoznam poisťovní ...... JS, objekt  INSURERS
        • Text súhlasu .......... JS, funkcia buildParas()
        • Napovedanie adresy .... JS, funkcia fetchNominatim() (Nominatim/OSM)
 ========================================================================== -->
 
-<style>
-  :root{
-    --accent:#0e7490;
-    --accent-soft:#e2f2f6;
-    --accent-line:#c7e6ee;
-    --ink:#262523;
-    --muted:#a5a096;
-    --label:#6e6a63;
-    --border:#efebe2;
-    --bg:#faf8f3;
-    --err:#c85a46;
-  }
-  *{box-sizing:border-box;}
-  body{
-    margin:0; background:var(--bg); color:var(--ink);
-    font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
-    -webkit-font-smoothing:antialiased;
-    padding:24px;
-  }
-  input,select,textarea{font-family:inherit; outline:none;}
-  input:focus,select:focus,textarea:focus{border-color:var(--accent)!important;}
-
-  .app{max-width:1220px; margin:0 auto; background:#fff; border-radius:20px; overflow:hidden;
-       box-shadow:0 12px 44px rgba(30,38,56,.10);}
-
-  .head{display:flex; align-items:center; justify-content:space-between; gap:12px;
-        flex-wrap:wrap; padding:16px 26px; border-bottom:1px solid #e8ebf2;}
-  .head-left{display:flex; align-items:center; gap:14px;}
-  .back-btn{width:38px; height:38px; border-radius:11px; border:1.5px solid #dde1ea; background:#fff;
-        display:flex; align-items:center; justify-content:center; color:#4a5160; flex-shrink:0;
-        text-decoration:none; transition:border-color .15s, color .15s;}
-  .back-btn:hover{border-color:var(--accent); color:var(--accent);}
-  .brand{display:flex; align-items:center; gap:11px;}
-  .logo{width:36px; height:36px; border-radius:12px; background:var(--accent); color:#fff;
-        display:flex; align-items:center; justify-content:center; font-weight:800; font-size:17px;}
-  .brand b{font-family:Georgia,'Iowan Old Style','Palatino Linotype',Palatino,serif; font-size:16px; font-weight:700; letter-spacing:-.01em;}
-  .brand small{font-size:11.5px; color:var(--muted);}
-  .head-actions{display:flex; align-items:center; gap:10px;}
-  .avatar{width:36px; height:36px; border-radius:50%; background:#eef1f7; display:flex;
-          align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#6b7280;}
-
-  .body{display:flex; flex-wrap:wrap; align-items:stretch;}
-  .form{flex:1 1 460px; min-width:300px; padding:28px 30px; display:flex; flex-direction:column; gap:30px;}
-  .preview{flex:1 1 380px; min-width:300px; background:var(--bg); padding:26px 30px;
-           border-left:1px solid #e8ebf2; display:flex; flex-direction:column;}
-
-  .step-head{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
-  .step-num{width:24px; height:24px; border-radius:8px; background:var(--accent-soft); color:var(--accent);
-            font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center;}
-  .step-title{font-size:13px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--label);}
-
-  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
-  .fields{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
-  .col-full{grid-column:1 / -1;}
-
-  .field{display:flex; flex-direction:column; gap:6px;}
-  .field > label{font-size:11px; font-weight:700; color:var(--muted); letter-spacing:.04em;}
-  .field input,.field select,.field textarea{
-    padding:11px 13px; border:1.5px solid var(--border); border-radius:12px; background:#fff;
-    font-size:14px; color:var(--ink);}
-  .field input[type=date]{font-weight:600;}
-  .field textarea{min-height:78px; resize:vertical; line-height:1.5;}
-  .field .hint{font-size:11px; color:var(--muted);}
-  .field .err{font-size:11px; color:#c0392b; font-weight:600; display:none;}
-  .field.invalid input,.field.invalid textarea,.field.invalid select{border-color:var(--err);}
-  .field.invalid .err{display:block;}
-
-  .select-wrap{position:relative;}
-  .select-wrap select{width:100%; padding:13px 38px 13px 15px; border:1.5px solid var(--border);
-       border-radius:12px; background:#fff; font-size:14px; font-weight:600; color:var(--ink);
-       -webkit-appearance:none; appearance:none; cursor:pointer;}
-  .select-wrap .caret{position:absolute; right:15px; top:50%; transform:translateY(-50%);
-       color:#a3acba; font-size:11px; pointer-events:none;}
-
-  .addr-wrap{position:relative;}
-  .suggest{border:1.5px solid var(--border); border-radius:12px; background:#fff;
-           box-shadow:0 10px 26px rgba(30,38,56,.14); overflow:hidden; margin-top:4px;
-           position:absolute; left:0; right:0; z-index:5;}
-  .suggest .row{display:flex; align-items:center; justify-content:space-between; gap:12px;
-                padding:11px 13px; cursor:pointer; border-bottom:1px solid #f0f2f7;}
-  .suggest .row:last-child{border-bottom:none;}
-  .suggest .row:hover{background:#f4f7fd;}
-  .suggest .s-street{font-size:13.5px; font-weight:600;}
-  .suggest .s-city{font-size:12px; color:var(--muted); white-space:nowrap;}
-
-  .alert{display:flex; gap:10px; align-items:flex-start; padding:12px 14px; border-radius:12px;
-         background:#fdecea; border:1.5px solid #f3c0b8; margin-top:12px;}
-  .alert .bang{flex:none; width:20px; height:20px; border-radius:50%; background:var(--err); color:#fff;
-               font-size:13px; font-weight:800; display:flex; align-items:center; justify-content:center;}
-  .alert .msg{font-size:12.5px; line-height:1.45; color:#9a2a20;}
-
-  .actions{display:flex; gap:12px; padding-top:2px;}
-  .btn-primary{flex:1; text-align:center; padding:15px; border-radius:14px; background:var(--accent);
-       color:#fff; font-weight:700; font-size:14.5px; cursor:pointer; border:none;
-       box-shadow:0 8px 18px rgba(14,116,144,.30);}
-  .btn-primary:disabled{opacity:.6; cursor:default;}
-  .btn-ghost{padding:15px 20px; border-radius:14px; border:1.5px solid #dde1ea; background:#fff;
-       color:var(--label); font-weight:600; font-size:14px; cursor:pointer;}
-
-  .preview-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
-  .preview-head .t{font-size:13px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--label);}
-  .live{display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--muted);}
-  .live i{width:7px; height:7px; border-radius:50%; background:#3a9b6e; display:inline-block;}
-  .preview-tools{display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;}
-  .tool{padding:11px 16px; border-radius:11px; background:#fff; border:1.5px solid #dde1ea;
-        color:#4a5160; font-size:13px; font-weight:600; cursor:pointer;}
-
-  .letter-wrap{border-radius:10px;}
-  .letter-frame{width:100%; height:940px; border:none; border-radius:10px; background:#fff;
-        box-shadow:0 10px 34px rgba(60,40,20,.13); display:block;}
-
-  @media print{ body{background:#fff;} .app{box-shadow:none;} }
-  @media (max-width:720px){
-    body{padding:12px;}
-    .head{padding:14px 16px;}
-    .head-actions{display:none;}
-    .form,.preview{min-width:0; padding:22px 18px;}
-    .fields{grid-template-columns:1fr;}
-    .grid2{grid-template-columns:1fr;}
-  }
-</style>
+<link rel="stylesheet" href="../assets/ui.css?v=1">
 </head>
 <body>
 

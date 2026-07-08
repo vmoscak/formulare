@@ -1,0 +1,129 @@
+/* ============================================================================
+   FORMULÁRE — štýl prehľadových stránok (moje-dokumenty.php, admin.php)
+   Dizajnový jazyk „Atrament & Meď" — rovnaké tokeny ako assets/ui.css.
+============================================================================ */
+:root{
+  --chrome:#181b21;
+  --chrome-line:#2e323c;
+  --chrome-ink:#eceef1;
+  --chrome-muted:#8b919d;
+  --paper:#ffffff;
+  --ink:#1c1f26;
+  --muted:#8a8f98;
+  --label:#5b616b;
+  --border:#dcdfe4;
+  --line-strong:#c3c8cf;
+  --accent:#b45309;
+  --accent-soft:#f7efe4;
+  --good:#2e7d5b;
+  --good-soft:#e9f3ee;
+  --warn:#a16207;
+  --warn-soft:#faf3e0;
+  --mono:ui-monospace,'SF Mono','Cascadia Mono','Roboto Mono',Consolas,'Courier New',monospace;
+  --sans:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; min-height:100vh; color:var(--chrome-ink);
+  font-family:var(--sans); -webkit-font-smoothing:antialiased;
+  padding:0 24px 64px;
+  background:
+    radial-gradient(rgba(255,255,255,.055) 1px, transparent 1.5px) 0 0/22px 22px,
+    linear-gradient(180deg,#20242c 0%, var(--chrome) 420px);
+  background-color:var(--chrome);
+}
+a{color:inherit; text-decoration:none;}
+.wrap{max-width:1100px; margin:0 auto; display:flex; flex-direction:column; gap:26px;}
+
+/* horná lišta */
+.topbar{display:flex; align-items:center; gap:12px; padding:22px 0 0;}
+.mark{
+  width:34px; height:34px; border-radius:5px; background:var(--accent); color:#fff;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.wordmark{font-family:var(--mono); font-size:13px; font-weight:700; letter-spacing:.22em; text-transform:uppercase;}
+.back{
+  margin-left:auto; font-family:var(--mono); font-size:10px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--chrome-muted);
+  border:1px solid var(--chrome-line); border-radius:999px; padding:7px 14px;
+  transition:color .15s, border-color .15s;
+}
+.back:hover{color:#fff; border-color:var(--accent);}
+
+/* titulok stránky */
+h1{
+  margin:26px 0 0; font-size:26px; font-weight:800; letter-spacing:-.02em; color:#fff;
+}
+.kicker{
+  font-family:var(--mono); font-size:11px; font-weight:600; letter-spacing:.22em;
+  text-transform:uppercase; color:var(--accent); margin:34px 0 0;
+}
+.kicker + h1{margin-top:10px;}
+
+/* biela karta s tabuľkou */
+.card{
+  background:var(--paper); color:var(--ink); border-radius:8px; padding:22px 24px;
+  box-shadow:0 2px 6px rgba(0,0,0,.25), 0 20px 50px -20px rgba(0,0,0,.55);
+}
+.card h2{
+  font-family:var(--mono); font-size:11px; font-weight:600; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--label); margin:0 0 14px;
+  padding-bottom:10px; border-bottom:1px solid var(--border);
+}
+table{width:100%; border-collapse:collapse; font-size:13px;}
+th{
+  text-align:left; font-family:var(--mono); font-size:9.5px; font-weight:600;
+  text-transform:uppercase; letter-spacing:.1em; color:var(--muted);
+  border-bottom:1px solid var(--border); padding:8px 10px;
+}
+td{padding:9px 10px; border-bottom:1px solid #eef0f2; vertical-align:top;}
+tbody tr{transition:background-color .15s ease;}
+tbody tr:hover{background-color:#faf8f5;}
+tr.inactive td{color:var(--muted); text-decoration:line-through;}
+td.mono, .date{font-family:var(--mono); font-size:11.5px; color:var(--label); white-space:nowrap;}
+
+/* stavové štítky */
+.pill{
+  display:inline-block; padding:3px 9px; border-radius:3px;
+  font-family:var(--mono); font-size:9.5px; font-weight:600;
+  letter-spacing:.08em; text-transform:uppercase;
+}
+.pill.submitted{background:var(--good-soft); color:var(--good);}
+.pill.pending{background:var(--warn-soft); color:var(--warn);}
+
+/* tlačidlá v riadkoch */
+.toggle-btn{
+  display:inline-block; padding:5px 10px; border:1px solid var(--line-strong);
+  border-radius:4px; background:#fff; font-size:12px; cursor:pointer; color:var(--ink);
+  text-decoration:none; transition:border-color .15s, color .15s;
+}
+.toggle-btn:hover{border-color:var(--accent); color:var(--accent);}
+
+/* formulár pridania poradcu (admin) */
+.add-form{display:grid; grid-template-columns:repeat(4,1fr) auto; gap:10px; margin-top:14px;}
+.add-form input{
+  padding:9px 11px; border:1px solid var(--border); border-radius:4px; font-size:13px;
+  transition:border-color .15s, box-shadow .15s; font-family:inherit;
+}
+.add-form input:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(180,83,9,.14);}
+.add-form button{
+  padding:9px 16px; border:none; border-radius:4px; background:var(--ink); color:#fff;
+  font-weight:700; cursor:pointer; transition:background .15s; font-family:inherit;
+}
+.add-form button:hover{background:var(--accent);}
+
+/* výber farby (admin) */
+.color-form{display:flex; align-items:center; gap:6px; margin:0;}
+.color-form input[type=color]{
+  width:30px; height:30px; padding:0; border:1px solid var(--line-strong);
+  border-radius:4px; cursor:pointer; background:#fff;
+}
+.color-form button{
+  padding:5px 8px; border:1px solid var(--line-strong); border-radius:4px;
+  background:#fff; font-size:11px; cursor:pointer;
+}
+
+@media (max-width:720px){
+  .add-form{grid-template-columns:1fr;}
+  table{display:block; overflow-x:auto;}
+}
