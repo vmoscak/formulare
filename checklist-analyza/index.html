@@ -250,6 +250,7 @@
   </div>
 </div>
 
+<script src="../assets/advisor-panel.js"></script>
 <script>
 /* ===========================================================================
    DÁTA — prednastavené úlohy (dajú sa upraviť / vymazať)
@@ -472,6 +473,7 @@ function doPDF(){
     document.body.appendChild(a); a.click();
     setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
     btn.textContent='Vygenerovať a stiahnuť PDF'; btn.disabled=false;
+    logDocument('checklist-analyza', state.clientName||'Klient', state, undefined);
   })
   .catch(function(e){
     console.error(e);
