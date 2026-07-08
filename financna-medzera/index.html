@@ -571,7 +571,7 @@ function computeSingleAdultRisks(income, expenses, debtsPaymentTotal, existing){
 
   const needDeath = FUNERAL_COST + debtsPaymentTotal*DEATH_DEBT_MONTHS;
   const needDisability = expenses*DISABILITY_EXPENSE_MONTHS;
-  const needCriticalIllness = expenses*CRITICAL_ILLNESS_EXPENSE_MONTHS + CRITICAL_ILLNESS_ABROAD_DEFAULT;
+  const needCriticalIllness = expenses*CRITICAL_ILLNESS_EXPENSE_MONTHS;
   const needPermanentInjury = expenses*PERMANENT_INJURY_EXPENSE_MONTHS;
 
   const statePnBenefit = grossIncome*STATE_SICKPAY_RATIO;
@@ -597,7 +597,7 @@ function computeCoupleAdultRisks(personIncome, partnerIncome, expenses, existing
 
   const needDeath = FUNERAL_COST + sharedShortfall*DEATH_SHORTFALL_MONTHS_PARTNER;
   const needDisability = sharedShortfall*DISABILITY_EXPENSE_MONTHS;
-  const needCriticalIllness = sharedShortfall*CRITICAL_ILLNESS_EXPENSE_MONTHS + CRITICAL_ILLNESS_ABROAD_DEFAULT;
+  const needCriticalIllness = sharedShortfall*CRITICAL_ILLNESS_EXPENSE_MONTHS;
   const needPermanentInjury = sharedShortfall*PERMANENT_INJURY_EXPENSE_MONTHS;
 
   const statePnBenefit = grossIncome*STATE_SICKPAY_RATIO;
@@ -685,10 +685,10 @@ function buildRiskEntries(g){
         : 'Pohrebné náklady (3 000 €, vyplatiteľné do 2-3 dní) + 12-násobok mesačnej splátky záväzkov ('+eur(g.inputs.debtsPaymentTotal)+') — preklenutie obdobia dedičského konania.' });
     entries.push({ section, badge:'teal', name:'Invalidita (čiastočná)', r:adult.disability, fmt:eur, lump:true,
       note: g.hasPartner
-        ? '36-násobok sumy, ktorú by partner musel priniesť mesačne do rozpočtu pri výpadku oboch príjmov naraz — najhorší scenár.'
-        : '36-násobok mesačných výdavkov. Pri čiastočnej invalidite sa spravidla vypláca pomerná časť poistnej sumy.' });
+        ? '36-násobok sumy, ktorú by partner musel priniesť mesačne do rozpočtu pri výpadku oboch príjmov naraz — najhorší scenár. Vypláca sa dohodnutá poistná suma (PS).'
+        : '36-násobok mesačných výdavkov. Vypláca sa dohodnutá poistná suma (PS).' });
     entries.push({ section, badge:'warm', name:'Kritické choroby', r:adult.criticalIllness, fmt:eur, lump:true,
-      note:'36-násobok '+(g.hasPartner?'referenčnej sumy':'mesačných výdavkov')+' + orientačne '+eur(CRITICAL_ILLNESS_ABROAD_DEFAULT)+' na prípadnú liečbu v zahraničí (spresní sa individuálne pri ponuke).' });
+      note:'36-násobok '+(g.hasPartner?'referenčnej sumy':'mesačných výdavkov')+'. Suma na prípadnú liečbu v zahraničí (orientačne '+eur(CRITICAL_ILLNESS_ABROAD_DEFAULT)+') tu nie je zahrnutá — dá sa dopočítať a pripoistiť zvlášť podľa záujmu.' });
     entries.push({ section, badge:'teal', name:'Trvalé následky úrazom', r:adult.permanentInjury, fmt:eur, lump:true,
       note:'Referenčná suma — 60-násobok '+(g.hasPartner?'referenčnej sumy':'mesačných výdavkov')+'. Produkt má progresívne plnenie do 1000 %, presnú poistnú sumu nastaví poradca individuálne.' });
     entries.push({ section, badge:'teal', name:'PN / práceneschopnosť', r:adult.pn, fmt:eurDay, lump:false,
@@ -798,7 +798,13 @@ function riskCardHtml(label, r, note, fmt){
 function render(){
   renderDebts();
   renderChildren();
+  renderResults();
+}
 
+/* Prepočíta a vykreslí len výsledky (bez prekreslenia zoznamov záväzkov/detí) —
+   volá sa pri písaní do ich polí, aby input políčka nestrácali focus po
+   každom znaku (viď onDebtInput/onChildInput). */
+function renderResults(){
   const errors = validate();
   document.querySelectorAll('.form .field[data-k]').forEach(f=>{
     const k=f.dataset.k;
@@ -1299,7 +1305,7 @@ function bind(){
     const row=e.target.closest('.item'); if(!row) return;
     const id=Number(row.dataset.id); const d=state.debts.find(x=>x.id===id); if(!d) return;
     const act=e.target.dataset.act; if(act) d[act]=e.target.value;
-    render();
+    renderResults();
   };
   $('debtItems').addEventListener('input', onDebtInput);
 
@@ -1307,7 +1313,7 @@ function bind(){
     const row=e.target.closest('.item'); if(!row) return;
     const id=Number(row.dataset.id); const c=state.children.find(x=>x.id===id); if(!c) return;
     const act=e.target.dataset.act; if(act) c[act]=e.target.value;
-    render();
+    renderResults();
   };
   $('childItems').addEventListener('input', onChildInput);
 
