@@ -712,9 +712,9 @@ function buildRiskEntries(g){
       note:'Orientačná suma 50 000 € na dieťa — čiastočná invalidita pri deťoch neexistuje; plnenie až po dosiahnutí 18 rokov ("invalidita z mladosti").' });
   }
 
-  entries.push({ section:'Rezerva', badge:'teal', name:'Krátkodobá rezerva (úspory)',
+  entries.push({ section:'Rezerva domácnosti', badge:'teal', name:'Krátkodobá rezerva (úspory)',
     r:{ need:g.reserve.target, covered:g.reserve.current, gap:g.reserve.gap }, fmt:eur, lump:false,
-    note:'6-násobok mesačných výdavkov ako likvidná rezerva. Posledných 5 rokov pred dôchodkom sa cieľ mení na 36-násobok.' });
+    note:'6-násobok mesačných výdavkov domácnosti ako likvidná rezerva — spoločný cieľ, nevytvára sa samostatne pre deti. Posledných 5 rokov pred dôchodkom sa cieľ mení na 36-násobok.' });
 
   return entries;
 }
@@ -829,7 +829,7 @@ function renderResults(){
   let html = '';
   let lastSection = null;
   entries.forEach(function(e){
-    if(showSectionLabels && e.section!=='Rezerva' && e.section!==lastSection){
+    if(showSectionLabels && e.section!==lastSection){
       html += '<div class="risk-section-label">'+escapeHtml(e.section)+'</div>';
     }
     lastSection = e.section;
@@ -859,7 +859,7 @@ function doCreateChecklist(){
   entries.forEach(function(e){
     if(e.r.gap<=0) return;
     const amt = e.fmt(e.r.gap);
-    if(e.section==='Rezerva'){
+    if(e.section==='Rezerva domácnosti'){
       items.push({ text:'Vybudovať krátkodobú finančnú rezervu – chýba cca '+amt, owner:'klient' });
       return;
     }
@@ -1115,7 +1115,7 @@ function buildReportHtml(mode){
   let risksHtml = '';
   let lastSection = null;
   entries.forEach(function(e){
-    if(showSectionLabels && e.section!=='Rezerva' && e.section!==lastSection){
+    if(showSectionLabels && e.section!==lastSection){
       risksHtml += '<div class="section-tag" style="margin-top:5mm;">'+escapeHtml(e.section)+'</div>';
     }
     lastSection = e.section;
