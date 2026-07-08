@@ -553,6 +553,17 @@ function bind(){
    ŠTART
 =========================================================================== */
 (function init(){
+  const seedParam = new URLSearchParams(location.search).get('seed');
+  if(seedParam){
+    try{
+      const seed = JSON.parse(seedParam);
+      if(seed.clientName) state.clientName = seed.clientName;
+      if(seed.advisorName) state.advisorName = seed.advisorName;
+      if(Array.isArray(seed.items) && seed.items.length){
+        state.items = seed.items.map(function(it){ return withId({ text: it.text||'', owner: it.owner||'klient', due:'', done:false }); });
+      }
+    }catch(e){ /* ticho ignoruj, ostanú predvolené úlohy */ }
+  }
   syncInputs(); bind(); render();
   autoOpenSavedDocument(function(d){ Object.assign(state, d); state.touched = true; syncInputs(); render(); }, doPDF);
 })();

@@ -374,6 +374,19 @@ function renderQuestion(){
   });
 }
 
+/* Odkaz do Kalkulačky finančnej medzery s predvyplnením podľa odpovedí
+   z tohto dotazníka (meno klienta, náznak detí/úveru). */
+function gapCalcUrl(){
+  const nameField = $('clientLinkLabel');
+  const contactName = (nameField ? nameField.value.trim() : '') || clientLinkLabel || state.contactName.trim();
+  const seed = {
+    contactName: contactName,
+    hasDependents: state.answers.hasDependents==='ano',
+    hasLoan: state.answers.hasLoan==='ano',
+  };
+  return '../financna-medzera/?seed=' + encodeURIComponent(JSON.stringify(seed));
+}
+
 function renderResults(){
   const recs = computeRecommendations();
   const recHtml = recs.map((r,i)=>
@@ -426,7 +439,7 @@ function renderResults(){
     + pdfCardHtml
     + clientRequestsHtml
     + myDocumentsHtml
-    + (CLIENT_TOKEN ? '' : '<a class="gap-link" href="../financna-medzera/">Chcete presne prepočítať, koľko by vám chýbalo? →</a>')
+    + (CLIENT_TOKEN ? '' : '<a class="gap-link" href="'+gapCalcUrl()+'">Chcete presne prepočítať, koľko by vám chýbalo? →</a>')
     + contactOrSubmitHtml
     + (CLIENT_TOKEN ? '' : '<div class="restart" id="restartBtn">↺ Vyplniť dotazník znova</div>');
 
