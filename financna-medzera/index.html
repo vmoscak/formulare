@@ -1060,6 +1060,12 @@ function bind(){
     setMode(state.mode);
     loadClientRequests();
     loadMyDocuments();
+    autoOpenSavedDocument(function(d){
+      Object.assign(state, d);
+      state.touched = true;
+      syncInputs();
+      render();
+    }, doGeneratePdf);
   }
 })();
 </script>

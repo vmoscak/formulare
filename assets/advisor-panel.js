@@ -24,6 +24,25 @@ function logDocument(tool, clientLabel, formData, clientToken){
   }catch(e){}
 }
 
+/* Ak URL obsahuje ?loadDoc=<id> (odkaz z "Moje dokumenty" / prehľadu pre
+   majiteľa), načíta uložený dokument a rovno spustí generovanie PDF —
+   umožňuje sa k už vygenerovanému dokumentu kedykoľvek vrátiť.
+   applyFn(formData) — nastaví načítané dáta do stavu formulára a prekreslí.
+   generateFn() — funkcia, ktorá spustí generovanie/stiahnutie PDF (doPDF /
+   doGeneratePdf). */
+async function autoOpenSavedDocument(applyFn, generateFn){
+  const id = new URLSearchParams(location.search).get('loadDoc');
+  if (!id) return;
+  try{
+    const r = await fetch('../api/get-document.php?id=' + encodeURIComponent(id));
+    if (!r.ok) return;
+    const data = await r.json();
+    if (!data || !data.form_data) return;
+    applyFn(JSON.parse(data.form_data));
+    generateFn();
+  }catch(e){ /* ticho ignoruj, formulár ostane prázdny */ }
+}
+
 /* Načíta a vykreslí zoznam (klientske odkazy / vygenerované dokumenty) do
    karty, ktorá je štandardne skrytá — zobrazí sa len ak sú nejaké záznamy.
    opts: { endpoint, tool, cardId, listId, rowHtml(row)->string, onOpen(row) } */

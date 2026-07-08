@@ -778,7 +778,15 @@ function initSendLinkPanel(){
 =========================================================================== */
 loadAdvisor();
 initSendLinkPanel();
-if(CLIENT_TOKEN){ loadClientSession(); }
+if(CLIENT_TOKEN){
+  loadClientSession();
+} else {
+  autoOpenSavedDocument(function(d){
+    Object.assign(state, d);
+    state.step = QUESTIONS.length;
+    render();
+  }, doGeneratePdf);
+}
 render();
 </script>
 

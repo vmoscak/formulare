@@ -110,7 +110,8 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
   .add-form button:hover{ transform:translateY(-2px); box-shadow:0 8px 18px rgba(31,95,209,.28); }
   .add-form button:active{ transform:translateY(0); }
   .toggle-btn{
-    padding:5px 10px; border:1.5px solid var(--border); border-radius:8px; background:#fff; font-size:12px; cursor:pointer;
+    display:inline-block; padding:5px 10px; border:1.5px solid var(--border); border-radius:8px; background:#fff;
+    font-size:12px; cursor:pointer; color:var(--ink); text-decoration:none;
     transition:border-color .18s ease, transform .18s ease;
   }
   .toggle-btn:hover{ border-color:var(--accent); transform:translateY(-1px); }
@@ -188,7 +189,8 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
         <td><?= h($d['tool']) ?></td>
         <td><?= $d['source'] === 'client' ? 'klient' : 'poradca' ?></td>
         <td><?= h($d['generated_at']) ?></td>
-        <td>
+        <td style="display:flex; gap:6px;">
+          <a class="toggle-btn" href="/<?= rawurlencode($d['tool']) ?>/index.html?loadDoc=<?= (int)$d['id'] ?>" target="_blank">PDF</a>
           <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj zmazať tento dokument?');">
             <input type="hidden" name="delete_doc_id" value="<?= (int)$d['id'] ?>">
             <button type="submit" class="toggle-btn">Zmazať</button>
