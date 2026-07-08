@@ -167,14 +167,6 @@
   .results-sheet{background:#fff; border:1px solid var(--border); border-radius:var(--radius-lg);
       box-shadow:var(--shadow-card); overflow:hidden;}
 
-  .thesis{padding:22px 24px 6px;}
-  .thesis-lede{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.09em; margin-bottom:8px; font-weight:600;}
-  .thesis-row{display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;}
-  .thesis-num{font-family:var(--mono); font-size:29px; font-weight:700; color:var(--ink); letter-spacing:-.01em;}
-  .thesis-num.ok{color:var(--good);}
-  .thesis-num.text{font-family:var(--serif); font-weight:400; letter-spacing:-.005em; line-height:1.25;}
-  .thesis-txt{font-size:12.5px; color:var(--label); max-width:44ch; line-height:1.55;}
-  .thesis-txt b{color:var(--ink); font-weight:700;}
 
   #riskResults{display:flex; flex-direction:column; gap:16px;}
   .matrix-wrap{overflow-x:auto; padding:12px 24px 2px;}
@@ -733,9 +725,9 @@ function buildRiskMatrix(g){
         ? '36-násobok referenčnej sumy pri výpadku oboch príjmov naraz. Vypláca sa dohodnutá PS; u dieťaťa len úplná, od 18 rokov.'
         : '36-násobok mesačných výdavkov. Vypláca sa dohodnutá poistná suma (PS); u dieťaťa len úplná, od 18 rokov.' },
     { key:'criticalIllness', field:'criticalIllness', label:'Kritické choroby', fmt:eur,
-      note:'36-násobok '+(g.hasPartner?'referenčnej sumy':'mesačných výdavkov')+' (dospelí) / 50 000 € na dieťa. Liečba v zahraničí sa dopočíta zvlášť.' },
+      note:'36-násobok '+(g.hasPartner?'referenčnej sumy':'mesačných výdavkov')+' / 50 000 € na dieťa. Liečba v zahraničí sa dopočíta zvlášť.' },
     { key:'permanentInjury', field:'permanentInjury', label:'Trvalé následky úrazom', fmt:eur,
-      note:'Referenčná suma — 60-násobok '+(g.hasPartner?'referenčnej sumy':'mesačných výdavkov')+' (dospelí) / 50 000 € na dieťa. Progresívne plnenie do 1000 %.' },
+      note:'Referenčná suma — 60-násobok '+(g.hasPartner?'referenčnej sumy':'mesačných výdavkov')+' / 50 000 € na dieťa. Progresívne plnenie do 1000 %.' },
     { key:'pn', field:'pn', label:'PN / práceneschopnosť', fmt:eurDay, childrenNA:true,
       note:'Rozdiel mesačných výdavkov'+(g.hasPartner?' a príjmu partnera/-ky':'')+' a štátneho nemocenského (55 % z hrubého príjmu), denná dávka. Pri deťoch sa nerieši.' },
   ];
@@ -890,22 +882,7 @@ function renderResults(){
   if($('sendLinkCard')) $('sendLinkCard').style.display = state.mode==='klient' ? 'none' : 'block';
 
   const hideNums = state.mode==='klient';
-  const worst = worstInMatrix(g);
   let html = '<div class="results-sheet">';
-  if(worst && worst.gap>0){
-    if(hideNums){
-      html += '<div class="thesis"><div class="thesis-lede">Na základe zadaných údajov</div>'
-        + '<div class="thesis-row"><span class="thesis-num text" style="font-size:20px;">Niektoré riziká nie sú dostatočne kryté</span></div>'
-        + '<div class="thesis-txt" style="margin-top:8px;">Najviac pozornosti potrebuje riziko <b>'+worst.rowLabel.toLowerCase()+'</b> — '+escapeHtml(worst.colLabel)+'. Presné čísla preberie poradca osobne.</div></div>';
-    } else {
-      html += '<div class="thesis"><div class="thesis-lede">Najhorší prípad by chýbalo</div>'
-        + '<div class="thesis-row"><span class="thesis-num">'+eur(worst.gap)+'</span>'
-        + '<span class="thesis-txt">Riziko <b>'+worst.rowLabel.toLowerCase()+'</b> — '+escapeHtml(worst.colLabel)+'.</span></div></div>';
-    }
-  } else {
-    html += '<div class="thesis"><div class="thesis-lede">Na základe zadaných údajov</div>'
-      + '<div class="thesis-row"><span class="thesis-num text ok" style="font-size:22px;">Ste dobre pripravení</span></div></div>';
-  }
   html += matrixTableHtml(g, hideNums);
   html += reserveBandHtml(g, hideNums);
   html += '</div>';
@@ -1130,29 +1107,6 @@ function buildReportHtml(mode){
   const { columns, rows } = buildRiskMatrix(g);
   const worst = worstInMatrix(g);
 
-  let thesisHtml;
-  if(worst && worst.gap>0){
-    if(masked){
-      thesisHtml = ''
-        + '<div class="thesis-lede">Na základe zadaných údajov sme prezreli riziká úmrtia, invalidity, kritických chorôb a trvalých následkov:</div>'
-        + '<div class="hero serif" style="font-size:20pt;">Niektoré riziká nie sú dostatočne kryté</div>'
-        + '<div class="hero-rule"></div>'
-        + '<div class="thesis-sub">Najviac pozornosti potrebuje riziko <b>'+worst.rowLabel.toLowerCase()+'</b>. Presné čísla a odporúčané krytie s vami prejde poradca osobne.</div>';
-    } else {
-      thesisHtml = ''
-        + '<div class="thesis-lede">Na základe zadaných údajov by v najhoršom prípade chýbalo:</div>'
-        + '<div class="hero">'+eur(worst.gap)+'</div>'
-        + '<div class="hero-rule"></div>'
-        + '<div class="thesis-sub">Riziko <b>'+worst.rowLabel.toLowerCase()+'</b> — '+escapeHtml(worst.colLabel)+'.</div>';
-    }
-  } else {
-    thesisHtml = ''
-      + '<div class="thesis-lede">Na základe zadaných údajov:</div>'
-      + '<div class="hero serif" style="color:#3f8361;">Ste dobre pripravení</div>'
-      + '<div class="hero-rule" style="background:#3f8361;"></div>'
-      + '<div class="thesis-sub">Vaše aktuálne krytie pokrýva odporúčané sumy pre preverené riziká. Odporúčame situáciu s poradcom raz ročne prekontrolovať.</div>';
-  }
-
   const nextStepHtml = (worst && worst.gap>0 && !masked)
     ? '<div class="next-step"><p>Najväčšie riziko je <b>'+worst.rowLabel.toLowerCase()+'</b> ('+escapeHtml(worst.colLabel)+') &mdash; odporúčame začať práve tu. Presné nastavenie poistnej sumy s vami prejde '+escapeHtml(ADVISOR.name)+' osobne.</p></div>'
     : (masked
@@ -1199,12 +1153,7 @@ function buildReportHtml(mode){
     .lh-right { text-align:right; }
     .lh-client { font-family:'DejaVu Serif',serif; font-size:11.5pt; }
     .lh-date { font-size:8.5pt; color:#6e6a63; margin-top:0.5mm; }
-    .thesis-lede { font-size:9.5pt; color:#6e6a63; margin-bottom:3mm; max-width:130mm; }
-    .hero { font-family:'DejaVu Sans Mono',monospace; font-size:24pt; font-weight:bold; margin-bottom:2.5mm; }
-    .hero.serif { font-family:'DejaVu Serif',serif; font-weight:normal; font-size:18pt; line-height:1.3; }
-    .hero-rule { width:14mm; height:0.9mm; background:`+accent+`; margin-bottom:3.5mm; border-radius:1mm; }
-    .thesis-sub { font-size:9.5pt; max-width:140mm; }
-    table.matrix { width:100%; border-collapse:collapse; margin-top:6mm; }
+    table.matrix { width:100%; border-collapse:collapse; margin-top:2mm; }
     td.mx-blank { width:38mm; }
     td.mx-head { font-family:'DejaVu Serif',serif; font-size:9.5pt; text-align:center; padding:0 2mm 2.5mm; border-bottom:0.8pt solid #262523; }
     td.mx-risk { font-family:'DejaVu Serif',serif; font-size:10pt; text-align:left; padding:3.5mm 2mm 3.5mm 0; border-top:0.5pt solid #e7e3d8; vertical-align:top; }
@@ -1242,7 +1191,6 @@ function buildReportHtml(mode){
       + '<td class="lh-right"><div class="lh-client">'+escapeHtml(clientName)+'</div>'
       + '<div class="lh-date mono">'+fmtDateSk(TODAY)+'</div></td>'
     + '</tr></table>'
-    + thesisHtml
     + matrixHtml
     + reserveHtml
     + nextStepHtml
