@@ -61,18 +61,18 @@
 
     var NAV = [
       { key: 'tools', icon: ICONS.tools, href: '/nastroje.php', label: 'Nástroje', active: isTools },
-      { key: 'docs', icon: ICONS.docs, href: '/moje-dokumenty.php', label: 'Moje dokumenty', active: isDocs },
-      { key: 'kb', icon: ICONS.kb, href: '/znalostna-baza.php', label: 'Znalostná báza', active: isKb }
+      { key: 'docs', icon: ICONS.docs, href: '/moje-dokumenty.php', label: 'Moje dokumenty', active: isDocs }
     ];
     // Admin ikona sa zobrazí len poradcovi s is_admin=1 (server-side to aj
     // tak stráži admin.php samotné — toto je len viditeľnosť v navigácii).
     if (adv.is_admin) {
       NAV.push({ key: 'admin', icon: ICONS.admin, href: '/admin.php', label: 'Admin', active: isAdmin });
     }
-    // Náborová zóna — viditeľná VÝHRADNE pre is_owner (nie každý admin),
-    // nabor.php si to aj tak stráži server-side rovnako prísne.
+    // Náborová zóna aj znalostná báza — viditeľné VÝHRADNE pre is_owner (nie
+    // každý admin), obe stránky si to aj tak strážia server-side rovnako prísne.
     if (adv.is_owner) {
       NAV.push({ key: 'nabor', icon: ICONS.nabor, href: '/nabor.php', label: 'Nábor', active: isNabor });
+      NAV.push({ key: 'kb', icon: ICONS.kb, href: '/znalostna-baza.php', label: 'Znalostná báza', active: isKb });
     }
 
     var css =

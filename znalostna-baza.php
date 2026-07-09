@@ -1,16 +1,13 @@
 <?php
 /**
- * Znalostná báza — interné FAQ / rýchle texty pre poradcov. Prispieva
- * ktokoľvek prihlásený (nie je to obmedzené na admina/vlastníka, na rozdiel
- * od nabor.php) — pridať a upraviť môže hocikto, zmazať len autor alebo
- * admin (aby sa niečo omylom nestratilo).
+ * Znalostná báza — interné FAQ / rýchle texty. Prístup VÝHRADNE pre poradcu
+ * s is_owner=1 (rovnaký vzor ako nabor.php) — kým sa nerozhodne, ako/či sa
+ * sprístupní aj ostatným poradcom na čítanie.
  */
 require_once __DIR__ . '/db.php';
 
 $advisorId = curAdvisorId();
-if (!$advisorId) { header('Location: /'); exit; }
-
-$stmt = db()->prepare('SELECT * FROM formulare_advisors WHERE id = ? AND active = 1');
+$stmt = db()->prepare('SELECT * FROM formulare_advisors WHERE id = ? AND is_owner = 1 AND active = 1');
 $stmt->execute([$advisorId]);
 $me = $stmt->fetch();
 if (!$me) { header('Location: /'); exit; }
@@ -35,11 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } elseif (isset($_POST['delete_id'])) {
         $id = (int)$_POST['delete_id'];
-        if ($me['is_admin']) {
-            db()->prepare('DELETE FROM formulare_knowledge_base WHERE id = ?')->execute([$id]);
-        } else {
-            db()->prepare('DELETE FROM formulare_knowledge_base WHERE id = ? AND advisor_id = ?')->execute([$id, $advisorId]);
-        }
+        db()->prepare('DELETE FROM formulare_knowledge_base WHERE id = ?')->execute([$id]);
     }
     header('Location: /znalostna-baza.php' . (isset($_GET['q']) ? '?q=' . urlencode($_GET['q']) : ''));
     exit;
@@ -69,7 +62,7 @@ try {
 <header class="topbar">
   <div class="tb-title">
     <h1>Znalostná báza</h1>
-    <p>Interné FAQ a rýchle texty · pridáva a upravuje ktokoľvek</p>
+    <p>Interné FAQ a rýchle texty · viditeľné len tebe</p>
   </div>
   <div class="tb-actions">
     <a class="pillbtn" href="/nastroje.php">← Späť na nástroje</a>
@@ -117,12 +110,10 @@ try {
             <div class="kb-actions">
               <button type="button" class="toggle-btn" onclick="kbCopy(<?= (int)$e['id'] ?>)">Kopírovať</button>
               <button type="button" class="toggle-btn" onclick="kbEdit(<?= (int)$e['id'] ?>)">Upraviť</button>
-              <?php if ($me['is_admin'] || (int)$e['advisor_id'] === $advisorId): ?>
               <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj zmazať tento záznam?');">
                 <input type="hidden" name="delete_id" value="<?= (int)$e['id'] ?>">
                 <button type="submit" class="toggle-btn">Zmazať</button>
               </form>
-              <?php endif; ?>
             </div>
           </div>
           <p class="kb-body" data-raw="<?= h($e['body']) ?>"><?= nl2br(h($e['body'])) ?></p>
