@@ -58,7 +58,7 @@ $arrow = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="cu
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=6">
+<link rel="stylesheet" href="/assets/panel.css?v=7">
 </head>
 <body>
 
@@ -105,6 +105,6 @@ $arrow = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="cu
 
 </main>
 
-<script src="/assets/shell.js?v=4"></script>
+<script src="/assets/shell.js?v=5"></script>
 </body>
 </html>

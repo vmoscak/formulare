@@ -121,7 +121,7 @@ function qs(array $overrides): string {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=6">
+<link rel="stylesheet" href="/assets/panel.css?v=7">
 </head><body>
 <header class="topbar">
   <div class="tb-title">
@@ -339,5 +339,5 @@ function qs(array $overrides): string {
     .catch(function () { countEl.textContent = '· chyba načítania'; });
 })();
 </script>
-<script src="/assets/shell.js?v=4"></script>
+<script src="/assets/shell.js?v=5"></script>
 </body></html>
