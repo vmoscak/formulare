@@ -191,21 +191,25 @@ try {
   .foot{margin-top:52px; font-size:12px; color:var(--label);}
 
   /* ── Novinky (banner) ── */
-  .news-wrap{
-    width:100%; max-width:1080px; margin:0 0 22px; display:flex; flex-direction:column; gap:10px;
-    opacity:0; animation:rise .5s ease .06s forwards;
-  }
+  .news-wrap{width:100%; max-width:1080px; margin:0 0 22px; display:flex; flex-direction:column; gap:10px;}
   .news-item{
-    background:var(--paper); border:1px solid var(--border); border-radius:var(--radius-lg);
-    padding:14px 18px; box-shadow:var(--shadow-sm); display:flex; gap:12px; align-items:flex-start;
+    background:var(--paper); border:1px solid var(--border); border-left:4px solid var(--news-accent,var(--accent));
+    border-radius:var(--radius-lg); padding:14px 18px 14px 16px; box-shadow:var(--shadow-sm);
+    display:flex; gap:12px; align-items:flex-start;
+    opacity:0; transform:translateY(10px); animation:newsIn .5s cubic-bezier(.22,1,.36,1) forwards;
   }
-  .news-item.important{border-color:var(--accent-line); background:var(--accent-soft);}
+  .news-item:nth-child(1){animation-delay:.08s;}
+  .news-item:nth-child(2){animation-delay:.16s;}
+  .news-item:nth-child(3){animation-delay:.24s;}
+  @keyframes newsIn{ to{opacity:1; transform:translateY(0);} }
+  .news-item.important{background:linear-gradient(135deg,var(--news-accent-soft,var(--accent-soft)),var(--paper) 65%);}
   .news-badge{
     flex-shrink:0; margin-top:2px; font-size:10px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
-    color:var(--accent); background:#fff; border:1px solid var(--accent-line); border-radius:999px; padding:3px 9px;
+    color:#fff; background:var(--news-accent,var(--accent)); border-radius:999px; padding:3px 9px;
   }
   .news-item h3{margin:0 0 3px; font-size:13.5px; font-weight:700; color:var(--ink);}
   .news-item p{margin:0; font-size:12.5px; color:var(--muted); line-height:1.5; white-space:pre-wrap;}
+  @media(prefers-reduced-motion:reduce){ .news-item{animation:none; opacity:1; transform:none;} }
 
   /* ── Obrazovka osobného PIN-u ── */
   .pin-wrap{
@@ -320,8 +324,18 @@ try {
 
   <?php if ($news): ?>
   <div class="news-wrap">
+    <?php
+    // Farebný cyklus pre bežné novinky (rovnaká paleta ako farebné karty
+    // nástrojov); dôležité novinky majú vždy pevnú "urgentnú" farbu.
+    $newsPalette = ['#4f46e5', '#059669', '#0d9488', '#7c3aed', '#0284c7', '#d97706'];
+    $newsColorIdx = 0;
+    ?>
     <?php foreach ($news as $n): ?>
-    <div class="news-item<?= $n['important'] ? ' important' : '' ?>">
+    <?php
+    if ($n['important']) { $accent = '#e11d48'; $accentSoft = '#fff1f2'; }
+    else { $accent = $newsPalette[$newsColorIdx % count($newsPalette)]; $accentSoft = $accent . '1a'; $newsColorIdx++; }
+    ?>
+    <div class="news-item<?= $n['important'] ? ' important' : '' ?>" style="--news-accent:<?= $accent ?>; --news-accent-soft:<?= $accentSoft ?>;">
       <?php if ($n['important']): ?><span class="news-badge">Dôležité</span><?php endif; ?>
       <div>
         <h3><?= htmlspecialchars($n['title']) ?></h3>
