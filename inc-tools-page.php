@@ -92,7 +92,7 @@ $arrow = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="cu
     </div>
     <div class="tool-grid">
       <?php foreach ($cat['tools'] as $t): ?>
-      <a class="tool-card c-<?= htmlspecialchars($t['color']) ?><?= !empty($t['hero']) ? ' hero' : '' ?>" href="<?= htmlspecialchars($t['href']) ?>">
+      <a class="tool-card c-<?= htmlspecialchars($t['color']) ?>" href="<?= htmlspecialchars($t['href']) ?>">
         <span class="ic"><?= toolIco($t['ico']) ?></span>
         <h4><?= htmlspecialchars($t['name']) ?></h4>
         <p><?= htmlspecialchars($t['desc']) ?></p>
@@ -102,22 +102,6 @@ $arrow = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="cu
     </div>
   </div>
   <?php endforeach; ?>
-
-  <?php if ($GROUP === 'nastroje'): ?>
-  <div class="section">
-    <div class="section-head">
-      <h3>Pripravujeme</h3>
-    </div>
-    <div class="tool-grid">
-      <div class="tool-card soon">
-        <span class="ic"><?= toolIco('plus') ?></span>
-        <h4>Ďalšie formuláre</h4>
-        <p>Postupne pribudnú ďalšie vzory a žiadosti.</p>
-        <span class="badge-soon">Čoskoro</span>
-      </div>
-    </div>
-  </div>
-  <?php endif; ?>
 
 </main>
 

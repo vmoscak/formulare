@@ -131,11 +131,6 @@ a{color:inherit; text-decoration:none;}
   width:44px; height:44px; border-radius:var(--radius-lg); display:flex; align-items:center; justify-content:center;
   background:var(--accent-soft); color:var(--accent); flex-shrink:0;
 }
-.tool-card.c-indigo .ic{background:var(--accent-soft); color:var(--accent);}
-.tool-card.c-emerald .ic{background:var(--good-soft); color:var(--good);}
-.tool-card.c-rose .ic{background:var(--rose-soft); color:var(--rose);}
-.tool-card.c-teal .ic{background:var(--teal-soft); color:var(--teal);}
-.tool-card.c-amber .ic{background:var(--amber-soft); color:var(--amber);}
 .tool-card h4{margin:0; font-size:15.5px; font-weight:700; letter-spacing:-.01em; color:var(--ink);}
 .tool-card p{margin:0; font-size:12.5px; color:var(--muted); line-height:1.55; flex:1;}
 .tool-card .go{
@@ -145,19 +140,21 @@ a{color:inherit; text-decoration:none;}
 .tool-card .go svg{transition:transform .18s ease;}
 .tool-card:hover .go svg{transform:translateX(3px);}
 
-/* hero karta (hlavný nástroj) — plná indigo ako v predlohe */
-.tool-card.hero{
-  background:linear-gradient(150deg,#4f46e5,#4338ca); border-color:transparent; color:#fff;
-  box-shadow:0 14px 30px -12px rgba(79,70,229,.6);
+/* Farebné karty — každá kategória farby má plný farebný gradient (nie len
+   farebnú ikonku), rovnaký vzor ako pôvodná "hero" karta financnej medzery. */
+.tool-card.c-indigo{background:linear-gradient(150deg,#4f46e5,#4338ca); box-shadow:0 14px 30px -12px rgba(79,70,229,.55);}
+.tool-card.c-emerald{background:linear-gradient(150deg,#10b981,#059669); box-shadow:0 14px 30px -12px rgba(5,150,105,.5);}
+.tool-card.c-rose{background:linear-gradient(150deg,#fb7185,#e11d48); box-shadow:0 14px 30px -12px rgba(225,29,72,.5);}
+.tool-card.c-teal{background:linear-gradient(150deg,#2dd4bf,#0d9488); box-shadow:0 14px 30px -12px rgba(13,148,136,.5);}
+.tool-card.c-amber{background:linear-gradient(150deg,#fbbf24,#d97706); box-shadow:0 14px 30px -12px rgba(217,119,6,.5);}
+.tool-card.c-indigo,.tool-card.c-emerald,.tool-card.c-rose,.tool-card.c-teal,.tool-card.c-amber{ border-color:transparent; }
+.tool-card.c-indigo::after,.tool-card.c-emerald::after,.tool-card.c-rose::after,.tool-card.c-teal::after,.tool-card.c-amber::after{
+  content:""; position:absolute; right:-30px; top:-30px; width:150px; height:150px; border-radius:50%; background:rgba(255,255,255,.12); filter:blur(6px);
 }
-.tool-card.hero::after{content:""; position:absolute; right:-30px; top:-30px; width:150px; height:150px; border-radius:50%; background:rgba(255,255,255,.1); filter:blur(6px);}
-.tool-card.hero .ic{background:rgba(255,255,255,.18); color:#fff;}
-.tool-card.hero h4{color:#fff;}
-.tool-card.hero p{color:rgba(255,255,255,.82);}
-.tool-card.hero .go{color:#fff;}
-.tool-card.soon{opacity:1;}
-.tool-card.soon .ic{background:var(--desk); color:var(--label);}
-.badge-soon{position:absolute; top:16px; right:16px; font-size:10px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); background:var(--desk); border:1px solid var(--border); padding:4px 9px; border-radius:999px;}
+.tool-card.c-indigo .ic,.tool-card.c-emerald .ic,.tool-card.c-rose .ic,.tool-card.c-teal .ic,.tool-card.c-amber .ic{background:rgba(255,255,255,.18); color:#fff;}
+.tool-card.c-indigo h4,.tool-card.c-emerald h4,.tool-card.c-rose h4,.tool-card.c-teal h4,.tool-card.c-amber h4{color:#fff;}
+.tool-card.c-indigo p,.tool-card.c-emerald p,.tool-card.c-rose p,.tool-card.c-teal p,.tool-card.c-amber p{color:rgba(255,255,255,.82);}
+.tool-card.c-indigo .go,.tool-card.c-emerald .go,.tool-card.c-rose .go,.tool-card.c-teal .go,.tool-card.c-amber .go{color:#fff;}
 
 /* ── Karty s tabuľkami ─────────────────────────────────────────────────── */
 .card{background:var(--paper); border:1px solid var(--border); border-radius:var(--radius-2xl); padding:22px 24px; box-shadow:var(--shadow-sm); margin-bottom:22px;}
