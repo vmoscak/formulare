@@ -141,20 +141,31 @@ a{color:inherit; text-decoration:none;}
 .tool-card:hover .go svg{transform:translateX(3px);}
 
 /* Farebné karty — každá kategória farby má plný farebný gradient (nie len
-   farebnú ikonku), rovnaký vzor ako pôvodná "hero" karta financnej medzery. */
+   farebnú ikonku), rovnaký vzor ako pôvodná "hero" karta financnej medzery.
+   8 farieb (nie len 5), aby sa pri väčšom počte nástrojov na jednej stránke
+   farby zbytočne neopakovali. */
 .tool-card.c-indigo{background:linear-gradient(150deg,#4f46e5,#4338ca); box-shadow:0 14px 30px -12px rgba(79,70,229,.55);}
 .tool-card.c-emerald{background:linear-gradient(150deg,#10b981,#059669); box-shadow:0 14px 30px -12px rgba(5,150,105,.5);}
 .tool-card.c-rose{background:linear-gradient(150deg,#fb7185,#e11d48); box-shadow:0 14px 30px -12px rgba(225,29,72,.5);}
 .tool-card.c-teal{background:linear-gradient(150deg,#2dd4bf,#0d9488); box-shadow:0 14px 30px -12px rgba(13,148,136,.5);}
 .tool-card.c-amber{background:linear-gradient(150deg,#fbbf24,#d97706); box-shadow:0 14px 30px -12px rgba(217,119,6,.5);}
-.tool-card.c-indigo,.tool-card.c-emerald,.tool-card.c-rose,.tool-card.c-teal,.tool-card.c-amber{ border-color:transparent; }
-.tool-card.c-indigo::after,.tool-card.c-emerald::after,.tool-card.c-rose::after,.tool-card.c-teal::after,.tool-card.c-amber::after{
+.tool-card.c-violet{background:linear-gradient(150deg,#a78bfa,#7c3aed); box-shadow:0 14px 30px -12px rgba(124,58,237,.5);}
+.tool-card.c-sky{background:linear-gradient(150deg,#38bdf8,#0284c7); box-shadow:0 14px 30px -12px rgba(2,132,199,.5);}
+.tool-card.c-orange{background:linear-gradient(150deg,#fb923c,#ea580c); box-shadow:0 14px 30px -12px rgba(234,88,12,.5);}
+.tool-card.c-indigo,.tool-card.c-emerald,.tool-card.c-rose,.tool-card.c-teal,.tool-card.c-amber,
+.tool-card.c-violet,.tool-card.c-sky,.tool-card.c-orange{ border-color:transparent; }
+.tool-card.c-indigo::after,.tool-card.c-emerald::after,.tool-card.c-rose::after,.tool-card.c-teal::after,.tool-card.c-amber::after,
+.tool-card.c-violet::after,.tool-card.c-sky::after,.tool-card.c-orange::after{
   content:""; position:absolute; right:-30px; top:-30px; width:150px; height:150px; border-radius:50%; background:rgba(255,255,255,.12); filter:blur(6px);
 }
-.tool-card.c-indigo .ic,.tool-card.c-emerald .ic,.tool-card.c-rose .ic,.tool-card.c-teal .ic,.tool-card.c-amber .ic{background:rgba(255,255,255,.18); color:#fff;}
-.tool-card.c-indigo h4,.tool-card.c-emerald h4,.tool-card.c-rose h4,.tool-card.c-teal h4,.tool-card.c-amber h4{color:#fff;}
-.tool-card.c-indigo p,.tool-card.c-emerald p,.tool-card.c-rose p,.tool-card.c-teal p,.tool-card.c-amber p{color:rgba(255,255,255,.82);}
-.tool-card.c-indigo .go,.tool-card.c-emerald .go,.tool-card.c-rose .go,.tool-card.c-teal .go,.tool-card.c-amber .go{color:#fff;}
+.tool-card.c-indigo .ic,.tool-card.c-emerald .ic,.tool-card.c-rose .ic,.tool-card.c-teal .ic,.tool-card.c-amber .ic,
+.tool-card.c-violet .ic,.tool-card.c-sky .ic,.tool-card.c-orange .ic{background:rgba(255,255,255,.18); color:#fff;}
+.tool-card.c-indigo h4,.tool-card.c-emerald h4,.tool-card.c-rose h4,.tool-card.c-teal h4,.tool-card.c-amber h4,
+.tool-card.c-violet h4,.tool-card.c-sky h4,.tool-card.c-orange h4{color:#fff;}
+.tool-card.c-indigo p,.tool-card.c-emerald p,.tool-card.c-rose p,.tool-card.c-teal p,.tool-card.c-amber p,
+.tool-card.c-violet p,.tool-card.c-sky p,.tool-card.c-orange p{color:rgba(255,255,255,.82);}
+.tool-card.c-indigo .go,.tool-card.c-emerald .go,.tool-card.c-rose .go,.tool-card.c-teal .go,.tool-card.c-amber .go,
+.tool-card.c-violet .go,.tool-card.c-sky .go,.tool-card.c-orange .go{color:#fff;}
 
 /* ── Karty s tabuľkami ─────────────────────────────────────────────────── */
 .card{background:var(--paper); border:1px solid var(--border); border-radius:var(--radius-2xl); padding:22px 24px; box-shadow:var(--shadow-sm); margin-bottom:22px;}
