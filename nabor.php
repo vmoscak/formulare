@@ -47,9 +47,14 @@ if (is_file(REGISTRY_FACETS_FILE)) {
     if (is_array($decoded)) $facets = array_merge($facets, $decoded);
 }
 
+// Náborová zóna má zmysel len pre jednotlivých agentov (ľudí, ktorých má kto
+// "prebrať"), nie inštitúcie ako banky/poisťovne/sporiteľne — preto je rozsah
+// natrvalo obmedzený len na tieto dve kategórie (viď rozhodnutie používateľa).
+const AGENT_CATEGORIES = ['viazaný finančný agent', 'podriadený finančný agent'];
+
 // -- vyhľadávanie / filter (GET, aby sa dalo odkázať/zdieľať) --
 $q = trim((string)($_GET['q'] ?? ''));
-$fCategories = array_values(array_filter(array_map('trim', (array)($_GET['cat'] ?? []))));
+$fCategories = array_values(array_intersect(array_map('trim', (array)($_GET['cat'] ?? [])), AGENT_CATEGORIES));
 $fSector = trim((string)($_GET['sector'] ?? ''));
 $fParent = trim((string)($_GET['parent'] ?? ''));
 $fRegion = trim((string)($_GET['region'] ?? ''));
@@ -58,13 +63,12 @@ $perPage = 30;
 
 // where bez kraja (pre prehľad počtov podľa kraja nižšie — nech vidno rozloženie
 // aj pri už zvolenom kraji) a where s krajom (pre samotné výsledky/stránkovanie)
+$activeCategories = $fCategories ?: AGENT_CATEGORIES;
 $where = [];
 $params = [];
+$where[] = '(' . implode(' OR ', array_fill(0, count($activeCategories), 'categories LIKE ?')) . ')';
+foreach ($activeCategories as $c) { $params[] = '%"' . $c . '"%'; }
 if ($q !== '') { $where[] = '(name LIKE ? OR ico LIKE ?)'; $params[] = '%' . $q . '%'; $params[] = '%' . $q . '%'; }
-if ($fCategories) {
-    $where[] = '(' . implode(' OR ', array_fill(0, count($fCategories), 'categories LIKE ?')) . ')';
-    foreach ($fCategories as $c) { $params[] = '%"' . $c . '"%'; }
-}
 if ($fSector !== '') { $where[] = 'sectors LIKE ?'; $params[] = '%"' . $fSector . '"%'; }
 if ($fParent !== '') { $where[] = 'parent_names LIKE ?'; $params[] = '%"' . $fParent . '"%'; }
 $whereSqlNoRegion = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
@@ -183,9 +187,9 @@ function qs(array $overrides): string {
         <input type="text" name="q" value="<?= h($q) ?>" placeholder="napr. Allianz alebo IČO">
       </div>
       <div class="f-field" style="min-width:260px;">
-        <label>Kategória <span style="font-weight:400; text-transform:none; letter-spacing:0;">(môžeš vybrať viac)</span></label>
+        <label>Kategória</label>
         <div class="chk-group">
-          <?php foreach ($facets['categories'] as $c): ?>
+          <?php foreach (AGENT_CATEGORIES as $c): ?>
           <label class="chk"><input type="checkbox" name="cat[]" value="<?= h($c) ?>" <?= in_array($c, $fCategories, true) ? 'checked' : '' ?>><?= h($c) ?></label>
           <?php endforeach; ?>
         </div>
