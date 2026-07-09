@@ -48,6 +48,7 @@ $arrow = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="cu
 <title>Formuláre — nástroje</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="/assets/theme-init.js"></script>
 <link rel="stylesheet" href="/assets/panel.css?v=4">
 </head>
 <body>

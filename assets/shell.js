@@ -33,7 +33,23 @@
     admin: '<path d="M12 2l7 4v6c0 5-3.5 8-7 10-3.5-2-7-5-7-10V6z"/>',
     nabor: '<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
     kb: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
+    moon: '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>',
   };
+
+  // Aktuálne účinná téma — explicitný prepínač (data-theme) má prednosť,
+  // inak systémová voľba (prefers-color-scheme).
+  function effectiveTheme() {
+    var explicit = document.documentElement.getAttribute('data-theme');
+    if (explicit === 'dark' || explicit === 'light') return explicit;
+    return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  }
+  function setTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    try { localStorage.setItem('theme', t); } catch (e) {}
+    var btn = document.getElementById('themeToggle');
+    if (btn) btn.innerHTML = svg(t === 'dark' ? ICONS.sun : ICONS.moon);
+  }
 
   function svg(path) {
     return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
@@ -76,20 +92,23 @@
     }
 
     var css =
-      '#appRail{position:fixed;left:0;top:0;bottom:0;width:72px;background:#fff;border-right:1px solid #eef0f3;' +
+      '#appRail{position:fixed;left:0;top:0;bottom:0;width:72px;background:var(--paper,#fff);border-right:1px solid var(--border,#eef0f3);' +
       'display:flex;flex-direction:column;align-items:center;padding:18px 0;z-index:60;font-family:\'Inter\',-apple-system,\'Segoe UI\',Roboto,sans-serif;}' +
-      '#appRail .rlogo{width:40px;height:40px;border-radius:12px;background:#4f46e5;color:#fff;display:flex;align-items:center;justify-content:center;' +
+      '#appRail .rlogo{width:40px;height:40px;border-radius:12px;background:var(--accent,#4f46e5);color:#fff;display:flex;align-items:center;justify-content:center;' +
       'box-shadow:0 6px 16px -4px rgba(79,70,229,.5);margin-bottom:26px;flex-shrink:0;}' +
       '#appRail nav{flex:1;display:flex;flex-direction:column;gap:8px;align-items:center;width:100%;}' +
       '#appRail a.ri{position:relative;width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;' +
-      'color:#98a2b3;text-decoration:none;transition:color .15s,background .15s;}' +
-      '#appRail a.ri:hover{color:#4b5563;background:#f5f6f8;}' +
-      '#appRail a.ri.on{color:#4f46e5;background:#eef2ff;}' +
-      '#appRail a.ri.on::before{content:"";position:absolute;left:-14px;top:50%;transform:translateY(-50%);width:4px;height:22px;border-radius:0 4px 4px 0;background:#4f46e5;}' +
-      '#appRail a.ri .tip{position:absolute;left:56px;top:50%;transform:translateY(-50%);background:#111827;color:#fff;font-size:12px;font-weight:500;' +
+      'color:var(--label,#98a2b3);text-decoration:none;transition:color .15s,background .15s;}' +
+      '#appRail a.ri:hover{color:var(--ink-2,#4b5563);background:var(--desk,#f5f6f8);}' +
+      '#appRail a.ri.on{color:var(--accent,#4f46e5);background:var(--accent-soft,#eef2ff);}' +
+      '#appRail a.ri.on::before{content:"";position:absolute;left:-14px;top:50%;transform:translateY(-50%);width:4px;height:22px;border-radius:0 4px 4px 0;background:var(--accent,#4f46e5);}' +
+      '#appRail a.ri .tip,#appRail button.ri .tip{position:absolute;left:56px;top:50%;transform:translateY(-50%);background:#111827;color:#fff;font-size:12px;font-weight:500;' +
       'padding:6px 10px;border-radius:8px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s;box-shadow:0 8px 20px -6px rgba(0,0,0,.4);z-index:2;}' +
-      '#appRail a.ri:hover .tip{opacity:1;}' +
-      '#appRail .rbot{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:14px;}' +
+      '#appRail a.ri:hover .tip,#appRail button.ri:hover .tip{opacity:1;}' +
+      '#appRail button.ri{position:relative;width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;' +
+      'color:var(--label,#98a2b3);background:none;border:none;cursor:pointer;transition:color .15s,background .15s;font:inherit;}' +
+      '#appRail button.ri:hover{color:var(--ink-2,#4b5563);background:var(--desk,#f5f6f8);}' +
+      '#appRail .rbot{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:10px;}' +
       '#appRail .ravatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;' +
       'font-size:13px;font-weight:600;color:#fff;text-decoration:none;box-shadow:0 4px 10px -4px rgba(16,24,40,.4);}' +
       'body.has-rail{padding-left:72px;}' +
@@ -101,12 +120,15 @@
     }).join('');
 
     var color = /^#[0-9a-fA-F]{6}$/.test(adv.color || '') ? adv.color : '#4f46e5';
+    var themeIcon = effectiveTheme() === 'dark' ? ICONS.sun : ICONS.moon;
 
     var html =
       '<div id="appRail">' +
         '<a class="rlogo" href="/nastroje.php" title="Formuláre">' + svg(ICONS.logo) + '</a>' +
         '<nav>' + navHtml + '</nav>' +
         '<div class="rbot">' +
+          '<button type="button" class="ri" id="themeToggle" title="Prepnúť tmavý/svetlý režim">' + svg(themeIcon) +
+          '<span class="tip">Tmavý/svetlý režim</span></button>' +
           '<a class="ravatar" href="/" title="' + esc(adv.name || '') + ' — zmeniť poradcu" ' +
           'style="background:' + color + ';">' + esc(initials(adv.name)) + '</a>' +
         '</div>' +
@@ -120,6 +142,10 @@
     wrap.innerHTML = html;
     document.body.insertBefore(wrap.firstChild, document.body.firstChild);
     document.body.classList.add('has-rail');
+
+    document.getElementById('themeToggle').addEventListener('click', function () {
+      setTheme(effectiveTheme() === 'dark' ? 'light' : 'dark');
+    });
   }
 
   function boot() {

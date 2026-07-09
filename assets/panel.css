@@ -26,6 +26,52 @@
   --sans:'Inter',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
   --mono:ui-monospace,'SF Mono','Cascadia Mono','Roboto Mono',Consolas,'Courier New',monospace;
 }
+
+/* Tmavý režim — podľa systému, alebo natvrdo cez prepínač (data-theme na <html>,
+   nastavuje assets/theme-init.js + assets/shell.js). Explicitný prepínač má
+   vždy prednosť pred systémovým nastavením. */
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0f1115; --paper:#1a1d24; --desk:#20242c;
+    --border:#2a2f3a; --line-strong:#3a4150;
+    --ink:#f3f4f6; --ink-2:#d1d5db; --muted:#9099a8; --label:#6b7280;
+    --accent:#818cf8; --accent-ink:#a5b4fc; --accent-soft:rgba(129,140,248,.16); --accent-line:rgba(129,140,248,.4);
+    --good:#34d399; --good-soft:rgba(52,211,153,.14);
+    --rose:#fb7185; --rose-soft:rgba(251,113,133,.14);
+    --teal:#2dd4bf; --teal-soft:rgba(45,212,191,.14);
+    --amber:#fbbf24; --amber-soft:rgba(251,191,36,.14);
+    --shadow-sm:0 1px 2px rgba(0,0,0,.3), 0 1px 3px rgba(0,0,0,.25);
+    --shadow-md:0 4px 6px -2px rgba(0,0,0,.35), 0 12px 22px -10px rgba(0,0,0,.5);
+    --topbar-bg:rgba(15,17,21,.85); --kraj-active:rgba(129,140,248,.25);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1115; --paper:#1a1d24; --desk:#20242c;
+  --border:#2a2f3a; --line-strong:#3a4150;
+  --ink:#f3f4f6; --ink-2:#d1d5db; --muted:#9099a8; --label:#6b7280;
+  --accent:#818cf8; --accent-ink:#a5b4fc; --accent-soft:rgba(129,140,248,.16); --accent-line:rgba(129,140,248,.4);
+  --good:#34d399; --good-soft:rgba(52,211,153,.14);
+  --rose:#fb7185; --rose-soft:rgba(251,113,133,.14);
+  --teal:#2dd4bf; --teal-soft:rgba(45,212,191,.14);
+  --amber:#fbbf24; --amber-soft:rgba(251,191,36,.14);
+  --shadow-sm:0 1px 2px rgba(0,0,0,.3), 0 1px 3px rgba(0,0,0,.25);
+  --shadow-md:0 4px 6px -2px rgba(0,0,0,.35), 0 12px 22px -10px rgba(0,0,0,.5);
+  --topbar-bg:rgba(15,17,21,.85); --kraj-active:rgba(129,140,248,.25);
+}
+:root[data-theme="light"]{
+  --bg:#f5f6f8; --paper:#ffffff; --desk:#f8fafc;
+  --border:#eef0f3; --line-strong:#e2e6ec;
+  --ink:#111827; --ink-2:#1f2937; --muted:#6b7280; --label:#98a2b3;
+  --accent:#4f46e5; --accent-ink:#4338ca; --accent-soft:#eef2ff; --accent-line:#c7d2fe;
+  --good:#059669; --good-soft:#ecfdf5;
+  --rose:#e11d48; --rose-soft:#fff1f2;
+  --teal:#0d9488; --teal-soft:#f0fdfa;
+  --amber:#d97706; --amber-soft:#fffbeb;
+  --shadow-sm:0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.05);
+  --shadow-md:0 4px 6px -2px rgba(16,24,40,.05), 0 12px 22px -10px rgba(16,24,40,.12);
+  --topbar-bg:rgba(255,255,255,.85); --kraj-active:#eef2ff;
+}
+
 *{box-sizing:border-box;}
 body{
   margin:0; background:var(--bg); color:var(--ink-2);
@@ -39,7 +85,7 @@ a{color:inherit; text-decoration:none;}
   position:sticky; top:0; z-index:20;
   display:flex; align-items:center; justify-content:space-between; gap:16px;
   padding:16px 32px; min-height:72px;
-  background:rgba(255,255,255,.85); backdrop-filter:saturate(1.1) blur(8px);
+  background:var(--topbar-bg,rgba(255,255,255,.85)); backdrop-filter:saturate(1.1) blur(8px);
   border-bottom:1px solid var(--border);
 }
 .topbar .tb-title h1{margin:0; font-size:20px; font-weight:600; letter-spacing:-.02em; color:var(--ink);}
@@ -187,7 +233,7 @@ td .strong{font-weight:600; color:var(--ink);}
 .kraj-bar.on .kraj-name{color:var(--accent);}
 .kraj-name{font-size:12.5px; font-weight:600; color:var(--ink-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 .kraj-track{height:8px; border-radius:4px; background:var(--desk); overflow:hidden;}
-.kraj-bar.on .kraj-track{background:#e0e4fb;}
+.kraj-bar.on .kraj-track{background:var(--kraj-active,#e0e4fb);}
 .kraj-fill{display:block; height:100%; background:var(--accent); border-radius:4px; min-width:2px;}
 .kraj-count{font-size:12px; font-weight:600; color:var(--muted); text-align:right; font-variant-numeric:tabular-nums;}
 
