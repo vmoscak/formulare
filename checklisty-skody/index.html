@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="sk"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checklisty podľa typu škody</title>
+
+<!-- =========================================================================
+     CHECKLISTY PODĽA TYPU ŠKODY — samostatný editovateľný súbor
+     -------------------------------------------------------------------------
+     Vyber typ škody, appka ukáže hotový zoznam dokladov/krokov — na SMS,
+     WhatsApp alebo ako PDF. PDF cez zdieľaný ../pdf.php (Dompdf).
+
+     KDE ČO UPRAVIŤ:
+       • Typy škôd a ich obsah ... JS, objekt DAMAGE_TYPES
+========================================================================== -->
+
+<link rel="stylesheet" href="../assets/ui.css?v=4">
+</head>
+<body>
+
+<div class="app">
+  <div class="head">
+    <div class="head-left">
+      <a href="../nastroje.php" class="back-btn" title="Späť na formuláre">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <div class="brand">
+        <div class="logo">C</div>
+        <div>
+          <b>Checklisty podľa typu škody</b><br>
+          <small>Hotový zoznam dokladov pre klienta — vyber typ škody</small>
+        </div>
+      </div>
+    </div>
+    <div class="head-actions">
+      <div class="avatar" id="avatar">?</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- ============ FORMULÁR ============ -->
+    <div class="form">
+
+      <!-- 1. typ škody -->
+      <div>
+        <div class="step-head"><div class="step-num">1</div><div class="step-title">Typ škody</div></div>
+        <div class="grid3" id="damageTypes"></div>
+      </div>
+
+      <!-- 2. klient -->
+      <div>
+        <div class="step-head"><div class="step-num">2</div><div class="step-title">Klient/-ka <span style="font-weight:500;text-transform:none;font-size:12px;color:var(--muted);">(nepovinné, len pre personalizáciu)</span></div></div>
+        <div class="fields">
+          <div class="field col-full" data-k="clientName">
+            <label>MENO A PRIEZVISKO</label>
+            <input id="clientName" placeholder="Meno a priezvisko">
+            <span class="err"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn-primary" id="genBtn">Vygenerovať a stiahnuť PDF</button>
+        <button class="btn-ghost" id="resetBtn">Vyčistiť</button>
+      </div>
+    </div>
+
+    <!-- ============ NÁHĽAD ============ -->
+    <div class="preview">
+      <div class="preview-head">
+        <span class="t">Náhľad checklistu</span>
+        <span class="live"><i></i>Aktualizuje sa naživo</span>
+      </div>
+      <div class="preview-tools">
+        <button class="tool" id="copyBtn">Kopírovať ako SMS/WhatsApp text</button>
+      </div>
+      <div class="letter-wrap">
+        <iframe id="letterFrame" class="letter-frame" title="Náhľad checklistu"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/advisor-panel.js"></script>
+<script>
+/* ===========================================================================
+   DÁTA — tu meníš typy škôd a ich obsah
+=========================================================================== */
+const DAMAGE_TYPES = {
+  auto: {
+    label:'Škoda na aute', sub:'Nehoda, poškodenie vozidla', tile:'AU',
+    items:[
+      'Fotky poškodenia vozidla zo všetkých strán',
+      'Fotky miesta nehody/škody (aj širší záber)',
+      'Záznam o nehode alebo doklad od polície (ak bola privolaná)',
+      'Vodičský preukaz a technický preukaz',
+      'Kontaktné údaje druhého účastníka (meno, EČV, poisťovňa)',
+      'Číslo škodovej udalosti pridelené poisťovňou',
+    ],
+  },
+  domacnost: {
+    label:'Škoda na domácnosti', sub:'Voda, požiar, víchrica...', tile:'DO',
+    items:[
+      'Fotky/video poškodenia PRED akýmkoľvek upratovaním',
+      'Zoznam poškodených vecí s približnou hodnotou',
+      'Doklady o kúpe poškodených vecí (ak sú k dispozícii)',
+      'Kontakt na správcu bytového domu (ak relevantné)',
+      'Kontaktné údaje suseda, ak škoda súvisí s jeho priestormi',
+    ],
+  },
+  kradez: {
+    label:'Krádež / vlámanie', sub:'Byt, dom, vozidlo', tile:'KR',
+    items:[
+      'Nahlásenie na polícii — potvrdenie o prijatí oznámenia',
+      'Zoznam ukradnutých vecí s odhadovanou hodnotou',
+      'Fotky poškodených dverí, zámkov alebo okien',
+      'Doklady o kúpe ukradnutých vecí (ak sú k dispozícii)',
+    ],
+  },
+  uraz: {
+    label:'Úraz / PN', sub:'Práceneschopnosť, zranenie', tile:'ÚR',
+    items:[
+      'Lekárska správa alebo potvrdenie o úraze',
+      'Rozhodnutie o PN od ošetrujúceho lekára',
+      'Kópia karty poistenca',
+      'Číslo bankového účtu na výplatu plnenia',
+    ],
+  },
+  zodpovednost: {
+    label:'Zodpovednosť za škodu', sub:'Škoda spôsobená inému', tile:'ZO',
+    items:[
+      'Presný popis udalosti, dátum a miesto',
+      'Kontaktné údaje poškodeného/-ej',
+      'Fotky vzniknutej škody',
+      'Odhad výšky škody alebo faktúra od poškodeného/-ej',
+    ],
+  },
+};
+
+const state = { damageType:'auto', clientName:'' };
+
+/* ===========================================================================
+   VYKRESLENIE
+=========================================================================== */
+const $ = id => document.getElementById(id);
+
+function renderControls(){
+  $('damageTypes').innerHTML = Object.keys(DAMAGE_TYPES).map(function(k){
+    const t=DAMAGE_TYPES[k], sel=k===state.damageType?' sel':'';
+    return '<div class="type'+sel+'" data-damage="'+k+'">'
+      + '<div class="tile">'+t.tile+'</div>'
+      + '<div><div class="t-label">'+t.label+'</div><div class="t-sub">'+t.sub+'</div></div></div>';
+  }).join('');
+}
+
+function syncInputs(){
+  if($('clientName')) $('clientName').value = state.clientName;
+}
+
+let _previewTimer=null;
+function refreshPreview(){
+  if(_previewTimer) clearTimeout(_previewTimer);
+  _previewTimer=setTimeout(function(){
+    var frame=document.getElementById('letterFrame');
+    if(!frame) return;
+    frame.onload=function(){
+      try{
+        var doc=frame.contentDocument;
+        var scale=frame.clientWidth/794;
+        doc.body.style.transform='scale('+scale+')';
+        var contentH=doc.body.scrollHeight;
+        frame.style.height=Math.ceil(contentH*scale)+'px';
+      }catch(e){}
+    };
+    frame.srcdoc=buildLetterHtml(true);
+  }, 180);
+}
+
+function render(){
+  var _p=(state.clientName||'').trim().split(/\s+/), _av=_p.length>=2?_p[0][0]+_p[_p.length-1][0]:(_p[0]?_p[0][0]:'?');
+  $('avatar').textContent=_av.toUpperCase();
+  refreshPreview();
+}
+
+function escapeHtml(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ===========================================================================
+   AKCIE — PDF (server), kopírovanie, reset
+=========================================================================== */
+function buildLetterHtml(previewMode){
+  const t = DAMAGE_TYPES[state.damageType];
+  const itemsHtml = '<ul class="checklist"><li>' + t.items.map(escapeHtml).join('</li><li>') + '</li></ul>';
+  const greeting = state.clientName ? 'Dobrý deň, ' + escapeHtml(state.clientName) + ',' : 'Dobrý deň,';
+
+  const body = `
+    <div class="doctitle">Checklist — ${escapeHtml(t.label)}</div>
+    <p class="intro">${greeting} pre rýchle vybavenie škody si prosím priprav nasledovné podklady:</p>
+    ${itemsHtml}
+    <p class="outro">S vyplnením a odoslaním ti rád/rada pomôžem — stačí mi podklady poslať.</p>
+    <div class="footer-bar">
+      <table><tr>
+        <td class="fl">${escapeHtml(state.clientName||'')}</td>
+        <td class="fr">Checklist — ${escapeHtml(t.label)}</td>
+      </tr></table>
+    </div>`;
+
+  const css = `
+    div,p,table,tr,td,th,strong,span,ul,li { box-sizing:border-box; margin:0; padding:0; }
+    body { margin:0; padding:0; font-family:'DejaVu Sans',sans-serif; font-size:11pt; line-height:1.6; color:#20242b; background:#fff; }
+    .doctitle { text-align:center; font-size:15pt; letter-spacing:0.5pt; font-weight:bold;
+      padding:7pt 0; border-bottom:1pt solid #20242b; margin-bottom:8mm; }
+    .intro, .outro { margin-bottom:5mm; }
+    .checklist { padding-left:5mm; margin-bottom:6mm; }
+    .checklist li { margin-bottom:3mm; }
+    .footer-bar table { width:100%; border-collapse:collapse; }
+    .footer-bar td.fr { text-align:right; }
+    .footer-bar { position:fixed; bottom:-22mm; left:0; right:0; width:166mm; border-top:0.5pt solid #ccc; padding-top:4pt; font-size:8.5pt; color:#999; }
+    @page{ margin:24mm 22mm 32mm 22mm; }
+  `;
+
+  const previewFonts = `
+    @font-face { font-family:'DejaVu Sans'; src:url('../vendor/dompdf/lib/fonts/DejaVuSans.ttf'); }
+    @font-face { font-family:'DejaVu Sans'; font-weight:bold; src:url('../vendor/dompdf/lib/fonts/DejaVuSans-Bold.ttf'); }
+  `;
+  let finalCss = css;
+  if(previewMode) finalCss = previewFonts + css + ' html{ overflow:hidden; background:#fff; } body{ box-sizing:border-box; width:210mm; padding:24mm 22mm 32mm 22mm; background:#fff; transform-origin:top left; } .footer-bar{ position:static; margin-top:20mm; width:auto; }';
+
+  return '<!DOCTYPE html><html lang="sk"><head>'
+    +'<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
+    +'<title>Checklist</title>'
+    +'<style>'+finalCss+'</style></head><body>'+body+'</body></html>';
+}
+
+function doPDF(){
+  const btn=$('genBtn');
+  btn.textContent='Generujem…'; btn.disabled=true;
+
+  const t = DAMAGE_TYPES[state.damageType];
+  const letterHtml=buildLetterHtml();
+  const filename='Checklist_'+t.label.replace(/\s+/g,'_')+(state.clientName ? '_'+state.clientName.replace(/\s+/g,'_') : '');
+
+  fetch('../pdf.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ html: letterHtml, filename: filename })
+  })
+  .then(function(r){
+    const ct = r.headers.get('Content-Type') || '';
+    if (ct.includes('application/json') || ct.includes('text/')) {
+      return r.text().then(function(t){ throw new Error('Server: ' + t); });
+    }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.blob();
+  })
+  .then(function(blob){
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=filename+'.pdf';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    btn.textContent='Vygenerovať a stiahnuť PDF'; btn.disabled=false;
+    logDocument('checklisty-skody', state.clientName||t.label, state, undefined);
+  })
+  .catch(function(e){
+    console.error(e);
+    btn.textContent='Vygenerovať a stiahnuť PDF'; btn.disabled=false;
+    alert('Chyba PDF:\n' + e.message);
+  });
+}
+
+function doCopy(){
+  const t = DAMAGE_TYPES[state.damageType];
+  const greeting = state.clientName ? 'Dobrý deň, ' + state.clientName + ',' : 'Dobrý deň,';
+  const txt=[greeting, 'pre rýchle vybavenie škody si prosím priprav nasledovné podklady:', '']
+    .concat(t.items.map(function(i){ return '– ' + i; }))
+    .concat(['', 'S vyplnením a odoslaním ti rád/rada pomôžem.'])
+    .join('\n');
+  try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
+  const b=$('copyBtn'); b.textContent='Skopírované ✓'; setTimeout(function(){ b.textContent='Kopírovať ako SMS/WhatsApp text'; },1600);
+}
+
+function doReset(){
+  Object.assign(state, { damageType:'auto', clientName:'' });
+  renderControls(); syncInputs(); render();
+}
+
+/* ===========================================================================
+   UDALOSTI
+=========================================================================== */
+function bind(){
+  document.addEventListener('click', function(e){
+    const dt=e.target.closest('[data-damage]'); if(dt){ state.damageType=dt.dataset.damage; renderControls(); render(); return; }
+  });
+  document.addEventListener('input', function(e){
+    if(e.target.id==='clientName'){ state.clientName=e.target.value; render(); }
+  });
+  $('genBtn').addEventListener('click', doPDF);
+  $('copyBtn').addEventListener('click', doCopy);
+  $('resetBtn').addEventListener('click', doReset);
+}
+
+/* ===========================================================================
+   ŠTART
+=========================================================================== */
+(function init(){
+  renderControls(); syncInputs(); bind(); render();
+  autoOpenSavedDocument(function(d){ Object.assign(state, d); syncInputs(); renderControls(); render(); }, doPDF);
+})();
+</script>
+
+<script src="/assets/shell.js?v=4"></script>
+</body></html>

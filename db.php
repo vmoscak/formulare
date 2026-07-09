@@ -47,6 +47,7 @@ function toolLabel(string $slug): string {
         'odvolanie-zamietnutie-plnenia' => 'Odvolanie voči likvidácii',
         'reklamacia-postup-institucie' => 'Reklamácia / sťažnosť',
         'financna-karticka-prvej-pomoci' => 'Finančná kartička prvej pomoci',
+        'checklisty-skody' => 'Checklisty podľa typu škody',
     ];
     return $labels[$slug] ?? $slug;
 }
