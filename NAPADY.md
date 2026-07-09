@@ -39,6 +39,8 @@ toho, čo sa rozhodneme spraviť.
   pojmov“ (spoluúčasť, čakacia doba, franšíza a pod.) ako PDF/text.
 - [x] **Interaktívny ťahák „Čo pýtať od klienta“** — živý zoznam otázok
   podľa situácie klienta na odškrtávanie počas stretnutia.
+- [x] **Editor noviniek** — pridávaš len ty (novinky.php), zobrazujú sa
+  ako banner na úvodnej stránke výberu poradcu; „dôležité“ ostáva navrchu.
 
 ---
 
@@ -93,7 +95,6 @@ toho, čo sa rozhodneme spraviť.
 ## Manažérske a tímové funkcie
 
 - [ ] **Most medzi Hypotékou a Poistením** (manažérska funkcia — synergia)
-- [ ] **Editor noviniek** (newsfeed appky)
 - [ ] **Smart Lead Routing** (inteligentné prerozdeľovanie kontaktov)
 - [ ] **Modul „Klientske výročia a narodeniny“** (automaty na vzťahy)
 - [ ] **Pripomienkovač „Happiness Check“**

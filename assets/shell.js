@@ -35,6 +35,7 @@
     admin: '<path d="M12 2l7 4v6c0 5-3.5 8-7 10-3.5-2-7-5-7-10V6z"/>',
     nabor: '<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
     kb: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+    news: '<path d="M3 11v3a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15 8a4 4 0 0 1 0 8"/><path d="M17.5 5.5a8 8 0 0 1 0 13"/>',
     sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
     moon: '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>',
   };
@@ -75,6 +76,7 @@
     var isAdmin = /admin\.php/.test(path);
     var isNabor = /nabor\.php/.test(path);
     var isKb = /znalostna-baza/.test(path);
+    var isNews = /novinky\.php/.test(path);
 
     // Ktorá z troch záložiek (Nástroje/Formuláre/Pomôcky) je aktívna: buď sme
     // priamo na jej prehľadovej stránke, alebo na stránke konkrétneho nástroja
@@ -83,7 +85,7 @@
     if (/\/nastroje\.php/.test(path)) currentGroup = 'nastroje';
     else if (/\/formulare\.php/.test(path)) currentGroup = 'formulare';
     else if (/\/pomocky\.php/.test(path)) currentGroup = 'pomocky';
-    else if (!isDocs && !isAdmin && !isNabor && !isKb) {
+    else if (!isDocs && !isAdmin && !isNabor && !isKb && !isNews) {
       var slug = (path.split('/').filter(Boolean)[0]) || '';
       currentGroup = (toolGroups && toolGroups[slug]) || 'nastroje';
     }
@@ -104,6 +106,7 @@
     if (adv.is_owner) {
       NAV.push({ key: 'nabor', icon: ICONS.nabor, href: '/nabor.php', label: 'Nábor', active: isNabor });
       NAV.push({ key: 'kb', icon: ICONS.kb, href: '/znalostna-baza.php', label: 'Znalostná báza', active: isKb });
+      NAV.push({ key: 'news', icon: ICONS.news, href: '/novinky.php', label: 'Novinky', active: isNews });
     }
 
     var css =
@@ -172,7 +175,7 @@
       .then(function (adv) {
         if (!(adv && adv.id)) return;
         var path = location.pathname;
-        var isSpecialPage = /moje-dokumenty|admin\.php|nabor\.php|znalostna-baza/.test(path);
+        var isSpecialPage = /moje-dokumenty|admin\.php|nabor\.php|znalostna-baza|novinky\.php/.test(path);
         var isGroupOverview = /\/(nastroje|formulare|pomocky)\.php/.test(path);
         // Na stránke konkrétneho nástroja (nie prehľad, nie iná sekcia)
         // potrebujeme mapu slug->skupina, aby sa zvýraznila správna záložka.

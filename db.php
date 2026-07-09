@@ -580,4 +580,12 @@ function dbInitSqlite(PDO $pdo): void {
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (advisor_id) REFERENCES formulare_advisors(id)
     )");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_news (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        body TEXT NOT NULL,
+        important INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )");
 }

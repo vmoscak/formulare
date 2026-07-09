@@ -86,6 +86,14 @@ try {
     $advisors = [];
 }
 $curAdvisorId = curAdvisorId() ?: null;
+
+// Novinky — najnovšie/dôležité oznamy, zobrazené len na tejto úvodnej
+// obrazovke (pred výberom poradcu). Editovať ich smie výhradne owner v novinky.php.
+try {
+    $news = db()->query('SELECT * FROM formulare_news ORDER BY important DESC, created_at DESC LIMIT 3')->fetchAll();
+} catch (Throwable $e) {
+    $news = [];
+}
 ?>
 <!DOCTYPE html>
 <html lang="sk">
@@ -181,6 +189,23 @@ $curAdvisorId = curAdvisorId() ?: null;
     border-radius:var(--radius-2xl); padding:28px; text-align:center; color:var(--muted); font-size:13.5px;
   }
   .foot{margin-top:52px; font-size:12px; color:var(--label);}
+
+  /* ── Novinky (banner) ── */
+  .news-wrap{
+    width:100%; max-width:1080px; margin:0 0 22px; display:flex; flex-direction:column; gap:10px;
+    opacity:0; animation:rise .5s ease .06s forwards;
+  }
+  .news-item{
+    background:var(--paper); border:1px solid var(--border); border-radius:var(--radius-lg);
+    padding:14px 18px; box-shadow:var(--shadow-sm); display:flex; gap:12px; align-items:flex-start;
+  }
+  .news-item.important{border-color:var(--accent-line); background:var(--accent-soft);}
+  .news-badge{
+    flex-shrink:0; margin-top:2px; font-size:10px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+    color:var(--accent); background:#fff; border:1px solid var(--accent-line); border-radius:999px; padding:3px 9px;
+  }
+  .news-item h3{margin:0 0 3px; font-size:13.5px; font-weight:700; color:var(--ink);}
+  .news-item p{margin:0; font-size:12.5px; color:var(--muted); line-height:1.5; white-space:pre-wrap;}
 
   /* ── Obrazovka osobného PIN-u ── */
   .pin-wrap{
@@ -292,6 +317,20 @@ $curAdvisorId = curAdvisorId() ?: null;
     <h1>Kto dnes pracuje?</h1>
     <p>Vyber svoje meno a zadaj svoj osobný PIN — dokumenty a klientske odkazy sa budú ukladať pod tvojím profilom. Voľba sa zapamätá na tomto zariadení.</p>
   </div>
+
+  <?php if ($news): ?>
+  <div class="news-wrap">
+    <?php foreach ($news as $n): ?>
+    <div class="news-item<?= $n['important'] ? ' important' : '' ?>">
+      <?php if ($n['important']): ?><span class="news-badge">Dôležité</span><?php endif; ?>
+      <div>
+        <h3><?= htmlspecialchars($n['title']) ?></h3>
+        <p><?= htmlspecialchars($n['body']) ?></p>
+      </div>
+    </div>
+    <?php endforeach; ?>
+  </div>
+  <?php endif; ?>
 
   <div class="grid">
     <?php foreach ($advisors as $adv): ?>
