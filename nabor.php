@@ -49,7 +49,7 @@ if (is_file(REGISTRY_FACETS_FILE)) {
 
 // -- vyhľadávanie / filter (GET, aby sa dalo odkázať/zdieľať) --
 $q = trim((string)($_GET['q'] ?? ''));
-$fCategory = trim((string)($_GET['category'] ?? ''));
+$fCategories = array_values(array_filter(array_map('trim', (array)($_GET['cat'] ?? []))));
 $fSector = trim((string)($_GET['sector'] ?? ''));
 $fParent = trim((string)($_GET['parent'] ?? ''));
 $page = max(1, (int)($_GET['page'] ?? 1));
@@ -58,7 +58,10 @@ $perPage = 30;
 $where = [];
 $params = [];
 if ($q !== '') { $where[] = '(name LIKE ? OR ico LIKE ?)'; $params[] = '%' . $q . '%'; $params[] = '%' . $q . '%'; }
-if ($fCategory !== '') { $where[] = 'categories LIKE ?'; $params[] = '%"' . $fCategory . '"%'; }
+if ($fCategories) {
+    $where[] = '(' . implode(' OR ', array_fill(0, count($fCategories), 'categories LIKE ?')) . ')';
+    foreach ($fCategories as $c) { $params[] = '%"' . $c . '"%'; }
+}
 if ($fSector !== '') { $where[] = 'sectors LIKE ?'; $params[] = '%"' . $fSector . '"%'; }
 if ($fParent !== '') { $where[] = 'parent_names LIKE ?'; $params[] = '%"' . $fParent . '"%'; }
 $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
@@ -71,7 +74,7 @@ try {
     $resultCount = (int)$countStmt->fetch()['c'];
 
     $offset = ($page - 1) * $perPage;
-    $listStmt = db()->prepare("SELECT ico, name, address, city, categories, sectors, parent_names
+    $listStmt = db()->prepare("SELECT ico, name, address, city, categories, sectors, parent_names, raw_json
         FROM formulare_registry_entities $whereSql ORDER BY name LIMIT $perPage OFFSET $offset");
     $listStmt->execute($params);
     $results = $listStmt->fetchAll();
@@ -83,6 +86,20 @@ function pillList($jsonText, string $cls = 'tag'): string {
     $items = json_decode((string)$jsonText, true);
     if (!is_array($items) || !$items) return '<span class="na">—</span>';
     return implode('', array_map(fn($i) => '<span class="' . $cls . '">' . h($i) . '</span>', $items));
+}
+
+/** Kategórie s dátumom "od" (registrácia) — čítané priamo z raw_json licencií. */
+function categoryPills($rawJsonText): string {
+    $licenses = json_decode((string)$rawJsonText, true);
+    if (!is_array($licenses) || !$licenses) return '<span class="na">—</span>';
+    $out = [];
+    foreach ($licenses as $item) {
+        if (!is_array($item) || empty($item['scope'])) continue;
+        $since = !empty($item['valid_from']) ? '<span class="since">od ' . h($item['valid_from']) . '</span>' : '';
+        $out[] = '<span class="tag accent">' . h($item['scope']) . $since . '</span>';
+    }
+    if (!$out) return '<span class="na">—</span>';
+    return implode('', $out);
 }
 
 function qs(array $overrides): string {
@@ -151,14 +168,13 @@ function qs(array $overrides): string {
         <label>Meno / IČO</label>
         <input type="text" name="q" value="<?= h($q) ?>" placeholder="napr. Allianz alebo IČO">
       </div>
-      <div class="f-field">
-        <label>Kategória</label>
-        <select name="category">
-          <option value="">Všetky</option>
+      <div class="f-field" style="min-width:260px;">
+        <label>Kategória <span style="font-weight:400; text-transform:none; letter-spacing:0;">(môžeš vybrať viac)</span></label>
+        <div class="chk-group">
           <?php foreach ($facets['categories'] as $c): ?>
-          <option value="<?= h($c) ?>" <?= $c === $fCategory ? 'selected' : '' ?>><?= h($c) ?></option>
+          <label class="chk"><input type="checkbox" name="cat[]" value="<?= h($c) ?>" <?= in_array($c, $fCategories, true) ? 'checked' : '' ?>><?= h($c) ?></label>
           <?php endforeach; ?>
-        </select>
+        </div>
       </div>
       <div class="f-field">
         <label>Sektor</label>
@@ -181,7 +197,7 @@ function qs(array $overrides): string {
       <div class="f-field" style="min-width:0;">
         <button type="submit" class="pillbtn solid">Filtrovať</button>
       </div>
-      <?php if ($q || $fCategory || $fSector || $fParent): ?>
+      <?php if ($q || $fCategories || $fSector || $fParent): ?>
       <div class="f-field" style="min-width:0;">
         <a class="pillbtn" href="/nabor.php">Zrušiť filter</a>
       </div>
@@ -191,14 +207,18 @@ function qs(array $overrides): string {
 
   <div class="card">
     <h3>Výsledky · <?= number_format($resultCount, 0, ',', ' ') ?><?= $resultCount === 1 ? ' záznam' : ($resultCount >= 2 && $resultCount <= 4 ? ' záznamy' : ' záznamov') ?></h3>
-    <table>
+    <table class="registry-table">
+      <colgroup>
+        <col class="c-ico"><col class="c-name"><col class="c-address">
+        <col class="c-cat"><col class="c-sector"><col class="c-parent">
+      </colgroup>
       <tr><th>IČO</th><th>Názov</th><th>Adresa</th><th>Kategórie</th><th>Sektory</th><th>Registrovaný pod</th></tr>
       <?php foreach ($results as $r): ?>
       <tr>
         <td class="mono"><?= h($r['ico']) ?></td>
         <td><span class="strong"><?= h($r['name']) ?></span></td>
         <td><?= h($r['city'] ?: $r['address']) ?></td>
-        <td><?= pillList($r['categories'], 'tag accent') ?></td>
+        <td><?= categoryPills($r['raw_json']) ?></td>
         <td><?= pillList($r['sectors']) ?></td>
         <td><?= pillList($r['parent_names']) ?></td>
       </tr>

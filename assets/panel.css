@@ -152,6 +152,28 @@ td .strong{font-weight:600; color:var(--ink);}
 }
 .filter-form input:focus,.filter-form select:focus{outline:none; border-color:var(--accent); background:#fff;}
 
+/* skupina zaškrtávacích políčok (napr. viacnásobný výber kategórie) */
+.chk-group{
+  display:flex; flex-wrap:wrap; gap:6px 14px; padding:9px 11px; border:1px solid var(--line-strong);
+  border-radius:var(--radius-md); background:var(--desk); max-width:420px;
+}
+.chk-group .chk{
+  display:flex; align-items:center; gap:6px; font-size:12.5px; font-weight:500; color:var(--ink-2);
+  text-transform:none; letter-spacing:0; cursor:pointer; white-space:nowrap;
+}
+.chk-group .chk input{width:14px; height:14px; margin:0; accent-color:var(--accent); cursor:pointer;}
+
+/* register (náborová zóna) — pevné šírky stĺpcov, nech pilulky netvoria diery */
+table.registry-table{table-layout:fixed;}
+table.registry-table col.c-ico{width:9%;}
+table.registry-table col.c-name{width:16%;}
+table.registry-table col.c-address{width:12%;}
+table.registry-table col.c-cat{width:16%;}
+table.registry-table col.c-sector{width:29%;}
+table.registry-table col.c-parent{width:18%;}
+table.registry-table td{word-break:break-word;}
+table.registry-table .tag .since{display:block; font-size:9px; font-weight:500; opacity:.7; margin-top:1px;}
+
 .pager{display:flex; align-items:center; gap:8px; margin-top:16px; font-size:12.5px; color:var(--muted);}
 .pager a{color:var(--accent); font-weight:600;}
 .pager a.disabled{color:var(--line-strong); pointer-events:none;}
