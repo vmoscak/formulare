@@ -34,9 +34,17 @@ function toolIco(string $key): string {
     return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . ($p[$key] ?? $p['help']) . '</svg>';
 }
 
+// Tri záložky v ľavej lište (assets/shell.js) — každá kategória nižšie patrí
+// do práve jednej skupiny cez kľúč 'group'. Chýbajúci 'group' = 'nastroje'.
+$TOOL_GROUPS = [
+    'nastroje'  => ['label' => 'Nástroje',  'subtitle' => 'Kalkulačky a analytické nástroje pre klienta.'],
+    'formulare' => ['label' => 'Formuláre', 'subtitle' => 'Zmluvy, žiadosti, vyhlásenia a reklamácie na podpis.'],
+    'pomocky'   => ['label' => 'Pomôcky',   'subtitle' => 'Kartičky a rýchle texty pre klienta na SMS/WhatsApp.'],
+];
+
 // Register nástrojov. `hero` = veľká indigo karta, `color` = farba ikonového čipu.
 $TOOL_CATEGORIES = [
-    ['title' => 'Hlavné nástroje', 'tools' => [
+    ['title' => 'Hlavné nástroje', 'group' => 'nastroje', 'tools' => [
         ['href' => 'wizard-poistenie/', 'name' => 'Aké poistenie potrebujem', 'ico' => 'help', 'color' => 'indigo',
          'desc' => 'Krátky dotazník na 6 otázok – odporúčanie typov poistenia, s prekliknutím do Kalkulačky finančnej medzery.'],
         ['href' => 'financna-medzera/', 'name' => 'Kalkulačka finančnej medzery', 'ico' => 'chart', 'color' => 'indigo', 'hero' => true,
@@ -44,7 +52,7 @@ $TOOL_CATEGORIES = [
         ['href' => 'checklist-analyza/', 'name' => 'Checklist – výstup z analýzy', 'ico' => 'check', 'color' => 'emerald',
          'desc' => 'Kontrolný zoznam krokov a odporúčaní, s termínmi a zodpovednosťou. Dá sa predvyplniť z Kalkulačky.'],
     ]],
-    ['title' => 'Zmluvy a dokumentácia', 'tools' => [
+    ['title' => 'Zmluvy a dokumentácia', 'group' => 'formulare', 'tools' => [
         ['href' => 'splnomocnenie/', 'name' => 'Všeobecné splnomocnenie', 'ico' => 'user-plus', 'color' => 'indigo',
          'desc' => 'Rozsah oprávnení, splnomocniteľ/-ka a splnomocnenec/-kyňa, platnosť – text sa doplní automaticky.'],
         ['href' => 'vypoved-poistenia/', 'name' => 'Výpoveď poistnej zmluvy', 'ico' => 'file-x', 'color' => 'rose',
@@ -54,7 +62,7 @@ $TOOL_CATEGORIES = [
         ['href' => 'univerzalna-ziadost-zmena/', 'name' => 'Univerzálna žiadosť o zmenu', 'ico' => 'edit', 'color' => 'amber',
          'desc' => 'Zmena osobných údajov, adresy alebo oprávnenej osoby v existujúcej zmluve – jeden formulár na všetko.'],
     ]],
-    ['title' => 'Poistné udalosti a škody', 'tools' => [
+    ['title' => 'Poistné udalosti a škody', 'group' => 'formulare', 'tools' => [
         ['href' => 'nahrada-skody-zodpovednost/', 'name' => 'Žiadosť o náhradu škody', 'ico' => 'alert', 'color' => 'rose',
          'desc' => 'Z poistenia zodpovednosti škodcu/-kyne – typ škody, poisťovňa, popis udalosti a výška škody.'],
         ['href' => 'cestne-vyhlasenie-inej-poistky/', 'name' => 'Čestné prehlásenie', 'ico' => 'shield', 'color' => 'indigo',
@@ -64,7 +72,7 @@ $TOOL_CATEGORIES = [
         ['href' => 'suhlas-vyplata-inemu-uctu/', 'name' => 'Súhlas s výplatou na iný účet', 'ico' => 'swap', 'color' => 'emerald',
          'desc' => 'Súhlas poškodeného/-ej s výplatou poistného plnenia na účet tretej osoby, napr. priamo autoservisu.'],
     ]],
-    ['title' => 'Reklamácie, zmeny a spory', 'tools' => [
+    ['title' => 'Reklamácie, zmeny a spory', 'group' => 'formulare', 'tools' => [
         ['href' => 'ziadost-vratenie-preplatku/', 'name' => 'Vrátenie preplatku', 'ico' => 'euro', 'color' => 'emerald',
          'desc' => 'Žiadosť o vrátenie preplatku / nespotrebovaného poistného pre zrušené alebo zmenené zmluvy, s IBANom.'],
         ['href' => 'odvolanie-zamietnutie-plnenia/', 'name' => 'Odvolanie voči likvidácii', 'ico' => 'undo', 'color' => 'amber',
@@ -72,7 +80,7 @@ $TOOL_CATEGORIES = [
         ['href' => 'reklamacia-postup-institucie/', 'name' => 'Reklamácia / sťažnosť', 'ico' => 'message', 'color' => 'rose',
          'desc' => 'Oficiálna reklamácia alebo sťažnosť voči postupu inštitúcie – predmet, popis a požadovaná náprava.'],
     ]],
-    ['title' => 'Kartičky a rýchle texty pre klienta', 'tools' => [
+    ['title' => 'Kartičky a rýchle texty pre klienta', 'group' => 'pomocky', 'tools' => [
         ['href' => 'financna-karticka-prvej-pomoci/', 'name' => 'Finančná kartička prvej pomoci', 'ico' => 'firstaid', 'color' => 'rose',
          'desc' => 'Jednostránkový prehľad poistiek a núdzových kontaktov pre klienta – PDF aj text na SMS/WhatsApp.'],
         ['href' => 'checklisty-skody/', 'name' => 'Checklisty podľa typu škody', 'ico' => 'check', 'color' => 'amber',

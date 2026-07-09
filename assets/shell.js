@@ -29,6 +29,8 @@
   var ICONS = {
     logo: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15l2 2 4-4"/>',
     tools: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+    formulare: '<path d="M8 7V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-2"/><rect x="4" y="7" width="12" height="14" rx="2"/>',
+    pomocky: '<rect x="2" y="5" width="20" height="14" rx="2.5"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/>',
     docs: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="14" y2="17"/>',
     admin: '<path d="M12 2l7 4v6c0 5-3.5 8-7 10-3.5-2-7-5-7-10V6z"/>',
     nabor: '<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
@@ -67,16 +69,29 @@
     return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
-  function render(adv) {
+  function render(adv, toolGroups) {
     var path = location.pathname;
     var isDocs = /moje-dokumenty/.test(path);
     var isAdmin = /admin\.php/.test(path);
     var isNabor = /nabor\.php/.test(path);
     var isKb = /znalostna-baza/.test(path);
-    var isTools = !isDocs && !isAdmin && !isNabor && !isKb; // nástroje aj samotná stránka nastroje.php
+
+    // Ktorá z troch záložiek (Nástroje/Formuláre/Pomôcky) je aktívna: buď sme
+    // priamo na jej prehľadovej stránke, alebo na stránke konkrétneho nástroja
+    // — vtedy sa skupina zistí zo slugu cesty cez mapu z api/tool-groups.php.
+    var currentGroup = null;
+    if (/\/nastroje\.php/.test(path)) currentGroup = 'nastroje';
+    else if (/\/formulare\.php/.test(path)) currentGroup = 'formulare';
+    else if (/\/pomocky\.php/.test(path)) currentGroup = 'pomocky';
+    else if (!isDocs && !isAdmin && !isNabor && !isKb) {
+      var slug = (path.split('/').filter(Boolean)[0]) || '';
+      currentGroup = (toolGroups && toolGroups[slug]) || 'nastroje';
+    }
 
     var NAV = [
-      { key: 'tools', icon: ICONS.tools, href: '/nastroje.php', label: 'Nástroje', active: isTools },
+      { key: 'nastroje', icon: ICONS.tools, href: '/nastroje.php', label: 'Nástroje', active: currentGroup === 'nastroje' },
+      { key: 'formulare', icon: ICONS.formulare, href: '/formulare.php', label: 'Formuláre', active: currentGroup === 'formulare' },
+      { key: 'pomocky', icon: ICONS.pomocky, href: '/pomocky.php', label: 'Pomôcky', active: currentGroup === 'pomocky' },
       { key: 'docs', icon: ICONS.docs, href: '/moje-dokumenty.php', label: 'Moje dokumenty', active: isDocs }
     ];
     // Admin ikona sa zobrazí len poradcovi s is_admin=1 (server-side to aj
@@ -152,7 +167,17 @@
     fetch('/api/whoami.php', { credentials: 'same-origin' })
       .then(function (r) { return r.ok ? r.json() : {}; })
       .then(function (adv) {
-        if (adv && adv.id) render(adv);
+        if (!(adv && adv.id)) return;
+        var path = location.pathname;
+        var isSpecialPage = /moje-dokumenty|admin\.php|nabor\.php|znalostna-baza/.test(path);
+        var isGroupOverview = /\/(nastroje|formulare|pomocky)\.php/.test(path);
+        // Na stránke konkrétneho nástroja (nie prehľad, nie iná sekcia)
+        // potrebujeme mapu slug->skupina, aby sa zvýraznila správna záložka.
+        if (isSpecialPage || isGroupOverview) { render(adv, null); return; }
+        fetch('/api/tool-groups.php', { credentials: 'same-origin' })
+          .then(function (r) { return r.ok ? r.json() : {}; })
+          .then(function (map) { render(adv, map || {}); })
+          .catch(function () { render(adv, {}); });
       })
       .catch(function () { /* bez lišty — appka funguje normálne */ });
   }
