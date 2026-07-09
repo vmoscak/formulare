@@ -32,10 +32,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['import'])) {
 }
 
 $geocodeMessage = '';
+$geocodeDebug = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['geocode_batch'])) {
     try {
         $g = geocodeBatchProcess(35);
         $geocodeMessage = 'Spracovaných ' . $g['processed'] . ' (nájdených ' . $g['found'] . ', nenájdených ' . $g['not_found'] . '), zostáva ' . number_format($g['remaining'], 0, ',', ' ') . '.';
+        if (!empty($g['first_error'])) $geocodeDebug = $g['first_error'];
     } catch (Throwable $e) {
         $geocodeMessage = 'Chyba: ' . $e->getMessage();
     }
@@ -162,6 +164,7 @@ function qs(array $overrides): string {
       Kým adresa nie je geokódovaná presne, na mape sa zobrazí aspoň približne (stred obce podľa PSČ).
     </p>
     <?php if ($geocodeMessage): ?><div class="pill submitted" style="margin-bottom:12px; padding:6px 12px;"><?= h($geocodeMessage) ?></div><?php endif; ?>
+    <?php if ($geocodeDebug): ?><div class="pill pending" style="margin-bottom:12px; padding:6px 12px; background:var(--rose-soft); color:var(--rose); border-color:#fbd0d5; display:block; white-space:normal;">Diagnostika (dočasné): <?= h($geocodeDebug) ?></div><?php endif; ?>
     <div style="display:flex; align-items:center; gap:18px; flex-wrap:wrap;">
       <div>
         <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em;">Presne nájdených</div>

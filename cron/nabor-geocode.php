@@ -26,6 +26,7 @@ try {
     $result = geocodeBatchProcess(35);
     echo "Spracovane: {$result['processed']}, najdene: {$result['found']}, "
         . "nenajdene: {$result['not_found']}, zostava: {$result['remaining']}\n";
+    if (!empty($result['first_error'])) echo 'Diagnostika: ' . $result['first_error'] . "\n";
 } catch (Throwable $e) {
     http_response_code(500);
     echo 'Chyba: ' . $e->getMessage() . "\n";

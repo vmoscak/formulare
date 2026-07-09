@@ -297,8 +297,12 @@ function registryImport(string $filePath, string $facetsFile): array {
     return ['count' => $count, 'updated' => $data['updated'] ?? null];
 }
 
-/** Zavolá OpenStreetMap Nominatim pre presné súradnice jednej adresy, alebo null. */
-function geocodeNominatim(string $address): ?array {
+/**
+ * Zavolá OpenStreetMap Nominatim pre presné súradnice jednej adresy, alebo null.
+ * $error (voliteľné, odovzdané referenciou) sa naplní diagnostickou správou
+ * pri zlyhaní — použité na dočasné odladenie sieťového pripojenia z hostingu.
+ */
+function geocodeNominatim(string $address, ?string &$error = null): ?array {
     $url = 'https://nominatim.openstreetmap.org/search?' . http_build_query([
         'format' => 'json',
         'q' => $address,
@@ -311,10 +315,19 @@ function geocodeNominatim(string $address): ?array {
         'timeout' => 8,
         'ignore_errors' => true,
     ]]);
+    error_clear_last();
     $resp = @file_get_contents($url, false, $ctx);
-    if ($resp === false) return null;
+    if ($resp === false) {
+        $last = error_get_last();
+        $error = 'file_get_contents zlyhalo: ' . ($last['message'] ?? 'neznáma chyba')
+            . (isset($http_response_header) ? ' | hlavička: ' . json_encode($http_response_header) : ' | žiadna HTTP odpoveď (spojenie sa nenadviazalo)');
+        return null;
+    }
     $data = json_decode($resp, true);
-    if (!is_array($data) || empty($data[0]['lat']) || empty($data[0]['lon'])) return null;
+    if (!is_array($data) || empty($data[0]['lat']) || empty($data[0]['lon'])) {
+        $error = 'Nominatim odpovedal, ale bez výsledku. Odpoveď: ' . mb_substr($resp, 0, 300);
+        return null;
+    }
     return [(float)$data[0]['lat'], (float)$data[0]['lon']];
 }
 
@@ -335,9 +348,10 @@ function geocodeBatchProcess(int $limit = 35): array {
     $updateCache = $pdo->prepare('UPDATE formulare_geocode_cache SET lat = ?, lon = ?, status = ?, updated_at = ? WHERE address_hash = ?');
     $updateRegistry = $pdo->prepare('UPDATE formulare_registry_entities SET lat = ?, lon = ?, geocoded_at = ? WHERE address = ?');
 
-    $found = 0; $notFound = 0;
+    $found = 0; $notFound = 0; $firstError = null;
     foreach ($rows as $i => $row) {
-        $coords = geocodeNominatim($row['address']);
+        $error = null;
+        $coords = geocodeNominatim($row['address'], $error);
         $now = date('Y-m-d H:i:s');
         if ($coords) {
             $updateCache->execute([$coords[0], $coords[1], 'found', $now, $row['address_hash']]);
@@ -346,12 +360,13 @@ function geocodeBatchProcess(int $limit = 35): array {
         } else {
             $updateCache->execute([null, null, 'not_found', $now, $row['address_hash']]);
             $notFound++;
+            if ($firstError === null) $firstError = $error;
         }
         if ($i < count($rows) - 1) usleep(1100000); // 1.1s medzera medzi dotazmi (Nominatim limit 1/s)
     }
 
     $remaining = (int)$pdo->query("SELECT COUNT(*) c FROM formulare_geocode_cache WHERE status = 'pending'")->fetch()['c'];
-    return ['processed' => count($rows), 'found' => $found, 'not_found' => $notFound, 'remaining' => $remaining];
+    return ['processed' => count($rows), 'found' => $found, 'not_found' => $notFound, 'remaining' => $remaining, 'first_error' => $firstError];
 }
 
 function db(): PDO {
