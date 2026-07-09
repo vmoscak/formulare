@@ -31,7 +31,6 @@
     tools: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
     docs: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="14" y2="17"/>',
     admin: '<path d="M12 2l7 4v6c0 5-3.5 8-7 10-3.5-2-7-5-7-10V6z"/>',
-    swap: '<path d="M8 3L4 7l4 4"/><path d="M4 7h16"/><path d="M16 21l4-4-4-4"/><path d="M20 17H4"/>'
   };
 
   function svg(path) {
@@ -60,6 +59,11 @@
       { key: 'tools', icon: ICONS.tools, href: '/nastroje.php', label: 'Nástroje', active: isTools },
       { key: 'docs', icon: ICONS.docs, href: '/moje-dokumenty.php', label: 'Moje dokumenty', active: isDocs }
     ];
+    // Admin ikona sa zobrazí len poradcovi s is_admin=1 (server-side to aj
+    // tak stráži admin.php samotné — toto je len viditeľnosť v navigácii).
+    if (adv.is_admin) {
+      NAV.push({ key: 'admin', icon: ICONS.admin, href: '/admin.php', label: 'Admin', active: isAdmin });
+    }
 
     var css =
       '#appRail{position:fixed;left:0;top:0;bottom:0;width:72px;background:#fff;border-right:1px solid #eef0f3;' +

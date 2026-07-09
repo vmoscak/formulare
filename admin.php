@@ -45,6 +45,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (isset($_POST['delete_doc_id'])) {
         $id = (int)$_POST['delete_doc_id'];
         db()->prepare('DELETE FROM formulare_generated_documents WHERE id = ?')->execute([$id]);
+    } elseif (isset($_POST['pin_id'])) {
+        $id = (int)$_POST['pin_id'];
+        $newPin = trim((string)($_POST['pin'] ?? ''));
+        if (preg_match('/^\d{4}$/', $newPin)) {
+            $hash = password_hash($newPin, PASSWORD_DEFAULT);
+            db()->prepare('UPDATE formulare_advisors SET pin_hash = ? WHERE id = ?')->execute([$hash, $id]);
+            throttleReset('advisor:' . $id);
+        }
     }
     header('Location: /admin.php');
     exit;
@@ -85,8 +93,9 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
   <div class="card">
     <h3>Poradcovia</h3>
+    <p style="margin:-6px 0 16px; font-size:12.5px; color:var(--muted);">Bez nastaveného PIN-u sa poradca nevie prihlásiť do svojej zóny — po pridaní nezabudni nastaviť PIN.</p>
     <table>
-      <tr><th>Farba</th><th>Meno</th><th>Organizácia</th><th>E-mail</th><th>Telefón</th><th>Stav</th><th></th></tr>
+      <tr><th>Farba</th><th>Meno</th><th>Organizácia</th><th>E-mail</th><th>Telefón</th><th>PIN</th><th>Stav</th><th></th></tr>
       <?php foreach ($advisors as $a): ?>
       <tr id="view-<?= (int)$a['id'] ?>" class="<?= $a['active'] ? '' : 'inactive' ?>">
         <td>
@@ -99,9 +108,11 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
         <td><?= h($a['org']) ?></td>
         <td><?= h($a['email']) ?></td>
         <td><?= h($a['phone']) ?></td>
+        <td><span class="pill <?= empty($a['pin_hash']) ? 'pending' : 'submitted' ?>"><?= empty($a['pin_hash']) ? 'Nenastavený' : 'Nastavený' ?></span></td>
         <td><?= $a['active'] ? 'aktívny' : 'neaktívny' ?></td>
         <td style="display:flex; gap:6px; flex-wrap:wrap;">
           <button type="button" class="toggle-btn" onclick="editAdvisor(<?= (int)$a['id'] ?>)">Upraviť</button>
+          <button type="button" class="toggle-btn" onclick="editPin(<?= (int)$a['id'] ?>)">PIN</button>
           <form method="post" style="margin:0;">
             <input type="hidden" name="toggle_id" value="<?= (int)$a['id'] ?>">
             <button type="submit" class="toggle-btn"><?= $a['active'] ? 'Deaktivovať' : 'Aktivovať' ?></button>
@@ -109,7 +120,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
         </td>
       </tr>
       <tr id="edit-<?= (int)$a['id'] ?>" style="display:none;">
-        <td colspan="7">
+        <td colspan="8">
           <form method="post" class="add-form" style="display:flex; flex-wrap:wrap; gap:10px;">
             <input type="hidden" name="edit_id" value="<?= (int)$a['id'] ?>">
             <input name="edit_name" value="<?= h($a['name']) ?>" placeholder="Meno" required>
@@ -118,6 +129,17 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
             <input name="edit_phone" value="<?= h($a['phone']) ?>" placeholder="Telefón">
             <button type="submit">Uložiť</button>
             <button type="button" class="toggle-btn" onclick="cancelEdit(<?= (int)$a['id'] ?>)">Zrušiť</button>
+          </form>
+        </td>
+      </tr>
+      <tr id="pin-<?= (int)$a['id'] ?>" style="display:none;">
+        <td colspan="8">
+          <form method="post" class="add-form" style="display:flex; flex-wrap:wrap; gap:10px; max-width:340px;">
+            <input type="hidden" name="pin_id" value="<?= (int)$a['id'] ?>">
+            <input name="pin" inputmode="numeric" pattern="\d{4}" maxlength="4" placeholder="Nový 4-miestny PIN"
+                   style="text-align:center; letter-spacing:.3em;" required>
+            <button type="submit">Uložiť PIN</button>
+            <button type="button" class="toggle-btn" onclick="cancelPin(<?= (int)$a['id'] ?>)">Zrušiť</button>
           </form>
         </td>
       </tr>
@@ -182,6 +204,12 @@ function editAdvisor(id){
 function cancelEdit(id){
   document.getElementById('edit-'+id).style.display = 'none';
   document.getElementById('view-'+id).style.display = '';
+}
+function editPin(id){
+  document.getElementById('pin-'+id).style.display = 'table-row';
+}
+function cancelPin(id){
+  document.getElementById('pin-'+id).style.display = 'none';
 }
 </script>
 </body></html>

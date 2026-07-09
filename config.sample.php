@@ -12,6 +12,8 @@ define('DB_DSN',  'mysql:host=localhost;dbname=formulare;charset=utf8mb4');
 define('DB_USER', 'db_user');
 define('DB_PASS', 'db_password');
 
-// Zdieľaná bezpečnostná fráza (brana.php) a hodnota cookie, ktorú .htaccess overuje.
-define('GATE_PASSPHRASE', 'zmen-ma');
+// Hlavný PIN brány (brana.php) — 4-miestne číslo, napr. '4821' — a hodnota
+// cookie, ktorú .htaccess overuje. Osobné PIN kódy jednotlivých poradcov sa
+// nastavujú v admin.php a ukladajú hashované v DB (pozri sql/003_advisor_pin.sql).
+define('GATE_PASSPHRASE', '0000');
 define('GATE_TOKEN', 'nahrad-nahodnym-64-znakovym-retazcom');
