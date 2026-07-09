@@ -488,4 +488,14 @@ function dbInitSqlite(PDO $pdo): void {
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )");
     $pdo->exec("CREATE INDEX IF NOT EXISTS idx_geocode_status ON formulare_geocode_cache(status)");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_knowledge_base (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        body TEXT NOT NULL,
+        advisor_id INTEGER NOT NULL,
+        advisor_name TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (advisor_id) REFERENCES formulare_advisors(id)
+    )");
 }

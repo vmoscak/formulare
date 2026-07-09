@@ -27,6 +27,7 @@
     # 2b) Pekné URL pre interné stránky (/admin, /nabor namiesto .php)
     RewriteRule ^admin/?$ admin.php [L]
     RewriteRule ^nabor/?$ nabor.php [L]
+    RewriteRule ^znalostna-baza/?$ znalostna-baza.php [L]
 
     # 3) Všetko ostatné vyžaduje platnú gate cookie
     RewriteCond %{HTTP_COOKIE} !(^|;\s*)gate_auth=__GATE_TOKEN__(;|$)
