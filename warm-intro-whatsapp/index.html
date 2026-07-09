@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="sk"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Warm-Intro WhatsApp generátor</title>
+
+<!-- =========================================================================
+     WARM-INTRO WHATSAPP GENERÁTOR — samostatný editovateľný súbor
+     -------------------------------------------------------------------------
+     Priateľská prvá správa pre nový kontakt, ktorý ťa niekto odporučil.
+     Bez PDF — len text na kopírovanie alebo priamy odkaz do WhatsAppu (wa.me).
+
+     KDE ČO UPRAVIŤ:
+       • Text správy ............ JS, funkcia buildMessage()
+========================================================================== -->
+
+<link rel="stylesheet" href="../assets/ui.css?v=4">
+</head>
+<body>
+
+<div class="app">
+  <div class="head">
+    <div class="head-left">
+      <a href="../nastroje.php" class="back-btn" title="Späť na formuláre">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <div class="brand">
+        <div class="logo">W</div>
+        <div>
+          <b>Warm-Intro WhatsApp generátor</b><br>
+          <small>Priateľská prvá správa pre odporúčaný kontakt</small>
+        </div>
+      </div>
+    </div>
+    <div class="head-actions">
+      <div class="avatar" id="avatar">?</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- ============ FORMULÁR ============ -->
+    <div class="form">
+
+      <div>
+        <div class="step-head"><div class="step-num">1</div><div class="step-title">Nový kontakt</div></div>
+        <div class="fields">
+          <div class="field col-full" data-k="contactName">
+            <label>MENO</label>
+            <input id="contactName" placeholder="napr. Zuzana">
+            <span class="err">Zadaj meno kontaktu</span>
+          </div>
+          <div class="field col-full" data-k="contactPhone">
+            <label>TELEFÓN <span style="font-weight:500;text-transform:none;">(nepovinné, pre priamy odkaz do WhatsAppu)</span></label>
+            <input id="contactPhone" placeholder="+421 900 000 000">
+            <span class="err"></span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="step-head"><div class="step-num">2</div><div class="step-title">Kto odporučil</div></div>
+        <div class="fields">
+          <div class="field col-full" data-k="referrerName">
+            <label>MENO ODPORÚČAJÚCEHO/-EJ</label>
+            <input id="referrerName" placeholder="napr. Peter Novák">
+            <span class="err">Zadaj meno odporúčajúceho/-ej</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert" id="summary" style="display:none;">
+        <span class="bang">!</span>
+        <span class="msg" id="summaryMsg"></span>
+      </div>
+    </div>
+
+    <!-- ============ NÁHĽAD ============ -->
+    <div class="preview">
+      <div class="preview-head">
+        <span class="t">Náhľad správy</span>
+        <span class="live"><i></i>Aktualizuje sa naživo</span>
+      </div>
+      <div class="preview-tools">
+        <button class="tool" id="copyBtn">Kopírovať text</button>
+        <button class="tool" id="waBtn">Otvoriť WhatsApp</button>
+      </div>
+      <div class="letter-wrap">
+        <div id="msgPreview" style="background:#fff; border-radius:8px; padding:20px; font-size:14px; line-height:1.7; white-space:pre-wrap; color:#20242b;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/advisor-panel.js"></script>
+<script>
+const state = { contactName:'', contactPhone:'', referrerName:'', advisorName:'', advisorPhone:'', touched:false };
+
+function validate(){
+  const e = {};
+  if(!state.contactName.trim()) e.contactName='Zadaj meno kontaktu';
+  if(!state.referrerName.trim()) e.referrerName='Zadaj meno odporúčajúceho/-ej';
+  return e;
+}
+
+const $ = id => document.getElementById(id);
+
+function syncInputs(){
+  ['contactName','contactPhone','referrerName'].forEach(function(k){ if($(k)) $(k).value = state[k]; });
+}
+
+function buildMessage(){
+  return 'Ahoj ' + (state.contactName.trim() || '') + ','
+    + '\n\nvolám sa ' + (state.advisorName || '…') + ' a som finančný poradca. Kontakt na teba mi dal/-a '
+    + (state.referrerName.trim() || '…') + ' — spomínal/-a, že by som ti mohol/-la pomôcť s financiami/poistením.'
+    + '\n\nNie je to žiadny záväzok, len krátke predstavenie 🙂 Ak by ti vyhovoval krátky telefonát alebo stretnutie, daj vedieť, kedy sa ti to hodí.'
+    + '\n\n' + (state.advisorName || '')
+    + (state.advisorPhone ? '\n' + state.advisorPhone : '');
+}
+
+function render(){
+  const errors = validate();
+  document.querySelectorAll('.field[data-k]').forEach(function(f){
+    const k=f.dataset.k;
+    const bad = state.touched && errors[k];
+    f.classList.toggle('invalid', !!bad);
+    const err=f.querySelector('.err'); if(err && errors[k]) err.textContent=errors[k];
+  });
+  const errCount = Object.keys(errors).length;
+  $('summary').style.display = (state.touched && errCount>0) ? 'flex' : 'none';
+  $('summaryMsg').textContent = 'Skontroluj zvýraznené polia ('+errCount+') a skús to znova.';
+
+  var _p=(state.contactName||'').trim().split(/\s+/), _av=_p.length>=2?_p[0][0]+_p[_p.length-1][0]:(_p[0]?_p[0][0]:'?');
+  $('avatar').textContent=_av.toUpperCase();
+
+  $('msgPreview').textContent = buildMessage();
+}
+
+function doCopy(){
+  const txt = buildMessage();
+  try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
+  const b=$('copyBtn'); b.textContent='Skopírované ✓'; setTimeout(function(){ b.textContent='Kopírovať text'; },1600);
+  state.touched=true; render();
+  logDocument('warm-intro-whatsapp', state.contactName||'Kontakt', state, undefined);
+}
+
+function doWhatsApp(){
+  state.touched=true; render();
+  const errors=validate();
+  if(Object.keys(errors).length>0) return;
+  const phone = (state.contactPhone||'').replace(/[^\d+]/g,'').replace(/^00/,'+').replace(/^\+?/, '');
+  const txt = encodeURIComponent(buildMessage());
+  const url = phone ? 'https://wa.me/' + phone + '?text=' + txt : 'https://wa.me/?text=' + txt;
+  window.open(url, '_blank');
+  logDocument('warm-intro-whatsapp', state.contactName||'Kontakt', state, undefined);
+}
+
+function bind(){
+  document.addEventListener('input', function(e){
+    ['contactName','contactPhone','referrerName'].forEach(function(k){
+      if(e.target.id===k){ state[k]=e.target.value; render(); }
+    });
+  });
+  $('copyBtn').addEventListener('click', doCopy);
+  $('waBtn').addEventListener('click', doWhatsApp);
+}
+
+(function init(){
+  syncInputs(); bind(); render();
+  fetch('/api/whoami.php', { credentials:'same-origin' })
+    .then(function(r){ return r.ok ? r.json() : {}; })
+    .then(function(adv){ if(adv && adv.id){ state.advisorName = adv.name || ''; state.advisorPhone = adv.phone || ''; render(); } })
+    .catch(function(){});
+})();
+</script>
+
+<script src="/assets/shell.js?v=4"></script>
+</body></html>

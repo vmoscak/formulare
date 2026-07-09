@@ -78,6 +78,8 @@ $TOOL_CATEGORIES = [
          'desc' => 'Vyber typ škody – hotový zoznam dokladov pre klienta, na SMS/WhatsApp alebo ako PDF.'],
         ['href' => 'generator-recenzii/', 'name' => 'Generátor 5-hviezdičkovej prosby', 'ico' => 'message', 'color' => 'teal',
          'desc' => 'Rýchla prosba o Google/Facebook recenziu na WhatsApp, s priamym odkazom na odoslanie.'],
+        ['href' => 'warm-intro-whatsapp/', 'name' => 'Warm-Intro WhatsApp generátor', 'ico' => 'message', 'color' => 'indigo',
+         'desc' => 'Priateľská prvá správa pre nový odporúčaný kontakt, s priamym odkazom na odoslanie.'],
     ]],
 ];
 
