@@ -55,5 +55,5 @@ jobs:
           mirror -R --verbose --parallel=3 \
             --exclude ^\.git/ \
             --exclude ^\.github/ \
-            ./ /sub/formulare/;
+            ./ /sub/portal/;
           "
