@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="sk"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vysvetlivky pre klienta</title>
+
+<!-- =========================================================================
+     VYSVETLIVKY PRE KLIENTA — samostatný editovateľný súbor
+     -------------------------------------------------------------------------
+     Krátke jednostránkové vysvetlenie bežného poistného pojmu v ľudskej reči,
+     na poslanie/odovzdanie klientovi. PDF cez zdieľaný ../pdf.php (Dompdf).
+
+     KDE ČO UPRAVIŤ:
+       • Zoznam pojmov a texty ... JS, objekt TERMS
+       • Farby / vzhľad ......... zdieľaný dizajnový systém ../assets/ui.css
+========================================================================== -->
+
+<script src="../assets/theme-init.js"></script>
+<link rel="stylesheet" href="../assets/ui.css?v=7">
+</head>
+<body>
+
+<div class="app">
+  <div class="head">
+    <div class="head-left">
+      <a href="../nastroje.php" class="back-btn" title="Späť na formuláre">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <div class="brand">
+        <div class="logo">V</div>
+        <div>
+          <b>Vysvetlivky pre klienta</b><br>
+          <small>Slovník pojmov v ľudskej reči, na 1 stránku</small>
+        </div>
+      </div>
+    </div>
+    <div class="head-actions">
+      <div class="avatar" id="avatar">?</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- ============ FORMULÁR ============ -->
+    <div class="form">
+
+      <div>
+        <div class="step-head"><div class="step-num">1</div><div class="step-title">Pojem</div></div>
+        <div class="grid3" id="terms"></div>
+      </div>
+
+      <div>
+        <div class="step-head"><div class="step-num">2</div><div class="step-title">Klient/-ka <span style="font-weight:500;text-transform:none;font-size:12px;color:var(--muted);">(nepovinné, pre oslovenie)</span></div></div>
+        <div class="fields">
+          <div class="field col-full" data-k="clientName">
+            <label>MENO</label>
+            <input id="clientName" placeholder="napr. Peter">
+            <span class="err"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn-primary" id="genBtn">Vygenerovať a stiahnuť PDF</button>
+      </div>
+    </div>
+
+    <!-- ============ NÁHĽAD ============ -->
+    <div class="preview">
+      <div class="preview-head">
+        <span class="t">Náhľad</span>
+        <span class="live"><i></i>Aktualizuje sa naživo</span>
+      </div>
+      <div class="preview-tools">
+        <button class="tool" id="copyBtn">Kopírovať ako text</button>
+      </div>
+      <div class="letter-wrap">
+        <iframe id="letterFrame" class="letter-frame" title="Náhľad vysvetliviek"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/advisor-panel.js"></script>
+<script>
+/* ===========================================================================
+   DÁTA — tu meníš pojmy a ich vysvetlenia
+=========================================================================== */
+const TERMS = {
+  casova_nova: {
+    label: 'Časová a nová hodnota', sub: 'Majetkové poistenie', tile: '1',
+    text: 'Nová hodnota je suma, za ktorú by ste si dnes kúpili rovnakú alebo porovnateľnú vec ako novú. '
+      + 'Časová hodnota je nová hodnota znížená o opotrebenie — vek, používanie, celkový stav veci. '
+      + 'Pri poistení na novú hodnotu dostanete pri škode sumu potrebnú na kúpu novej veci. Pri poistení na '
+      + 'časovú hodnotu dostanete len sumu zodpovedajúcu veku a opotrebeniu poškodenej veci.'
+  },
+  spoluucast: {
+    label: 'Spoluúčasť', sub: 'Koľko si platíte sami', tile: '2',
+    text: 'Spoluúčasť je časť škody, ktorú pri poistnej udalosti hradíte vy sami — poisťovňa vypláca plnenie '
+      + 'znížené o túto sumu alebo percento. Vyššia spoluúčasť obvykle znamená nižšie poistné, ale pri menšej '
+      + 'škode Vám poisťovňa vyplatí menej, prípadne nič.'
+  },
+  cakacia_doba: {
+    label: 'Čakacia doba', sub: 'Kedy začína platiť krytie', tile: '3',
+    text: 'Čakacia doba je obdobie od uzavretia zmluvy, počas ktorého poisťovňa ešte nevypláca plnenie za '
+      + 'niektoré riziká — najčastejšie ochorenie pri životnom alebo nemocenskom poistení. Pri úraze čakacia '
+      + 'doba spravidla neplatí, krytie funguje hneď od začiatku zmluvy.'
+  },
+  vyluky: {
+    label: 'Výluky z poistenia', sub: 'Čo poistka nekryje', tile: '4',
+    text: 'Výluky sú presne vymenované situácie alebo príčiny škody, za ktoré poisťovňa neposkytuje plnenie, '
+      + 'aj keď poistná udalosť inak nastala. Bývajú uvedené vo Všeobecných poistných podmienkach — oplatí sa '
+      + 'ich poznať už pred podpisom zmluvy, nie až pri škode.'
+  },
+  poistna_suma: {
+    label: 'Poistná suma vs. poistné', sub: 'Dve rôzne čísla', tile: '5',
+    text: 'Poistná suma je maximálna suma, ktorú môžete dostať pri poistnej udalosti — napríklad pri úmrtí, '
+      + 'invalidite alebo škode na majetku. Poistné je suma, ktorú vy platíte poisťovni (mesačne alebo ročne) '
+      + 'za to, že poistenie máte. Vyššia poistná suma spravidla znamená vyššie poistné.'
+  },
+  odkupna_hodnota: {
+    label: 'Odkupná hodnota', sub: 'Životné poistenie s investíciou', tile: '6',
+    text: 'Ak platíte životné poistenie s investičnou alebo kapitálovou zložkou, časť poistného sa zhodnocuje '
+      + 'a vytvára tzv. odkupnú hodnotu. Pri predčasnom ukončení zmluvy Vám poisťovňa spravidla vyplatí práve '
+      + 'túto hodnotu — obvykle nižšiu, než súčet doteraz zaplateného poistného, najmä v prvých rokoch zmluvy.'
+  },
+  indexacia: {
+    label: 'Indexácia zmluvy', sub: 'Prečo rastie poistné aj krytie', tile: '7',
+    text: 'Indexácia je pravidelné (zvyčajne ročné) prispôsobenie poistnej sumy a poistného inflácii alebo '
+      + 'rastu cien, aby si poistenie zachovalo reálnu hodnotu krytia. Navýšenie poistnej sumy aj poistného '
+      + 'môžete spravidla priebežne prijať aj odmietnuť podľa vlastného rozhodnutia.'
+  },
+  fransiza: {
+    label: 'Franšíza', sub: 'Iný typ spoluúčasti', tile: '8',
+    text: 'Franšíza je vopred dohodnutá hranica škody, do ktorej poisťovňa vôbec nevypláca plnenie (tzv. '
+      + 'integrálna franšíza), alebo o ktorú sa plnenie zníži (tzv. odpočítateľná franšíza). Používa sa najmä '
+      + 'pri majetkovom a cestovnom poistení.'
+  },
+};
+
+const state = {
+  term: 'casova_nova',
+  clientName: '',
+  touched: false,
+};
+
+/* ===========================================================================
+   VYKRESLENIE
+=========================================================================== */
+const $ = id => document.getElementById(id);
+
+function renderTerms(){
+  $('terms').innerHTML = Object.keys(TERMS).map(function(k){
+    const t=TERMS[k], sel=k===state.term?' sel':'';
+    return '<div class="type'+sel+'" data-term="'+k+'">'
+      + '<div class="tile">'+t.tile+'</div>'
+      + '<div><div class="t-label">'+t.label+'</div><div class="t-sub">'+t.sub+'</div></div></div>';
+  }).join('');
+}
+
+function syncInputs(){
+  if($('clientName')) $('clientName').value = state.clientName;
+}
+
+let _previewTimer=null;
+function refreshPreview(){
+  if(_previewTimer) clearTimeout(_previewTimer);
+  _previewTimer=setTimeout(function(){
+    var frame=document.getElementById('letterFrame');
+    if(!frame) return;
+    frame.onload=function(){
+      try{
+        var doc=frame.contentDocument;
+        var scale=frame.clientWidth/794;
+        doc.body.style.transform='scale('+scale+')';
+        var contentH=doc.body.scrollHeight;
+        frame.style.height=Math.ceil(contentH*scale)+'px';
+      }catch(e){}
+    };
+    frame.srcdoc=buildLetterHtml(true);
+  }, 180);
+}
+
+function render(){
+  var _p=(state.clientName||'').trim().split(/\s+/), _av=_p.length>=2?_p[0][0]+_p[_p.length-1][0]:(_p[0]?_p[0][0]:'?');
+  $('avatar').textContent=_av.toUpperCase();
+  refreshPreview();
+}
+
+function escapeHtml(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ===========================================================================
+   ZOSTAVENIE LISTU (HTML pre PDF aj náhľad)
+=========================================================================== */
+function buildLetterHtml(previewMode){
+  const term = TERMS[state.term];
+
+  const body = `
+    <div class="doctitle">Vysvetlivky pre klienta</div>
+    <div class="card-sub">${state.clientName ? 'Pre ' + escapeHtml(state.clientName) : 'Krátke vysvetlenie'}</div>
+
+    <div class="section">
+      <div class="section-title">${escapeHtml(term.label)}</div>
+      <p>${escapeHtml(term.text)}</p>
+    </div>
+
+    <div class="footer-bar">
+      <table><tr>
+        <td class="fl">${escapeHtml(state.clientName||'…')}</td>
+        <td class="fr">Vysvetlivky pre klienta</td>
+      </tr></table>
+    </div>`;
+
+  const css = `
+    div,p,table,tr,td,th,strong,span,ul,ol,li { box-sizing:border-box; margin:0; padding:0; }
+    body { margin:0; padding:0; font-family:'DejaVu Sans',sans-serif; font-size:11pt; line-height:1.7; color:#20242b; background:#fff; }
+    .doctitle { text-align:center; font-size:16pt; letter-spacing:1pt; text-transform:uppercase; font-weight:bold;
+      padding:7pt 0 2pt; }
+    .card-sub { text-align:center; font-size:12pt; color:#555; margin-bottom:10mm; padding-bottom:5mm; border-bottom:1pt solid #20242b; }
+    .section { margin-bottom:7mm; }
+    .section-title { font-size:13.5pt; font-weight:bold; color:#4f46e5; margin-bottom:4mm; }
+    .footer-bar table { width:100%; border-collapse:collapse; }
+    .footer-bar td.fr { text-align:right; }
+    .footer-bar { position:fixed; bottom:-22mm; left:0; right:0; width:166mm; border-top:0.5pt solid #ccc; padding-top:4pt; font-size:8.5pt; color:#999; }
+    @page{ margin:24mm 22mm 32mm 22mm; }
+  `;
+
+  const previewFonts = `
+    @font-face { font-family:'DejaVu Sans'; src:url('../vendor/dompdf/lib/fonts/DejaVuSans.ttf'); }
+    @font-face { font-family:'DejaVu Sans'; font-weight:bold; src:url('../vendor/dompdf/lib/fonts/DejaVuSans-Bold.ttf'); }
+  `;
+  let finalCss = css;
+  if(previewMode) finalCss = previewFonts + css + ' html{ overflow:hidden; background:#fff; } body{ box-sizing:border-box; width:210mm; padding:24mm 22mm 32mm 22mm; background:#fff; transform-origin:top left; } .footer-bar{ position:static; margin-top:20mm; width:auto; }';
+
+  return '<!DOCTYPE html><html lang="sk"><head>'
+    +'<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
+    +'<title>Vysvetlivky pre klienta</title>'
+    +'<style>'+finalCss+'</style></head><body>'+body+'</body></html>';
+}
+
+/* ===========================================================================
+   AKCIE — PDF (server), kopírovanie
+=========================================================================== */
+function doPDF(){
+  state.touched=true; render();
+
+  const btn=$('genBtn');
+  btn.textContent='Generujem…'; btn.disabled=true;
+
+  const letterHtml=buildLetterHtml();
+  const term = TERMS[state.term];
+  const filename='Vysvetlivky_'+term.label.replace(/\s+/g,'_')+(state.clientName?'_'+state.clientName.replace(/\s+/g,'_'):'');
+
+  fetch('../pdf.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ html: letterHtml, filename: filename })
+  })
+  .then(function(r){
+    const ct = r.headers.get('Content-Type') || '';
+    if (ct.includes('application/json') || ct.includes('text/')) {
+      return r.text().then(function(t){ throw new Error('Server: ' + t); });
+    }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.blob();
+  })
+  .then(function(blob){
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=filename+'.pdf';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    btn.textContent='Vygenerovať a stiahnuť PDF'; btn.disabled=false;
+    logDocument('vysvetlivky-pre-klienta', state.clientName||term.label, state, undefined);
+  })
+  .catch(function(e){
+    console.error(e);
+    btn.textContent='Vygenerovať a stiahnuť PDF'; btn.disabled=false;
+    alert('Chyba PDF:\n' + e.message);
+  });
+}
+
+function doCopy(){
+  const term = TERMS[state.term];
+  const txt = term.label + '\n\n' + term.text;
+  try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
+  const b=$('copyBtn'); b.textContent='Skopírované ✓'; setTimeout(function(){ b.textContent='Kopírovať ako text'; },1600);
+}
+
+/* ===========================================================================
+   UDALOSTI
+=========================================================================== */
+function bind(){
+  document.addEventListener('click', function(e){
+    const t=e.target.closest('[data-term]'); if(t){ state.term=t.dataset.term; renderTerms(); render(); return; }
+  });
+  document.addEventListener('input', function(e){
+    if(e.target.id==='clientName'){ state.clientName=e.target.value; render(); }
+  });
+  $('genBtn').addEventListener('click', doPDF);
+  $('copyBtn').addEventListener('click', doCopy);
+}
+
+/* ===========================================================================
+   ŠTART
+=========================================================================== */
+(function init(){
+  renderTerms(); syncInputs(); bind(); render();
+  autoOpenSavedDocument(function(d){ Object.assign(state, d); state.touched = true; renderTerms(); syncInputs(); render(); }, doPDF);
+})();
+</script>
+
+<script src="/assets/shell.js?v=5"></script>
+</body></html>

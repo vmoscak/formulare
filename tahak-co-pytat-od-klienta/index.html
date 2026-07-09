@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="sk"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ťahák „Čo pýtať od klienta“</title>
+
+<!-- =========================================================================
+     INTERAKTÍVNY ŤAHÁK „ČO PÝTAŤ OD KLIENTA“ — samostatný editovateľný súbor
+     -------------------------------------------------------------------------
+     Živý zoznam otázok na stretnutí podľa situácie klienta — na odškrtávanie
+     počas rozhovoru, nie na odovzdanie klientovi. Bez PDF, bez ukladania dát
+     o klientovi (žiadne osobné údaje sa nezadávajú).
+
+     KDE ČO UPRAVIŤ:
+       • Situácie a otázky ...... JS, objekt CATEGORIES
+       • Farby / vzhľad ......... zdieľaný dizajnový systém ../assets/ui.css
+========================================================================== -->
+
+<script src="../assets/theme-init.js"></script>
+<link rel="stylesheet" href="../assets/ui.css?v=7">
+</head>
+<body>
+
+<div class="app">
+  <div class="head">
+    <div class="head-left">
+      <a href="../nastroje.php" class="back-btn" title="Späť na formuláre">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <div class="brand">
+        <div class="logo">Ť</div>
+        <div>
+          <b>Ťahák „Čo pýtať od klienta“</b><br>
+          <small>Živý zoznam otázok počas stretnutia</small>
+        </div>
+      </div>
+    </div>
+    <div class="head-actions">
+      <div class="avatar" id="avatar">?</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- ============ FORMULÁR ============ -->
+    <div class="form">
+
+      <div>
+        <div class="step-head"><div class="step-num">1</div><div class="step-title">Situácia klienta</div></div>
+        <div class="grid3" id="categories"></div>
+      </div>
+
+    </div>
+
+    <!-- ============ NÁHĽAD / ZOZNAM OTÁZOK ============ -->
+    <div class="preview">
+      <div class="preview-head">
+        <span class="t">Otázky na stretnutie</span>
+        <span class="live"><i></i>Odškrtávaj počas rozhovoru</span>
+      </div>
+      <div class="preview-tools">
+        <button class="tool" id="copyBtn">Kopírovať zoznam</button>
+        <button class="tool" id="resetBtn">Vynulovať odškrtnuté</button>
+      </div>
+      <div class="letter-wrap">
+        <div id="checklist" style="background:#fff; border-radius:8px; padding:24px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/advisor-panel.js"></script>
+<script>
+/* ===========================================================================
+   DÁTA — tu meníš situácie a otázky
+=========================================================================== */
+const CATEGORIES = {
+  nova: {
+    label: 'Nová poistná zmluva', sub: 'Všeobecný úvod', tile: 'N',
+    questions: [
+      'Aký je Váš súčasný rodinný stav a počet detí/závislých osôb?',
+      'Aký je Váš mesačný príjem a základné výdavky/záväzky (úver, nájom)?',
+      'Máte už nejaké poistenie? Aké a od kedy?',
+      'Čo je pre Vás najväčšou obavou — strata príjmu, zdravie, majetok?',
+      'Plánujete v najbližších rokoch väčšie zmeny (kúpa bytu, dieťa, zmena zamestnania)?',
+    ],
+  },
+  zivotne: {
+    label: 'Životné poistenie', sub: 'Riziká a záväzky', tile: 'Ž',
+    questions: [
+      'Kto všetko je na Vás finančne závislý?',
+      'Aké máte záväzky (hypotéka, úver) a na ako dlho?',
+      'Máte už životné poistenie od zamestnávateľa alebo inde?',
+      'Aký príjem by rodina potrebovala, keby ste Vy (alebo partner/-ka) vypadli na dlhší čas?',
+      'Fajčíte, alebo máte rizikové zamestnanie/koníček?',
+    ],
+  },
+  majetok: {
+    label: 'Majetkové poistenie', sub: 'Nehnuteľnosť a domácnosť', tile: 'M',
+    questions: [
+      'Je nehnuteľnosť vo vlastníctve, alebo v hypotéke (vyžaduje banka poistenie)?',
+      'Aký je typ stavby a rok výstavby?',
+      'Aká je odhadovaná hodnota nehnuteľnosti a vybavenia domácnosti?',
+      'Máte v domácnosti cennejšie veci (elektronika, šperky, zbierky)?',
+      'Stala sa Vám už niekedy škoda (voda, oheň, krádež)?',
+    ],
+  },
+  zodpovednost: {
+    label: 'Poistenie zodpovednosti', sub: 'Škoda tretej osobe', tile: 'Z',
+    questions: [
+      'Máte domáce zvieratá alebo deti, ktoré by mohli spôsobiť škodu tretej osobe?',
+      'Venujete sa športu alebo aktivitám s vyšším rizikom škody?',
+      'Vlastníte nehnuteľnosť, ktorú prenajímate?',
+      'Mali ste v minulosti škodovú udalosť, za ktorú ste zodpovedali?',
+    ],
+  },
+  auto: {
+    label: 'Auto — PZP a havarijné', sub: 'Vozidlo', tile: 'A',
+    questions: [
+      'Aký je vek a hodnota vozidla?',
+      'Kto všetko bude vozidlo šoférovať (aj mladý vodič)?',
+      'Koľko km ročne najazdíte a na aké účely (súkromné/pracovné)?',
+      'Parkuje vozidlo v garáži, alebo na ulici?',
+      'Mali ste v posledných rokoch nejakú škodovú udalosť?',
+    ],
+  },
+  dochodok: {
+    label: 'Dôchodok a investície', sub: 'Dlhodobé sporenie', tile: 'D',
+    questions: [
+      'Koľko rokov Vám zostáva do dôchodku?',
+      'Máte už II. alebo III. pilier? Akú sumu si mesačne odkladáte?',
+      'Aký je Váš vzťah k riziku — konzervatívny, vyvážený, dynamický?',
+      'Máte iné úspory alebo investície (nehnuteľnosť, akcie, sporenie)?',
+      'Plánujete v budúcnosti nejaký väčší výdavok (dôchodok, štúdium detí)?',
+    ],
+  },
+  podnikatel: {
+    label: 'Podnikateľ / SZČO', sub: 'Firma a príjem', tile: 'P',
+    questions: [
+      'Aká je právna forma podnikania (živnosť, s.r.o.)?',
+      'Máte zamestnancov? Koľko?',
+      'Čo by sa stalo s príjmom firmy, keby ste Vy na dlhší čas vypadli?',
+      'Máte poistenú zodpovednosť z podnikania / profesijnú zodpovednosť?',
+      'Máte poistený majetok firmy (priestory, zásoby, vybavenie)?',
+    ],
+  },
+};
+
+const state = {
+  category: 'nova',
+  checked: {},
+};
+
+/* ===========================================================================
+   VYKRESLENIE
+=========================================================================== */
+const $ = id => document.getElementById(id);
+
+function renderCategories(){
+  $('categories').innerHTML = Object.keys(CATEGORIES).map(function(k){
+    const c=CATEGORIES[k], sel=k===state.category?' sel':'';
+    return '<div class="type'+sel+'" data-cat="'+k+'">'
+      + '<div class="tile">'+c.tile+'</div>'
+      + '<div><div class="t-label">'+c.label+'</div><div class="t-sub">'+c.sub+'</div></div></div>';
+  }).join('');
+}
+
+function renderChecklist(){
+  const cat = CATEGORIES[state.category];
+  const checkedSet = state.checked[state.category] || {};
+  $('checklist').innerHTML = '<div style="font-weight:700; font-size:15px; color:#20242b; margin-bottom:14px;">'
+    + cat.label + '</div>'
+    + cat.questions.map(function(q, i){
+        const isChecked = !!checkedSet[i];
+        return '<label style="display:flex; align-items:flex-start; gap:10px; padding:9px 0; border-bottom:1px solid #eef0f3; cursor:pointer;">'
+          + '<input type="checkbox" data-q="'+i+'" '+(isChecked?'checked':'')+' style="margin-top:3px; flex-shrink:0; width:16px; height:16px;">'
+          + '<span style="font-size:14px; line-height:1.5; color:'+(isChecked?'#9aa1ad':'#20242b')+'; text-decoration:'+(isChecked?'line-through':'none')+';">'+escapeHtml(q)+'</span>'
+          + '</label>';
+      }).join('');
+}
+
+function render(){
+  var _av = CATEGORIES[state.category].tile;
+  $('avatar').textContent = _av;
+  renderChecklist();
+}
+
+function escapeHtml(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ===========================================================================
+   AKCIE
+=========================================================================== */
+function doCopy(){
+  const cat = CATEGORIES[state.category];
+  const checkedSet = state.checked[state.category] || {};
+  const txt = cat.label + '\n\n' + cat.questions.map(function(q, i){
+    return (checkedSet[i] ? '[x] ' : '[ ] ') + q;
+  }).join('\n');
+  try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
+  const b=$('copyBtn'); b.textContent='Skopírované ✓'; setTimeout(function(){ b.textContent='Kopírovať zoznam'; },1600);
+}
+
+function doReset(){
+  state.checked[state.category] = {};
+  renderChecklist();
+}
+
+/* ===========================================================================
+   UDALOSTI
+=========================================================================== */
+function bind(){
+  document.addEventListener('click', function(e){
+    const c=e.target.closest('[data-cat]'); if(c){ state.category=c.dataset.cat; renderCategories(); render(); return; }
+  });
+  document.addEventListener('change', function(e){
+    if(e.target.matches('input[type="checkbox"][data-q]')){
+      const i = +e.target.dataset.q;
+      if(!state.checked[state.category]) state.checked[state.category] = {};
+      state.checked[state.category][i] = e.target.checked;
+      renderChecklist();
+    }
+  });
+  $('copyBtn').addEventListener('click', doCopy);
+  $('resetBtn').addEventListener('click', doReset);
+}
+
+/* ===========================================================================
+   ŠTART
+=========================================================================== */
+(function init(){
+  renderCategories(); bind(); render();
+})();
+</script>
+
+<script src="/assets/shell.js?v=5"></script>
+</body></html>

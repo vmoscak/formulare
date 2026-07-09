@@ -35,6 +35,10 @@ toho, čo sa rozhodneme spraviť.
 - [x] **Dizajnové mikro-interakcie** — jemné animácie pri výbere
   dlaždíc, stlačení tlačidiel, nástupe kariet a hoveri na ľavej lište
   (rešpektuje prefers-reduced-motion).
+- [x] **Vysvetlivky pre klienta** — krátky jednostránkový „slovník
+  pojmov“ (spoluúčasť, čakacia doba, franšíza a pod.) ako PDF/text.
+- [x] **Interaktívny ťahák „Čo pýtať od klienta“** — živý zoznam otázok
+  podľa situácie klienta na odškrtávanie počas stretnutia.
 
 ---
 
@@ -70,16 +74,17 @@ toho, čo sa rozhodneme spraviť.
 - [ ] **Žiadosť o zmenu oprávnenej osoby**
 - [ ] **Rýchle linky a QR kódy** (zbierka)
 - [ ] **Generátor „Rodinného Trezoru“** (núdzový manuál pre pozostalých)
-- [ ] **Generátor bezpečného linku na zber dát**
+- [ ] **Generátor bezpečného linku na zber dát** — appka už má tokénový
+  klientsky odkaz, ale len pre 2 nástroje (Kalkulačka finančnej medzery,
+  Aké poistenie potrebujem); premyslieť, či rozšíriť alebo urobiť
+  samostatný všeobecný formulár *(odložené, dorozmyslieť)*
 
 ## Nástroje a produktivita poradcu
 
 - [ ] **„Tichý radar“ pre poradcov** (pripomienkovač aktivít)
 - [ ] **Šablóny na riešenie „Zásekov“** (trablšúting) — rýchle texty na
   vyžiadanie dokladov, keď proces v poisťovni zastane
-- [ ] **Vysvetlivky pre klienta na stiahnutie**
 - [ ] **Copy-Paste zóna pre poradcu**
-- [ ] **Interaktívny ťahák „Čo pýtať od klienta“**
 - [ ] **60-sekundový „Zápisník po stretnutí“**
 - [ ] **Hlasový zápisník z auta** (AI, moderná produktivita)
 - [ ] **Refinančný Radar** (sledovač sadzieb)

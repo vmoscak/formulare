@@ -29,6 +29,7 @@ function toolIco(string $key): string {
         'message'   => '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
         'firstaid'  => '<rect x="3" y="3" width="18" height="18" rx="2.5"/><path d="M12 8v8M8 12h8"/>',
         'users'     => '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+        'book'      => '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
     ];
     return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . ($p[$key] ?? $p['help']) . '</svg>';
 }
@@ -50,6 +51,8 @@ $TOOL_CATEGORIES = [
          'desc' => 'Koľko by rodine chýbalo pri úmrtí, invalidite alebo dlhodobej PN – odporúčané krytie vs. existujúce poistenie.'],
         ['href' => 'checklist-analyza/', 'name' => 'Checklist – výstup z analýzy', 'ico' => 'check', 'color' => 'emerald',
          'desc' => 'Kontrolný zoznam krokov a odporúčaní, s termínmi a zodpovednosťou. Dá sa predvyplniť z Kalkulačky.'],
+        ['href' => 'tahak-co-pytat-od-klienta/', 'name' => 'Ťahák „Čo pýtať od klienta“', 'ico' => 'check', 'color' => 'amber',
+         'desc' => 'Živý zoznam otázok podľa situácie klienta na odškrtávanie počas stretnutia.'],
     ]],
     ['title' => 'Zmluvy a dokumentácia', 'group' => 'formulare', 'tools' => [
         ['href' => 'splnomocnenie/', 'name' => 'Všeobecné splnomocnenie', 'ico' => 'user-plus', 'color' => 'indigo',
@@ -92,6 +95,8 @@ $TOOL_CATEGORIES = [
          'desc' => 'Priateľská prvá správa pre nový odporúčaný kontakt, s priamym odkazom na odoslanie.'],
         ['href' => 'karticka-odporucte-ma/', 'name' => 'Kartička „Odporučte ma priateľom“', 'ico' => 'users', 'color' => 'emerald',
          'desc' => 'Poďakovanie a kontakt pre klienta, aby odporučil poradcu ďalej – PDF aj text na SMS/WhatsApp.'],
+        ['href' => 'vysvetlivky-pre-klienta/', 'name' => 'Vysvetlivky pre klienta', 'ico' => 'book', 'color' => 'sky',
+         'desc' => 'Krátke jednostránkové vysvetlenie bežného poistného pojmu v ľudskej reči – PDF aj text.'],
     ]],
 ];
 
