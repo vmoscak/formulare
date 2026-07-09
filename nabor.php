@@ -98,7 +98,7 @@ function qs(array $overrides): string {
 <title>Náborová zóna</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/panel.css?v=2">
+<link rel="stylesheet" href="/assets/panel.css?v=3">
 </head><body>
 <header class="topbar">
   <div class="tb-title">
@@ -216,5 +216,5 @@ function qs(array $overrides): string {
   </div>
 
 </main>
-<script src="/assets/shell.js?v=2"></script>
+<script src="/assets/shell.js?v=3"></script>
 </body></html>
