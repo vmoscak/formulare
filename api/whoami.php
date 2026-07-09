@@ -12,9 +12,10 @@ $advisorId = curAdvisorId();
 if (!$advisorId) { echo '{}'; exit; }
 
 try {
-    $stmt = db()->prepare('SELECT id, name, org, email, phone, color FROM formulare_advisors WHERE id = ? AND active = 1');
+    $stmt = db()->prepare('SELECT id, name, org, email, phone, color, is_admin FROM formulare_advisors WHERE id = ? AND active = 1');
     $stmt->execute([$advisorId]);
     $advisor = $stmt->fetch();
+    if ($advisor) $advisor['is_admin'] = (bool)$advisor['is_admin'];
 } catch (Throwable $e) { $advisor = null; }
 
 echo json_encode($advisor ?: (object)[]);

@@ -1,26 +1,81 @@
 <?php
 require_once __DIR__ . '/db.php';
 
-// Kliknutie na dlaždicu poradcu — nastaví "kto som" na 365 dní a presmeruje
-// na zoznam nástrojov. Žiadne obmedzenie medzi poradcami (vzájomný prístup
-// je zámerne povolený).
-if (isset($_GET['adv'])) {
+function advisorInitials(string $name): string {
+    $parts = preg_split('/\s+/', trim($name));
+    $first = mb_substr($parts[0] ?? '', 0, 1);
+    $last = count($parts) > 1 ? mb_substr($parts[count($parts) - 1], 0, 1) : '';
+    return mb_strtoupper($first . $last);
+}
+
+function fetchActiveAdvisor(int $id): ?array {
     try {
-        $advId = (int)$_GET['adv'];
-        $stmt = db()->prepare('SELECT id FROM formulare_advisors WHERE id = ? AND active = 1');
-        $stmt->execute([$advId]);
-        if ($stmt->fetch()) {
-            setcookie('cur_advisor', signAdvisorId($advId), [
+        $stmt = db()->prepare('SELECT id, name, org, color, pin_hash FROM formulare_advisors WHERE id = ? AND active = 1');
+        $stmt->execute([$id]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    } catch (Throwable $e) { return null; }
+}
+
+// Klik na dlaždicu poradcu vedie sem s ?adv=ID — namiesto priameho prihlásenia
+// (ako predtým) sa zobrazí obrazovka na zadanie OSOBNÉHO PIN-u daného poradcu.
+// Cookie "cur_advisor" sa nastaví až po jeho overení nižšie.
+$selectedId = isset($_GET['adv']) ? (int)$_GET['adv'] : (isset($_POST['adv']) ? (int)$_POST['adv'] : 0);
+$selected = $selectedId ? fetchActiveAdvisor($selectedId) : null;
+$pinError = '';
+$lockedSeconds = 0;
+
+if ($selected) {
+    $scope = 'advisor:' . $selected['id'];
+    $lockedSeconds = throttleSecondsLeft($scope);
+
+    $needsSetup = empty($selected['pin_hash']);
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && $lockedSeconds === 0 && $needsSetup) {
+        // Prvé prihlásenie — poradca si sám nastaví osobný PIN. Bezpečné, lebo
+        // sem sa dá dostať až po prejdení hlavnej brány appky (viď brana.php);
+        // po nastavení už PIN pozná len on a admin ho vie len resetnúť (nie prečítať).
+        $pin1 = trim((string)($_POST['pin'] ?? ''));
+        $pin2 = trim((string)($_POST['pin2'] ?? ''));
+        if (!preg_match('/^\d{4}$/', $pin1)) {
+            $pinError = 'PIN musí mať presne 4 číslice.';
+        } elseif ($pin1 !== $pin2) {
+            $pinError = 'PIN-y sa nezhodujú, skús to znova.';
+        } else {
+            db()->prepare('UPDATE formulare_advisors SET pin_hash = ? WHERE id = ?')
+                ->execute([password_hash($pin1, PASSWORD_DEFAULT), $selected['id']]);
+            setcookie('cur_advisor', signAdvisorId($selected['id']), [
                 'expires' => time() + 365 * 86400,
                 'path' => '/',
                 'secure' => !empty($_SERVER['HTTPS']),
                 'httponly' => true,
                 'samesite' => 'Lax',
             ]);
+            header('Location: /nastroje.php');
+            exit;
         }
-    } catch (Throwable $e) { /* DB nedostupná — pokračuj bez nastavenia poradcu */ }
-    header('Location: /nastroje.php');
-    exit;
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $lockedSeconds === 0) {
+        $entered = trim((string)($_POST['pin'] ?? ''));
+        if ($entered !== '' && password_verify($entered, $selected['pin_hash'])) {
+            throttleReset($scope);
+            setcookie('cur_advisor', signAdvisorId($selected['id']), [
+                'expires' => time() + 365 * 86400,
+                'path' => '/',
+                'secure' => !empty($_SERVER['HTTPS']),
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]);
+            header('Location: /nastroje.php');
+            exit;
+        }
+        throttleRecordFailure($scope);
+        $lockedSeconds = throttleSecondsLeft($scope);
+        $pinError = $lockedSeconds > 0
+            ? 'Príliš veľa pokusov. Skús to znova o ' . (int)ceil($lockedSeconds / 60) . ' min.'
+            : 'Nesprávny PIN, skús to znova.';
+    } elseif ($lockedSeconds > 0) {
+        $pinError = 'Príliš veľa pokusov. Skús to znova o ' . (int)ceil($lockedSeconds / 60) . ' min.';
+    }
 }
 
 // Ak je DB dočasne nedostupná, stránka musí ostať funkčná — jednoducho sa
@@ -31,13 +86,6 @@ try {
     $advisors = [];
 }
 $curAdvisorId = curAdvisorId() ?: null;
-
-function advisorInitials(string $name): string {
-    $parts = preg_split('/\s+/', trim($name));
-    $first = mb_substr($parts[0] ?? '', 0, 1);
-    $last = count($parts) > 1 ? mb_substr($parts[count($parts) - 1], 0, 1) : '';
-    return mb_strtoupper($first . $last);
-}
 ?>
 <!DOCTYPE html>
 <html lang="sk">
@@ -53,6 +101,7 @@ function advisorInitials(string $name): string {
     --bg:#f5f6f8; --paper:#fff; --border:#eef0f3; --line-strong:#e2e6ec;
     --ink:#111827; --muted:#6b7280; --label:#98a2b3;
     --accent:#4f46e5; --accent-ink:#4338ca; --accent-soft:#eef2ff; --accent-line:#c7d2fe;
+    --err:#e11d48;
     --radius-2xl:16px; --radius-lg:10px;
     --sans:'Inter',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
     --shadow-sm:0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.05);
@@ -133,8 +182,43 @@ function advisorInitials(string $name): string {
   }
   .foot{margin-top:52px; font-size:12px; color:var(--label);}
 
+  /* ── Obrazovka osobného PIN-u ── */
+  .pin-wrap{
+    width:100%; max-width:390px; margin:64px auto 0;
+    opacity:0; transform:translateY(10px); animation:rise .4s ease forwards;
+  }
+  .pin-card{
+    background:var(--paper); border:1px solid var(--border); border-radius:var(--radius-2xl);
+    padding:36px 32px; text-align:center; box-shadow:var(--shadow-md);
+  }
+  .pin-ini{
+    width:56px; height:56px; border-radius:16px; margin:0 auto 16px;
+    background:var(--adv,var(--accent)); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-size:19px; font-weight:600; box-shadow:0 8px 18px -8px var(--adv,var(--accent));
+  }
+  .pin-card h1{font-size:18px; font-weight:700; letter-spacing:-.01em; margin:0 0 4px;}
+  .pin-card p.sub{font-size:13px; color:var(--muted); margin:0 0 22px;}
+  .pin-label{font-size:10.5px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:var(--label); text-align:left; margin:0 0 6px;}
+  .pin-input{
+    width:100%; padding:16px 14px; border:1px solid var(--line-strong); border-radius:12px;
+    font-size:26px; font-weight:700; text-align:center; letter-spacing:.6em; text-indent:.6em;
+    margin-bottom:16px; font-family:inherit; background:#f8fafc; color:var(--ink);
+    transition:border-color .15s, box-shadow .15s, background .15s;
+  }
+  .pin-input:focus{outline:none; border-color:var(--accent); background:#fff; box-shadow:0 0 0 3px rgba(79,70,229,.14);}
+  .pin-card button{
+    width:100%; padding:13px; border:none; border-radius:10px; background:var(--accent);
+    color:#fff; font-weight:600; font-size:14px; cursor:pointer; font-family:inherit;
+    box-shadow:0 8px 18px -8px rgba(79,70,229,.6); transition:background .15s;
+  }
+  .pin-card button:hover{background:var(--accent-ink);}
+  .pin-error{color:var(--err); font-size:13px; font-weight:600; margin-bottom:14px;}
+  .pin-back{display:inline-block; margin-top:18px; font-size:12.5px; color:var(--muted); font-weight:600;}
+  .pin-back:hover{color:var(--accent);}
+
   @media(max-width:560px){ .hero{padding:40px 4px 24px;} .hero h1{font-size:27px;} .topbar .tag{display:none;} }
-  @media(prefers-reduced-motion:reduce){ .hero,.grid{animation:none; opacity:1; transform:none;} }
+  @media(prefers-reduced-motion:reduce){ .hero,.grid,.pin-wrap{animation:none; opacity:1; transform:none;} }
 </style>
 </head>
 <body>
@@ -149,10 +233,64 @@ function advisorInitials(string $name): string {
     <span class="tag">Interný nástroj</span>
   </div>
 
+  <?php if ($selected): ?>
+  <!-- ============================================================
+       OBRAZOVKA OSOBNÉHO PIN-u — konkrétny poradca z ?adv=ID
+  ============================================================ -->
+  <div class="pin-wrap">
+    <div class="pin-card">
+      <div class="pin-ini" style="--adv:<?= htmlspecialchars($selected['color']) ?>;"><?= htmlspecialchars(advisorInitials($selected['name'])) ?></div>
+      <h1><?= htmlspecialchars($selected['name']) ?></h1>
+      <p class="sub"><?= $needsSetup ? 'Prvé prihlásenie — nastav si osobný PIN' : 'Zadaj svoj osobný PIN' ?></p>
+      <?php if ($pinError): ?><div class="pin-error"><?= htmlspecialchars($pinError) ?></div><?php endif; ?>
+      <?php if ($lockedSeconds === 0 && $needsSetup): ?>
+      <form method="post" id="pinForm" data-mode="setup">
+        <div class="pin-label">Nový PIN</div>
+        <input class="pin-input" type="tel" inputmode="numeric" pattern="[0-9]*" name="pin"
+               placeholder="••••" maxlength="4" autocomplete="off" autofocus required>
+        <div class="pin-label">Zopakuj PIN</div>
+        <input class="pin-input" type="tel" inputmode="numeric" pattern="[0-9]*" name="pin2"
+               placeholder="••••" maxlength="4" autocomplete="off" required>
+        <input type="hidden" name="adv" value="<?= (int)$selected['id'] ?>">
+        <button type="submit">Nastaviť PIN a vstúpiť</button>
+      </form>
+      <?php elseif ($lockedSeconds === 0): ?>
+      <form method="post" id="pinForm">
+        <input class="pin-input" type="tel" inputmode="numeric" pattern="[0-9]*" name="pin"
+               placeholder="••••" maxlength="4" autocomplete="off" autofocus required>
+        <input type="hidden" name="adv" value="<?= (int)$selected['id'] ?>">
+        <button type="submit">Vstúpiť</button>
+      </form>
+      <?php endif; ?>
+      <a class="pin-back" href="/">← Späť na výber poradcu</a>
+    </div>
+  </div>
+  <script>
+    (function(){
+      var f = document.getElementById('pinForm');
+      if (!f) return;
+      var inputs = f.querySelectorAll('.pin-input');
+      var isSetup = f.dataset.mode === 'setup';
+      inputs.forEach(function(i, idx){
+        i.addEventListener('input', function(){
+          i.value = i.value.replace(/\D/g, '').slice(0, 4);
+          if (i.value.length === 4) {
+            if (isSetup && idx === 0) { inputs[1].focus(); }
+            else if (!isSetup || idx === 1) { f.requestSubmit(); }
+          }
+        });
+      });
+    })();
+  </script>
+
+  <?php else: ?>
+  <!-- ============================================================
+       VÝBER PORADCU — dlaždice
+  ============================================================ -->
   <div class="hero">
     <div class="kicker">Pracovný pult poradcu</div>
     <h1>Kto dnes pracuje?</h1>
-    <p>Vyber svoje meno — dokumenty a klientske odkazy sa budú ukladať pod tvojím profilom. Voľba sa zapamätá na tomto zariadení.</p>
+    <p>Vyber svoje meno a zadaj svoj osobný PIN — dokumenty a klientske odkazy sa budú ukladať pod tvojím profilom. Voľba sa zapamätá na tomto zariadení.</p>
   </div>
 
   <div class="grid">
@@ -175,6 +313,7 @@ function advisorInitials(string $name): string {
   </div>
 
   <div class="foot">Formuláre · prístup len pre poradcov</div>
+  <?php endif; ?>
 
 </body>
 </html>

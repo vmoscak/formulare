@@ -50,6 +50,48 @@ function toolLabel(string $slug): string {
     return $labels[$slug] ?? $slug;
 }
 
+/**
+ * Centrálne priehradenie brute-force pokusov o PIN — hlavná brána (scope
+ * 'gate') aj PIN jednotlivých poradcov (scope 'advisor:<id>'). Zámerne bez
+ * väzby na IP: pri malom internom tíme stačí, že po sérii chybných pokusov
+ * sa daný vstup na pár minút zamkne pre kohokoľvek (4-miestny PIN má len
+ * 10 000 kombinácií, bez priehradenia by bol behom sekúnd uhádnuteľný).
+ * Throttling nesmie appku nikdy zhodiť — pri nedostupnej DB sa ticho vynechá.
+ */
+function throttleSecondsLeft(string $scope): int {
+    try {
+        $stmt = db()->prepare('SELECT locked_until FROM formulare_login_throttle WHERE scope = ?');
+        $stmt->execute([$scope]);
+        $row = $stmt->fetch();
+        if (!$row || !$row['locked_until']) return 0;
+        $left = strtotime($row['locked_until']) - time();
+        return $left > 0 ? $left : 0;
+    } catch (Throwable $e) { return 0; }
+}
+
+function throttleRecordFailure(string $scope, int $maxAttempts = 8, int $lockSeconds = 300): void {
+    try {
+        $pdo = db();
+        $stmt = $pdo->prepare('SELECT fail_count FROM formulare_login_throttle WHERE scope = ?');
+        $stmt->execute([$scope]);
+        $count = (int)($stmt->fetch()['fail_count'] ?? 0) + 1;
+        if ($count >= $maxAttempts) {
+            $lockedUntil = date('Y-m-d H:i:s', time() + $lockSeconds);
+            $pdo->prepare('REPLACE INTO formulare_login_throttle (scope, fail_count, locked_until) VALUES (?, 0, ?)')
+                ->execute([$scope, $lockedUntil]);
+        } else {
+            $pdo->prepare('REPLACE INTO formulare_login_throttle (scope, fail_count, locked_until) VALUES (?, ?, NULL)')
+                ->execute([$scope, $count]);
+        }
+    } catch (Throwable $e) { /* throttling nie je kritické pre chod appky */ }
+}
+
+function throttleReset(string $scope): void {
+    try {
+        db()->prepare('DELETE FROM formulare_login_throttle WHERE scope = ?')->execute([$scope]);
+    } catch (Throwable $e) { /* ticho ignoruj */ }
+}
+
 function db(): PDO {
     static $pdo = null;
     if ($pdo === null) {
@@ -78,9 +120,17 @@ function dbInitSqlite(PDO $pdo): void {
         email TEXT NOT NULL,
         phone TEXT NOT NULL DEFAULT '',
         color TEXT NOT NULL DEFAULT '#1f5fd1',
+        pin_hash TEXT NULL,
         is_admin INTEGER NOT NULL DEFAULT 0,
         active INTEGER NOT NULL DEFAULT 1,
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )");
+    // Defenzívne pre už existujúce lokálne SQLite DB založené pred zavedením PIN-u.
+    try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN pin_hash TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
+    $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_login_throttle (
+        scope TEXT PRIMARY KEY,
+        fail_count INTEGER NOT NULL DEFAULT 0,
+        locked_until TEXT NULL
     )");
     $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_client_links (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

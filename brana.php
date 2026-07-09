@@ -1,10 +1,12 @@
 <?php
 /**
- * Vstupná brána pre celú doménu — jedna zdieľaná bezpečnostná fráza.
+ * Vstupná brána pre celú doménu — jeden zdieľaný 4-miestny PIN.
  * Po správnom zadaní nastaví dlhodobú cookie (gate_auth), ktorú si
  * .htaccess overuje pri každej ďalšej požiadavke (viď RewriteCond).
+ * Priehradené proti uhádnutiu cez throttleRecordFailure() (scope 'gate') —
+ * pozri db.php.
  */
-require_once __DIR__ . '/config.local.php';
+require_once __DIR__ . '/db.php';
 
 function safeNextPath(?string $path): string {
     if ($path === null || $path === '') return '/';
@@ -17,10 +19,12 @@ function safeNextPath(?string $path): string {
 
 $next = safeNextPath($_SERVER['REDIRECT_URL'] ?? ($_GET['next'] ?? null));
 $error = '';
+$lockedSeconds = throttleSecondsLeft('gate');
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $entered = (string)($_POST['passphrase'] ?? '');
-    if (hash_equals(GATE_PASSPHRASE, $entered)) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $lockedSeconds === 0) {
+    $entered = trim((string)($_POST['pin'] ?? ''));
+    if ($entered !== '' && hash_equals(GATE_PASSPHRASE, $entered)) {
+        throttleReset('gate');
         setcookie('gate_auth', GATE_TOKEN, [
             'expires'  => time() + 365 * 86400,
             'path'     => '/',
@@ -31,7 +35,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: ' . safeNextPath($_POST['next'] ?? $next));
         exit;
     }
-    $error = 'Nesprávna fráza, skús to znova.';
+    throttleRecordFailure('gate');
+    $lockedSeconds = throttleSecondsLeft('gate');
+    $error = $lockedSeconds > 0
+        ? 'Príliš veľa pokusov. Skús to znova o ' . (int)ceil($lockedSeconds / 60) . ' min.'
+        : 'Nesprávny PIN, skús to znova.';
+} elseif ($lockedSeconds > 0) {
+    $error = 'Príliš veľa pokusov. Skús to znova o ' . (int)ceil($lockedSeconds / 60) . ' min.';
 }
 ?>
 <!DOCTYPE html><html lang="sk"><head>
@@ -72,18 +82,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
   h1{font-size:19px; font-weight:700; letter-spacing:-.01em; margin:0 0 8px; color:var(--ink);}
   p.sub{font-size:13px; color:var(--muted); margin:0 0 24px;}
-  input{
-    width:100%; padding:12px 14px; border:1px solid var(--line-strong); border-radius:10px;
-    font-size:15px; text-align:center; margin-bottom:14px; font-family:inherit; background:#f8fafc;
+  .pin-input{
+    width:100%; padding:16px 14px; border:1px solid var(--line-strong); border-radius:12px;
+    font-size:26px; font-weight:700; text-align:center; letter-spacing:.6em; text-indent:.6em;
+    margin-bottom:16px; font-family:inherit; background:#f8fafc; color:var(--ink);
     transition:border-color .15s, box-shadow .15s, background .15s;
   }
-  input:focus{outline:none; border-color:var(--accent); background:#fff; box-shadow:0 0 0 3px rgba(79,70,229,.14);}
+  .pin-input:focus{outline:none; border-color:var(--accent); background:#fff; box-shadow:0 0 0 3px rgba(79,70,229,.14);}
   button{
     width:100%; padding:13px; border:none; border-radius:10px; background:var(--accent);
     color:#fff; font-weight:600; font-size:14px; cursor:pointer; font-family:inherit;
     box-shadow:0 8px 18px -8px rgba(79,70,229,.6); transition:background .15s;
   }
   button:hover{background:var(--accent-ink);}
+  button:disabled{opacity:.5; cursor:default;}
   .error{color:var(--err); font-size:13px; font-weight:600; margin-bottom:14px;}
 </style>
 </head><body>
@@ -95,12 +107,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
     <div class="wordmark">Formuláre</div>
     <h1>Vstup pre poradcov</h1>
-    <p class="sub">Zadaj bezpečnostnú frázu</p>
+    <p class="sub">Zadaj bezpečnostný PIN</p>
     <?php if ($error): ?><div class="error"><?= htmlspecialchars($error) ?></div><?php endif; ?>
-    <form method="post">
-      <input type="password" name="passphrase" placeholder="Bezpečnostná fráza" autofocus required>
+    <?php if ($lockedSeconds === 0): ?>
+    <form method="post" id="gateForm">
+      <input class="pin-input" type="tel" inputmode="numeric" pattern="[0-9]*" name="pin"
+             placeholder="••••" maxlength="4" autocomplete="off" autofocus required>
       <input type="hidden" name="next" value="<?= htmlspecialchars($next) ?>">
       <button type="submit">Vstúpiť</button>
     </form>
+    <?php endif; ?>
   </div>
+  <script>
+    // Len digity + automatické odoslanie po 4. číslici (formulár ostáva plne
+    // funkčný aj bez JS — Vstúpiť sa dá stlačiť kedykoľvek ručne).
+    (function(){
+      var f = document.getElementById('gateForm');
+      if (!f) return;
+      var i = f.querySelector('.pin-input');
+      i.addEventListener('input', function(){
+        i.value = i.value.replace(/\D/g, '').slice(0, 4);
+        if (i.value.length === 4) f.requestSubmit();
+      });
+    })();
+  </script>
 </body></html>
