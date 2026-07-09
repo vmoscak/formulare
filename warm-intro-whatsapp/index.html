@@ -10,7 +10,11 @@
      Priateľská prvá správa pre nový kontakt, ktorý ťa niekto odporučil.
      Bez PDF — len text na kopírovanie alebo priamy odkaz do WhatsAppu (wa.me).
 
+     Poznámka: texty jednotlivých tónov sú zámerne len pracovná verzia —
+     presné znenie sa bude ešte dolaďovať.
+
      KDE ČO UPRAVIŤ:
+       • Tóny správy ............ JS, objekt TONES
        • Text správy ............ JS, funkcia buildMessage()
 ========================================================================== -->
 
@@ -69,6 +73,11 @@
         </div>
       </div>
 
+      <div>
+        <div class="step-head"><div class="step-num">3</div><div class="step-title">Tón správy</div></div>
+        <div class="grid3" id="tones"></div>
+      </div>
+
       <div class="alert" id="summary" style="display:none;">
         <span class="bang">!</span>
         <span class="msg" id="summaryMsg"></span>
@@ -94,7 +103,16 @@
 
 <script src="../assets/advisor-panel.js"></script>
 <script>
-const state = { contactName:'', contactPhone:'', referrerName:'', advisorName:'', advisorPhone:'', touched:false };
+/* ===========================================================================
+   DÁTA
+=========================================================================== */
+const TONES = {
+  priatelsky: { label:'Priateľský', sub:'Neformálny, teplý tón', tile:'PR' },
+  formalny:   { label:'Formálny', sub:'Zdvorilý, vykanie', tile:'FO' },
+  strucny:    { label:'Stručný', sub:'Krátka rýchla správa', tile:'ST' },
+};
+
+const state = { contactName:'', contactPhone:'', referrerName:'', tone:'priatelsky', advisorName:'', advisorPhone:'', touched:false };
 
 function validate(){
   const e = {};
@@ -105,17 +123,42 @@ function validate(){
 
 const $ = id => document.getElementById(id);
 
+function renderTones(){
+  $('tones').innerHTML = Object.keys(TONES).map(function(k){
+    const t=TONES[k], sel=k===state.tone?' sel':'';
+    return '<div class="type'+sel+'" data-tone="'+k+'">'
+      + '<div class="tile">'+t.tile+'</div>'
+      + '<div><div class="t-label">'+t.label+'</div><div class="t-sub">'+t.sub+'</div></div></div>';
+  }).join('');
+}
+
 function syncInputs(){
   ['contactName','contactPhone','referrerName'].forEach(function(k){ if($(k)) $(k).value = state[k]; });
 }
 
 function buildMessage(){
-  return 'Ahoj ' + (state.contactName.trim() || '') + ','
-    + '\n\nvolám sa ' + (state.advisorName || '…') + ' a som finančný poradca. Kontakt na teba mi dal/-a '
-    + (state.referrerName.trim() || '…') + ' — spomínal/-a, že by som ti mohol/-la pomôcť s financiami/poistením.'
+  const name = state.contactName.trim();
+  const referrer = state.referrerName.trim() || '…';
+  const advisor = state.advisorName || '…';
+  const phoneLine = state.advisorPhone ? '\n' + state.advisorPhone : '';
+
+  if (state.tone === 'formalny') {
+    return 'Dobrý deň' + (name ? ' ' + name : '') + ',\n\n'
+      + 'volám sa ' + advisor + ' a pôsobím ako finančný poradca. Váš kontakt mi odovzdal/-a ' + referrer
+      + ', ktorý/-á sa domnieva, že by som Vám mohol/-la byť nápomocný/-á v oblasti financií a poistenia.'
+      + '\n\nRád by som si s Vami dohodol krátky telefonát alebo stretnutie, ak by Vám to vyhovovalo. Dajte mi, prosím, vedieť, kedy sa Vám to hodí.'
+      + '\n\nS pozdravom,\n' + advisor + phoneLine;
+  }
+  if (state.tone === 'strucny') {
+    return 'Ahoj' + (name ? ' ' + name : '') + ', som ' + advisor + ' (finančný poradca), kontakt mi dal/-a ' + referrer + '. Ozvem sa ti, keď budeš mať chvíľku?'
+      + '\n' + advisor + phoneLine;
+  }
+  // priateľský (predvolený)
+  return 'Ahoj ' + (name || '') + ','
+    + '\n\nvolám sa ' + advisor + ' a som finančný poradca. Kontakt na teba mi dal/-a '
+    + referrer + ' — spomínal/-a, že by som ti mohol/-la pomôcť s financiami/poistením.'
     + '\n\nNie je to žiadny záväzok, len krátke predstavenie 🙂 Ak by ti vyhovoval krátky telefonát alebo stretnutie, daj vedieť, kedy sa ti to hodí.'
-    + '\n\n' + (state.advisorName || '')
-    + (state.advisorPhone ? '\n' + state.advisorPhone : '');
+    + '\n\n' + advisor + phoneLine;
 }
 
 function render(){
@@ -156,6 +199,9 @@ function doWhatsApp(){
 }
 
 function bind(){
+  document.addEventListener('click', function(e){
+    const t=e.target.closest('[data-tone]'); if(t){ state.tone=t.dataset.tone; renderTones(); render(); return; }
+  });
   document.addEventListener('input', function(e){
     ['contactName','contactPhone','referrerName'].forEach(function(k){
       if(e.target.id===k){ state[k]=e.target.value; render(); }
@@ -166,7 +212,7 @@ function bind(){
 }
 
 (function init(){
-  syncInputs(); bind(); render();
+  renderTones(); syncInputs(); bind(); render();
   fetch('/api/whoami.php', { credentials:'same-origin' })
     .then(function(r){ return r.ok ? r.json() : {}; })
     .then(function(adv){ if(adv && adv.id){ state.advisorName = adv.name || ''; state.advisorPhone = adv.phone || ''; render(); } })

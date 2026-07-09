@@ -5,15 +5,18 @@
 <title>Generátor 5-hviezdičkovej prosby</title>
 
 <!-- =========================================================================
-     GENERÁTOR 5-HVIEZDIČKOVEJ PROSBY (WhatsApp) — samostatný editovateľný súbor
+     GENERÁTOR 5-HVIEZDIČKOVEJ PROSBY — samostatný editovateľný súbor
      -------------------------------------------------------------------------
-     Rýchla prosba o recenziu po uzatvorení zmluvy / vybavení škody. Bez PDF —
-     len text na kopírovanie alebo priamy odkaz do WhatsAppu (wa.me).
-     Odkaz na recenziu sa pamätá v prehliadači (localStorage), nemusíš ho
-     zakaždým prepisovať.
+     Prosba o recenziu po uzatvorení zmluvy / vybavení škody / revízii a pod.
+     Bez PDF — len text na kopírovanie alebo priamy odkaz (WhatsApp/SMS/e-mail).
+     Odkaz na recenziu sa pamätá v prehliadači (localStorage).
+
+     Poznámka: texty a presné znenie sú zámerne len pracovná verzia — dizajn
+     aj presné formulácie sa budú ešte dolaďovať.
 
      KDE ČO UPRAVIŤ:
        • Dôvody (kontext) ....... JS, objekt REASONS
+       • Kanály ................. JS, objekt CHANNELS
        • Text správy ............ JS, funkcia buildMessage()
 ========================================================================== -->
 
@@ -32,7 +35,7 @@
         <div class="logo">R</div>
         <div>
           <b>Generátor 5-hviezdičkovej prosby</b><br>
-          <small>Rýchla prosba o recenziu na WhatsApp/SMS</small>
+          <small>Prosba o recenziu — WhatsApp, SMS alebo e-mail</small>
         </div>
       </div>
     </div>
@@ -54,8 +57,13 @@
             <span class="err">Zadaj meno klienta</span>
           </div>
           <div class="field col-full" data-k="clientPhone">
-            <label>TELEFÓN <span style="font-weight:500;text-transform:none;">(nepovinné, pre priamy odkaz do WhatsAppu)</span></label>
+            <label>TELEFÓN <span style="font-weight:500;text-transform:none;">(nepovinné — pre WhatsApp/SMS)</span></label>
             <input id="clientPhone" placeholder="+421 900 000 000">
+            <span class="err"></span>
+          </div>
+          <div class="field col-full" data-k="clientEmail">
+            <label>E-MAIL <span style="font-weight:500;text-transform:none;">(nepovinné — pre e-mailovú verziu)</span></label>
+            <input id="clientEmail" placeholder="klient@example.com">
             <span class="err"></span>
           </div>
         </div>
@@ -67,7 +75,12 @@
       </div>
 
       <div>
-        <div class="step-head"><div class="step-num">3</div><div class="step-title">Odkaz na recenziu</div></div>
+        <div class="step-head"><div class="step-num">3</div><div class="step-title">Kanál</div></div>
+        <div class="grid3" id="channels"></div>
+      </div>
+
+      <div>
+        <div class="step-head"><div class="step-num">4</div><div class="step-title">Odkaz na recenziu</div></div>
         <div class="fields">
           <div class="field col-full" data-k="reviewLink">
             <label>ODKAZ <span style="font-weight:500;text-transform:none;">(Google profil / Facebook — pamätá sa v prehliadači)</span></label>
@@ -91,7 +104,7 @@
       </div>
       <div class="preview-tools">
         <button class="tool" id="copyBtn">Kopírovať text</button>
-        <button class="tool" id="waBtn">Otvoriť WhatsApp</button>
+        <button class="tool" id="openBtn">Otvoriť WhatsApp</button>
       </div>
       <div class="letter-wrap">
         <div id="msgPreview" style="background:#fff; border-radius:8px; padding:20px; font-size:14px; line-height:1.7; white-space:pre-wrap; color:#20242b;"></div>
@@ -106,13 +119,22 @@
    DÁTA
 =========================================================================== */
 const REASONS = {
-  zmluva:   { label:'Uzatvorenie zmluvy', sub:'Nová poistka/produkt', tile:'ZM', text:'za uzatvorenie novej zmluvy' },
-  skoda:    { label:'Vybavenie škody', sub:'Poistná udalosť', tile:'ŠK', text:'za pomoc s vybavením poistnej udalosti' },
+  zmluva:      { label:'Uzatvorenie zmluvy', sub:'Nová poistka/produkt', tile:'ZM', text:'za uzatvorenie novej zmluvy' },
+  skoda:       { label:'Vybavenie škody', sub:'Poistná udalosť', tile:'ŠK', text:'za pomoc s vybavením poistnej udalosti' },
   konzultacia: { label:'Konzultácia', sub:'Poradenstvo', tile:'KO', text:'za konzultáciu a poradenstvo' },
+  revizia:     { label:'Ročná revízia', sub:'Kontrola poistenia', tile:'RE', text:'za čas venovaný ročnej revízii poistenia' },
+  vyrocie:     { label:'Výročie spolupráce', sub:'Dlhodobý klient', tile:'VY', text:'za dlhoročnú spoluprácu a dôveru' },
+};
+
+const CHANNELS = {
+  whatsapp: { label:'WhatsApp', sub:'Rýchla správa s odkazom', tile:'WA' },
+  sms:      { label:'SMS', sub:'Krátky text', tile:'SMS' },
+  email:    { label:'E-mail', sub:'Formálnejšia správa', tile:'@' },
 };
 
 const state = {
-  clientName:'', clientPhone:'', reason:'zmluva',
+  clientName:'', clientPhone:'', clientEmail:'',
+  reason:'zmluva', channel:'whatsapp',
   reviewLink: localStorage.getItem('kb_reviewLink') || '',
   advisorName:'',
   touched:false,
@@ -142,18 +164,47 @@ function renderReasons(){
   }).join('');
 }
 
+function renderChannels(){
+  $('channels').innerHTML = Object.keys(CHANNELS).map(function(k){
+    const c=CHANNELS[k], sel=k===state.channel?' sel':'';
+    return '<div class="type'+sel+'" data-channel="'+k+'">'
+      + '<div class="tile">'+c.tile+'</div>'
+      + '<div><div class="t-label">'+c.label+'</div><div class="t-sub">'+c.sub+'</div></div></div>';
+  }).join('');
+}
+
 function syncInputs(){
-  ['clientName','clientPhone','reviewLink'].forEach(function(k){ if($(k)) $(k).value = state[k]; });
+  ['clientName','clientPhone','clientEmail','reviewLink'].forEach(function(k){ if($(k)) $(k).value = state[k]; });
+}
+
+function buildSubject(){
+  return 'Poprosím Vás o krátku recenziu';
 }
 
 function buildMessage(){
   const r = REASONS[state.reason];
-  const name = state.clientName.trim() || 'dobrý deň';
-  return 'Ahoj ' + (state.clientName.trim() || '') + (state.clientName.trim() ? ',' : '')
+  const name = state.clientName.trim();
+  const link = state.reviewLink.trim() || '…';
+  const sign = state.advisorName || '';
+
+  if (state.channel === 'email') {
+    return 'Dobrý deň' + (name ? ' ' + name : '') + ',\n\n'
+      + 'ďakujem ' + r.text + '. Bol by som veľmi rád, keby ste si našli chvíľku a nechali krátku recenziu:\n\n'
+      + link
+      + '\n\nVopred ďakujem za váš čas.\n\n' + sign;
+  }
+  if (state.channel === 'sms') {
+    return 'Ahoj' + (name ? ' ' + name : '') + ', ďakujem ' + r.text + '! Poprosím Ťa o krátku recenziu: ' + link + ' Vopred vďaka! ' + sign;
+  }
+  return 'Ahoj ' + (name || '') + (name ? ',' : '')
     + '\n\nĎakujem ' + r.text + '! Veľmi by mi pomohlo, keby si mi venoval/-a chvíľku a nechal/-a krátku recenziu:\n\n'
-    + (state.reviewLink.trim() || '…')
+    + link
     + '\n\nVopred veľká vďaka! ⭐⭐⭐⭐⭐'
-    + (state.advisorName ? '\n' + state.advisorName : '');
+    + (sign ? '\n' + sign : '');
+}
+
+function buildPreviewText(){
+  return state.channel === 'email' ? ('Predmet: ' + buildSubject() + '\n\n' + buildMessage()) : buildMessage();
 }
 
 function render(){
@@ -171,7 +222,10 @@ function render(){
   var _p=(state.clientName||'').trim().split(/\s+/), _av=_p.length>=2?_p[0][0]+_p[_p.length-1][0]:(_p[0]?_p[0][0]:'?');
   $('avatar').textContent=_av.toUpperCase();
 
-  $('msgPreview').textContent = buildMessage();
+  $('msgPreview').textContent = buildPreviewText();
+
+  var labels = { whatsapp:'Otvoriť WhatsApp', sms:'Otvoriť SMS', email:'Otvoriť e-mail' };
+  $('openBtn').textContent = labels[state.channel];
 
   localStorage.setItem('kb_reviewLink', state.reviewLink);
 }
@@ -180,21 +234,32 @@ function render(){
    AKCIE
 =========================================================================== */
 function doCopy(){
-  const txt = buildMessage();
+  const txt = buildPreviewText();
   try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
   const b=$('copyBtn'); b.textContent='Skopírované ✓'; setTimeout(function(){ b.textContent='Kopírovať text'; },1600);
   state.touched=true; render();
   logDocument('generator-recenzii', state.clientName||'Klient', state, undefined);
 }
 
-function doWhatsApp(){
+function doOpen(){
   state.touched=true; render();
   const errors=validate();
   if(Object.keys(errors).length>0) return;
-  const phone = (state.clientPhone||'').replace(/[^\d+]/g,'').replace(/^00/,'+').replace(/^\+?/, '');
-  const txt = encodeURIComponent(buildMessage());
-  const url = phone ? 'https://wa.me/' + phone + '?text=' + txt : 'https://wa.me/?text=' + txt;
-  window.open(url, '_blank');
+
+  if (state.channel === 'email') {
+    const to = (state.clientEmail||'').trim();
+    const url = 'mailto:' + encodeURIComponent(to) + '?subject=' + encodeURIComponent(buildSubject()) + '&body=' + encodeURIComponent(buildMessage());
+    window.location.href = url;
+  } else if (state.channel === 'sms') {
+    const phone = (state.clientPhone||'').replace(/[^\d+]/g,'');
+    const url = 'sms:' + phone + '?body=' + encodeURIComponent(buildMessage());
+    window.location.href = url;
+  } else {
+    const phone = (state.clientPhone||'').replace(/[^\d+]/g,'').replace(/^00/,'+').replace(/^\+?/, '');
+    const txt = encodeURIComponent(buildMessage());
+    const url = phone ? 'https://wa.me/' + phone + '?text=' + txt : 'https://wa.me/?text=' + txt;
+    window.open(url, '_blank');
+  }
   logDocument('generator-recenzii', state.clientName||'Klient', state, undefined);
 }
 
@@ -204,21 +269,22 @@ function doWhatsApp(){
 function bind(){
   document.addEventListener('click', function(e){
     const r=e.target.closest('[data-reason]'); if(r){ state.reason=r.dataset.reason; renderReasons(); render(); return; }
+    const c=e.target.closest('[data-channel]'); if(c){ state.channel=c.dataset.channel; renderChannels(); render(); return; }
   });
   document.addEventListener('input', function(e){
-    ['clientName','clientPhone','reviewLink'].forEach(function(k){
+    ['clientName','clientPhone','clientEmail','reviewLink'].forEach(function(k){
       if(e.target.id===k){ state[k]=e.target.value; render(); }
     });
   });
   $('copyBtn').addEventListener('click', doCopy);
-  $('waBtn').addEventListener('click', doWhatsApp);
+  $('openBtn').addEventListener('click', doOpen);
 }
 
 /* ===========================================================================
    ŠTART
 =========================================================================== */
 (function init(){
-  renderReasons(); syncInputs(); bind(); render();
+  renderReasons(); renderChannels(); syncInputs(); bind(); render();
   fetch('/api/whoami.php', { credentials:'same-origin' })
     .then(function(r){ return r.ok ? r.json() : {}; })
     .then(function(adv){ if(adv && adv.id){ state.advisorName = adv.name || ''; render(); } })
