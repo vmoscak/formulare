@@ -92,6 +92,133 @@ function throttleReset(string $scope): void {
     } catch (Throwable $e) { /* ticho ignoruj */ }
 }
 
+/**
+ * Rozloží vnorenú "licenses" štruktúru NBS registra na ploché polia pre
+ * rýchle filtrovanie/hľadanie (uložené ako JSON v samostatných stĺpcoch):
+ *   - categories    = scope na najvyššej úrovni (napr. "viazaný finančný agent")
+ *   - sectors       = scope vo vnorených licenciách (napr. "sektor poistenia alebo zaistenia")
+ *   - parent_names  = parent_entity_name kdekoľvek vo vnorení — pre koho je
+ *                     daný viazaný agent registrovaný (kľúčové pre nábor).
+ * Použité pri importe (nabor-import.php) aj v nabor.php pri zobrazovaní.
+ */
+function registryDeriveFlags(array $licenses): array {
+    $categories = [];
+    $sectors = [];
+    $parentNames = [];
+
+    $walkNested = function (array $items) use (&$walkNested, &$sectors, &$parentNames) {
+        foreach ($items as $item) {
+            if (!is_array($item)) continue;
+            if (!empty($item['scope'])) $sectors[] = $item['scope'];
+            if (!empty($item['parent_entity_name'])) $parentNames[] = $item['parent_entity_name'];
+            if (!empty($item['licenses']) && is_array($item['licenses'])) $walkNested($item['licenses']);
+        }
+    };
+
+    foreach ($licenses as $item) {
+        if (!is_array($item)) continue;
+        if (!empty($item['scope'])) $categories[] = $item['scope'];
+        if (!empty($item['parent_entity_name'])) $parentNames[] = $item['parent_entity_name'];
+        if (!empty($item['licenses']) && is_array($item['licenses'])) $walkNested($item['licenses']);
+    }
+
+    return [
+        'categories' => array_values(array_unique($categories)),
+        'sectors' => array_values(array_unique($sectors)),
+        'parent_names' => array_values(array_unique($parentNames)),
+    ];
+}
+
+/** Rozdelí adresu tvaru "Ulica 4, 81102 Bratislava" na mesto a PSČ (SK formát). */
+function registryParseAddress(string $address): array {
+    $city = ''; $zip = '';
+    if (preg_match('/(\d{3}\s?\d{2})\s+(.+)$/u', $address, $m)) {
+        $zip = trim($m[1]);
+        $city = trim($m[2]);
+    }
+    return [$city, $zip];
+}
+
+const REGISTRY_DATA_FILE = __DIR__ . '/data/nbs-register.json';
+const REGISTRY_FACETS_FILE = __DIR__ . '/data/facets.json';
+
+/**
+ * Načíta data/nbs-register.json a naplní ním formulare_registry_entities
+ * (plný refresh — zmaže staré a vloží nanovo, aby dáta vždy presne
+ * zodpovedali poslednému nahratému súboru). Vracia počet a dátum datasetu.
+ * Volané z nabor.php (owner-only tlačidlo) aj priamo pri lokálnom testovaní.
+ */
+function registryImport(string $filePath, string $facetsFile): array {
+    if (!is_file($filePath)) {
+        throw new RuntimeException('Súbor sa nenašiel (' . basename($filePath) . ') — nahraj ho cez FTP do priečinka data/.');
+    }
+    ini_set('memory_limit', '512M');
+    set_time_limit(300);
+
+    $raw = file_get_contents($filePath);
+    if ($raw === false) throw new RuntimeException('Súbor sa nepodarilo prečítať.');
+
+    $data = json_decode($raw, true);
+    unset($raw);
+    if (!is_array($data) || !isset($data['institutions']) || !is_array($data['institutions'])) {
+        throw new RuntimeException('Neočakávaný formát JSON — chýba pole "institutions".');
+    }
+
+    $pdo = db();
+    $pdo->exec('DELETE FROM formulare_registry_entities');
+    $insert = $pdo->prepare('INSERT INTO formulare_registry_entities
+        (ico, name, address, city, zip, country, categories, sectors, parent_names, raw_json, imported_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+
+    $allCategories = [];
+    $allSectors = [];
+    $allParents = [];
+    $now = date('Y-m-d H:i:s');
+
+    $pdo->beginTransaction();
+    $count = 0;
+    foreach ($data['institutions'] as $inst) {
+        if (!is_array($inst) || empty($inst['id'])) continue;
+        $licenses = is_array($inst['licenses'] ?? null) ? $inst['licenses'] : [];
+        $flags = registryDeriveFlags($licenses);
+        [$city, $zip] = registryParseAddress((string)($inst['address'] ?? ''));
+
+        $insert->execute([
+            (string)$inst['id'],
+            (string)($inst['name'] ?? ''),
+            (string)($inst['address'] ?? ''),
+            $city,
+            $zip,
+            (string)($inst['country'] ?? 'SK'),
+            json_encode($flags['categories'], JSON_UNESCAPED_UNICODE),
+            json_encode($flags['sectors'], JSON_UNESCAPED_UNICODE),
+            json_encode($flags['parent_names'], JSON_UNESCAPED_UNICODE),
+            json_encode($licenses, JSON_UNESCAPED_UNICODE),
+            $now,
+        ]);
+        $count++;
+
+        foreach ($flags['categories'] as $c) $allCategories[$c] = true;
+        foreach ($flags['sectors'] as $s) $allSectors[$s] = true;
+        foreach ($flags['parent_names'] as $p) $allParents[$p] = true;
+
+        if ($count % 500 === 0) { $pdo->commit(); $pdo->beginTransaction(); }
+    }
+    $pdo->commit();
+
+    $categories = array_keys($allCategories); sort($categories);
+    $sectors = array_keys($allSectors); sort($sectors);
+    $parents = array_keys($allParents); sort($parents);
+    file_put_contents($facetsFile, json_encode([
+        'categories' => $categories,
+        'sectors' => $sectors,
+        'parent_names' => $parents,
+        'dataset_updated' => $data['updated'] ?? null,
+    ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+
+    return ['count' => $count, 'updated' => $data['updated'] ?? null];
+}
+
 function db(): PDO {
     static $pdo = null;
     if ($pdo === null) {
@@ -123,12 +250,14 @@ function dbInitSqlite(PDO $pdo): void {
         pin_hash TEXT NULL,
         disabled_tools TEXT NULL,
         is_admin INTEGER NOT NULL DEFAULT 0,
+        is_owner INTEGER NOT NULL DEFAULT 0,
         active INTEGER NOT NULL DEFAULT 1,
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )");
-    // Defenzívne pre už existujúce lokálne SQLite DB založené pred zavedením PIN-u / prepínačov nástrojov.
+    // Defenzívne pre už existujúce lokálne SQLite DB založené pred zavedením PIN-u / prepínačov nástrojov / náborovej zóny.
     try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN pin_hash TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
     try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN disabled_tools TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
+    try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN is_owner INTEGER NOT NULL DEFAULT 0"); } catch (Throwable $e) { /* stĺpec už existuje */ }
     $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_login_throttle (
         scope TEXT PRIMARY KEY,
         fail_count INTEGER NOT NULL DEFAULT 0,
@@ -160,4 +289,21 @@ function dbInitSqlite(PDO $pdo): void {
         FOREIGN KEY (advisor_id) REFERENCES formulare_advisors(id),
         FOREIGN KEY (client_link_id) REFERENCES formulare_client_links(id)
     )");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_registry_entities (
+        ico TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        address TEXT NOT NULL DEFAULT '',
+        city TEXT NOT NULL DEFAULT '',
+        zip TEXT NOT NULL DEFAULT '',
+        country TEXT NOT NULL DEFAULT 'SK',
+        categories TEXT NULL,
+        sectors TEXT NULL,
+        parent_names TEXT NULL,
+        raw_json TEXT NOT NULL,
+        lat REAL NULL,
+        lon REAL NULL,
+        geocoded_at TEXT NULL,
+        imported_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )");
+    $pdo->exec("CREATE INDEX IF NOT EXISTS idx_registry_name ON formulare_registry_entities(name)");
 }

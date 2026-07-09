@@ -5,3 +5,8 @@ tmp/fonts/*
 # Lokálna konfigurácia (DB prístupové údaje, brána) — nikdy necommitovať
 config.local.php
 tmp/local.sqlite
+
+# Náborová zóna — veľký JSON register sa nahráva priamo cez FTP na server,
+# nikdy cez git (desiatky MB, navyše dáta z NBS registra nepatria do repa).
+data/*.json
+!data/.gitkeep
