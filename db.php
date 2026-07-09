@@ -46,6 +46,7 @@ function toolLabel(string $slug): string {
         'ziadost-vratenie-preplatku' => 'Vrátenie preplatku',
         'odvolanie-zamietnutie-plnenia' => 'Odvolanie voči likvidácii',
         'reklamacia-postup-institucie' => 'Reklamácia / sťažnosť',
+        'ziadost-vyplata-poistneho-plnenia' => 'Výplata poistného plnenia',
         'financna-karticka-prvej-pomoci' => 'Finančná kartička prvej pomoci',
         'checklisty-skody' => 'Checklisty podľa typu škody',
         'generator-recenzii' => 'Generátor 5-hviezdičkovej prosby',

@@ -78,6 +78,8 @@ $TOOL_CATEGORIES = [
          'desc' => 'Nesúhlas s výsledkom likvidácie alebo zamietnutím poistného plnenia – odôvodnenie a požadovaný postup.'],
         ['href' => 'reklamacia-postup-institucie/', 'name' => 'Reklamácia / sťažnosť', 'ico' => 'message', 'color' => 'teal',
          'desc' => 'Oficiálna reklamácia alebo sťažnosť voči postupu inštitúcie – predmet, popis a požadovaná náprava.'],
+        ['href' => 'ziadost-vyplata-poistneho-plnenia/', 'name' => 'Výplata poistného plnenia', 'ico' => 'euro', 'color' => 'rose',
+         'desc' => 'Žiadosť o vyplatenie poistného plnenia z poistnej udalosti na bankový účet žiadateľa, s IBANom.'],
     ]],
     ['title' => 'Kartičky a rýchle texty pre klienta', 'group' => 'pomocky', 'tools' => [
         ['href' => 'financna-karticka-prvej-pomoci/', 'name' => 'Finančná kartička prvej pomoci', 'ico' => 'firstaid', 'color' => 'rose',
