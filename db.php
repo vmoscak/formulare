@@ -153,10 +153,11 @@ const REGISTRY_FACETS_FILE = __DIR__ . '/data/facets.json';
 // Zdieľané medzi nabor.php, api/nabor-markers.php a nabor-geocode.php.
 const AGENT_CATEGORIES = ['viazaný finančný agent', 'podriadený finančný agent'];
 
-// Presné (platené) geokódovanie sa robí len pre tieto kraje — používateľ
-// reálne pôsobí len tu, netreba platiť za geokódovanie celého Slovenska.
-// Ostatné kraje ostávajú len na približnej polohe podľa PSČ.
-const PRECISE_GEOCODE_REGIONS = ['Prešovský kraj', 'Košický kraj'];
+// Náborová zóna (aj presné platené geokódovanie) sa obmedzuje len na tieto
+// kraje — používateľ reálne pôsobí len tu. Používa sa jednak na filtrovanie
+// zobrazených/importovaných záznamov (nabor.php, api/nabor-markers.php),
+// jednak na obmedzenie rozsahu platenej presnej geokódovacej služby.
+const NABOR_ACTIVE_REGIONS = ['Prešovský kraj', 'Košický kraj'];
 
 /**
  * Vráti kraj SR podľa 5-miestneho PSČ, alebo null ak sa nenašlo (napr.
@@ -166,6 +167,20 @@ const PRECISE_GEOCODE_REGIONS = ['Prešovský kraj', 'Košický kraj'];
 function regionForZip(string $zip): ?string {
     static $table = null;
     if ($table === null) $table = require __DIR__ . '/psc-kraj.php';
+    $zip5 = preg_replace('/\D/', '', $zip);
+    if (isset($table['exact'][$zip5])) return $table['exact'][$zip5];
+    return $table['prefix3'][substr($zip5, 0, 3)] ?? null;
+}
+
+/**
+ * Vráti okres SR podľa 5-miestneho PSČ, alebo null ak sa nenašlo. Tabuľka
+ * psc-okres.php je generovaná z rovnakého overeného datasetu ako
+ * psc-kraj.php (obce/okresy/kraje SR) — nikdy neupravuj ručne, pozri
+ * hlavičku súboru.
+ */
+function okresForZip(string $zip): ?string {
+    static $table = null;
+    if ($table === null) $table = require __DIR__ . '/psc-okres.php';
     $zip5 = preg_replace('/\D/', '', $zip);
     if (isset($table['exact'][$zip5])) return $table['exact'][$zip5];
     return $table['prefix3'][substr($zip5, 0, 3)] ?? null;
@@ -228,19 +243,20 @@ function registryImport(string $filePath, string $facetsFile): array {
     $enqueue = $pdo->prepare('INSERT INTO formulare_geocode_cache (address_hash, address, status) VALUES (?, ?, \'pending\')');
     $enqueuedHashes = [];
     // Hashe adries, ktoré reálne patria do rozsahu presného geokódovania
-    // (PRECISE_GEOCODE_REGIONS) — po importe sa všetko mimo tejto množiny
+    // (NABOR_ACTIVE_REGIONS) — po importe sa všetko mimo tejto množiny
     // v cache, čo ešte čaká na spracovanie ('pending'), vymaže (viď nižšie).
     $wantedHashes = [];
 
     $pdo->exec('DELETE FROM formulare_registry_entities');
     $insert = $pdo->prepare('INSERT INTO formulare_registry_entities
-        (ico, name, address, city, zip, country, categories, sectors, parent_names, region, lat, lon, geocoded_at, raw_json, imported_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        (ico, name, address, city, zip, country, categories, sectors, parent_names, region, okres, lat, lon, geocoded_at, raw_json, imported_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
 
     $allCategories = [];
     $allSectors = [];
     $allParents = [];
     $allRegions = [];
+    $allOkres = [];
     $now = date('Y-m-d H:i:s');
 
     $pdo->beginTransaction();
@@ -252,11 +268,12 @@ function registryImport(string $filePath, string $facetsFile): array {
         $address = (string)($inst['address'] ?? '');
         [$city, $zip] = registryParseAddress($address);
         $region = $zip !== '' ? regionForZip($zip) : null;
+        $okres = $zip !== '' ? okresForZip($zip) : null;
         $coords = $zip !== '' ? coordsForZip($zip) : null;
         $geocodedAt = $coords ? $now : null;
 
         $isAgent = (bool)array_intersect($flags['categories'], AGENT_CATEGORIES);
-        $inPreciseScope = $region !== null && in_array($region, PRECISE_GEOCODE_REGIONS, true);
+        $inPreciseScope = $region !== null && in_array($region, NABOR_ACTIVE_REGIONS, true);
         if ($isAgent && $address !== '' && $inPreciseScope) {
             $hash = geocodeCacheKey($address);
             $wantedHashes[$hash] = true;
@@ -281,6 +298,7 @@ function registryImport(string $filePath, string $facetsFile): array {
             json_encode($flags['sectors'], JSON_UNESCAPED_UNICODE),
             json_encode($flags['parent_names'], JSON_UNESCAPED_UNICODE),
             $region,
+            $okres,
             $coords[0] ?? null,
             $coords[1] ?? null,
             $geocodedAt,
@@ -293,12 +311,13 @@ function registryImport(string $filePath, string $facetsFile): array {
         foreach ($flags['sectors'] as $s) $allSectors[$s] = true;
         foreach ($flags['parent_names'] as $p) $allParents[$p] = true;
         if ($region) $allRegions[$region] = true;
+        if ($okres && $inPreciseScope) $allOkres[$okres] = true;
 
         if ($count % 500 === 0) { $pdo->commit(); $pdo->beginTransaction(); }
     }
     $pdo->commit();
 
-    // Vyčistiť frontu presného geokódovania od adries mimo PRECISE_GEOCODE_REGIONS
+    // Vyčistiť frontu presného geokódovania od adries mimo NABOR_ACTIVE_REGIONS
     // (napr. zostatok z čias, keď sa geokódovalo celé Slovensko) — nemá zmysel
     // za ne platiť. Netýka sa už hotových 'found'/'not_found' záznamov.
     $staleHashes = [];
@@ -316,11 +335,13 @@ function registryImport(string $filePath, string $facetsFile): array {
     $sectors = array_keys($allSectors); sort($sectors);
     $parents = array_keys($allParents); sort($parents);
     $regions = array_keys($allRegions); sort($regions);
+    $okresy = array_keys($allOkres); sort($okresy);
     file_put_contents($facetsFile, json_encode([
         'categories' => $categories,
         'sectors' => $sectors,
         'parent_names' => $parents,
         'regions' => $regions,
+        'okresy' => $okresy,
         'dataset_updated' => $data['updated'] ?? null,
     ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
 
@@ -511,6 +532,7 @@ function dbInitSqlite(PDO $pdo): void {
         sectors TEXT NULL,
         parent_names TEXT NULL,
         region TEXT NULL,
+        okres TEXT NULL,
         raw_json TEXT NOT NULL,
         lat REAL NULL,
         lon REAL NULL,
@@ -519,6 +541,7 @@ function dbInitSqlite(PDO $pdo): void {
     )");
     $pdo->exec("CREATE INDEX IF NOT EXISTS idx_registry_name ON formulare_registry_entities(name)");
     $pdo->exec("CREATE INDEX IF NOT EXISTS idx_registry_region ON formulare_registry_entities(region)");
+    $pdo->exec("CREATE INDEX IF NOT EXISTS idx_registry_okres ON formulare_registry_entities(okres)");
     $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_geocode_cache (
         address_hash TEXT PRIMARY KEY,
         address TEXT NOT NULL,

@@ -63,7 +63,7 @@ try {
 } catch (Throwable $e) { /* tabuľka môže byť ešte prázdna */ }
 
 // -- fasety pre filter dropdowny --
-$facets = ['categories' => [], 'sectors' => [], 'parent_names' => [], 'regions' => [], 'dataset_updated' => null];
+$facets = ['categories' => [], 'sectors' => [], 'parent_names' => [], 'regions' => [], 'okresy' => [], 'dataset_updated' => null];
 if (is_file(REGISTRY_FACETS_FILE)) {
     $decoded = json_decode((string)file_get_contents(REGISTRY_FACETS_FILE), true);
     if (is_array($decoded)) $facets = array_merge($facets, $decoded);
@@ -75,14 +75,19 @@ $fCategories = array_values(array_intersect(array_map('trim', (array)($_GET['cat
 $fSector = trim((string)($_GET['sector'] ?? ''));
 $fParent = trim((string)($_GET['parent'] ?? ''));
 $fRegion = trim((string)($_GET['region'] ?? ''));
+$fOkres = trim((string)($_GET['okres'] ?? ''));
 
 // where bez kraja (pre prehľad počtov podľa kraja nižšie — nech vidno rozloženie
-// aj pri už zvolenom kraji) a where s krajom (pre samotné výsledky/stránkovanie)
+// aj pri už zvolenom kraji) a where s krajom (pre samotné výsledky/stránkovanie).
+// Náborová zóna je natrvalo obmedzená len na NABOR_ACTIVE_REGIONS (rovnaké
+// rozhodnutie ako AGENT_CATEGORIES) — netreba dáta z celého Slovenska.
 $activeCategories = $fCategories ?: AGENT_CATEGORIES;
 $where = [];
 $params = [];
 $where[] = '(' . implode(' OR ', array_fill(0, count($activeCategories), 'categories LIKE ?')) . ')';
 foreach ($activeCategories as $c) { $params[] = '%"' . $c . '"%'; }
+$where[] = '(' . implode(' OR ', array_fill(0, count(NABOR_ACTIVE_REGIONS), 'region = ?')) . ')';
+foreach (NABOR_ACTIVE_REGIONS as $r) { $params[] = $r; }
 if ($q !== '') { $where[] = '(name LIKE ? OR ico LIKE ?)'; $params[] = '%' . $q . '%'; $params[] = '%' . $q . '%'; }
 if ($fSector !== '') { $where[] = 'sectors LIKE ?'; $params[] = '%"' . $fSector . '"%'; }
 if ($fParent !== '') { $where[] = 'parent_names LIKE ?'; $params[] = '%"' . $fParent . '"%'; }
@@ -118,7 +123,7 @@ function qs(array $overrides): string {
 <header class="topbar">
   <div class="tb-title">
     <h1>Náborová zóna</h1>
-    <p>Register inštitúcií a finančných agentov (NBS) · viditeľné len tebe</p>
+    <p>Register inštitúcií a finančných agentov (NBS) · len Prešovský a Košický kraj · viditeľné len tebe</p>
   </div>
   <div class="tb-actions">
     <a class="pillbtn" href="/nastroje.php">← Späť na nástroje</a>
@@ -215,16 +220,25 @@ function qs(array $overrides): string {
       <div class="f-field">
         <label>Kraj</label>
         <select name="region">
-          <option value="">Celé Slovensko</option>
-          <?php foreach ($facets['regions'] as $r): ?>
+          <option value="">Oba kraje</option>
+          <?php foreach (NABOR_ACTIVE_REGIONS as $r): ?>
           <option value="<?= h($r) ?>" <?= $r === $fRegion ? 'selected' : '' ?>><?= h($r) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <div class="f-field">
+        <label>Okres</label>
+        <select name="okres">
+          <option value="">Všetky okresy</option>
+          <?php foreach ($facets['okresy'] as $o): ?>
+          <option value="<?= h($o) ?>" <?= $o === $fOkres ? 'selected' : '' ?>><?= h($o) ?></option>
           <?php endforeach; ?>
         </select>
       </div>
       <div class="f-field" style="min-width:0;">
         <button type="submit" class="pillbtn solid">Filtrovať</button>
       </div>
-      <?php if ($q || $fSector || $fParent || $fRegion): ?>
+      <?php if ($q || $fSector || $fParent || $fRegion || $fOkres): ?>
       <div class="f-field" style="min-width:0;">
         <a class="pillbtn" href="/nabor.php">Zrušiť filter</a>
       </div>

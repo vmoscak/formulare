@@ -2,8 +2,9 @@
 /**
  * Body pre mapu náborovej zóny (JSON) — súradnice sú na úrovni obce (stred
  * PSČ), nie presná ulica, pozri psc-suradnice.php. Rozsah kategórií je
- * natrvalo len na viazaných a podriadených finančných agentov (rovnako ako
- * nabor.php), rovnaké filtre (q, sector, parent, region) v query stringu.
+ * natrvalo len na viazaných a podriadených finančných agentov a rozsah
+ * krajov natrvalo len na NABOR_ACTIVE_REGIONS (rovnako ako nabor.php),
+ * rovnaké filtre (q, sector, parent, region, okres) v query stringu.
  * Prístup VÝHRADNE pre is_owner (rovnaká kontrola ako nabor.php).
  */
 require_once __DIR__ . '/../db.php';
@@ -19,16 +20,21 @@ $fCategories = array_values(array_intersect(array_map('trim', (array)($_GET['cat
 $fSector = trim((string)($_GET['sector'] ?? ''));
 $fParent = trim((string)($_GET['parent'] ?? ''));
 $fRegion = trim((string)($_GET['region'] ?? ''));
+$fOkres = trim((string)($_GET['okres'] ?? ''));
 $activeCategories = $fCategories ?: AGENT_CATEGORIES;
+// Kraj zúžený na jeden z povolených, ak je zvolený a platný — inak oba.
+$activeRegions = ($fRegion !== '' && in_array($fRegion, NABOR_ACTIVE_REGIONS, true)) ? [$fRegion] : NABOR_ACTIVE_REGIONS;
 
 $where = ['lat IS NOT NULL', 'lon IS NOT NULL'];
 $params = [];
 $where[] = '(' . implode(' OR ', array_fill(0, count($activeCategories), 'categories LIKE ?')) . ')';
 foreach ($activeCategories as $c) { $params[] = '%"' . $c . '"%'; }
+$where[] = '(' . implode(' OR ', array_fill(0, count($activeRegions), 'region = ?')) . ')';
+foreach ($activeRegions as $r) { $params[] = $r; }
 if ($q !== '') { $where[] = '(name LIKE ? OR ico LIKE ?)'; $params[] = '%' . $q . '%'; $params[] = '%' . $q . '%'; }
 if ($fSector !== '') { $where[] = 'sectors LIKE ?'; $params[] = '%"' . $fSector . '"%'; }
 if ($fParent !== '') { $where[] = 'parent_names LIKE ?'; $params[] = '%"' . $fParent . '"%'; }
-if ($fRegion !== '') { $where[] = 'region = ?'; $params[] = $fRegion; }
+if ($fOkres !== '') { $where[] = 'okres = ?'; $params[] = $fOkres; }
 $whereSql = 'WHERE ' . implode(' AND ', $where);
 
 $out = [];
