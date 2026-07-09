@@ -48,6 +48,7 @@ function toolLabel(string $slug): string {
         'reklamacia-postup-institucie' => 'Reklamácia / sťažnosť',
         'financna-karticka-prvej-pomoci' => 'Finančná kartička prvej pomoci',
         'checklisty-skody' => 'Checklisty podľa typu škody',
+        'generator-recenzii' => 'Generátor 5-hviezdičkovej prosby',
     ];
     return $labels[$slug] ?? $slug;
 }

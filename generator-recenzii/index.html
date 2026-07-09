@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="sk"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generátor 5-hviezdičkovej prosby</title>
+
+<!-- =========================================================================
+     GENERÁTOR 5-HVIEZDIČKOVEJ PROSBY (WhatsApp) — samostatný editovateľný súbor
+     -------------------------------------------------------------------------
+     Rýchla prosba o recenziu po uzatvorení zmluvy / vybavení škody. Bez PDF —
+     len text na kopírovanie alebo priamy odkaz do WhatsAppu (wa.me).
+     Odkaz na recenziu sa pamätá v prehliadači (localStorage), nemusíš ho
+     zakaždým prepisovať.
+
+     KDE ČO UPRAVIŤ:
+       • Dôvody (kontext) ....... JS, objekt REASONS
+       • Text správy ............ JS, funkcia buildMessage()
+========================================================================== -->
+
+<link rel="stylesheet" href="../assets/ui.css?v=4">
+</head>
+<body>
+
+<div class="app">
+  <div class="head">
+    <div class="head-left">
+      <a href="../nastroje.php" class="back-btn" title="Späť na formuláre">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <div class="brand">
+        <div class="logo">R</div>
+        <div>
+          <b>Generátor 5-hviezdičkovej prosby</b><br>
+          <small>Rýchla prosba o recenziu na WhatsApp/SMS</small>
+        </div>
+      </div>
+    </div>
+    <div class="head-actions">
+      <div class="avatar" id="avatar">?</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- ============ FORMULÁR ============ -->
+    <div class="form">
+
+      <div>
+        <div class="step-head"><div class="step-num">1</div><div class="step-title">Klient/-ka</div></div>
+        <div class="fields">
+          <div class="field col-full" data-k="clientName">
+            <label>MENO</label>
+            <input id="clientName" placeholder="napr. Peter">
+            <span class="err">Zadaj meno klienta</span>
+          </div>
+          <div class="field col-full" data-k="clientPhone">
+            <label>TELEFÓN <span style="font-weight:500;text-transform:none;">(nepovinné, pre priamy odkaz do WhatsAppu)</span></label>
+            <input id="clientPhone" placeholder="+421 900 000 000">
+            <span class="err"></span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="step-head"><div class="step-num">2</div><div class="step-title">Dôvod</div></div>
+        <div class="grid3" id="reasons"></div>
+      </div>
+
+      <div>
+        <div class="step-head"><div class="step-num">3</div><div class="step-title">Odkaz na recenziu</div></div>
+        <div class="fields">
+          <div class="field col-full" data-k="reviewLink">
+            <label>ODKAZ <span style="font-weight:500;text-transform:none;">(Google profil / Facebook — pamätá sa v prehliadači)</span></label>
+            <input id="reviewLink" placeholder="https://g.page/r/...">
+            <span class="err">Zadaj odkaz na recenziu</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert" id="summary" style="display:none;">
+        <span class="bang">!</span>
+        <span class="msg" id="summaryMsg"></span>
+      </div>
+    </div>
+
+    <!-- ============ NÁHĽAD ============ -->
+    <div class="preview">
+      <div class="preview-head">
+        <span class="t">Náhľad správy</span>
+        <span class="live"><i></i>Aktualizuje sa naživo</span>
+      </div>
+      <div class="preview-tools">
+        <button class="tool" id="copyBtn">Kopírovať text</button>
+        <button class="tool" id="waBtn">Otvoriť WhatsApp</button>
+      </div>
+      <div class="letter-wrap">
+        <div id="msgPreview" style="background:#fff; border-radius:8px; padding:20px; font-size:14px; line-height:1.7; white-space:pre-wrap; color:#20242b;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/advisor-panel.js"></script>
+<script>
+/* ===========================================================================
+   DÁTA
+=========================================================================== */
+const REASONS = {
+  zmluva:   { label:'Uzatvorenie zmluvy', sub:'Nová poistka/produkt', tile:'ZM', text:'za uzatvorenie novej zmluvy' },
+  skoda:    { label:'Vybavenie škody', sub:'Poistná udalosť', tile:'ŠK', text:'za pomoc s vybavením poistnej udalosti' },
+  konzultacia: { label:'Konzultácia', sub:'Poradenstvo', tile:'KO', text:'za konzultáciu a poradenstvo' },
+};
+
+const state = {
+  clientName:'', clientPhone:'', reason:'zmluva',
+  reviewLink: localStorage.getItem('kb_reviewLink') || '',
+  advisorName:'',
+  touched:false,
+};
+
+/* ===========================================================================
+   VALIDÁCIA
+=========================================================================== */
+function validate(){
+  const e = {};
+  if(!state.clientName.trim()) e.clientName='Zadaj meno klienta';
+  if(!state.reviewLink.trim()) e.reviewLink='Zadaj odkaz na recenziu';
+  return e;
+}
+
+/* ===========================================================================
+   VYKRESLENIE
+=========================================================================== */
+const $ = id => document.getElementById(id);
+
+function renderReasons(){
+  $('reasons').innerHTML = Object.keys(REASONS).map(function(k){
+    const r=REASONS[k], sel=k===state.reason?' sel':'';
+    return '<div class="type'+sel+'" data-reason="'+k+'">'
+      + '<div class="tile">'+r.tile+'</div>'
+      + '<div><div class="t-label">'+r.label+'</div><div class="t-sub">'+r.sub+'</div></div></div>';
+  }).join('');
+}
+
+function syncInputs(){
+  ['clientName','clientPhone','reviewLink'].forEach(function(k){ if($(k)) $(k).value = state[k]; });
+}
+
+function buildMessage(){
+  const r = REASONS[state.reason];
+  const name = state.clientName.trim() || 'dobrý deň';
+  return 'Ahoj ' + (state.clientName.trim() || '') + (state.clientName.trim() ? ',' : '')
+    + '\n\nĎakujem ' + r.text + '! Veľmi by mi pomohlo, keby si mi venoval/-a chvíľku a nechal/-a krátku recenziu:\n\n'
+    + (state.reviewLink.trim() || '…')
+    + '\n\nVopred veľká vďaka! ⭐⭐⭐⭐⭐'
+    + (state.advisorName ? '\n' + state.advisorName : '');
+}
+
+function render(){
+  const errors = validate();
+  document.querySelectorAll('.field[data-k]').forEach(function(f){
+    const k=f.dataset.k;
+    const bad = state.touched && errors[k];
+    f.classList.toggle('invalid', !!bad);
+    const err=f.querySelector('.err'); if(err && errors[k]) err.textContent=errors[k];
+  });
+  const errCount = Object.keys(errors).length;
+  $('summary').style.display = (state.touched && errCount>0) ? 'flex' : 'none';
+  $('summaryMsg').textContent = 'Skontroluj zvýraznené polia ('+errCount+') a skús to znova.';
+
+  var _p=(state.clientName||'').trim().split(/\s+/), _av=_p.length>=2?_p[0][0]+_p[_p.length-1][0]:(_p[0]?_p[0][0]:'?');
+  $('avatar').textContent=_av.toUpperCase();
+
+  $('msgPreview').textContent = buildMessage();
+
+  localStorage.setItem('kb_reviewLink', state.reviewLink);
+}
+
+/* ===========================================================================
+   AKCIE
+=========================================================================== */
+function doCopy(){
+  const txt = buildMessage();
+  try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
+  const b=$('copyBtn'); b.textContent='Skopírované ✓'; setTimeout(function(){ b.textContent='Kopírovať text'; },1600);
+  state.touched=true; render();
+  logDocument('generator-recenzii', state.clientName||'Klient', state, undefined);
+}
+
+function doWhatsApp(){
+  state.touched=true; render();
+  const errors=validate();
+  if(Object.keys(errors).length>0) return;
+  const phone = (state.clientPhone||'').replace(/[^\d+]/g,'').replace(/^00/,'+').replace(/^\+?/, '');
+  const txt = encodeURIComponent(buildMessage());
+  const url = phone ? 'https://wa.me/' + phone + '?text=' + txt : 'https://wa.me/?text=' + txt;
+  window.open(url, '_blank');
+  logDocument('generator-recenzii', state.clientName||'Klient', state, undefined);
+}
+
+/* ===========================================================================
+   UDALOSTI
+=========================================================================== */
+function bind(){
+  document.addEventListener('click', function(e){
+    const r=e.target.closest('[data-reason]'); if(r){ state.reason=r.dataset.reason; renderReasons(); render(); return; }
+  });
+  document.addEventListener('input', function(e){
+    ['clientName','clientPhone','reviewLink'].forEach(function(k){
+      if(e.target.id===k){ state[k]=e.target.value; render(); }
+    });
+  });
+  $('copyBtn').addEventListener('click', doCopy);
+  $('waBtn').addEventListener('click', doWhatsApp);
+}
+
+/* ===========================================================================
+   ŠTART
+=========================================================================== */
+(function init(){
+  renderReasons(); syncInputs(); bind(); render();
+  fetch('/api/whoami.php', { credentials:'same-origin' })
+    .then(function(r){ return r.ok ? r.json() : {}; })
+    .then(function(adv){ if(adv && adv.id){ state.advisorName = adv.name || ''; render(); } })
+    .catch(function(){});
+})();
+</script>
+
+<script src="/assets/shell.js?v=4"></script>
+</body></html>

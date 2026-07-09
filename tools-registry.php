@@ -76,6 +76,8 @@ $TOOL_CATEGORIES = [
          'desc' => 'Jednostránkový prehľad poistiek a núdzových kontaktov pre klienta – PDF aj text na SMS/WhatsApp.'],
         ['href' => 'checklisty-skody/', 'name' => 'Checklisty podľa typu škody', 'ico' => 'check', 'color' => 'amber',
          'desc' => 'Vyber typ škody – hotový zoznam dokladov pre klienta, na SMS/WhatsApp alebo ako PDF.'],
+        ['href' => 'generator-recenzii/', 'name' => 'Generátor 5-hviezdičkovej prosby', 'ico' => 'message', 'color' => 'teal',
+         'desc' => 'Rýchla prosba o Google/Facebook recenziu na WhatsApp, s priamym odkazom na odoslanie.'],
     ]],
 ];
 
