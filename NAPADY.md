@@ -15,6 +15,18 @@ toho, čo sa rozhodneme spraviť.
 - [x] **Znalostná báza v „Ľudskej reči"** — interné FAQ s vyhľadávaním a
   kopírovaním na jeden klik. Zatiaľ tiež len pre teba, zobrazenie ostatným
   poradcom sa ešte doladí.
+- [x] **Generátor „Finančnej kartičky prvej pomoci“** — cesta C (SMS/WhatsApp
+  text) aj plnohodnotné PDF s prehľadom poistiek a núdzových kontaktov.
+  Fyzická/QR-vCard cesta (A/B) zatiaľ nie.
+- [x] **Checklisty podľa typu škody do SMS** — výber typu škody (auto,
+  domácnosť, krádež, úraz, zodpovednosť), hotový zoznam dokladov ako PDF
+  alebo SMS/WhatsApp text.
+- [x] **Generátor „5-hviezdičkovej prosby“ do WhatsAppu** — text s odkazom na
+  Google/Facebook recenziu, odkaz sa pamätá v prehliadači.
+- [x] **„Warm-Intro“ WhatsApp Generátor** — priateľská prvá správa pre nový
+  odporúčaný kontakt.
+- [x] **Tmavý režim (Dark Mode)** — prepínač v ľavej lište, uložený v
+  prehliadači, funguje naprieč celou appkou.
 
 ---
 
@@ -44,13 +56,10 @@ toho, čo sa rozhodneme spraviť.
 
 ## Generátory dokumentov a kariet
 
-- [ ] **Generátor „Finančnej kartičky prvej pomoci“**
-  - A) Fyzická cesta (najlepší klientsky zážitok)
-  - B) Digitálna cesta — QR kód s vCard ("WOW" efekt)
-  - C) Rýchla SMS / WhatsApp verzia
+- [ ] **Generátor „Finančnej kartičky prvej pomoci“** — zostáva: A) fyzická
+  cesta, B) digitálna QR-vCard cesta
 - [ ] **Generátor sprievodných prehlásení k likvidácii**
 - [ ] **Žiadosť o zmenu oprávnenej osoby**
-- [ ] **Checklisty podľa typu škody do SMS**
 - [ ] **Rýchle linky a QR kódy** (zbierka)
 - [ ] **Žiadosť o výplatu poistného plnenia** (na účet č. ...)
 - [ ] **Generátor „Rodinného Trezoru“** (núdzový manuál pre pozostalých)
@@ -85,9 +94,7 @@ toho, čo sa rozhodneme spraviť.
 ## Marketing a získavanie klientov
 
 - [ ] **„Rodinná mapa“** (generačný marketing, demografický cross-sell)
-- [ ] **Generátor „5-hviezdičkovej prosby“** do WhatsAppu (referencie)
 - [ ] **Kartička „Odporučte ma priateľom“**
-- [ ] **„Warm-Intro“ WhatsApp Generátor** (teplé odporúčanie)
 - [ ] **Výročný „Zostrih zmlúv“** (automatický pre-servis existujúcich klientov)
 
 ## B2B / firemný segment
@@ -97,7 +104,6 @@ toho, čo sa rozhodneme spraviť.
 
 ## Dizajn a UX appky
 
-- [ ] **Tmavý režim** (Dark Mode)
 - [ ] **Dizajnové mikro-interakcie**
 
 ---
