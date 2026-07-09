@@ -35,7 +35,7 @@ $geocodeMessage = '';
 $geocodeDebug = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['geocode_batch'])) {
     try {
-        $g = geocodeBatchProcess(35);
+        $g = geocodeBatchProcess(50);
         $geocodeMessage = 'Spracovaných ' . $g['processed'] . ' (nájdených ' . $g['found'] . ', nenájdených ' . $g['not_found']
             . ($g['retried'] > 0 ? ', dočasne odmietnutých ' . $g['retried'] . ' — skúsi sa znova' : '') . '), zostáva ' . number_format($g['remaining'], 0, ',', ' ') . '.';
         if (!empty($g['first_error'])) $geocodeDebug = $g['first_error'];
@@ -113,7 +113,7 @@ function qs(array $overrides): string {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=4">
+<link rel="stylesheet" href="/assets/panel.css?v=5">
 </head><body>
 <header class="topbar">
   <div class="tb-title">
@@ -162,7 +162,7 @@ function qs(array $overrides): string {
   <div class="card">
     <h3>Presné geokódovanie adries (poloha na mape)</h3>
     <p style="margin:-6px 0 16px; font-size:12.5px; color:var(--muted);">
-      Beží automaticky na pozadí cez Plánovač úloh (OpenStreetMap Nominatim, max 1 adresa/sekundu — preto to trvá dlhšie).
+      Len Prešovský a Košický kraj (LocationIQ, platená služba) — beží automaticky na pozadí cez Plánovač úloh.
       Kým adresa nie je geokódovaná presne, na mape sa zobrazí aspoň približne (stred obce podľa PSČ).
     </p>
     <?php if ($geocodeMessage): ?><div class="pill submitted" style="margin-bottom:12px; padding:6px 12px;"><?= h($geocodeMessage) ?></div><?php endif; ?>
@@ -182,7 +182,7 @@ function qs(array $overrides): string {
       </div>
       <form method="post" style="margin-left:auto;">
         <input type="hidden" name="geocode_batch" value="1">
-        <button type="submit" class="pillbtn">Spustiť dávku teraz (~35, ručne)</button>
+        <button type="submit" class="pillbtn">Spustiť dávku teraz (~50, ručne)</button>
       </form>
     </div>
   </div>

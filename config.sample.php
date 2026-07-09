@@ -17,3 +17,7 @@ define('DB_PASS', 'db_password');
 // nastavujú v admin.php a ukladajú hashované v DB (pozri sql/003_advisor_pin.sql).
 define('GATE_PASSPHRASE', '0000');
 define('GATE_TOKEN', 'nahrad-nahodnym-64-znakovym-retazcom');
+
+// LocationIQ API token (presné geokódovanie v náborovej zóne, len Prešovský
+// a Košický kraj) — zaregistruj sa na locationiq.com, token nájdeš v Dashboard.
+define('LOCATIONIQ_TOKEN', '');

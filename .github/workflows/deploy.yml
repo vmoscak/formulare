@@ -29,9 +29,10 @@ jobs:
           DB_PASS: ${{ secrets.DB_PASS }}
           GATE_TOKEN: ${{ secrets.GATE_TOKEN }}
           GATE_PASSPHRASE: ${{ secrets.GATE_PASSPHRASE }}
+          LOCATIONIQ_TOKEN: ${{ secrets.LOCATIONIQ_TOKEN }}
         run: |
           php -r '
-            $vars = ["DB_DSN","DB_USER","DB_PASS","GATE_TOKEN","GATE_PASSPHRASE"];
+            $vars = ["DB_DSN","DB_USER","DB_PASS","GATE_TOKEN","GATE_PASSPHRASE","LOCATIONIQ_TOKEN"];
             $out = "<?php\n";
             foreach ($vars as $v) { $out .= "define(".var_export($v,true).", ".var_export(getenv($v),true).");\n"; }
             file_put_contents("config.local.php", $out);

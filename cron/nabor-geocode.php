@@ -1,10 +1,10 @@
 <?php
 /**
- * Dávkové presné geokódovanie adries náborovej zóny (OpenStreetMap Nominatim)
- * — spúšťané periodicky cez Websupport "Plánovač úloh" (návšteva URL), aby
- * to bežalo na pozadí bez otvoreného prehliadača. Každý beh spracuje jednu
- * malú dávku (viď geocodeBatchProcess v db.php) a rešpektuje limit
- * Nominatim 1 dotaz/sekundu.
+ * Dávkové presné geokódovanie adries náborovej zóny (LocationIQ, len
+ * Prešovský a Košický kraj) — spúšťané periodicky cez Websupport "Plánovač
+ * úloh" (návšteva URL), aby to bežalo na pozadí bez otvoreného prehliadača.
+ * Každý beh spracuje jednu dávku (viď geocodeBatchProcess v db.php) a
+ * rešpektuje limit voľného plánu LocationIQ (2 dotazy/sekundu).
  *
  * Autorizácia: buď spustené z príkazového riadku (CLI), alebo cez URL s
  * ?token=<GATE_TOKEN> — rovnaký tajný token ako brána appky, nastav v
@@ -23,7 +23,7 @@ if (!$isCli && !hash_equals(GATE_TOKEN, (string)($_GET['token'] ?? ''))) {
 }
 
 try {
-    $result = geocodeBatchProcess(35);
+    $result = geocodeBatchProcess(150);
     echo "Spracovane: {$result['processed']}, najdene: {$result['found']}, "
         . "nenajdene: {$result['not_found']}, docasne odmietnute: {$result['retried']}, zostava: {$result['remaining']}\n";
     if (!empty($result['first_error'])) echo 'Diagnostika: ' . $result['first_error'] . "\n";

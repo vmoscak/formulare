@@ -153,6 +153,11 @@ const REGISTRY_FACETS_FILE = __DIR__ . '/data/facets.json';
 // Zdieľané medzi nabor.php, api/nabor-markers.php a nabor-geocode.php.
 const AGENT_CATEGORIES = ['viazaný finančný agent', 'podriadený finančný agent'];
 
+// Presné (platené) geokódovanie sa robí len pre tieto kraje — používateľ
+// reálne pôsobí len tu, netreba platiť za geokódovanie celého Slovenska.
+// Ostatné kraje ostávajú len na približnej polohe podľa PSČ.
+const PRECISE_GEOCODE_REGIONS = ['Prešovský kraj', 'Košický kraj'];
+
 /**
  * Vráti kraj SR podľa 5-miestneho PSČ, alebo null ak sa nenašlo (napr.
  * neplatné/chýbajúce PSČ). Tabuľka psc-kraj.php je generovaná z overených
@@ -222,6 +227,10 @@ function registryImport(string $filePath, string $facetsFile): array {
     } catch (Throwable $e) { /* tabuľka ešte nemusí existovať (pred migráciou) */ }
     $enqueue = $pdo->prepare('INSERT INTO formulare_geocode_cache (address_hash, address, status) VALUES (?, ?, \'pending\')');
     $enqueuedHashes = [];
+    // Hashe adries, ktoré reálne patria do rozsahu presného geokódovania
+    // (PRECISE_GEOCODE_REGIONS) — po importe sa všetko mimo tejto množiny
+    // v cache, čo ešte čaká na spracovanie ('pending'), vymaže (viď nižšie).
+    $wantedHashes = [];
 
     $pdo->exec('DELETE FROM formulare_registry_entities');
     $insert = $pdo->prepare('INSERT INTO formulare_registry_entities
@@ -247,8 +256,10 @@ function registryImport(string $filePath, string $facetsFile): array {
         $geocodedAt = $coords ? $now : null;
 
         $isAgent = (bool)array_intersect($flags['categories'], AGENT_CATEGORIES);
-        if ($isAgent && $address !== '') {
+        $inPreciseScope = $region !== null && in_array($region, PRECISE_GEOCODE_REGIONS, true);
+        if ($isAgent && $address !== '' && $inPreciseScope) {
             $hash = geocodeCacheKey($address);
+            $wantedHashes[$hash] = true;
             $cached = $geocodeCache[$hash] ?? null;
             if ($cached && $cached['status'] === 'found' && $cached['lat'] !== null) {
                 $coords = [(float)$cached['lat'], (float)$cached['lon']];
@@ -287,6 +298,20 @@ function registryImport(string $filePath, string $facetsFile): array {
     }
     $pdo->commit();
 
+    // Vyčistiť frontu presného geokódovania od adries mimo PRECISE_GEOCODE_REGIONS
+    // (napr. zostatok z čias, keď sa geokódovalo celé Slovensko) — nemá zmysel
+    // za ne platiť. Netýka sa už hotových 'found'/'not_found' záznamov.
+    $staleHashes = [];
+    foreach ($geocodeCache as $hash => $g) {
+        if ($g['status'] === 'pending' && !isset($wantedHashes[$hash])) $staleHashes[] = $hash;
+    }
+    if ($staleHashes) {
+        foreach (array_chunk($staleHashes, 400) as $chunk) {
+            $pdo->prepare('DELETE FROM formulare_geocode_cache WHERE status = \'pending\' AND address_hash IN (' . implode(',', array_fill(0, count($chunk), '?')) . ')')
+                ->execute($chunk);
+        }
+    }
+
     $categories = array_keys($allCategories); sort($categories);
     $sectors = array_keys($allSectors); sort($sectors);
     $parents = array_keys($allParents); sort($parents);
@@ -303,22 +328,26 @@ function registryImport(string $filePath, string $facetsFile): array {
 }
 
 /**
- * Zavolá OpenStreetMap Nominatim pre presné súradnice jednej adresy.
+ * Zavolá LocationIQ (platená služba, Nominatim-kompatibilné API) pre presné
+ * súradnice jednej adresy. Vyžaduje LOCATIONIQ_TOKEN v config.local.php.
  * Vráti ['status' => 'found'|'not_found'|'retry', 'coords' => [lat,lon]|null].
  * 'retry' = dočasné zlyhanie (napr. HTTP 429 rate-limit, sieťová chyba) —
  * adresa sa NESMIE označiť ako 'not_found', musí ostať 'pending' na ďalší pokus.
  * $error (voliteľné) sa naplní diagnostickou správou pri 'retry'/'not_found'.
  */
-function geocodeNominatim(string $address, ?string &$error = null): array {
-    $url = 'https://nominatim.openstreetmap.org/search?' . http_build_query([
+function geocodeAddress(string $address, ?string &$error = null): array {
+    if (!defined('LOCATIONIQ_TOKEN') || LOCATIONIQ_TOKEN === '') {
+        $error = 'Chýba LOCATIONIQ_TOKEN v konfigurácii.';
+        return ['status' => 'retry', 'coords' => null];
+    }
+    $url = 'https://us1.locationiq.com/v1/search?' . http_build_query([
+        'key' => LOCATIONIQ_TOKEN,
         'format' => 'json',
         'q' => $address,
         'countrycodes' => 'sk',
         'limit' => 1,
     ]);
     $ctx = stream_context_create(['http' => [
-        // Nominatim usage policy vyžaduje identifikovateľný User-Agent.
-        'header' => "User-Agent: FormulareNaborovaZona/1.0 (kontakt: vmfin@vmfin.sk)\r\n",
         'timeout' => 8,
         'ignore_errors' => true,
     ]]);
@@ -336,16 +365,22 @@ function geocodeNominatim(string $address, ?string &$error = null): array {
         return ['status' => 'retry', 'coords' => null];
     }
     if ($status === 429 || $status >= 500) {
-        $error = "Nominatim vrátil HTTP $status (dočasné, skúsi sa znova neskôr). Odpoveď: " . mb_substr($resp, 0, 200);
+        $error = "LocationIQ vrátil HTTP $status (dočasné, skúsi sa znova neskôr). Odpoveď: " . mb_substr($resp, 0, 200);
         return ['status' => 'retry', 'coords' => null];
     }
     $data = json_decode($resp, true);
     if (!is_array($data)) {
+        // LocationIQ vracia pri "nič nenájdené" JSON objekt s "error" kľúčom,
+        // nie prázdne pole — to je legitímny not_found, nie chyba parsovania.
+        if ($status === 404) {
+            $error = 'LocationIQ nenašiel žiadny výsledok pre túto adresu.';
+            return ['status' => 'not_found', 'coords' => null];
+        }
         $error = 'Neočakávaná odpoveď (nie JSON), HTTP ' . $status . ': ' . mb_substr($resp, 0, 200);
         return ['status' => 'retry', 'coords' => null];
     }
     if (empty($data[0]['lat']) || empty($data[0]['lon'])) {
-        $error = 'Nominatim nenašiel žiadny výsledok pre túto adresu.';
+        $error = 'LocationIQ nenašiel žiadny výsledok pre túto adresu.';
         return ['status' => 'not_found', 'coords' => null];
     }
     return ['status' => 'found', 'coords' => [(float)$data[0]['lat'], (float)$data[0]['lon']]];
@@ -353,17 +388,17 @@ function geocodeNominatim(string $address, ?string &$error = null): array {
 
 /**
  * Spracuje jednu dávku čakajúcich adries z formulare_geocode_cache cez
- * Nominatim (max 1 dotaz/s podľa ich pravidiel používania). Zapíše výsledok
- * do cache (prežije reimport) AJ priamo do formulare_registry_entities
- * (nech sa to na mape prejaví hneď, bez čakania na ďalší import).
+ * LocationIQ (voľný plán 2 dotazy/s). Zapíše výsledok do cache (prežije
+ * reimport) AJ priamo do formulare_registry_entities (nech sa to na mape
+ * prejaví hneď, bez čakania na ďalší import).
  * Pri rate-limite (HTTP 429) sa dávka predčasne ukončí — nemá zmysel
- * pokračovať, kým Nominatim odmieta dotazy.
+ * pokračovať, kým LocationIQ odmieta dotazy.
  * Volané z nabor-geocode.php (cron cez Plánovač úloh alebo ručne z nabor.php).
  */
 function geocodeBatchProcess(int $limit = 35): array {
     set_time_limit(max(120, $limit * 2));
     $pdo = db();
-    $limit = max(1, min(100, $limit));
+    $limit = max(1, min(300, $limit));
     $stmt = $pdo->query("SELECT address_hash, address FROM formulare_geocode_cache WHERE status = 'pending' LIMIT $limit");
     $rows = $stmt->fetchAll();
 
@@ -373,7 +408,7 @@ function geocodeBatchProcess(int $limit = 35): array {
     $found = 0; $notFound = 0; $retried = 0; $firstError = null;
     foreach ($rows as $i => $row) {
         $error = null;
-        $result = geocodeNominatim($row['address'], $error);
+        $result = geocodeAddress($row['address'], $error);
         $now = date('Y-m-d H:i:s');
         if ($result['status'] === 'found') {
             [$lat, $lon] = $result['coords'];
@@ -388,7 +423,7 @@ function geocodeBatchProcess(int $limit = 35): array {
             if ($firstError === null) $firstError = $error;
             break; // rate-limit/sieťová chyba — ďalšie pokusy v tejto dávke by dopadli rovnako
         }
-        if ($i < count($rows) - 1) usleep(1100000); // 1.1s medzera medzi dotazmi (Nominatim limit 1/s)
+        if ($i < count($rows) - 1) usleep(550000); // 0.55s medzera medzi dotazmi (LocationIQ voľný plán 2/s)
     }
 
     $remaining = (int)$pdo->query("SELECT COUNT(*) c FROM formulare_geocode_cache WHERE status = 'pending'")->fetch()['c'];
