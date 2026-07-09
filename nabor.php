@@ -95,7 +95,7 @@ function qs(array $overrides): string {
 <title>Náborová zóna</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/panel.css?v=3">
+<link rel="stylesheet" href="/assets/panel.css?v=4">
 </head><body>
 <header class="topbar">
   <div class="tb-title">
@@ -261,5 +261,5 @@ function qs(array $overrides): string {
     .catch(function () { countEl.textContent = '· chyba načítania'; });
 })();
 </script>
-<script src="/assets/shell.js?v=3"></script>
+<script src="/assets/shell.js?v=4"></script>
 </body></html>
