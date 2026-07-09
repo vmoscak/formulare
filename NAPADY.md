@@ -50,12 +50,10 @@ toho, čo sa rozhodneme spraviť.
 - [ ] **Žiadosť o výplatu poistného plnenia** (na účet č. ...)
 - [ ] **Generátor „Rodinného Trezoru“** (núdzový manuál pre pozostalých)
 - [ ] **Generátor bezpečného linku na zber dát**
-- [ ] **AI Prekladateľ výluk a VPP** (všeobecných poistných podmienok, "ľudskou rečou")
 
 ## Nástroje a produktivita poradcu
 
 - [ ] **„Tichý radar“ pre poradcov** (pripomienkovač aktivít)
-- [ ] **Command Palette** (ovládací panel, štýl Cmd+K)
 - [ ] **Šablóny na riešenie „Zásekov“** (trablšúting) — rýchle texty na
   vyžiadanie dokladov, keď proces v poisťovni zastane
 - [ ] **Znalostná báza v „Ľudskej reči“** — interné FAQ s okamžitým vyhľadávaním
@@ -64,7 +62,6 @@ toho, čo sa rozhodneme spraviť.
 - [ ] **Interaktívny ťahák „Čo pýtať od klienta“**
 - [ ] **60-sekundový „Zápisník po stretnutí“**
 - [ ] **Hlasový zápisník z auta** (AI, moderná produktivita)
-- [ ] **PWA režim** (offline dostupnosť na tablete)
 - [ ] **Refinančný Radar** (sledovač sadzieb)
 - [ ] **„Hypo-Refinance Autopilot“** s notifikáciou pre poradcu
 
@@ -79,8 +76,7 @@ toho, čo sa rozhodneme spraviť.
 - [ ] **Automatický zber dát cez CRON** (plná automatizácia — dôchodky)
 - [ ] **Modul „Lokálny Partner Hub“** (vzájomný referral systém)
 - [ ] **Sezónny marketingový kalendár** (autopilot na kampane)
-- [ ] **„Sieň slávy“** (elegantný leaderboard — gamifikácia)
-- [ ] **Osobný „Provízny simulátor“** pre poradcov
+- [ ] **„Sieň slávy“** a **Osobný „Provízny simulátor“** *(odložené — pozri nižšie)*
 
 ## Marketing a získavanie klientov
 
@@ -99,6 +95,15 @@ toho, čo sa rozhodneme spraviť.
 
 - [ ] **Tmavý režim** (Dark Mode)
 - [ ] **Dizajnové mikro-interakcie**
+
+---
+
+## Odložené (nenasadzovať zatiaľ)
+
+- **„Sieň slávy“ / Provízny simulátor** — zámerne **nie ako súťaženie**
+  medzi poradcami, ale skôr ako **uznanie výsledkov** (napr. tichá pochvala/
+  míľnik, nie verejný rebríček). Koncept si necháme premyslieť nanovo, kým
+  sa k tomu vrátime — zatiaľ sa nestavia.
 
 ---
 
