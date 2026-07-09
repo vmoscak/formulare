@@ -134,13 +134,13 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
         <td><span class="pill <?= empty($a['pin_hash']) ? 'pending' : 'submitted' ?>"><?= empty($a['pin_hash']) ? 'Nenastavený' : 'Nastavený' ?></span></td>
         <td><span class="pill <?= $aEnabledCount === $totalToolCount ? 'submitted' : 'pending' ?>"><?= $aEnabledCount ?>/<?= $totalToolCount ?></span></td>
         <td><?= $a['active'] ? 'aktívny' : 'neaktívny' ?></td>
-        <td style="display:flex; gap:6px; flex-wrap:wrap;">
+        <td style="display:grid; grid-template-columns:repeat(2,1fr); gap:6px; min-width:184px;">
           <button type="button" class="toggle-btn" onclick="editAdvisor(<?= (int)$a['id'] ?>)">Upraviť</button>
           <button type="button" class="toggle-btn" onclick="editPin(<?= (int)$a['id'] ?>)">PIN</button>
           <button type="button" class="toggle-btn" onclick="editTools(<?= (int)$a['id'] ?>)">Nástroje</button>
-          <form method="post" style="margin:0;">
+          <form method="post" style="display:contents;">
             <input type="hidden" name="toggle_id" value="<?= (int)$a['id'] ?>">
-            <button type="submit" class="toggle-btn"><?= $a['active'] ? 'Deaktivovať' : 'Aktivovať' ?></button>
+            <button type="submit" class="toggle-btn" style="width:100%;"><?= $a['active'] ? 'Deaktivovať' : 'Aktivovať' ?></button>
           </form>
         </td>
       </tr>
