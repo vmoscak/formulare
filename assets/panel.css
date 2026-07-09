@@ -134,6 +134,28 @@ td .strong{font-weight:600; color:var(--ink);}
 .pill.submitted{background:var(--good-soft); color:var(--good); border-color:#c7f0dd;}
 .pill.pending{background:var(--amber-soft); color:var(--amber); border-color:#fce7c0;}
 
+/* neutrálne chip-y (kategórie/sektory v náborovej zóne) */
+.tag{
+  display:inline-block; padding:2px 8px; margin:1px 3px 1px 0; border-radius:5px;
+  font-size:10.5px; font-weight:600; background:var(--desk); color:var(--label);
+  border:1px solid var(--border); white-space:nowrap;
+}
+.tag.accent{background:var(--accent-soft); color:var(--accent); border-color:var(--accent-line);}
+
+/* jednoduchý formulár hľadania/filtra (GET) */
+.filter-form{display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; margin-bottom:6px;}
+.filter-form .f-field{display:flex; flex-direction:column; gap:4px; min-width:160px;}
+.filter-form label{font-size:10.5px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.03em;}
+.filter-form input,.filter-form select{
+  padding:9px 11px; border:1px solid var(--line-strong); border-radius:var(--radius-md);
+  font-size:13px; font-family:inherit; background:var(--desk);
+}
+.filter-form input:focus,.filter-form select:focus{outline:none; border-color:var(--accent); background:#fff;}
+
+.pager{display:flex; align-items:center; gap:8px; margin-top:16px; font-size:12.5px; color:var(--muted);}
+.pager a{color:var(--accent); font-weight:600;}
+.pager a.disabled{color:var(--line-strong); pointer-events:none;}
+
 /* tlačidlá v riadkoch */
 .toggle-btn{
   display:inline-block; padding:6px 12px; border:1px solid var(--line-strong); border-radius:var(--radius-md);

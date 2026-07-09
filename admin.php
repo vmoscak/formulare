@@ -127,7 +127,7 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
             <input type="color" name="color" value="<?= h($a['color']) ?>" onchange="this.form.requestSubmit()" title="Farba poradcu">
           </form>
         </td>
-        <td><?= h($a['name']) ?><?= $a['is_admin'] ? ' (admin)' : '' ?></td>
+        <td><?= h($a['name']) ?><?= $a['is_admin'] ? ' (admin)' : '' ?><?= !empty($a['is_owner']) ? ' (vlastník)' : '' ?></td>
         <td><?= h($a['org']) ?></td>
         <td><?= h($a['email']) ?></td>
         <td><?= h($a['phone']) ?></td>

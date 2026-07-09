@@ -1,7 +1,10 @@
-# Ochrana tmp adresára
+# Ochrana tmp a data adresárov — data/ obsahuje surový register (náborová
+# zóna), ktorý sa NESMIE dať stiahnuť priamo cez URL ani poradcom, čo majú
+# len bránu appky (nabor.php má vlastnú prísnejšiu is_owner kontrolu).
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteRule ^tmp/ - [F,L]
+    RewriteRule ^data/ - [F,L]
 </IfModule>
 
 # ---------------------------------------------------------------------------
@@ -21,8 +24,9 @@
     RewriteCond %{QUERY_STRING} (^|&)token=[a-f0-9]{64}(&|$)
     RewriteRule ^(financna-medzera|wizard-poistenie)/(index\.html)?$ - [L]
 
-    # 2b) Pekná URL pre prehľad majiteľa (/admin namiesto /admin.php)
+    # 2b) Pekné URL pre interné stránky (/admin, /nabor namiesto .php)
     RewriteRule ^admin/?$ admin.php [L]
+    RewriteRule ^nabor/?$ nabor.php [L]
 
     # 3) Všetko ostatné vyžaduje platnú gate cookie
     RewriteCond %{HTTP_COOKIE} !(^|;\s*)gate_auth=__GATE_TOKEN__(;|$)
