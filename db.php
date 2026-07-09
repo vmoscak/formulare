@@ -50,6 +50,7 @@ function toolLabel(string $slug): string {
         'checklisty-skody' => 'Checklisty podľa typu škody',
         'generator-recenzii' => 'Generátor 5-hviezdičkovej prosby',
         'warm-intro-whatsapp' => 'Warm-Intro WhatsApp generátor',
+        'karticka-odporucte-ma' => 'Kartička „Odporučte ma priateľom“',
     ];
     return $labels[$slug] ?? $slug;
 }

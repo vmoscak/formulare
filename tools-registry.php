@@ -29,6 +29,7 @@ function toolIco(string $key): string {
         'message'   => '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
         'plus'      => '<path d="M12 5v14M5 12h14"/>',
         'firstaid'  => '<rect x="3" y="3" width="18" height="18" rx="2.5"/><path d="M12 8v8M8 12h8"/>',
+        'users'     => '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
     ];
     return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . ($p[$key] ?? $p['help']) . '</svg>';
 }
@@ -80,6 +81,8 @@ $TOOL_CATEGORIES = [
          'desc' => 'Rýchla prosba o Google/Facebook recenziu na WhatsApp, s priamym odkazom na odoslanie.'],
         ['href' => 'warm-intro-whatsapp/', 'name' => 'Warm-Intro WhatsApp generátor', 'ico' => 'message', 'color' => 'indigo',
          'desc' => 'Priateľská prvá správa pre nový odporúčaný kontakt, s priamym odkazom na odoslanie.'],
+        ['href' => 'karticka-odporucte-ma/', 'name' => 'Kartička „Odporučte ma priateľom“', 'ico' => 'users', 'color' => 'emerald',
+         'desc' => 'Poďakovanie a kontakt pre klienta, aby odporučil poradcu ďalej – PDF aj text na SMS/WhatsApp.'],
     ]],
 ];
 
