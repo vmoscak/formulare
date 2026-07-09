@@ -142,6 +142,12 @@ function registryParseAddress(string $address): array {
 const REGISTRY_DATA_FILE = __DIR__ . '/data/nbs-register.json';
 const REGISTRY_FACETS_FILE = __DIR__ . '/data/facets.json';
 
+// Náborová zóna má zmysel len pre jednotlivých agentov (ľudí, ktorých má kto
+// "prebrať"), nie inštitúcie ako banky/poisťovne/sporiteľne — preto je rozsah
+// natrvalo obmedzený len na tieto dve kategórie (rozhodnutie používateľa).
+// Zdieľané medzi nabor.php, api/nabor-markers.php a nabor-geocode.php.
+const AGENT_CATEGORIES = ['viazaný finančný agent', 'podriadený finančný agent'];
+
 /**
  * Vráti kraj SR podľa 5-miestneho PSČ, alebo null ak sa nenašlo (napr.
  * neplatné/chýbajúce PSČ). Tabuľka psc-kraj.php je generovaná z overených
@@ -167,11 +173,21 @@ function coordsForZip(string $zip): ?array {
     return $table['prefix3'][substr($zip5, 0, 3)] ?? null;
 }
 
+/** Kľúč do formulare_geocode_cache — normalizovaná adresa (bez ohľadu na veľkosť písmen/medzery navyše). */
+function geocodeCacheKey(string $address): string {
+    return md5(mb_strtolower(trim(preg_replace('/\s+/u', ' ', $address))));
+}
+
 /**
  * Načíta data/nbs-register.json a naplní ním formulare_registry_entities
  * (plný refresh — zmaže staré a vloží nanovo, aby dáta vždy presne
  * zodpovedali poslednému nahratému súboru). Vracia počet a dátum datasetu.
  * Volané z nabor.php (owner-only tlačidlo) aj priamo pri lokálnom testovaní.
+ *
+ * Pre agentov (AGENT_CATEGORIES) sa navyše skúša presnejšia poloha z trvalej
+ * cache formulare_geocode_cache (geokódovaná podľa celej adresy, nie len PSČ)
+ * — tá prežíva reimport, takže sa nabudúce negeokóduje odznova. Adresy, čo
+ * ešte nie sú v cache, sa tam zaradia ako 'pending' pre nabor-geocode.php.
  */
 function registryImport(string $filePath, string $facetsFile): array {
     if (!is_file($filePath)) {
@@ -190,6 +206,18 @@ function registryImport(string $filePath, string $facetsFile): array {
     }
 
     $pdo = db();
+
+    // Prednačítať celú cache presného geokódovania do pamäte (max pár desiatok
+    // tisíc riadkov, malé) — rýchlejšie než dotaz na DB pre každý riadok importu.
+    $geocodeCache = [];
+    try {
+        foreach ($pdo->query('SELECT address_hash, lat, lon, status FROM formulare_geocode_cache') as $g) {
+            $geocodeCache[$g['address_hash']] = $g;
+        }
+    } catch (Throwable $e) { /* tabuľka ešte nemusí existovať (pred migráciou) */ }
+    $enqueue = $pdo->prepare('INSERT INTO formulare_geocode_cache (address_hash, address, status) VALUES (?, ?, \'pending\')');
+    $enqueuedHashes = [];
+
     $pdo->exec('DELETE FROM formulare_registry_entities');
     $insert = $pdo->prepare('INSERT INTO formulare_registry_entities
         (ico, name, address, city, zip, country, categories, sectors, parent_names, region, lat, lon, geocoded_at, raw_json, imported_at)
@@ -207,14 +235,29 @@ function registryImport(string $filePath, string $facetsFile): array {
         if (!is_array($inst) || empty($inst['id'])) continue;
         $licenses = is_array($inst['licenses'] ?? null) ? $inst['licenses'] : [];
         $flags = registryDeriveFlags($licenses);
-        [$city, $zip] = registryParseAddress((string)($inst['address'] ?? ''));
+        $address = (string)($inst['address'] ?? '');
+        [$city, $zip] = registryParseAddress($address);
         $region = $zip !== '' ? regionForZip($zip) : null;
         $coords = $zip !== '' ? coordsForZip($zip) : null;
+        $geocodedAt = $coords ? $now : null;
+
+        $isAgent = (bool)array_intersect($flags['categories'], AGENT_CATEGORIES);
+        if ($isAgent && $address !== '') {
+            $hash = geocodeCacheKey($address);
+            $cached = $geocodeCache[$hash] ?? null;
+            if ($cached && $cached['status'] === 'found' && $cached['lat'] !== null) {
+                $coords = [(float)$cached['lat'], (float)$cached['lon']];
+                $geocodedAt = $cached['updated_at'] ?? $now;
+            } elseif (!$cached && !isset($enqueuedHashes[$hash])) {
+                $enqueue->execute([$hash, mb_substr($address, 0, 255)]);
+                $enqueuedHashes[$hash] = true;
+            }
+        }
 
         $insert->execute([
             (string)$inst['id'],
             (string)($inst['name'] ?? ''),
-            (string)($inst['address'] ?? ''),
+            $address,
             $city,
             $zip,
             (string)($inst['country'] ?? 'SK'),
@@ -224,7 +267,7 @@ function registryImport(string $filePath, string $facetsFile): array {
             $region,
             $coords[0] ?? null,
             $coords[1] ?? null,
-            $coords ? $now : null,
+            $geocodedAt,
             json_encode($licenses, JSON_UNESCAPED_UNICODE),
             $now,
         ]);
@@ -252,6 +295,63 @@ function registryImport(string $filePath, string $facetsFile): array {
     ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
 
     return ['count' => $count, 'updated' => $data['updated'] ?? null];
+}
+
+/** Zavolá OpenStreetMap Nominatim pre presné súradnice jednej adresy, alebo null. */
+function geocodeNominatim(string $address): ?array {
+    $url = 'https://nominatim.openstreetmap.org/search?' . http_build_query([
+        'format' => 'json',
+        'q' => $address,
+        'countrycodes' => 'sk',
+        'limit' => 1,
+    ]);
+    $ctx = stream_context_create(['http' => [
+        // Nominatim usage policy vyžaduje identifikovateľný User-Agent.
+        'header' => "User-Agent: FormulareNaborovaZona/1.0 (kontakt: vmfin@vmfin.sk)\r\n",
+        'timeout' => 8,
+        'ignore_errors' => true,
+    ]]);
+    $resp = @file_get_contents($url, false, $ctx);
+    if ($resp === false) return null;
+    $data = json_decode($resp, true);
+    if (!is_array($data) || empty($data[0]['lat']) || empty($data[0]['lon'])) return null;
+    return [(float)$data[0]['lat'], (float)$data[0]['lon']];
+}
+
+/**
+ * Spracuje jednu dávku čakajúcich adries z formulare_geocode_cache cez
+ * Nominatim (max 1 dotaz/s podľa ich pravidiel používania). Zapíše výsledok
+ * do cache (prežije reimport) AJ priamo do formulare_registry_entities
+ * (nech sa to na mape prejaví hneď, bez čakania na ďalší import).
+ * Volané z nabor-geocode.php (cron cez Plánovač úloh alebo ručne z nabor.php).
+ */
+function geocodeBatchProcess(int $limit = 35): array {
+    set_time_limit(max(120, $limit * 2));
+    $pdo = db();
+    $limit = max(1, min(100, $limit));
+    $stmt = $pdo->query("SELECT address_hash, address FROM formulare_geocode_cache WHERE status = 'pending' LIMIT $limit");
+    $rows = $stmt->fetchAll();
+
+    $updateCache = $pdo->prepare('UPDATE formulare_geocode_cache SET lat = ?, lon = ?, status = ?, updated_at = ? WHERE address_hash = ?');
+    $updateRegistry = $pdo->prepare('UPDATE formulare_registry_entities SET lat = ?, lon = ?, geocoded_at = ? WHERE address = ?');
+
+    $found = 0; $notFound = 0;
+    foreach ($rows as $i => $row) {
+        $coords = geocodeNominatim($row['address']);
+        $now = date('Y-m-d H:i:s');
+        if ($coords) {
+            $updateCache->execute([$coords[0], $coords[1], 'found', $now, $row['address_hash']]);
+            $updateRegistry->execute([$coords[0], $coords[1], $now, $row['address']]);
+            $found++;
+        } else {
+            $updateCache->execute([null, null, 'not_found', $now, $row['address_hash']]);
+            $notFound++;
+        }
+        if ($i < count($rows) - 1) usleep(1100000); // 1.1s medzera medzi dotazmi (Nominatim limit 1/s)
+    }
+
+    $remaining = (int)$pdo->query("SELECT COUNT(*) c FROM formulare_geocode_cache WHERE status = 'pending'")->fetch()['c'];
+    return ['processed' => count($rows), 'found' => $found, 'not_found' => $notFound, 'remaining' => $remaining];
 }
 
 function db(): PDO {
@@ -343,4 +443,13 @@ function dbInitSqlite(PDO $pdo): void {
     )");
     $pdo->exec("CREATE INDEX IF NOT EXISTS idx_registry_name ON formulare_registry_entities(name)");
     $pdo->exec("CREATE INDEX IF NOT EXISTS idx_registry_region ON formulare_registry_entities(region)");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_geocode_cache (
+        address_hash TEXT PRIMARY KEY,
+        address TEXT NOT NULL,
+        lat REAL NULL,
+        lon REAL NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )");
+    $pdo->exec("CREATE INDEX IF NOT EXISTS idx_geocode_status ON formulare_geocode_cache(status)");
 }

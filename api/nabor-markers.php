@@ -14,8 +14,6 @@ $stmt = db()->prepare('SELECT id FROM formulare_advisors WHERE id = ? AND is_own
 $stmt->execute([$advisorId]);
 if (!$stmt->fetch()) { http_response_code(403); echo '[]'; exit; }
 
-const AGENT_CATEGORIES = ['viazaný finančný agent', 'podriadený finančný agent'];
-
 $q = trim((string)($_GET['q'] ?? ''));
 $fCategories = array_values(array_intersect(array_map('trim', (array)($_GET['cat'] ?? [])), AGENT_CATEGORIES));
 $fSector = trim((string)($_GET['sector'] ?? ''));

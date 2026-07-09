@@ -31,6 +31,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['import'])) {
     }
 }
 
+$geocodeMessage = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['geocode_batch'])) {
+    try {
+        $g = geocodeBatchProcess(35);
+        $geocodeMessage = 'Spracovaných ' . $g['processed'] . ' (nájdených ' . $g['found'] . ', nenájdených ' . $g['not_found'] . '), zostáva ' . number_format($g['remaining'], 0, ',', ' ') . '.';
+    } catch (Throwable $e) {
+        $geocodeMessage = 'Chyba: ' . $e->getMessage();
+    }
+}
+
+// -- stav geokódovania (presné adresy agentov) --
+$geoStats = ['pending' => 0, 'found' => 0, 'not_found' => 0];
+try {
+    foreach (db()->query("SELECT status, COUNT(*) c FROM formulare_geocode_cache GROUP BY status") as $g) {
+        $geoStats[$g['status']] = (int)$g['c'];
+    }
+} catch (Throwable $e) { /* tabuľka môže byť ešte prázdna */ }
+$geoTotal = array_sum($geoStats);
+
 // -- štatistiky --
 $totalCount = 0;
 $lastImportAt = null;
@@ -46,11 +65,6 @@ if (is_file(REGISTRY_FACETS_FILE)) {
     $decoded = json_decode((string)file_get_contents(REGISTRY_FACETS_FILE), true);
     if (is_array($decoded)) $facets = array_merge($facets, $decoded);
 }
-
-// Náborová zóna má zmysel len pre jednotlivých agentov (ľudí, ktorých má kto
-// "prebrať"), nie inštitúcie ako banky/poisťovne/sporiteľne — preto je rozsah
-// natrvalo obmedzený len na tieto dve kategórie (viď rozhodnutie používateľa).
-const AGENT_CATEGORIES = ['viazaný finančný agent', 'podriadený finančný agent'];
 
 // -- vyhľadávanie / filter (GET, aby sa dalo odkázať/zdieľať) --
 $q = trim((string)($_GET['q'] ?? ''));
@@ -137,6 +151,33 @@ function qs(array $overrides): string {
       <form method="post" style="margin-left:auto;">
         <input type="hidden" name="import" value="1">
         <button type="submit" class="pillbtn solid">Importovať / obnoviť dáta</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Presné geokódovanie adries (poloha na mape)</h3>
+    <p style="margin:-6px 0 16px; font-size:12.5px; color:var(--muted);">
+      Beží automaticky na pozadí cez Plánovač úloh (OpenStreetMap Nominatim, max 1 adresa/sekundu — preto to trvá dlhšie).
+      Kým adresa nie je geokódovaná presne, na mape sa zobrazí aspoň približne (stred obce podľa PSČ).
+    </p>
+    <?php if ($geocodeMessage): ?><div class="pill submitted" style="margin-bottom:12px; padding:6px 12px;"><?= h($geocodeMessage) ?></div><?php endif; ?>
+    <div style="display:flex; align-items:center; gap:18px; flex-wrap:wrap;">
+      <div>
+        <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em;">Presne nájdených</div>
+        <div style="font-size:20px; font-weight:700; color:var(--good);"><?= number_format($geoStats['found'], 0, ',', ' ') ?></div>
+      </div>
+      <div>
+        <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em;">Čaká na spracovanie</div>
+        <div style="font-size:20px; font-weight:700; color:var(--ink);"><?= number_format($geoStats['pending'], 0, ',', ' ') ?></div>
+      </div>
+      <div>
+        <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em;">Nenájdených</div>
+        <div style="font-size:20px; font-weight:700; color:var(--muted);"><?= number_format($geoStats['not_found'], 0, ',', ' ') ?></div>
+      </div>
+      <form method="post" style="margin-left:auto;">
+        <input type="hidden" name="geocode_batch" value="1">
+        <button type="submit" class="pillbtn">Spustiť dávku teraz (~35, ručne)</button>
       </form>
     </div>
   </div>
