@@ -1,18 +1,12 @@
 <?php
 /**
- * PSC -> kraj SR. Zdroj: obce/okresy/kraje SR (gunsoft/obce-okresy-kraje-slovenska,
- * MIT), generovane skriptom z 4208 obci -- nemenit rucne.
- *
- * ['exact']   presne 5-miestne PSC -> kraj (1352 zaznamov).
- * ['prefix3'] zalozny fallback na 3-miestnu predponu PSC -> kraj, LEN pre
-              predpony, ktore v datach patria vyhradne jednemu kraju
-              (128 z 137 predpon; zvysok je zamerne vynechany, lebo
-              PSC v SR NIE JE spolahlivo prevoditelne na kraj len podla
-              predpony -- napr. Malacky/Pezinok/Senec maju PSC "90x",
-              ktore inak patri Trnavskemu kraju, ale administrativne su
-              Bratislavsky kraj. Pouzivat VZDY najprv ['exact'], fallback
-              len ked presne PSC v tabulke chyba.
- * Pouzitie: regionForZip() v db.php.
+ * PSC (5-miestne, bez medzery) -> kraj SR. Zdroj: obce/okresy/kraje
+ * (Statisticky urad SR + Slovenska posta, cez gunsoft/obce-okresy-kraje-slovenska,
+ * MIT licencia), plus rucne doplnene PSC 811 01-09 (Bratislava I / Stare
+ * Mesto), ktore v zdrojovom datasete chybaju -- overene podla oficialneho
+ * cislovania mestskych casti Bratislavy (811-819=BA I, 821-829=BA II atd,
+ * potvrdene z realnych PSC ostatnych castí v datach). Nemenit rucne.
+ * Pouzitie: kraj podla PSC obce/institucie (napr. filter "len vychodne Slovensko").
  */
 return [
     'exact' => [
@@ -621,6 +615,15 @@ return [
         '09433' => 'Prešovský kraj',
         '09434' => 'Prešovský kraj',
         '09435' => 'Prešovský kraj',
+        '81101' => 'Bratislavský kraj',
+        '81102' => 'Bratislavský kraj',
+        '81103' => 'Bratislavský kraj',
+        '81104' => 'Bratislavský kraj',
+        '81105' => 'Bratislavský kraj',
+        '81106' => 'Bratislavský kraj',
+        '81107' => 'Bratislavský kraj',
+        '81108' => 'Bratislavský kraj',
+        '81109' => 'Bratislavský kraj',
         '82106' => 'Bratislavský kraj',
         '82107' => 'Bratislavský kraj',
         '83107' => 'Bratislavský kraj',

@@ -163,16 +163,18 @@ td .strong{font-weight:600; color:var(--ink);}
 }
 .chk-group .chk input{width:14px; height:14px; margin:0; accent-color:var(--accent); cursor:pointer;}
 
-/* register (náborová zóna) — pevné šírky stĺpcov, nech pilulky netvoria diery */
-table.registry-table{table-layout:fixed;}
-table.registry-table col.c-ico{width:9%;}
-table.registry-table col.c-name{width:16%;}
-table.registry-table col.c-address{width:12%;}
-table.registry-table col.c-cat{width:16%;}
-table.registry-table col.c-sector{width:29%;}
-table.registry-table col.c-parent{width:18%;}
-table.registry-table td{word-break:break-word;}
-table.registry-table .since{display:block; font-size:9px; font-weight:500; opacity:.7; margin-top:1px;}
+/* mapa náborovej zóny (Leaflet) */
+#naborMap{height:640px; border-radius:var(--radius-lg); overflow:hidden; z-index:1;}
+.map-pop{font-family:var(--sans); font-size:13px; max-width:280px;}
+.map-pop b{display:block; font-size:13.5px; color:var(--ink); margin-bottom:2px;}
+.map-pop-sub{font-size:11.5px; color:var(--muted); margin-bottom:6px;}
+.map-pop-row{margin-top:4px;}
+.map-pop-label{font-size:10.5px; font-weight:600; color:var(--muted); margin-right:2px;}
+.map-tag{
+  display:inline-block; padding:2px 7px; margin:1px 3px 1px 0; border-radius:5px;
+  font-size:10px; font-weight:600; background:var(--accent-soft); color:var(--accent); white-space:nowrap;
+}
+.map-tag.alt{background:var(--desk); color:var(--label);}
 
 /* prehľad počtov podľa kraja — vodorovný pruhový graf namiesto geo mapy */
 .kraj-bars{display:flex; flex-direction:column; gap:6px;}

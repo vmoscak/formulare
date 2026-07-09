@@ -58,8 +58,6 @@ $fCategories = array_values(array_intersect(array_map('trim', (array)($_GET['cat
 $fSector = trim((string)($_GET['sector'] ?? ''));
 $fParent = trim((string)($_GET['parent'] ?? ''));
 $fRegion = trim((string)($_GET['region'] ?? ''));
-$page = max(1, (int)($_GET['page'] ?? 1));
-$perPage = 30;
 
 // where bez kraja (pre prehľad počtov podľa kraja nižšie — nech vidno rozloženie
 // aj pri už zvolenom kraji) a where s krajom (pre samotné výsledky/stránkovanie)
@@ -74,51 +72,15 @@ if ($fParent !== '') { $where[] = 'parent_names LIKE ?'; $params[] = '%"' . $fPa
 $whereSqlNoRegion = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
 $paramsNoRegion = $params;
 
-if ($fRegion !== '') { $where[] = 'region = ?'; $params[] = $fRegion; }
-$whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
-
-$results = [];
-$resultCount = 0;
 $regionCounts = [];
 try {
-    $countStmt = db()->prepare("SELECT COUNT(*) c FROM formulare_registry_entities $whereSql");
-    $countStmt->execute($params);
-    $resultCount = (int)$countStmt->fetch()['c'];
-
-    $offset = ($page - 1) * $perPage;
-    $listStmt = db()->prepare("SELECT ico, name, address, city, region, categories, sectors, parent_names, raw_json
-        FROM formulare_registry_entities $whereSql ORDER BY name LIMIT $perPage OFFSET $offset");
-    $listStmt->execute($params);
-    $results = $listStmt->fetchAll();
-
     $regStmt = db()->prepare("SELECT COALESCE(region, '— bez PSČ/kraja —') AS region, COUNT(*) c
         FROM formulare_registry_entities $whereSqlNoRegion GROUP BY region ORDER BY c DESC");
     $regStmt->execute($paramsNoRegion);
     $regionCounts = $regStmt->fetchAll();
 } catch (Throwable $e) { /* tabuľka môže byť ešte prázdna */ }
 
-$totalPages = max(1, (int)ceil($resultCount / $perPage));
 $regionMax = $regionCounts ? max(array_column($regionCounts, 'c')) : 0;
-
-function pillList($jsonText, string $cls = 'tag'): string {
-    $items = json_decode((string)$jsonText, true);
-    if (!is_array($items) || !$items) return '<span class="na">—</span>';
-    return implode('', array_map(fn($i) => '<span class="' . $cls . '">' . h($i) . '</span>', $items));
-}
-
-/** Kategórie s dátumom "od" (registrácia) — čítané priamo z raw_json licencií. */
-function categoryPills($rawJsonText): string {
-    $licenses = json_decode((string)$rawJsonText, true);
-    if (!is_array($licenses) || !$licenses) return '<span class="na">—</span>';
-    $out = [];
-    foreach ($licenses as $item) {
-        if (!is_array($item) || empty($item['scope'])) continue;
-        $since = !empty($item['valid_from']) ? '<span class="since">od ' . h($item['valid_from']) . '</span>' : '';
-        $out[] = '<span class="tag accent">' . h($item['scope']) . $since . '</span>';
-    }
-    if (!$out) return '<span class="na">—</span>';
-    return implode('', $out);
-}
 
 function qs(array $overrides): string {
     $params = array_merge($_GET, $overrides);
@@ -186,14 +148,6 @@ function qs(array $overrides): string {
         <label>Meno / IČO</label>
         <input type="text" name="q" value="<?= h($q) ?>" placeholder="napr. Allianz alebo IČO">
       </div>
-      <div class="f-field" style="min-width:260px;">
-        <label>Kategória</label>
-        <div class="chk-group">
-          <?php foreach (AGENT_CATEGORIES as $c): ?>
-          <label class="chk"><input type="checkbox" name="cat[]" value="<?= h($c) ?>" <?= in_array($c, $fCategories, true) ? 'checked' : '' ?>><?= h($c) ?></label>
-          <?php endforeach; ?>
-        </div>
-      </div>
       <div class="f-field">
         <label>Sektor</label>
         <select name="sector">
@@ -224,7 +178,7 @@ function qs(array $overrides): string {
       <div class="f-field" style="min-width:0;">
         <button type="submit" class="pillbtn solid">Filtrovať</button>
       </div>
-      <?php if ($q || $fCategories || $fSector || $fParent || $fRegion): ?>
+      <?php if ($q || $fSector || $fParent || $fRegion): ?>
       <div class="f-field" style="min-width:0;">
         <a class="pillbtn" href="/nabor.php">Zrušiť filter</a>
       </div>
@@ -237,7 +191,7 @@ function qs(array $overrides): string {
     <h3>Podľa kraja</h3>
     <div class="kraj-bars">
       <?php foreach ($regionCounts as $rc): ?>
-      <a class="kraj-bar<?= $rc['region'] === $fRegion ? ' on' : '' ?>" href="<?= qs(['region' => $rc['region'] === $fRegion ? '' : $rc['region'], 'page' => '']) ?>">
+      <a class="kraj-bar<?= $rc['region'] === $fRegion ? ' on' : '' ?>" href="<?= qs(['region' => $rc['region'] === $fRegion ? '' : $rc['region']]) ?>">
         <span class="kraj-name"><?= h($rc['region']) ?></span>
         <span class="kraj-track"><span class="kraj-fill" style="width:<?= $regionMax > 0 ? round($rc['c'] / $regionMax * 100) : 0 ?>%;"></span></span>
         <span class="kraj-count"><?= number_format((int)$rc['c'], 0, ',', ' ') ?></span>
@@ -248,35 +202,64 @@ function qs(array $overrides): string {
   <?php endif; ?>
 
   <div class="card">
-    <h3>Výsledky · <?= number_format($resultCount, 0, ',', ' ') ?><?= $resultCount === 1 ? ' záznam' : ($resultCount >= 2 && $resultCount <= 4 ? ' záznamy' : ' záznamov') ?></h3>
-    <table class="registry-table">
-      <colgroup>
-        <col class="c-ico"><col class="c-name"><col class="c-address">
-        <col class="c-cat"><col class="c-sector"><col class="c-parent">
-      </colgroup>
-      <tr><th>IČO</th><th>Názov</th><th>Adresa</th><th>Kategórie</th><th>Sektory</th><th>Registrovaný pod</th></tr>
-      <?php foreach ($results as $r): ?>
-      <tr>
-        <td class="mono"><?= h($r['ico']) ?></td>
-        <td><span class="strong"><?= h($r['name']) ?></span></td>
-        <td><?= h($r['city'] ?: $r['address']) ?><?php if ($r['region']): ?><span class="since"><?= h($r['region']) ?></span><?php endif; ?></td>
-        <td><?= categoryPills($r['raw_json']) ?></td>
-        <td><?= pillList($r['sectors']) ?></td>
-        <td><?= pillList($r['parent_names']) ?></td>
-      </tr>
-      <?php endforeach; ?>
-      <?php if (!$results): ?><tr><td colspan="6" class="empty">Žiadne záznamy — over import, prípadne uprav filter.</td></tr><?php endif; ?>
-    </table>
-
-    <?php if ($totalPages > 1): ?>
-    <div class="pager">
-      <a class="<?= $page <= 1 ? 'disabled' : '' ?>" href="<?= qs(['page' => $page - 1]) ?>">← Predošlá</a>
-      <span>Strana <?= $page ?> / <?= $totalPages ?></span>
-      <a class="<?= $page >= $totalPages ? 'disabled' : '' ?>" href="<?= qs(['page' => $page + 1]) ?>">Ďalšia →</a>
-    </div>
-    <?php endif; ?>
+    <h3>Mapa <span id="mapCount" style="font-weight:400; color:var(--muted); font-size:12.5px;"></span></h3>
+    <p style="margin:-6px 0 12px; font-size:12.5px; color:var(--muted);">
+      Poloha je približná (stred obce podľa PSČ, nie presná ulica). Priblíž sa na konkrétne mesto — pri prekrytých bodoch
+      klikni na zhluk pre rozbalenie.
+    </p>
+    <div id="naborMap"></div>
   </div>
 
 </main>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script>
+(function () {
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function popupHtml(m) {
+    var cats = (m.cats || []).map(function (c) { return '<span class="map-tag">' + esc(c) + '</span>'; }).join('');
+    var sectors = (m.sectors || []).map(function (s) { return '<span class="map-tag alt">' + esc(s) + '</span>'; }).join('');
+    var parents = (m.parents || []).map(function (p) { return '<span class="map-tag alt">' + esc(p) + '</span>'; }).join('');
+    return '<div class="map-pop">' +
+      '<b>' + esc(m.name) + '</b>' +
+      '<div class="map-pop-sub">' + esc(m.city || '') + (m.region ? ' · ' + esc(m.region) : '') + ' · IČO ' + esc(m.ico) + '</div>' +
+      (cats ? '<div class="map-pop-row">' + cats + '</div>' : '') +
+      (sectors ? '<div class="map-pop-row">' + sectors + '</div>' : '') +
+      (parents ? '<div class="map-pop-row"><span class="map-pop-label">Pod:</span> ' + parents + '</div>' : '') +
+      '</div>';
+  }
+
+  var map = L.map('naborMap').setView([48.7, 19.5], 8);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18,
+    attribution: '&copy; OpenStreetMap prispievatelia'
+  }).addTo(map);
+
+  var clusters = L.markerClusterGroup({ chunkedLoading: true, spiderfyOnMaxZoom: true });
+  var countEl = document.getElementById('mapCount');
+
+  fetch('/api/nabor-markers.php' + window.location.search, { credentials: 'same-origin' })
+    .then(function (r) { return r.json(); })
+    .then(function (rows) {
+      countEl.textContent = '· ' + rows.length.toLocaleString('sk-SK') + ' na mape';
+      var bounds = [];
+      rows.forEach(function (m) {
+        var marker = L.marker([m.lat, m.lon]);
+        marker.bindPopup(popupHtml(m));
+        marker.on('mouseover', function () { marker.openPopup(); });
+        clusters.addLayer(marker);
+        bounds.push([m.lat, m.lon]);
+      });
+      map.addLayer(clusters);
+      if (bounds.length) map.fitBounds(bounds, { padding: [30, 30], maxZoom: 12 });
+    })
+    .catch(function () { countEl.textContent = '· chyba načítania'; });
+})();
+</script>
 <script src="/assets/shell.js?v=3"></script>
 </body></html>

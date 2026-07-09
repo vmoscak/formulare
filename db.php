@@ -156,6 +156,18 @@ function regionForZip(string $zip): ?string {
 }
 
 /**
+ * Vráti [lat, lon] (stred obce, nie presná adresa) podľa 5-miestneho PSČ,
+ * alebo null. Tabuľka psc-suradnice.php — pozri hlavičku súboru, nemeniť ručne.
+ */
+function coordsForZip(string $zip): ?array {
+    static $table = null;
+    if ($table === null) $table = require __DIR__ . '/psc-suradnice.php';
+    $zip5 = preg_replace('/\D/', '', $zip);
+    if (isset($table['exact'][$zip5])) return $table['exact'][$zip5];
+    return $table['prefix3'][substr($zip5, 0, 3)] ?? null;
+}
+
+/**
  * Načíta data/nbs-register.json a naplní ním formulare_registry_entities
  * (plný refresh — zmaže staré a vloží nanovo, aby dáta vždy presne
  * zodpovedali poslednému nahratému súboru). Vracia počet a dátum datasetu.
@@ -180,8 +192,8 @@ function registryImport(string $filePath, string $facetsFile): array {
     $pdo = db();
     $pdo->exec('DELETE FROM formulare_registry_entities');
     $insert = $pdo->prepare('INSERT INTO formulare_registry_entities
-        (ico, name, address, city, zip, country, categories, sectors, parent_names, region, raw_json, imported_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        (ico, name, address, city, zip, country, categories, sectors, parent_names, region, lat, lon, geocoded_at, raw_json, imported_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
 
     $allCategories = [];
     $allSectors = [];
@@ -197,6 +209,7 @@ function registryImport(string $filePath, string $facetsFile): array {
         $flags = registryDeriveFlags($licenses);
         [$city, $zip] = registryParseAddress((string)($inst['address'] ?? ''));
         $region = $zip !== '' ? regionForZip($zip) : null;
+        $coords = $zip !== '' ? coordsForZip($zip) : null;
 
         $insert->execute([
             (string)$inst['id'],
@@ -209,6 +222,9 @@ function registryImport(string $filePath, string $facetsFile): array {
             json_encode($flags['sectors'], JSON_UNESCAPED_UNICODE),
             json_encode($flags['parent_names'], JSON_UNESCAPED_UNICODE),
             $region,
+            $coords[0] ?? null,
+            $coords[1] ?? null,
+            $coords ? $now : null,
             json_encode($licenses, JSON_UNESCAPED_UNICODE),
             $now,
         ]);
