@@ -10,6 +10,11 @@ toho, čo sa rozhodneme spraviť.
 
 - [x] **Modulárny spínač (Feature Toggles)** — zap./vyp. jednotlivých nástrojov
   per poradca cez admin zónu. (Presne tvoj tip na koniec zoznamu — už funguje.)
+- [x] **Náborová zóna** — register agentov (NBS), filter podľa kategórie/kraja,
+  interaktívna mapa s presným aj približným geokódovaním. Len pre teba.
+- [x] **Znalostná báza v „Ľudskej reči"** — interné FAQ s vyhľadávaním a
+  kopírovaním na jeden klik. Zatiaľ tiež len pre teba, zobrazenie ostatným
+  poradcom sa ešte doladí.
 
 ---
 
@@ -56,7 +61,6 @@ toho, čo sa rozhodneme spraviť.
 - [ ] **„Tichý radar“ pre poradcov** (pripomienkovač aktivít)
 - [ ] **Šablóny na riešenie „Zásekov“** (trablšúting) — rýchle texty na
   vyžiadanie dokladov, keď proces v poisťovni zastane
-- [ ] **Znalostná báza v „Ľudskej reči“** — interné FAQ s okamžitým vyhľadávaním
 - [ ] **Vysvetlivky pre klienta na stiahnutie**
 - [ ] **Copy-Paste zóna pre poradcu**
 - [ ] **Interaktívny ťahák „Čo pýtať od klienta“**
