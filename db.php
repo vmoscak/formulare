@@ -121,12 +121,14 @@ function dbInitSqlite(PDO $pdo): void {
         phone TEXT NOT NULL DEFAULT '',
         color TEXT NOT NULL DEFAULT '#1f5fd1',
         pin_hash TEXT NULL,
+        disabled_tools TEXT NULL,
         is_admin INTEGER NOT NULL DEFAULT 0,
         active INTEGER NOT NULL DEFAULT 1,
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )");
-    // Defenzívne pre už existujúce lokálne SQLite DB založené pred zavedením PIN-u.
+    // Defenzívne pre už existujúce lokálne SQLite DB založené pred zavedením PIN-u / prepínačov nástrojov.
     try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN pin_hash TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
+    try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN disabled_tools TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
     $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_login_throttle (
         scope TEXT PRIMARY KEY,
         fail_count INTEGER NOT NULL DEFAULT 0,

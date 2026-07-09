@@ -5,6 +5,7 @@
  * (rieši .htaccess) + cur_advisor musí patriť poradcovi s is_admin=1.
  */
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/tools-registry.php';
 
 $advisorId = curAdvisorId();
 $stmt = db()->prepare('SELECT * FROM formulare_advisors WHERE id = ? AND is_admin = 1 AND active = 1');
@@ -53,6 +54,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             db()->prepare('UPDATE formulare_advisors SET pin_hash = ? WHERE id = ?')->execute([$hash, $id]);
             throttleReset('advisor:' . $id);
         }
+    } elseif (isset($_POST['tools_id'])) {
+        $id = (int)$_POST['tools_id'];
+        $allSlugs = [];
+        foreach ($TOOL_CATEGORIES as $cat) foreach ($cat['tools'] as $t) $allSlugs[] = toolSlug($t['href']);
+        $enabledSlugs = array_map('strval', $_POST['enabled_tools'] ?? []);
+        $disabledSlugs = array_values(array_diff($allSlugs, $enabledSlugs));
+        db()->prepare('UPDATE formulare_advisors SET disabled_tools = ? WHERE id = ?')
+            ->execute([json_encode($disabledSlugs), $id]);
     }
     header('Location: /admin.php');
     exit;
@@ -69,6 +78,17 @@ $links = db()->query(
 )->fetchAll();
 
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
+
+$allToolSlugs = [];
+foreach ($TOOL_CATEGORIES as $cat) foreach ($cat['tools'] as $t) $allToolSlugs[] = toolSlug($t['href']);
+$totalToolCount = count($allToolSlugs);
+
+function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
+    if (empty($a['disabled_tools'])) return [];
+    $decoded = json_decode($a['disabled_tools'], true);
+    if (!is_array($decoded)) return [];
+    return array_values(array_intersect($decoded, $allToolSlugs)); // ignoruj zastarané/zmazané slugy
+}
 ?>
 <!DOCTYPE html><html lang="sk"><head>
 <meta charset="UTF-8">
@@ -95,8 +115,11 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
     <h3>Poradcovia</h3>
     <p style="margin:-6px 0 16px; font-size:12.5px; color:var(--muted);">Bez nastaveného PIN-u sa poradca nevie prihlásiť do svojej zóny — po pridaní nezabudni nastaviť PIN.</p>
     <table>
-      <tr><th>Farba</th><th>Meno</th><th>Organizácia</th><th>E-mail</th><th>Telefón</th><th>PIN</th><th>Stav</th><th></th></tr>
-      <?php foreach ($advisors as $a): ?>
+      <tr><th>Farba</th><th>Meno</th><th>Organizácia</th><th>E-mail</th><th>Telefón</th><th>PIN</th><th>Nástroje</th><th>Stav</th><th></th></tr>
+      <?php foreach ($advisors as $a):
+        $aDisabled = advisorDisabledSlugs($a, $allToolSlugs);
+        $aEnabledCount = $totalToolCount - count($aDisabled);
+      ?>
       <tr id="view-<?= (int)$a['id'] ?>" class="<?= $a['active'] ? '' : 'inactive' ?>">
         <td>
           <form method="post" class="color-form">
@@ -109,10 +132,12 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
         <td><?= h($a['email']) ?></td>
         <td><?= h($a['phone']) ?></td>
         <td><span class="pill <?= empty($a['pin_hash']) ? 'pending' : 'submitted' ?>"><?= empty($a['pin_hash']) ? 'Nenastavený' : 'Nastavený' ?></span></td>
+        <td><span class="pill <?= $aEnabledCount === $totalToolCount ? 'submitted' : 'pending' ?>"><?= $aEnabledCount ?>/<?= $totalToolCount ?></span></td>
         <td><?= $a['active'] ? 'aktívny' : 'neaktívny' ?></td>
         <td style="display:flex; gap:6px; flex-wrap:wrap;">
           <button type="button" class="toggle-btn" onclick="editAdvisor(<?= (int)$a['id'] ?>)">Upraviť</button>
           <button type="button" class="toggle-btn" onclick="editPin(<?= (int)$a['id'] ?>)">PIN</button>
+          <button type="button" class="toggle-btn" onclick="editTools(<?= (int)$a['id'] ?>)">Nástroje</button>
           <form method="post" style="margin:0;">
             <input type="hidden" name="toggle_id" value="<?= (int)$a['id'] ?>">
             <button type="submit" class="toggle-btn"><?= $a['active'] ? 'Deaktivovať' : 'Aktivovať' ?></button>
@@ -120,7 +145,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
         </td>
       </tr>
       <tr id="edit-<?= (int)$a['id'] ?>" style="display:none;">
-        <td colspan="8">
+        <td colspan="9">
           <form method="post" class="add-form" style="display:flex; flex-wrap:wrap; gap:10px;">
             <input type="hidden" name="edit_id" value="<?= (int)$a['id'] ?>">
             <input name="edit_name" value="<?= h($a['name']) ?>" placeholder="Meno" required>
@@ -133,13 +158,41 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
         </td>
       </tr>
       <tr id="pin-<?= (int)$a['id'] ?>" style="display:none;">
-        <td colspan="8">
+        <td colspan="9">
           <form method="post" class="add-form" style="display:flex; flex-wrap:wrap; gap:10px; max-width:340px;">
             <input type="hidden" name="pin_id" value="<?= (int)$a['id'] ?>">
             <input name="pin" inputmode="numeric" pattern="\d{4}" maxlength="4" placeholder="Nový 4-miestny PIN"
                    style="text-align:center; letter-spacing:.3em;" required>
             <button type="submit">Uložiť PIN</button>
             <button type="button" class="toggle-btn" onclick="cancelPin(<?= (int)$a['id'] ?>)">Zrušiť</button>
+          </form>
+        </td>
+      </tr>
+      <tr id="tools-<?= (int)$a['id'] ?>" style="display:none;">
+        <td colspan="9">
+          <form method="post" style="max-width:640px;">
+            <input type="hidden" name="tools_id" value="<?= (int)$a['id'] ?>">
+            <div style="display:flex; gap:8px; margin-bottom:10px;">
+              <button type="button" class="toggle-btn" onclick="setAllTools(<?= (int)$a['id'] ?>, true)">Zapnúť všetko</button>
+              <button type="button" class="toggle-btn" onclick="setAllTools(<?= (int)$a['id'] ?>, false)">Vypnúť všetko</button>
+            </div>
+            <?php foreach ($TOOL_CATEGORIES as $cat): ?>
+            <div style="margin-bottom:12px;">
+              <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin-bottom:6px;"><?= h($cat['title']) ?></div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px 16px;">
+                <?php foreach ($cat['tools'] as $t): $slug = toolSlug($t['href']); ?>
+                <label style="display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer;">
+                  <input type="checkbox" name="enabled_tools[]" value="<?= h($slug) ?>" <?= in_array($slug, $aDisabled, true) ? '' : 'checked' ?>>
+                  <?= h($t['name']) ?>
+                </label>
+                <?php endforeach; ?>
+              </div>
+            </div>
+            <?php endforeach; ?>
+            <div style="display:flex; gap:8px; margin-top:6px;">
+              <button type="submit">Uložiť nástroje</button>
+              <button type="button" class="toggle-btn" onclick="cancelTools(<?= (int)$a['id'] ?>)">Zrušiť</button>
+            </div>
           </form>
         </td>
       </tr>
@@ -210,6 +263,15 @@ function editPin(id){
 }
 function cancelPin(id){
   document.getElementById('pin-'+id).style.display = 'none';
+}
+function editTools(id){
+  document.getElementById('tools-'+id).style.display = 'table-row';
+}
+function cancelTools(id){
+  document.getElementById('tools-'+id).style.display = 'none';
+}
+function setAllTools(id, on){
+  document.querySelectorAll('#tools-'+id+' input[type=checkbox]').forEach(function(cb){ cb.checked = on; });
 }
 </script>
 </body></html>
