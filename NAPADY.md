@@ -27,6 +27,9 @@ toho, čo sa rozhodneme spraviť.
   odporúčaný kontakt.
 - [x] **Tmavý režim (Dark Mode)** — prepínač v ľavej lište, uložený v
   prehliadači, funguje naprieč celou appkou.
+- [x] **Kartička „Odporučte ma priateľom“** — poďakovanie, kontakt na
+  poradcu a priestor na odporúčanie (meno/telefón priateľa) — PDF aj
+  SMS/WhatsApp text.
 
 ---
 
@@ -94,7 +97,6 @@ toho, čo sa rozhodneme spraviť.
 ## Marketing a získavanie klientov
 
 - [ ] **„Rodinná mapa“** (generačný marketing, demografický cross-sell)
-- [ ] **Kartička „Odporučte ma priateľom“**
 - [ ] **Výročný „Zostrih zmlúv“** (automatický pre-servis existujúcich klientov)
 
 ## B2B / firemný segment
