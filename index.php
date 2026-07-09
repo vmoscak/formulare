@@ -51,7 +51,7 @@ if ($selected) {
                 'httponly' => true,
                 'samesite' => 'Lax',
             ]);
-            header('Location: /nastroje.php');
+            header('Location: /uvod.php');
             exit;
         }
     } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $lockedSeconds === 0) {
@@ -65,7 +65,7 @@ if ($selected) {
                 'httponly' => true,
                 'samesite' => 'Lax',
             ]);
-            header('Location: /nastroje.php');
+            header('Location: /uvod.php');
             exit;
         }
         throttleRecordFailure($scope);
@@ -86,14 +86,6 @@ try {
     $advisors = [];
 }
 $curAdvisorId = curAdvisorId() ?: null;
-
-// Novinky — najnovšie/dôležité oznamy, zobrazené len na tejto úvodnej
-// obrazovke (pred výberom poradcu). Editovať ich smie výhradne owner v novinky.php.
-try {
-    $news = db()->query('SELECT * FROM formulare_news ORDER BY important DESC, created_at DESC LIMIT 3')->fetchAll();
-} catch (Throwable $e) {
-    $news = [];
-}
 ?>
 <!DOCTYPE html>
 <html lang="sk">
@@ -189,27 +181,6 @@ try {
     border-radius:var(--radius-2xl); padding:28px; text-align:center; color:var(--muted); font-size:13.5px;
   }
   .foot{margin-top:52px; font-size:12px; color:var(--label);}
-
-  /* ── Novinky (banner) ── */
-  .news-wrap{width:100%; max-width:1080px; margin:0 0 22px; display:flex; flex-direction:column; gap:10px;}
-  .news-item{
-    background:var(--paper); border:1px solid var(--border); border-left:4px solid var(--news-accent,var(--accent));
-    border-radius:var(--radius-lg); padding:14px 18px 14px 16px; box-shadow:var(--shadow-sm);
-    display:flex; gap:12px; align-items:flex-start;
-    opacity:0; transform:translateY(10px); animation:newsIn .5s cubic-bezier(.22,1,.36,1) forwards;
-  }
-  .news-item:nth-child(1){animation-delay:.08s;}
-  .news-item:nth-child(2){animation-delay:.16s;}
-  .news-item:nth-child(3){animation-delay:.24s;}
-  @keyframes newsIn{ to{opacity:1; transform:translateY(0);} }
-  .news-item.important{background:linear-gradient(135deg,var(--news-accent-soft,var(--accent-soft)),var(--paper) 65%);}
-  .news-badge{
-    flex-shrink:0; margin-top:2px; font-size:10px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
-    color:#fff; background:var(--news-accent,var(--accent)); border-radius:999px; padding:3px 9px;
-  }
-  .news-item h3{margin:0 0 3px; font-size:13.5px; font-weight:700; color:var(--ink);}
-  .news-item p{margin:0; font-size:12.5px; color:var(--muted); line-height:1.5; white-space:pre-wrap;}
-  @media(prefers-reduced-motion:reduce){ .news-item{animation:none; opacity:1; transform:none;} }
 
   /* ── Obrazovka osobného PIN-u ── */
   .pin-wrap{
@@ -321,30 +292,6 @@ try {
     <h1>Kto dnes pracuje?</h1>
     <p>Vyber svoje meno a zadaj svoj osobný PIN — dokumenty a klientske odkazy sa budú ukladať pod tvojím profilom. Voľba sa zapamätá na tomto zariadení.</p>
   </div>
-
-  <?php if ($news): ?>
-  <div class="news-wrap">
-    <?php
-    // Farebný cyklus pre bežné novinky (rovnaká paleta ako farebné karty
-    // nástrojov); dôležité novinky majú vždy pevnú "urgentnú" farbu.
-    $newsPalette = ['#4f46e5', '#059669', '#0d9488', '#7c3aed', '#0284c7', '#d97706'];
-    $newsColorIdx = 0;
-    ?>
-    <?php foreach ($news as $n): ?>
-    <?php
-    if ($n['important']) { $accent = '#e11d48'; $accentSoft = '#fff1f2'; }
-    else { $accent = $newsPalette[$newsColorIdx % count($newsPalette)]; $accentSoft = $accent . '1a'; $newsColorIdx++; }
-    ?>
-    <div class="news-item<?= $n['important'] ? ' important' : '' ?>" style="--news-accent:<?= $accent ?>; --news-accent-soft:<?= $accentSoft ?>;">
-      <?php if ($n['important']): ?><span class="news-badge">Dôležité</span><?php endif; ?>
-      <div>
-        <h3><?= htmlspecialchars($n['title']) ?></h3>
-        <p><?= htmlspecialchars($n['body']) ?></p>
-      </div>
-    </div>
-    <?php endforeach; ?>
-  </div>
-  <?php endif; ?>
 
   <div class="grid">
     <?php foreach ($advisors as $adv): ?>

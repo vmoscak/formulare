@@ -39,8 +39,13 @@ toho, čo sa rozhodneme spraviť.
   pojmov“ (spoluúčasť, čakacia doba, franšíza a pod.) ako PDF/text.
 - [x] **Interaktívny ťahák „Čo pýtať od klienta“** — živý zoznam otázok
   podľa situácie klienta na odškrtávanie počas stretnutia.
-- [x] **Editor noviniek** — pridávaš len ty (novinky.php), zobrazujú sa
-  ako banner na úvodnej stránke výberu poradcu; „dôležité“ ostáva navrchu.
+- [x] **Editor noviniek** — pridávaš len ty (novinky.php); „dôležité“
+  ostáva navrchu.
+- [x] **Domov (úvodná záložka po prihlásení)** — nová stránka uvod.php,
+  prvá záložka v ľavej lište. Zobrazuje banner noviniek (presunutý sem
+  z index.php) a veľké karty na Nástroje/Formuláre/Pomôcky v novom,
+  jemnejšom dizajne (biele karty, farebný pruh hore, kruhová ikona) —
+  odlišnom od farebných gradientových kariet jednotlivých nástrojov.
 
 ---
 
