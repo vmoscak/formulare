@@ -46,6 +46,7 @@ function toolLabel(string $slug): string {
         'ziadost-vratenie-preplatku' => 'Vrátenie preplatku',
         'odvolanie-zamietnutie-plnenia' => 'Odvolanie voči likvidácii',
         'reklamacia-postup-institucie' => 'Reklamácia / sťažnosť',
+        'financna-karticka-prvej-pomoci' => 'Finančná kartička prvej pomoci',
     ];
     return $labels[$slug] ?? $slug;
 }
