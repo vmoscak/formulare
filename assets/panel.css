@@ -229,6 +229,13 @@ td .strong{font-weight:600; color:var(--ink);}
   font-size:10px; font-weight:600; background:var(--accent-soft); color:var(--accent); white-space:nowrap;
 }
 .map-tag.alt{background:var(--desk); color:var(--label);}
+.map-tag.new{background:var(--good-soft); color:var(--good);}
+
+/* farebné bodkové markery (nový/existujúci záznam od posledného importu) */
+.nabor-legend-dot{display:inline-block; width:10px; height:10px; border-radius:50%; border:2px solid var(--paper); box-shadow:0 1px 3px rgba(0,0,0,.3); flex-shrink:0;}
+.nabor-pin{background:transparent; border:none;}
+.nabor-pin span{display:block; width:14px; height:14px; border-radius:50%; background:#4f46e5; border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.4);}
+.nabor-pin-new span{background:#059669;}
 
 /* prehľad počtov podľa kraja — vodorovný pruhový graf namiesto geo mapy */
 .kraj-bars{display:flex; flex-direction:column; gap:6px;}

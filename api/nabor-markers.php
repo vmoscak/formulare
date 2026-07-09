@@ -39,7 +39,7 @@ $whereSql = 'WHERE ' . implode(' AND ', $where);
 
 $out = [];
 try {
-    $stmt = db()->prepare("SELECT ico, name, city, region, lat, lon, sectors, parent_names, raw_json
+    $stmt = db()->prepare("SELECT ico, name, city, region, lat, lon, sectors, parent_names, raw_json, first_seen_at, imported_at
         FROM formulare_registry_entities $whereSql");
     $stmt->execute($params);
     while ($r = $stmt->fetch()) {
@@ -63,6 +63,9 @@ try {
             'cats' => $cats,
             'sectors' => is_array($sectors) ? $sectors : [],
             'parents' => is_array($parents) ? $parents : [],
+            // Nové od posledného importu = prvýkrát videné v tom istom importe,
+            // v ktorom bol tento riadok naposledy zapísaný (viď registryImport).
+            'is_new' => $r['first_seen_at'] !== null && $r['first_seen_at'] === $r['imported_at'],
         ];
     }
 } catch (Throwable $e) { /* prázdna tabuľka -> prázdny zoznam */ }

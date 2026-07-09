@@ -232,6 +232,17 @@ function registryImport(string $filePath, string $facetsFile): array {
 
     $pdo = db();
 
+    // Prednačítať, kedy bolo ktoré IČO prvýkrát videné (first_seen_at) — aby
+    // reimport nezresetoval "nové od posledného importu" pre záznamy, ktoré
+    // už existovali predtým. Nové IČO (nie je v tejto mape) dostane first_seen_at
+    // rovný $now, čím sa odlíši od starších záznamov (viď nižšie pri INSERTe).
+    $firstSeenCache = [];
+    try {
+        foreach ($pdo->query('SELECT ico, first_seen_at FROM formulare_registry_entities') as $r) {
+            $firstSeenCache[$r['ico']] = $r['first_seen_at'];
+        }
+    } catch (Throwable $e) { /* tabuľka ešte nemusí existovať (pred migráciou) */ }
+
     // Prednačítať celú cache presného geokódovania do pamäte (max pár desiatok
     // tisíc riadkov, malé) — rýchlejšie než dotaz na DB pre každý riadok importu.
     $geocodeCache = [];
@@ -249,8 +260,8 @@ function registryImport(string $filePath, string $facetsFile): array {
 
     $pdo->exec('DELETE FROM formulare_registry_entities');
     $insert = $pdo->prepare('INSERT INTO formulare_registry_entities
-        (ico, name, address, city, zip, country, categories, sectors, parent_names, region, okres, lat, lon, geocoded_at, raw_json, imported_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        (ico, name, address, city, zip, country, categories, sectors, parent_names, region, okres, lat, lon, geocoded_at, raw_json, imported_at, first_seen_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
 
     $allCategories = [];
     $allSectors = [];
@@ -272,6 +283,9 @@ function registryImport(string $filePath, string $facetsFile): array {
         $coords = $zip !== '' ? coordsForZip($zip) : null;
         $geocodedAt = $coords ? $now : null;
 
+        $ico = (string)$inst['id'];
+        $firstSeenAt = $firstSeenCache[$ico] ?? $now;
+
         $isAgent = (bool)array_intersect($flags['categories'], AGENT_CATEGORIES);
         $inPreciseScope = $region !== null && in_array($region, NABOR_ACTIVE_REGIONS, true);
         if ($isAgent && $address !== '' && $inPreciseScope) {
@@ -288,7 +302,7 @@ function registryImport(string $filePath, string $facetsFile): array {
         }
 
         $insert->execute([
-            (string)$inst['id'],
+            $ico,
             (string)($inst['name'] ?? ''),
             $address,
             $city,
@@ -304,6 +318,7 @@ function registryImport(string $filePath, string $facetsFile): array {
             $geocodedAt,
             json_encode($licenses, JSON_UNESCAPED_UNICODE),
             $now,
+            $firstSeenAt,
         ]);
         $count++;
 
@@ -537,7 +552,8 @@ function dbInitSqlite(PDO $pdo): void {
         lat REAL NULL,
         lon REAL NULL,
         geocoded_at TEXT NULL,
-        imported_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        imported_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        first_seen_at TEXT NULL
     )");
     $pdo->exec("CREATE INDEX IF NOT EXISTS idx_registry_name ON formulare_registry_entities(name)");
     $pdo->exec("CREATE INDEX IF NOT EXISTS idx_registry_region ON formulare_registry_entities(region)");

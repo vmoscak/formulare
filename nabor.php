@@ -56,11 +56,14 @@ $geoTotal = array_sum($geoStats);
 // -- štatistiky --
 $totalCount = 0;
 $lastImportAt = null;
+$newSinceLastImport = 0;
 try {
     $totalCount = (int)db()->query('SELECT COUNT(*) c FROM formulare_registry_entities')->fetch()['c'];
     $row = db()->query('SELECT MAX(imported_at) m FROM formulare_registry_entities')->fetch();
     $lastImportAt = $row['m'] ?? null;
-} catch (Throwable $e) { /* tabuľka môže byť ešte prázdna */ }
+    // "Nové" = prvýkrát videné práve v poslednom importe (first_seen_at == imported_at).
+    $newSinceLastImport = (int)db()->query("SELECT COUNT(*) c FROM formulare_registry_entities WHERE first_seen_at IS NOT NULL AND first_seen_at = imported_at")->fetch()['c'];
+} catch (Throwable $e) { /* tabuľka môže byť ešte prázdna, alebo pred migráciou first_seen_at */ }
 
 // -- fasety pre filter dropdowny --
 $facets = ['categories' => [], 'sectors' => [], 'parent_names' => [], 'regions' => [], 'okresy' => [], 'dataset_updated' => null];
@@ -118,7 +121,7 @@ function qs(array $overrides): string {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=5">
+<link rel="stylesheet" href="/assets/panel.css?v=6">
 </head><body>
 <header class="topbar">
   <div class="tb-title">
@@ -151,6 +154,12 @@ function qs(array $overrides): string {
         <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em;">Posledný import</div>
         <div style="font-size:13px; color:var(--ink-2);" class="date"><?= $lastImportAt ? h($lastImportAt) : '—' ?></div>
       </div>
+      <?php if ($newSinceLastImport > 0): ?>
+      <div>
+        <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em;">Nové od posledného importu</div>
+        <div style="font-size:20px; font-weight:700; color:var(--good);"><?= number_format($newSinceLastImport, 0, ',', ' ') ?></div>
+      </div>
+      <?php endif; ?>
       <?php if ($facets['dataset_updated']): ?>
       <div>
         <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em;">Dataset aktualizovaný</div>
@@ -267,6 +276,10 @@ function qs(array $overrides): string {
       Poloha je približná (stred obce podľa PSČ, nie presná ulica). Priblíž sa na konkrétne mesto — pri prekrytých bodoch
       klikni na zhluk pre rozbalenie.
     </p>
+    <div style="display:flex; align-items:center; gap:16px; margin:-2px 0 12px; font-size:12px; color:var(--muted);">
+      <span style="display:inline-flex; align-items:center; gap:6px;"><span class="nabor-legend-dot" style="background:#4f46e5;"></span> Existujúci</span>
+      <span style="display:inline-flex; align-items:center; gap:6px;"><span class="nabor-legend-dot" style="background:#059669;"></span> Nový od posledného importu</span>
+    </div>
     <div id="naborMap"></div>
   </div>
 
@@ -286,13 +299,18 @@ function qs(array $overrides): string {
     var sectors = (m.sectors || []).map(function (s) { return '<span class="map-tag alt">' + esc(s) + '</span>'; }).join('');
     var parents = (m.parents || []).map(function (p) { return '<span class="map-tag alt">' + esc(p) + '</span>'; }).join('');
     return '<div class="map-pop">' +
-      '<b>' + esc(m.name) + '</b>' +
+      '<b>' + esc(m.name) + '</b>' + (m.is_new ? ' <span class="map-tag new">Nové</span>' : '') +
       '<div class="map-pop-sub">' + esc(m.city || '') + (m.region ? ' · ' + esc(m.region) : '') + ' · IČO ' + esc(m.ico) + '</div>' +
       (cats ? '<div class="map-pop-row">' + cats + '</div>' : '') +
       (sectors ? '<div class="map-pop-row">' + sectors + '</div>' : '') +
       (parents ? '<div class="map-pop-row"><span class="map-pop-label">Pod:</span> ' + parents + '</div>' : '') +
       '</div>';
   }
+
+  var pinIcons = {
+    existing: L.divIcon({ className: 'nabor-pin', html: '<span></span>', iconSize: [16, 16], iconAnchor: [8, 8] }),
+    fresh: L.divIcon({ className: 'nabor-pin nabor-pin-new', html: '<span></span>', iconSize: [16, 16], iconAnchor: [8, 8] })
+  };
 
   var map = L.map('naborMap').setView([48.7, 19.5], 8);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -309,7 +327,7 @@ function qs(array $overrides): string {
       countEl.textContent = '· ' + rows.length.toLocaleString('sk-SK') + ' na mape';
       var bounds = [];
       rows.forEach(function (m) {
-        var marker = L.marker([m.lat, m.lon]);
+        var marker = L.marker([m.lat, m.lon], { icon: m.is_new ? pinIcons.fresh : pinIcons.existing });
         marker.bindPopup(popupHtml(m));
         marker.on('mouseover', function () { marker.openPopup(); });
         clusters.addLayer(marker);
