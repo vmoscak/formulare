@@ -143,6 +143,19 @@ const REGISTRY_DATA_FILE = __DIR__ . '/data/nbs-register.json';
 const REGISTRY_FACETS_FILE = __DIR__ . '/data/facets.json';
 
 /**
+ * Vráti kraj SR podľa 5-miestneho PSČ, alebo null ak sa nenašlo (napr.
+ * neplatné/chýbajúce PSČ). Tabuľka psc-kraj.php je generovaná z overených
+ * dát (obce/okresy/kraje SR) — nikdy neupravuj ručne, pozri hlavičku súboru.
+ */
+function regionForZip(string $zip): ?string {
+    static $table = null;
+    if ($table === null) $table = require __DIR__ . '/psc-kraj.php';
+    $zip5 = preg_replace('/\D/', '', $zip);
+    if (isset($table['exact'][$zip5])) return $table['exact'][$zip5];
+    return $table['prefix3'][substr($zip5, 0, 3)] ?? null;
+}
+
+/**
  * Načíta data/nbs-register.json a naplní ním formulare_registry_entities
  * (plný refresh — zmaže staré a vloží nanovo, aby dáta vždy presne
  * zodpovedali poslednému nahratému súboru). Vracia počet a dátum datasetu.
@@ -167,12 +180,13 @@ function registryImport(string $filePath, string $facetsFile): array {
     $pdo = db();
     $pdo->exec('DELETE FROM formulare_registry_entities');
     $insert = $pdo->prepare('INSERT INTO formulare_registry_entities
-        (ico, name, address, city, zip, country, categories, sectors, parent_names, raw_json, imported_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        (ico, name, address, city, zip, country, categories, sectors, parent_names, region, raw_json, imported_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
 
     $allCategories = [];
     $allSectors = [];
     $allParents = [];
+    $allRegions = [];
     $now = date('Y-m-d H:i:s');
 
     $pdo->beginTransaction();
@@ -182,6 +196,7 @@ function registryImport(string $filePath, string $facetsFile): array {
         $licenses = is_array($inst['licenses'] ?? null) ? $inst['licenses'] : [];
         $flags = registryDeriveFlags($licenses);
         [$city, $zip] = registryParseAddress((string)($inst['address'] ?? ''));
+        $region = $zip !== '' ? regionForZip($zip) : null;
 
         $insert->execute([
             (string)$inst['id'],
@@ -193,6 +208,7 @@ function registryImport(string $filePath, string $facetsFile): array {
             json_encode($flags['categories'], JSON_UNESCAPED_UNICODE),
             json_encode($flags['sectors'], JSON_UNESCAPED_UNICODE),
             json_encode($flags['parent_names'], JSON_UNESCAPED_UNICODE),
+            $region,
             json_encode($licenses, JSON_UNESCAPED_UNICODE),
             $now,
         ]);
@@ -201,6 +217,7 @@ function registryImport(string $filePath, string $facetsFile): array {
         foreach ($flags['categories'] as $c) $allCategories[$c] = true;
         foreach ($flags['sectors'] as $s) $allSectors[$s] = true;
         foreach ($flags['parent_names'] as $p) $allParents[$p] = true;
+        if ($region) $allRegions[$region] = true;
 
         if ($count % 500 === 0) { $pdo->commit(); $pdo->beginTransaction(); }
     }
@@ -209,10 +226,12 @@ function registryImport(string $filePath, string $facetsFile): array {
     $categories = array_keys($allCategories); sort($categories);
     $sectors = array_keys($allSectors); sort($sectors);
     $parents = array_keys($allParents); sort($parents);
+    $regions = array_keys($allRegions); sort($regions);
     file_put_contents($facetsFile, json_encode([
         'categories' => $categories,
         'sectors' => $sectors,
         'parent_names' => $parents,
+        'regions' => $regions,
         'dataset_updated' => $data['updated'] ?? null,
     ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
 
@@ -299,6 +318,7 @@ function dbInitSqlite(PDO $pdo): void {
         categories TEXT NULL,
         sectors TEXT NULL,
         parent_names TEXT NULL,
+        region TEXT NULL,
         raw_json TEXT NOT NULL,
         lat REAL NULL,
         lon REAL NULL,
@@ -306,4 +326,5 @@ function dbInitSqlite(PDO $pdo): void {
         imported_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )");
     $pdo->exec("CREATE INDEX IF NOT EXISTS idx_registry_name ON formulare_registry_entities(name)");
+    $pdo->exec("CREATE INDEX IF NOT EXISTS idx_registry_region ON formulare_registry_entities(region)");
 }

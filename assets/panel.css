@@ -172,7 +172,22 @@ table.registry-table col.c-cat{width:16%;}
 table.registry-table col.c-sector{width:29%;}
 table.registry-table col.c-parent{width:18%;}
 table.registry-table td{word-break:break-word;}
-table.registry-table .tag .since{display:block; font-size:9px; font-weight:500; opacity:.7; margin-top:1px;}
+table.registry-table .since{display:block; font-size:9px; font-weight:500; opacity:.7; margin-top:1px;}
+
+/* prehľad počtov podľa kraja — vodorovný pruhový graf namiesto geo mapy */
+.kraj-bars{display:flex; flex-direction:column; gap:6px;}
+.kraj-bar{
+  display:grid; grid-template-columns:160px 1fr 60px; align-items:center; gap:12px;
+  padding:5px 8px; border-radius:var(--radius-md); text-decoration:none; transition:background .15s;
+}
+.kraj-bar:hover{background:var(--desk);}
+.kraj-bar.on{background:var(--accent-soft);}
+.kraj-bar.on .kraj-name{color:var(--accent);}
+.kraj-name{font-size:12.5px; font-weight:600; color:var(--ink-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.kraj-track{height:8px; border-radius:4px; background:var(--desk); overflow:hidden;}
+.kraj-bar.on .kraj-track{background:#e0e4fb;}
+.kraj-fill{display:block; height:100%; background:var(--accent); border-radius:4px; min-width:2px;}
+.kraj-count{font-size:12px; font-weight:600; color:var(--muted); text-align:right; font-variant-numeric:tabular-nums;}
 
 .pager{display:flex; align-items:center; gap:8px; margin-top:16px; font-size:12.5px; color:var(--muted);}
 .pager a{color:var(--accent); font-weight:600;}

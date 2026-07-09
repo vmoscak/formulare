@@ -41,7 +41,7 @@ try {
 } catch (Throwable $e) { /* tabuľka môže byť ešte prázdna */ }
 
 // -- fasety pre filter dropdowny --
-$facets = ['categories' => [], 'sectors' => [], 'parent_names' => [], 'dataset_updated' => null];
+$facets = ['categories' => [], 'sectors' => [], 'parent_names' => [], 'regions' => [], 'dataset_updated' => null];
 if (is_file(REGISTRY_FACETS_FILE)) {
     $decoded = json_decode((string)file_get_contents(REGISTRY_FACETS_FILE), true);
     if (is_array($decoded)) $facets = array_merge($facets, $decoded);
@@ -52,9 +52,12 @@ $q = trim((string)($_GET['q'] ?? ''));
 $fCategories = array_values(array_filter(array_map('trim', (array)($_GET['cat'] ?? []))));
 $fSector = trim((string)($_GET['sector'] ?? ''));
 $fParent = trim((string)($_GET['parent'] ?? ''));
+$fRegion = trim((string)($_GET['region'] ?? ''));
 $page = max(1, (int)($_GET['page'] ?? 1));
 $perPage = 30;
 
+// where bez kraja (pre prehľad počtov podľa kraja nižšie — nech vidno rozloženie
+// aj pri už zvolenom kraji) a where s krajom (pre samotné výsledky/stránkovanie)
 $where = [];
 $params = [];
 if ($q !== '') { $where[] = '(name LIKE ? OR ico LIKE ?)'; $params[] = '%' . $q . '%'; $params[] = '%' . $q . '%'; }
@@ -64,23 +67,34 @@ if ($fCategories) {
 }
 if ($fSector !== '') { $where[] = 'sectors LIKE ?'; $params[] = '%"' . $fSector . '"%'; }
 if ($fParent !== '') { $where[] = 'parent_names LIKE ?'; $params[] = '%"' . $fParent . '"%'; }
+$whereSqlNoRegion = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
+$paramsNoRegion = $params;
+
+if ($fRegion !== '') { $where[] = 'region = ?'; $params[] = $fRegion; }
 $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
 
 $results = [];
 $resultCount = 0;
+$regionCounts = [];
 try {
     $countStmt = db()->prepare("SELECT COUNT(*) c FROM formulare_registry_entities $whereSql");
     $countStmt->execute($params);
     $resultCount = (int)$countStmt->fetch()['c'];
 
     $offset = ($page - 1) * $perPage;
-    $listStmt = db()->prepare("SELECT ico, name, address, city, categories, sectors, parent_names, raw_json
+    $listStmt = db()->prepare("SELECT ico, name, address, city, region, categories, sectors, parent_names, raw_json
         FROM formulare_registry_entities $whereSql ORDER BY name LIMIT $perPage OFFSET $offset");
     $listStmt->execute($params);
     $results = $listStmt->fetchAll();
+
+    $regStmt = db()->prepare("SELECT COALESCE(region, '— bez PSČ/kraja —') AS region, COUNT(*) c
+        FROM formulare_registry_entities $whereSqlNoRegion GROUP BY region ORDER BY c DESC");
+    $regStmt->execute($paramsNoRegion);
+    $regionCounts = $regStmt->fetchAll();
 } catch (Throwable $e) { /* tabuľka môže byť ešte prázdna */ }
 
 $totalPages = max(1, (int)ceil($resultCount / $perPage));
+$regionMax = $regionCounts ? max(array_column($regionCounts, 'c')) : 0;
 
 function pillList($jsonText, string $cls = 'tag'): string {
     $items = json_decode((string)$jsonText, true);
@@ -194,16 +208,40 @@ function qs(array $overrides): string {
           <?php endforeach; ?>
         </select>
       </div>
+      <div class="f-field">
+        <label>Kraj</label>
+        <select name="region">
+          <option value="">Celé Slovensko</option>
+          <?php foreach ($facets['regions'] as $r): ?>
+          <option value="<?= h($r) ?>" <?= $r === $fRegion ? 'selected' : '' ?>><?= h($r) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
       <div class="f-field" style="min-width:0;">
         <button type="submit" class="pillbtn solid">Filtrovať</button>
       </div>
-      <?php if ($q || $fCategories || $fSector || $fParent): ?>
+      <?php if ($q || $fCategories || $fSector || $fParent || $fRegion): ?>
       <div class="f-field" style="min-width:0;">
         <a class="pillbtn" href="/nabor.php">Zrušiť filter</a>
       </div>
       <?php endif; ?>
     </form>
   </div>
+
+  <?php if ($regionCounts): ?>
+  <div class="card">
+    <h3>Podľa kraja</h3>
+    <div class="kraj-bars">
+      <?php foreach ($regionCounts as $rc): ?>
+      <a class="kraj-bar<?= $rc['region'] === $fRegion ? ' on' : '' ?>" href="<?= qs(['region' => $rc['region'] === $fRegion ? '' : $rc['region'], 'page' => '']) ?>">
+        <span class="kraj-name"><?= h($rc['region']) ?></span>
+        <span class="kraj-track"><span class="kraj-fill" style="width:<?= $regionMax > 0 ? round($rc['c'] / $regionMax * 100) : 0 ?>%;"></span></span>
+        <span class="kraj-count"><?= number_format((int)$rc['c'], 0, ',', ' ') ?></span>
+      </a>
+      <?php endforeach; ?>
+    </div>
+  </div>
+  <?php endif; ?>
 
   <div class="card">
     <h3>Výsledky · <?= number_format($resultCount, 0, ',', ' ') ?><?= $resultCount === 1 ? ' záznam' : ($resultCount >= 2 && $resultCount <= 4 ? ' záznamy' : ' záznamov') ?></h3>
@@ -217,7 +255,7 @@ function qs(array $overrides): string {
       <tr>
         <td class="mono"><?= h($r['ico']) ?></td>
         <td><span class="strong"><?= h($r['name']) ?></span></td>
-        <td><?= h($r['city'] ?: $r['address']) ?></td>
+        <td><?= h($r['city'] ?: $r['address']) ?><?php if ($r['region']): ?><span class="since"><?= h($r['region']) ?></span><?php endif; ?></td>
         <td><?= categoryPills($r['raw_json']) ?></td>
         <td><?= pillList($r['sectors']) ?></td>
         <td><?= pillList($r['parent_names']) ?></td>
