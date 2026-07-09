@@ -121,6 +121,8 @@ toho, čo sa rozhodneme spraviť.
 
 ## Poznámky k implementácii
 
-- Pri pridávaní nových nástrojov využiť už hotový mechanizmus **feature
-  toggles** (per-poradca zap./vyp. v admin zóne) — nový nástroj sa nemusí
-  hneď zobraziť úplne všetkým, dá sa najprv otestovať na vybraných ľuďoch.
+- **Pravidlo (od 7/2026):** každý nový nástroj sa pri pridaní rovno vypne
+  pre všetkých poradcov okrem teba (owner) — cez existujúci mechanizmus
+  `disabled_tools`. K tomu vždy dostaneš krátky SQL na spustenie v
+  phpMyAdmin (jednorazová dátová úprava, rovnaký vzor ako schémové
+  migrácie). Jednotlivým poradcom ho potom zapínaš postupne v admin.php.
