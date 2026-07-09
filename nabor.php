@@ -36,7 +36,8 @@ $geocodeDebug = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['geocode_batch'])) {
     try {
         $g = geocodeBatchProcess(35);
-        $geocodeMessage = 'Spracovaných ' . $g['processed'] . ' (nájdených ' . $g['found'] . ', nenájdených ' . $g['not_found'] . '), zostáva ' . number_format($g['remaining'], 0, ',', ' ') . '.';
+        $geocodeMessage = 'Spracovaných ' . $g['processed'] . ' (nájdených ' . $g['found'] . ', nenájdených ' . $g['not_found']
+            . ($g['retried'] > 0 ? ', dočasne odmietnutých ' . $g['retried'] . ' — skúsi sa znova' : '') . '), zostáva ' . number_format($g['remaining'], 0, ',', ' ') . '.';
         if (!empty($g['first_error'])) $geocodeDebug = $g['first_error'];
     } catch (Throwable $e) {
         $geocodeMessage = 'Chyba: ' . $e->getMessage();

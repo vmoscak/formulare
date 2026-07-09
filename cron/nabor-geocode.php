@@ -25,7 +25,7 @@ if (!$isCli && !hash_equals(GATE_TOKEN, (string)($_GET['token'] ?? ''))) {
 try {
     $result = geocodeBatchProcess(35);
     echo "Spracovane: {$result['processed']}, najdene: {$result['found']}, "
-        . "nenajdene: {$result['not_found']}, zostava: {$result['remaining']}\n";
+        . "nenajdene: {$result['not_found']}, docasne odmietnute: {$result['retried']}, zostava: {$result['remaining']}\n";
     if (!empty($result['first_error'])) echo 'Diagnostika: ' . $result['first_error'] . "\n";
 } catch (Throwable $e) {
     http_response_code(500);

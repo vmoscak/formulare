@@ -298,11 +298,13 @@ function registryImport(string $filePath, string $facetsFile): array {
 }
 
 /**
- * Zavolá OpenStreetMap Nominatim pre presné súradnice jednej adresy, alebo null.
- * $error (voliteľné, odovzdané referenciou) sa naplní diagnostickou správou
- * pri zlyhaní — použité na dočasné odladenie sieťového pripojenia z hostingu.
+ * Zavolá OpenStreetMap Nominatim pre presné súradnice jednej adresy.
+ * Vráti ['status' => 'found'|'not_found'|'retry', 'coords' => [lat,lon]|null].
+ * 'retry' = dočasné zlyhanie (napr. HTTP 429 rate-limit, sieťová chyba) —
+ * adresa sa NESMIE označiť ako 'not_found', musí ostať 'pending' na ďalší pokus.
+ * $error (voliteľné) sa naplní diagnostickou správou pri 'retry'/'not_found'.
  */
-function geocodeNominatim(string $address, ?string &$error = null): ?array {
+function geocodeNominatim(string $address, ?string &$error = null): array {
     $url = 'https://nominatim.openstreetmap.org/search?' . http_build_query([
         'format' => 'json',
         'q' => $address,
@@ -317,18 +319,31 @@ function geocodeNominatim(string $address, ?string &$error = null): ?array {
     ]]);
     error_clear_last();
     $resp = @file_get_contents($url, false, $ctx);
+
+    $status = 0;
+    if (isset($http_response_header[0]) && preg_match('/\s(\d{3})\s/', $http_response_header[0], $m)) {
+        $status = (int)$m[1];
+    }
+
     if ($resp === false) {
         $last = error_get_last();
-        $error = 'file_get_contents zlyhalo: ' . ($last['message'] ?? 'neznáma chyba')
-            . (isset($http_response_header) ? ' | hlavička: ' . json_encode($http_response_header) : ' | žiadna HTTP odpoveď (spojenie sa nenadviazalo)');
-        return null;
+        $error = 'Spojenie zlyhalo: ' . ($last['message'] ?? 'neznáma chyba');
+        return ['status' => 'retry', 'coords' => null];
+    }
+    if ($status === 429 || $status >= 500) {
+        $error = "Nominatim vrátil HTTP $status (dočasné, skúsi sa znova neskôr). Odpoveď: " . mb_substr($resp, 0, 200);
+        return ['status' => 'retry', 'coords' => null];
     }
     $data = json_decode($resp, true);
-    if (!is_array($data) || empty($data[0]['lat']) || empty($data[0]['lon'])) {
-        $error = 'Nominatim odpovedal, ale bez výsledku. Odpoveď: ' . mb_substr($resp, 0, 300);
-        return null;
+    if (!is_array($data)) {
+        $error = 'Neočakávaná odpoveď (nie JSON), HTTP ' . $status . ': ' . mb_substr($resp, 0, 200);
+        return ['status' => 'retry', 'coords' => null];
     }
-    return [(float)$data[0]['lat'], (float)$data[0]['lon']];
+    if (empty($data[0]['lat']) || empty($data[0]['lon'])) {
+        $error = 'Nominatim nenašiel žiadny výsledok pre túto adresu.';
+        return ['status' => 'not_found', 'coords' => null];
+    }
+    return ['status' => 'found', 'coords' => [(float)$data[0]['lat'], (float)$data[0]['lon']]];
 }
 
 /**
@@ -336,6 +351,8 @@ function geocodeNominatim(string $address, ?string &$error = null): ?array {
  * Nominatim (max 1 dotaz/s podľa ich pravidiel používania). Zapíše výsledok
  * do cache (prežije reimport) AJ priamo do formulare_registry_entities
  * (nech sa to na mape prejaví hneď, bez čakania na ďalší import).
+ * Pri rate-limite (HTTP 429) sa dávka predčasne ukončí — nemá zmysel
+ * pokračovať, kým Nominatim odmieta dotazy.
  * Volané z nabor-geocode.php (cron cez Plánovač úloh alebo ručne z nabor.php).
  */
 function geocodeBatchProcess(int $limit = 35): array {
@@ -348,25 +365,29 @@ function geocodeBatchProcess(int $limit = 35): array {
     $updateCache = $pdo->prepare('UPDATE formulare_geocode_cache SET lat = ?, lon = ?, status = ?, updated_at = ? WHERE address_hash = ?');
     $updateRegistry = $pdo->prepare('UPDATE formulare_registry_entities SET lat = ?, lon = ?, geocoded_at = ? WHERE address = ?');
 
-    $found = 0; $notFound = 0; $firstError = null;
+    $found = 0; $notFound = 0; $retried = 0; $firstError = null;
     foreach ($rows as $i => $row) {
         $error = null;
-        $coords = geocodeNominatim($row['address'], $error);
+        $result = geocodeNominatim($row['address'], $error);
         $now = date('Y-m-d H:i:s');
-        if ($coords) {
-            $updateCache->execute([$coords[0], $coords[1], 'found', $now, $row['address_hash']]);
-            $updateRegistry->execute([$coords[0], $coords[1], $now, $row['address']]);
+        if ($result['status'] === 'found') {
+            [$lat, $lon] = $result['coords'];
+            $updateCache->execute([$lat, $lon, 'found', $now, $row['address_hash']]);
+            $updateRegistry->execute([$lat, $lon, $now, $row['address']]);
             $found++;
-        } else {
+        } elseif ($result['status'] === 'not_found') {
             $updateCache->execute([null, null, 'not_found', $now, $row['address_hash']]);
             $notFound++;
+        } else { // 'retry' — necháva sa ako 'pending', skúsi sa nabudúce
+            $retried++;
             if ($firstError === null) $firstError = $error;
+            break; // rate-limit/sieťová chyba — ďalšie pokusy v tejto dávke by dopadli rovnako
         }
         if ($i < count($rows) - 1) usleep(1100000); // 1.1s medzera medzi dotazmi (Nominatim limit 1/s)
     }
 
     $remaining = (int)$pdo->query("SELECT COUNT(*) c FROM formulare_geocode_cache WHERE status = 'pending'")->fetch()['c'];
-    return ['processed' => count($rows), 'found' => $found, 'not_found' => $notFound, 'remaining' => $remaining, 'first_error' => $firstError];
+    return ['processed' => $found + $notFound + $retried, 'found' => $found, 'not_found' => $notFound, 'retried' => $retried, 'remaining' => $remaining, 'first_error' => $firstError];
 }
 
 function db(): PDO {
