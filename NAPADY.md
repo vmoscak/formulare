@@ -30,6 +30,11 @@ toho, čo sa rozhodneme spraviť.
 - [x] **Kartička „Odporučte ma priateľom“** — poďakovanie, kontakt na
   poradcu a priestor na odporúčanie (meno/telefón priateľa) — PDF aj
   SMS/WhatsApp text.
+- [x] **Žiadosť o výplatu poistného plnenia** — formálna žiadosť o
+  vyplatenie plnenia z poistnej udalosti na IBAN žiadateľa.
+- [x] **Dizajnové mikro-interakcie** — jemné animácie pri výbere
+  dlaždíc, stlačení tlačidiel, nástupe kariet a hoveri na ľavej lište
+  (rešpektuje prefers-reduced-motion).
 
 ---
 
@@ -64,7 +69,6 @@ toho, čo sa rozhodneme spraviť.
 - [ ] **Generátor sprievodných prehlásení k likvidácii**
 - [ ] **Žiadosť o zmenu oprávnenej osoby**
 - [ ] **Rýchle linky a QR kódy** (zbierka)
-- [ ] **Žiadosť o výplatu poistného plnenia** (na účet č. ...)
 - [ ] **Generátor „Rodinného Trezoru“** (núdzový manuál pre pozostalých)
 - [ ] **Generátor bezpečného linku na zber dát**
 
@@ -103,10 +107,6 @@ toho, čo sa rozhodneme spraviť.
 
 - [ ] **„Audit firiem“** (B2B minikatalóg pre konateľov a SZČO)
 - [ ] **One-Pager „Ako vytiahnuť peniaze z firmy do súkromia cez UNIQA“**
-
-## Dizajn a UX appky
-
-- [ ] **Dizajnové mikro-interakcie**
 
 ---
 
