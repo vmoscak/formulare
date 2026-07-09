@@ -126,8 +126,8 @@ toho, čo sa rozhodneme spraviť.
 
 ## Poznámky k implementácii
 
-- **Pravidlo (od 7/2026):** každý nový nástroj sa pri pridaní rovno vypne
-  pre všetkých poradcov okrem teba (owner) — cez existujúci mechanizmus
-  `disabled_tools`. K tomu vždy dostaneš krátky SQL na spustenie v
-  phpMyAdmin (jednorazová dátová úprava, rovnaký vzor ako schémové
-  migrácie). Jednotlivým poradcom ho potom zapínaš postupne v admin.php.
+- **Pravidlo (od 7/2026):** nové nástroje sa poradcom nezobrazujú
+  automaticky naschvál — po nasadení si ich v admin.php **sám ručne
+  vypneš** pre ostatných (existujúci mechanizmus `disabled_tools`, pár
+  klikov). Žiadne SQL na toto už netreba generovať — to bolo zbytočný
+  krok navyše.
