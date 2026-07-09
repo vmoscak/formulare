@@ -67,27 +67,24 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
 <title>Prehľad pre majiteľa</title>
-<link rel="stylesheet" href="/assets/panel.css?v=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/panel.css?v=2">
 </head><body>
-<div class="wrap">
-
-  <div class="topbar">
-    <div class="mark">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15l2 2 4-4"/>
-      </svg>
-    </div>
-    <span class="wordmark">Formuláre</span>
-    <a href="/nastroje.php" class="back">← Späť na nástroje</a>
-  </div>
-
-  <div>
-    <div class="kicker">Administrácia</div>
+<header class="topbar">
+  <div class="tb-title">
     <h1>Prehľad pre majiteľa</h1>
+    <p>Administrácia · poradcovia, dokumenty a klientske odkazy</p>
   </div>
+  <div class="tb-actions">
+    <a class="pillbtn" href="/nastroje.php">← Späť na nástroje</a>
+  </div>
+</header>
+
+<main class="content">
 
   <div class="card">
-    <h2>Poradcovia</h2>
+    <h3>Poradcovia</h3>
     <table>
       <tr><th>Farba</th><th>Meno</th><th>Organizácia</th><th>E-mail</th><th>Telefón</th><th>Stav</th><th></th></tr>
       <?php foreach ($advisors as $a): ?>
@@ -136,7 +133,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
   </div>
 
   <div class="card">
-    <h2>Vygenerované dokumenty (posledných 200)</h2>
+    <h3>Vygenerované dokumenty · posledných 200</h3>
     <table>
       <tr><th>Poradca</th><th>Klient</th><th>Nástroj</th><th>Zdroj</th><th>Kedy</th><th></th></tr>
       <?php foreach ($docs as $d): ?>
@@ -160,7 +157,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
   </div>
 
   <div class="card">
-    <h2>Klientske odkazy</h2>
+    <h3>Klientske odkazy</h3>
     <table>
       <tr><th>Poradca</th><th>Klient</th><th>Nástroj</th><th>Stav</th><th>Vytvorené</th></tr>
       <?php foreach ($links as $l): ?>
@@ -175,7 +172,8 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
       <?php if (!$links): ?><tr><td colspan="5" style="color:var(--muted);">Zatiaľ žiadne odkazy.</td></tr><?php endif; ?>
     </table>
   </div>
-</div>
+</main>
+<script src="/assets/shell.js?v=2"></script>
 <script>
 function editAdvisor(id){
   document.getElementById('view-'+id).style.display = 'none';

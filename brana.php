@@ -39,52 +39,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
 <title>Vstup pre poradcov</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  /* Dizajnový jazyk „Atrament & Meď" — rovnaké tokeny ako assets/ui.css */
+  /* Svetlý „Clean SaaS" vzhľad — zhodné tokeny s assets/ui.css */
   :root{
-    --chrome:#181b21; --chrome-line:#2e323c; --chrome-muted:#8b919d;
-    --paper:#ffffff; --ink:#1c1f26; --muted:#8a8f98; --label:#5b616b;
-    --border:#dcdfe4; --accent:#b45309; --err:#b3362a;
-    --mono:ui-monospace,'SF Mono','Cascadia Mono','Roboto Mono',Consolas,'Courier New',monospace;
+    --bg:#f5f6f8; --paper:#fff; --border:#eef0f3; --line-strong:#e2e6ec;
+    --ink:#111827; --muted:#6b7280; --label:#98a2b3;
+    --accent:#4f46e5; --accent-ink:#4338ca; --err:#e11d48;
+    --sans:'Inter',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
   }
   *{box-sizing:border-box;}
   body{
     margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
-    color:var(--ink);
-    font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
-    -webkit-font-smoothing:antialiased; padding:24px;
-    background:
-      radial-gradient(rgba(255,255,255,.055) 1px, transparent 1.5px) 0 0/22px 22px,
-      linear-gradient(180deg,#20242c 0%, var(--chrome) 100%);
-    background-color:var(--chrome);
+    color:var(--ink); font-family:var(--sans); -webkit-font-smoothing:antialiased; padding:24px;
+    background:var(--bg);
   }
   .card{
-    width:100%; max-width:380px; background:var(--paper); border-radius:8px;
-    border-top:3px solid var(--accent); padding:34px 30px; text-align:center;
-    box-shadow:0 2px 6px rgba(0,0,0,.28), 0 24px 60px -18px rgba(0,0,0,.55);
+    width:100%; max-width:390px; background:var(--paper);
+    border:1px solid var(--border); border-radius:16px;
+    padding:36px 32px; text-align:center;
+    box-shadow:0 1px 3px rgba(16,24,40,.05), 0 20px 44px -20px rgba(16,24,40,.24);
   }
   .logo{
-    width:46px; height:46px; border-radius:6px; background:var(--accent); color:#fff;
+    width:48px; height:48px; border-radius:14px; background:var(--accent); color:#fff;
     margin:0 auto 16px; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 8px 18px -6px rgba(79,70,229,.55);
   }
   .wordmark{
-    font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.22em;
+    font-size:12px; font-weight:600; letter-spacing:.02em;
     text-transform:uppercase; color:var(--label); margin-bottom:18px;
   }
-  h1{font-size:18px; font-weight:800; letter-spacing:-.01em; margin:0 0 8px;}
+  h1{font-size:19px; font-weight:700; letter-spacing:-.01em; margin:0 0 8px; color:var(--ink);}
   p.sub{font-size:13px; color:var(--muted); margin:0 0 24px;}
   input{
-    width:100%; padding:12px 14px; border:1px solid var(--border); border-radius:5px;
-    font-size:15px; text-align:center; margin-bottom:14px; font-family:inherit;
-    transition:border-color .15s, box-shadow .15s;
+    width:100%; padding:12px 14px; border:1px solid var(--line-strong); border-radius:10px;
+    font-size:15px; text-align:center; margin-bottom:14px; font-family:inherit; background:#f8fafc;
+    transition:border-color .15s, box-shadow .15s, background .15s;
   }
-  input:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(180,83,9,.14);}
+  input:focus{outline:none; border-color:var(--accent); background:#fff; box-shadow:0 0 0 3px rgba(79,70,229,.14);}
   button{
-    width:100%; padding:13px; border:none; border-radius:5px; background:var(--ink);
-    color:#fff; font-weight:700; font-size:14px; cursor:pointer; font-family:inherit;
-    transition:background .15s;
+    width:100%; padding:13px; border:none; border-radius:10px; background:var(--accent);
+    color:#fff; font-weight:600; font-size:14px; cursor:pointer; font-family:inherit;
+    box-shadow:0 8px 18px -8px rgba(79,70,229,.6); transition:background .15s;
   }
-  button:hover{background:var(--accent);}
+  button:hover{background:var(--accent-ink);}
   .error{color:var(--err); font-size:13px; font-weight:600; margin-bottom:14px;}
 </style>
 </head><body>

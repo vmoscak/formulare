@@ -19,57 +19,68 @@ function advisorInitials(string $name): string {
     return mb_strtoupper($first . $last);
 }
 
-// Register nástrojov — tu pridávaš / upravuješ položky zoznamu.
+// Jednoduché SVG ikony (feather/lucide štýl).
+function ico(string $key): string {
+    $p = [
+        'help'      => '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+        'chart'     => '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>',
+        'check'     => '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
+        'user-plus' => '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/>',
+        'file-x'    => '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>',
+        'clipboard' => '<path d="M16 3H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"/><path d="M9 3v4h6V3"/>',
+        'edit'      => '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/>',
+        'alert'     => '<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+        'shield'    => '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+        'receipt'   => '<path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M14 2v6h6"/><path d="M9 15l2 2 4-4"/>',
+        'swap'      => '<path d="M17 8l4 4-4 4M3 12h18"/><path d="M7 4l-4 4 4 4"/>',
+        'euro'      => '<path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+        'undo'      => '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+        'message'   => '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+        'plus'      => '<path d="M12 5v14M5 12h14"/>',
+    ];
+    return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . ($p[$key] ?? $p['help']) . '</svg>';
+}
+
+// Register nástrojov. `hero` = veľká indigo karta, `color` = farba ikonového čipu.
 $categories = [
-    [
-        'title' => 'Hlavné nástroje',
-        'tools' => [
-            ['href' => 'wizard-poistenie/', 'name' => 'Aké poistenie potrebujem',
-             'desc' => 'Krátky dotazník na 6 otázok – odporúčanie typov poistenia, s prekliknutím rovno do Kalkulačky finančnej medzery.'],
-            ['href' => 'financna-medzera/', 'name' => 'Kalkulačka finančnej medzery',
-             'desc' => 'Koľko by rodine chýbalo pri úmrtí, invalidite alebo dlhodobej PN – odporúčané krytie vs. existujúce poistenie. Poradcovský aj klientsky režim.'],
-            ['href' => 'checklist-analyza/', 'name' => 'Checklist – výstup z analýzy',
-             'desc' => 'Kontrolný zoznam krokov a odporúčaní, s termínmi a zodpovednosťou. Dá sa predvyplniť rovno z Kalkulačky finančnej medzery.'],
-        ],
-    ],
-    [
-        'title' => 'Zmluvy a dokumentácia',
-        'tools' => [
-            ['href' => 'splnomocnenie/', 'name' => 'Všeobecné splnomocnenie',
-             'desc' => 'Rozsah oprávnení, splnomocniteľ/-ka a splnomocnenec/-kyňa, platnosť – text sa doplní automaticky.'],
-            ['href' => 'vypoved-poistenia/', 'name' => 'Výpoveď poistnej zmluvy',
-             'desc' => 'Výber poisťovne, dôvodu a termínu – text výpovede sa doplní automaticky.'],
-            ['href' => 'preberaci-protokol/', 'name' => 'Preberací protokol',
-             'desc' => 'Všeobecný preberací / odovzdávací protokol na dokumentáciu – zoznam odovzdávaných dokumentov, obe strany a podpisy.'],
-            ['href' => 'univerzalna-ziadost-zmena/', 'name' => 'Univerzálna žiadosť o zmenu',
-             'desc' => 'Zmena osobných údajov, adresy alebo oprávnenej osoby v existujúcej zmluve – jeden formulár na všetko.'],
-        ],
-    ],
-    [
-        'title' => 'Poistné udalosti a škody',
-        'tools' => [
-            ['href' => 'nahrada-skody-zodpovednost/', 'name' => 'Žiadosť o náhradu škody',
-             'desc' => 'Z poistenia zodpovednosti škodcu/-kyne – typ škody, poisťovňa, popis udalosti a výška škody.'],
-            ['href' => 'cestne-vyhlasenie-inej-poistky/', 'name' => 'Čestné prehlásenie',
-             'desc' => 'O neuplatňovaní si náhrady z iného poistenia – vyhlasujúci/-a, súvisiaca škoda, poisťovňa.'],
-            ['href' => 'cestne-vyhlasenie-kupa-veci/', 'name' => 'Čestné prehlásenie o kúpe veci',
-             'desc' => 'Pre prípad, že chýbajú pôvodné bloky/doklady o kúpe – popis veci, dátum a dôvod chýbajúceho dokladu.'],
-            ['href' => 'suhlas-vyplata-inemu-uctu/', 'name' => 'Súhlas s výplatou na iný účet',
-             'desc' => 'Súhlas poškodeného/-ej s výplatou poistného plnenia na účet tretej osoby, napr. priamo autoservisu.'],
-        ],
-    ],
-    [
-        'title' => 'Reklamácie, zmeny a spory',
-        'tools' => [
-            ['href' => 'ziadost-vratenie-preplatku/', 'name' => 'Vrátenie preplatku',
-             'desc' => 'Žiadosť o vrátenie preplatku / nespotrebovaného poistného pre zrušené alebo zmenené zmluvy, s IBANom na vrátenie.'],
-            ['href' => 'odvolanie-zamietnutie-plnenia/', 'name' => 'Odvolanie voči likvidácii',
-             'desc' => 'Nesúhlas s výsledkom likvidácie alebo zamietnutím poistného plnenia – odôvodnenie a požadovaný postup.'],
-            ['href' => 'reklamacia-postup-institucie/', 'name' => 'Reklamácia / sťažnosť',
-             'desc' => 'Oficiálna reklamácia alebo sťažnosť voči postupu inštitúcie – predmet, popis a požadovaná náprava.'],
-        ],
-    ],
+    ['title' => 'Hlavné nástroje', 'tools' => [
+        ['href' => 'wizard-poistenie/', 'name' => 'Aké poistenie potrebujem', 'ico' => 'help', 'color' => 'indigo',
+         'desc' => 'Krátky dotazník na 6 otázok – odporúčanie typov poistenia, s prekliknutím do Kalkulačky finančnej medzery.'],
+        ['href' => 'financna-medzera/', 'name' => 'Kalkulačka finančnej medzery', 'ico' => 'chart', 'color' => 'indigo', 'hero' => true,
+         'desc' => 'Koľko by rodine chýbalo pri úmrtí, invalidite alebo dlhodobej PN – odporúčané krytie vs. existujúce poistenie.'],
+        ['href' => 'checklist-analyza/', 'name' => 'Checklist – výstup z analýzy', 'ico' => 'check', 'color' => 'emerald',
+         'desc' => 'Kontrolný zoznam krokov a odporúčaní, s termínmi a zodpovednosťou. Dá sa predvyplniť z Kalkulačky.'],
+    ]],
+    ['title' => 'Zmluvy a dokumentácia', 'tools' => [
+        ['href' => 'splnomocnenie/', 'name' => 'Všeobecné splnomocnenie', 'ico' => 'user-plus', 'color' => 'indigo',
+         'desc' => 'Rozsah oprávnení, splnomocniteľ/-ka a splnomocnenec/-kyňa, platnosť – text sa doplní automaticky.'],
+        ['href' => 'vypoved-poistenia/', 'name' => 'Výpoveď poistnej zmluvy', 'ico' => 'file-x', 'color' => 'rose',
+         'desc' => 'Výber poisťovne, dôvodu a termínu – text výpovede sa doplní automaticky.'],
+        ['href' => 'preberaci-protokol/', 'name' => 'Preberací protokol', 'ico' => 'clipboard', 'color' => 'teal',
+         'desc' => 'Všeobecný preberací / odovzdávací protokol – zoznam odovzdávaných dokumentov, obe strany a podpisy.'],
+        ['href' => 'univerzalna-ziadost-zmena/', 'name' => 'Univerzálna žiadosť o zmenu', 'ico' => 'edit', 'color' => 'amber',
+         'desc' => 'Zmena osobných údajov, adresy alebo oprávnenej osoby v existujúcej zmluve – jeden formulár na všetko.'],
+    ]],
+    ['title' => 'Poistné udalosti a škody', 'tools' => [
+        ['href' => 'nahrada-skody-zodpovednost/', 'name' => 'Žiadosť o náhradu škody', 'ico' => 'alert', 'color' => 'rose',
+         'desc' => 'Z poistenia zodpovednosti škodcu/-kyne – typ škody, poisťovňa, popis udalosti a výška škody.'],
+        ['href' => 'cestne-vyhlasenie-inej-poistky/', 'name' => 'Čestné prehlásenie', 'ico' => 'shield', 'color' => 'indigo',
+         'desc' => 'O neuplatňovaní si náhrady z iného poistenia – vyhlasujúci/-a, súvisiaca škoda, poisťovňa.'],
+        ['href' => 'cestne-vyhlasenie-kupa-veci/', 'name' => 'Čestné prehlásenie o kúpe veci', 'ico' => 'receipt', 'color' => 'teal',
+         'desc' => 'Pre prípad, že chýbajú pôvodné bloky/doklady o kúpe – popis veci, dátum a dôvod chýbajúceho dokladu.'],
+        ['href' => 'suhlas-vyplata-inemu-uctu/', 'name' => 'Súhlas s výplatou na iný účet', 'ico' => 'swap', 'color' => 'emerald',
+         'desc' => 'Súhlas poškodeného/-ej s výplatou poistného plnenia na účet tretej osoby, napr. priamo autoservisu.'],
+    ]],
+    ['title' => 'Reklamácie, zmeny a spory', 'tools' => [
+        ['href' => 'ziadost-vratenie-preplatku/', 'name' => 'Vrátenie preplatku', 'ico' => 'euro', 'color' => 'emerald',
+         'desc' => 'Žiadosť o vrátenie preplatku / nespotrebovaného poistného pre zrušené alebo zmenené zmluvy, s IBANom.'],
+        ['href' => 'odvolanie-zamietnutie-plnenia/', 'name' => 'Odvolanie voči likvidácii', 'ico' => 'undo', 'color' => 'amber',
+         'desc' => 'Nesúhlas s výsledkom likvidácie alebo zamietnutím poistného plnenia – odôvodnenie a požadovaný postup.'],
+        ['href' => 'reklamacia-postup-institucie/', 'name' => 'Reklamácia / sťažnosť', 'ico' => 'message', 'color' => 'rose',
+         'desc' => 'Oficiálna reklamácia alebo sťažnosť voči postupu inštitúcie – predmet, popis a požadovaná náprava.'],
+    ]],
 ];
+$arrow = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
 ?>
 <!DOCTYPE html>
 <html lang="sk">
@@ -78,224 +89,69 @@ $categories = [
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
 <title>Formuláre — nástroje</title>
-<style>
-  /* Dizajnový jazyk „Atrament & Meď" — rovnaké tokeny ako assets/ui.css */
-  :root{
-    --chrome:#181b21;
-    --chrome-line:#2e323c;
-    --chrome-ink:#eceef1;
-    --chrome-muted:#8b919d;
-    --paper:#ffffff;
-    --ink:#1c1f26;
-    --muted:#8a8f98;
-    --label:#5b616b;
-    --border:#dcdfe4;
-    --accent:#b45309;
-    --accent-soft:#f7efe4;
-    --mono:ui-monospace,'SF Mono','Cascadia Mono','Roboto Mono',Consolas,'Courier New',monospace;
-    --sans:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
-  }
-  *{box-sizing:border-box;}
-  body{
-    margin:0; min-height:100vh; color:var(--chrome-ink);
-    font-family:var(--sans); -webkit-font-smoothing:antialiased;
-    padding:0 24px 64px;
-    background:
-      radial-gradient(rgba(255,255,255,.055) 1px, transparent 1.5px) 0 0/22px 22px,
-      linear-gradient(180deg,#20242c 0%, var(--chrome) 420px);
-    background-color:var(--chrome);
-  }
-  a{color:inherit; text-decoration:none;}
-  .wrap{max-width:920px; margin:0 auto;}
-
-  /* ── Horná lišta ── */
-  .topbar{display:flex; align-items:center; gap:12px; padding:22px 0 0; flex-wrap:wrap;}
-  .mark{
-    width:34px; height:34px; border-radius:5px; background:var(--accent); color:#fff;
-    display:flex; align-items:center; justify-content:center; flex-shrink:0;
-  }
-  .wordmark{
-    font-family:var(--mono); font-size:13px; font-weight:700;
-    letter-spacing:.22em; text-transform:uppercase;
-  }
-  .topbar .right{margin-left:auto; display:flex; align-items:center; gap:10px;}
-  .who{
-    display:flex; align-items:center; gap:9px;
-    border:1px solid var(--chrome-line); border-radius:999px; padding:5px 14px 5px 6px;
-  }
-  .who .ini{
-    width:26px; height:26px; border-radius:50%; color:#fff;
-    display:flex; align-items:center; justify-content:center;
-    font-family:var(--mono); font-size:10.5px; font-weight:700;
-  }
-  .who b{font-size:12.5px; font-weight:600; color:var(--chrome-ink); white-space:nowrap;}
-  .who a{
-    font-family:var(--mono); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase;
-    color:var(--chrome-muted); border-left:1px solid var(--chrome-line); padding-left:9px;
-  }
-  .who a:hover{color:var(--accent);}
-  .docs-link{
-    font-family:var(--mono); font-size:10px; letter-spacing:.12em; text-transform:uppercase;
-    color:var(--chrome-muted); border:1px solid var(--chrome-line); border-radius:999px;
-    padding:7px 14px; transition:color .15s, border-color .15s;
-  }
-  .docs-link:hover{color:#fff; border-color:var(--accent);}
-
-  /* ── Uvítanie ── */
-  .hero{padding:52px 0 34px; opacity:0; transform:translateY(10px); animation:rise .5s ease forwards;}
-  .hero .kicker{
-    font-family:var(--mono); font-size:11px; font-weight:600;
-    letter-spacing:.22em; text-transform:uppercase; color:var(--accent); margin-bottom:12px;
-  }
-  .hero h1{margin:0; font-size:32px; font-weight:800; letter-spacing:-.02em; color:#fff; line-height:1.1;}
-  .hero p{margin:10px 0 0; font-size:14px; color:var(--chrome-muted); line-height:1.6;}
-  @keyframes rise{ to{opacity:1; transform:translateY(0);} }
-
-  /* ── Kategórie = register dokumentov ── */
-  .cat{margin-bottom:36px; opacity:0; transform:translateY(10px); animation:rise .5s ease forwards;}
-  .cat:nth-of-type(1){animation-delay:.06s;}
-  .cat:nth-of-type(2){animation-delay:.12s;}
-  .cat:nth-of-type(3){animation-delay:.18s;}
-  .cat:nth-of-type(4){animation-delay:.24s;}
-  .cat:nth-of-type(5){animation-delay:.30s;}
-  .cat-head{display:flex; align-items:center; gap:12px; margin-bottom:12px;}
-  .cat-head .num{font-family:var(--mono); font-size:12px; font-weight:700; color:var(--accent);}
-  .cat-head .t{
-    font-family:var(--mono); font-size:11px; font-weight:600;
-    letter-spacing:.16em; text-transform:uppercase; color:var(--chrome-muted);
-  }
-  .cat-head .count{
-    font-family:var(--mono); font-size:10px; color:var(--chrome-muted);
-    border:1px solid var(--chrome-line); border-radius:999px; padding:2px 9px;
-  }
-  .cat-head .rule{flex:1; height:1px; background:var(--chrome-line);}
-
-  .sheet{
-    background:var(--paper); color:var(--ink); border-radius:8px; overflow:hidden;
-    box-shadow:0 2px 6px rgba(0,0,0,.25), 0 20px 50px -20px rgba(0,0,0,.55);
-  }
-  .row{
-    display:flex; align-items:center; gap:16px;
-    padding:15px 22px; border-bottom:1px solid var(--border);
-    transition:background .15s;
-    position:relative;
-  }
-  .row:last-child{border-bottom:none;}
-  a.row::before{
-    content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
-    background:var(--accent); transform:scaleY(0); transition:transform .18s ease;
-  }
-  a.row:hover{background:#faf8f5;}
-  a.row:hover::before{transform:scaleY(1);}
-  .row .idx{
-    font-family:var(--mono); font-size:11.5px; font-weight:700; color:var(--muted);
-    width:26px; flex-shrink:0; text-align:right;
-  }
-  a.row:hover .idx{color:var(--accent);}
-  .row .body{flex:1; min-width:0;}
-  .row h2{margin:0; font-size:14.5px; font-weight:700; letter-spacing:-.005em;}
-  .row p{
-    margin:3px 0 0; font-size:12px; color:var(--muted); line-height:1.5;
-    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-  }
-  .row .arrow{color:var(--border); flex-shrink:0; transition:transform .18s, color .18s;}
-  a.row:hover .arrow{color:var(--accent); transform:translateX(3px);}
-
-  .row.soon{color:var(--muted);}
-  .row.soon h2{color:var(--label);}
-  .badge-soon{
-    font-family:var(--mono); font-size:9px; font-weight:600; letter-spacing:.12em;
-    text-transform:uppercase; color:var(--muted); background:#f1f2f4;
-    border:1px solid var(--border); padding:4px 9px; border-radius:3px; flex-shrink:0;
-  }
-
-  .foot{
-    margin-top:52px; font-family:var(--mono); font-size:10px; letter-spacing:.12em;
-    text-transform:uppercase; color:#565c66; text-align:center;
-  }
-
-  @media(max-width:640px){
-    .hero{padding:38px 0 26px;}
-    .hero h1{font-size:25px;}
-    .topbar .right{width:100%; order:3;}
-    .row p{white-space:normal;}
-    .row{padding:13px 16px;}
-  }
-  @media(prefers-reduced-motion:reduce){
-    .hero,.cat{animation:none; opacity:1; transform:none;}
-  }
-</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/panel.css?v=2">
 </head>
 <body>
 
-<div class="wrap">
+<header class="topbar">
+  <div class="tb-title">
+    <h1>Nástroje</h1>
+    <p>Vyber nástroj — vyplníš údaje a hotový dokument stiahneš ako PDF.</p>
+  </div>
+  <div class="tb-actions">
+    <a class="pillbtn" href="/moje-dokumenty.php">Moje dokumenty</a>
+    <span class="who">
+      <span class="ini" style="background:<?= htmlspecialchars($me['color']) ?>;"><?= htmlspecialchars(advisorInitials($me['name'])) ?></span>
+      <b><?= htmlspecialchars($me['name']) ?></b>
+    </span>
+  </div>
+</header>
 
-  <div class="topbar">
-    <div class="mark">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15l2 2 4-4"/>
-      </svg>
-    </div>
-    <span class="wordmark">Formuláre</span>
-    <div class="right">
-      <a class="docs-link" href="/moje-dokumenty.php">Moje dokumenty</a>
-      <span class="who">
-        <span class="ini" style="background:<?= htmlspecialchars($me['color']) ?>;"><?= htmlspecialchars(advisorInitials($me['name'])) ?></span>
-        <b><?= htmlspecialchars($me['name']) ?></b>
-        <a href="/" title="Prepnúť poradcu">Zmeniť</a>
-      </span>
-    </div>
+<main class="content">
+
+  <div class="page-head">
+    <div class="kicker">Pracovný pult</div>
+    <h2>Dobrý deň, <?= htmlspecialchars(explode(' ', $me['name'])[0]) ?></h2>
+    <p>Máš pripravených <?= array_sum(array_map(fn($c) => count($c['tools']), $categories)) ?> nástrojov v <?= count($categories) ?> kategóriách.</p>
   </div>
 
-  <div class="hero">
-    <div class="kicker">Register nástrojov</div>
-    <h1>Čo dnes pripravujeme?</h1>
-    <p>Vyber nástroj — vyplníš údaje, náhľad sa priebežne aktualizuje a hotový dokument stiahneš ako PDF.</p>
-  </div>
-
-  <?php $catNo = 0; foreach ($categories as $cat): $catNo++; ?>
-  <div class="cat">
-    <div class="cat-head">
-      <span class="num"><?= str_pad((string)$catNo, 2, '0', STR_PAD_LEFT) ?></span>
-      <span class="t"><?= htmlspecialchars($cat['title']) ?></span>
+  <?php foreach ($categories as $cat): ?>
+  <div class="section">
+    <div class="section-head">
+      <h3><?= htmlspecialchars($cat['title']) ?></h3>
       <span class="count"><?= count($cat['tools']) ?></span>
-      <span class="rule"></span>
     </div>
-    <div class="sheet">
-      <?php $i = 0; foreach ($cat['tools'] as $tool): $i++; ?>
-      <a class="row" href="<?= htmlspecialchars($tool['href']) ?>">
-        <span class="idx"><?= str_pad((string)$i, 2, '0', STR_PAD_LEFT) ?></span>
-        <span class="body">
-          <h2><?= htmlspecialchars($tool['name']) ?></h2>
-          <p><?= htmlspecialchars($tool['desc']) ?></p>
-        </span>
-        <span class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+    <div class="tool-grid">
+      <?php foreach ($cat['tools'] as $t): ?>
+      <a class="tool-card c-<?= htmlspecialchars($t['color']) ?><?= !empty($t['hero']) ? ' hero' : '' ?>" href="<?= htmlspecialchars($t['href']) ?>">
+        <span class="ic"><?= ico($t['ico']) ?></span>
+        <h4><?= htmlspecialchars($t['name']) ?></h4>
+        <p><?= htmlspecialchars($t['desc']) ?></p>
+        <span class="go">Otvoriť <?= $arrow ?></span>
       </a>
       <?php endforeach; ?>
     </div>
   </div>
   <?php endforeach; ?>
 
-  <div class="cat">
-    <div class="cat-head">
-      <span class="num"><?= str_pad((string)($catNo + 1), 2, '0', STR_PAD_LEFT) ?></span>
-      <span class="t">Pripravujeme</span>
-      <span class="rule"></span>
+  <div class="section">
+    <div class="section-head">
+      <h3>Pripravujeme</h3>
     </div>
-    <div class="sheet">
-      <div class="row soon">
-        <span class="idx">··</span>
-        <span class="body">
-          <h2>Ďalšie formuláre</h2>
-          <p>Postupne pribudnú ďalšie vzory a žiadosti.</p>
-        </span>
+    <div class="tool-grid">
+      <div class="tool-card soon">
+        <span class="ic"><?= ico('plus') ?></span>
+        <h4>Ďalšie formuláre</h4>
+        <p>Postupne pribudnú ďalšie vzory a žiadosti.</p>
         <span class="badge-soon">Čoskoro</span>
       </div>
     </div>
   </div>
 
-  <div class="foot">Formuláre · prístup len pre poradcov</div>
+</main>
 
-</div>
+<script src="/assets/shell.js?v=2"></script>
 </body>
 </html>
