@@ -407,6 +407,9 @@ td .strong{font-weight:600; color:var(--ink);}
 }
 .add-form button:hover{background:var(--accent-ink);}
 
+/* zoznam prepínačov nástrojov (admin, per poradca) */
+.tools-grid{display:grid; grid-template-columns:1fr 1fr; gap:6px 16px;}
+
 /* výber farby (admin) */
 .color-form{display:flex; align-items:center; gap:6px; margin:0;}
 .color-form input[type=color]{width:30px; height:30px; padding:0; border:1px solid var(--line-strong); border-radius:var(--radius-md); cursor:pointer; background:#fff;}
@@ -418,4 +421,25 @@ td .strong{font-weight:600; color:var(--ink);}
   .content{padding:22px 18px 48px;}
   .add-form{grid-template-columns:1fr;}
   .card{overflow-x:auto;}
+  .tools-grid{grid-template-columns:1fr;}
+
+  /* Tabuľky (napr. admin.php) sa na mobile nedajú čítať v pôvodnej forme
+     (deväť stĺpcov, akčné tlačidlá mimo obrazovky) — každý riadok sa
+     prekreslí ako samostatná karta so štítkami namiesto hlavičky. */
+  .card table tr:first-child{display:none;}
+  .card table tr{
+    display:block; background:var(--desk); border:1px solid var(--border); border-radius:var(--radius-lg);
+    margin-bottom:10px; padding:2px 14px;
+  }
+  .card table tr:last-child{margin-bottom:0;}
+  .card table td{
+    display:flex; align-items:center; justify-content:space-between; gap:14px;
+    padding:9px 0; border-bottom:1px solid var(--border); text-align:right; width:auto;
+  }
+  .card table td:last-child{border-bottom:none;}
+  .card table td[data-label]::before{
+    content:attr(data-label); font-size:10.5px; font-weight:700; text-transform:uppercase;
+    letter-spacing:.04em; color:var(--label); text-align:left; flex-shrink:0;
+  }
+  .card table td[colspan]{display:block; text-align:left; padding:12px 0;}
 }

@@ -98,7 +98,7 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=11">
+<link rel="stylesheet" href="/assets/panel.css?v=12">
 </head><body>
 <header class="topbar">
   <div class="tb-title">
@@ -122,19 +122,19 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
         $aEnabledCount = $totalToolCount - count($aDisabled);
       ?>
       <tr id="view-<?= (int)$a['id'] ?>" class="<?= $a['active'] ? '' : 'inactive' ?>">
-        <td>
+        <td data-label="Farba">
           <form method="post" class="color-form">
             <input type="hidden" name="color_id" value="<?= (int)$a['id'] ?>">
             <input type="color" name="color" value="<?= h($a['color']) ?>" onchange="this.form.requestSubmit()" title="Farba poradcu">
           </form>
         </td>
-        <td><?= h($a['name']) ?><?= $a['is_admin'] ? ' (admin)' : '' ?><?= !empty($a['is_owner']) ? ' (vlastník)' : '' ?></td>
-        <td><?= h($a['org']) ?></td>
-        <td><?= h($a['email']) ?></td>
-        <td><?= h($a['phone']) ?></td>
-        <td><span class="pill <?= empty($a['pin_hash']) ? 'pending' : 'submitted' ?>"><?= empty($a['pin_hash']) ? 'Nenastavený' : 'Nastavený' ?></span></td>
-        <td><span class="pill <?= $aEnabledCount === $totalToolCount ? 'submitted' : 'pending' ?>"><?= $aEnabledCount ?>/<?= $totalToolCount ?></span></td>
-        <td><?= $a['active'] ? 'aktívny' : 'neaktívny' ?></td>
+        <td data-label="Meno"><?= h($a['name']) ?><?= $a['is_admin'] ? ' (admin)' : '' ?><?= !empty($a['is_owner']) ? ' (vlastník)' : '' ?></td>
+        <td data-label="Organizácia"><?= h($a['org']) ?></td>
+        <td data-label="E-mail"><?= h($a['email']) ?></td>
+        <td data-label="Telefón"><?= h($a['phone']) ?></td>
+        <td data-label="PIN"><span class="pill <?= empty($a['pin_hash']) ? 'pending' : 'submitted' ?>"><?= empty($a['pin_hash']) ? 'Nenastavený' : 'Nastavený' ?></span></td>
+        <td data-label="Nástroje"><span class="pill <?= $aEnabledCount === $totalToolCount ? 'submitted' : 'pending' ?>"><?= $aEnabledCount ?>/<?= $totalToolCount ?></span></td>
+        <td data-label="Stav"><?= $a['active'] ? 'aktívny' : 'neaktívny' ?></td>
         <td style="display:grid; grid-template-columns:repeat(2,1fr); gap:6px; min-width:184px;">
           <button type="button" class="toggle-btn" onclick="editAdvisor(<?= (int)$a['id'] ?>)">Upraviť</button>
           <button type="button" class="toggle-btn" onclick="editPin(<?= (int)$a['id'] ?>)">PIN</button>
@@ -180,7 +180,7 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
             <?php foreach ($TOOL_CATEGORIES as $cat): ?>
             <div style="margin-bottom:12px;">
               <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin-bottom:6px;"><?= h($cat['title']) ?></div>
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px 16px;">
+              <div class="tools-grid">
                 <?php foreach ($cat['tools'] as $t): $slug = toolSlug($t['href']); ?>
                 <label style="display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer;">
                   <input type="checkbox" name="enabled_tools[]" value="<?= h($slug) ?>" <?= in_array($slug, $aDisabled, true) ? '' : 'checked' ?>>
@@ -214,12 +214,12 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
       <tr><th>Poradca</th><th>Klient</th><th>Nástroj</th><th>Zdroj</th><th>Kedy</th><th></th></tr>
       <?php foreach ($docs as $d): ?>
       <tr>
-        <td><?= h($d['advisor_name']) ?></td>
-        <td><?= h($d['client_label']) ?></td>
-        <td><?= h(toolLabel($d['tool'])) ?></td>
-        <td><?= $d['source'] === 'client' ? 'klient' : 'poradca' ?></td>
-        <td class="date"><?= h($d['generated_at']) ?></td>
-        <td style="display:flex; gap:6px;">
+        <td data-label="Poradca"><?= h($d['advisor_name']) ?></td>
+        <td data-label="Klient"><?= h($d['client_label']) ?></td>
+        <td data-label="Nástroj"><?= h(toolLabel($d['tool'])) ?></td>
+        <td data-label="Zdroj"><?= $d['source'] === 'client' ? 'klient' : 'poradca' ?></td>
+        <td class="date" data-label="Kedy"><?= h($d['generated_at']) ?></td>
+        <td style="display:flex; gap:6px; justify-content:flex-start;">
           <a class="toggle-btn" href="/<?= rawurlencode($d['tool']) ?>/index.html?loadDoc=<?= (int)$d['id'] ?>" target="_blank">PDF</a>
           <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj zmazať tento dokument?');">
             <input type="hidden" name="delete_doc_id" value="<?= (int)$d['id'] ?>">
@@ -238,11 +238,11 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
       <tr><th>Poradca</th><th>Klient</th><th>Nástroj</th><th>Stav</th><th>Vytvorené</th></tr>
       <?php foreach ($links as $l): ?>
       <tr>
-        <td><?= h($l['advisor_name']) ?></td>
-        <td><?= h($l['client_label']) ?></td>
-        <td><?= h(toolLabel($l['tool'])) ?></td>
-        <td><span class="pill <?= $l['status'] ?>"><?= $l['status']==='submitted' ? 'Vyplnené' : 'Čaká' ?></span></td>
-        <td class="date"><?= h($l['created_at']) ?></td>
+        <td data-label="Poradca"><?= h($l['advisor_name']) ?></td>
+        <td data-label="Klient"><?= h($l['client_label']) ?></td>
+        <td data-label="Nástroj"><?= h(toolLabel($l['tool'])) ?></td>
+        <td data-label="Stav"><span class="pill <?= $l['status'] ?>"><?= $l['status']==='submitted' ? 'Vyplnené' : 'Čaká' ?></span></td>
+        <td class="date" data-label="Vytvorené"><?= h($l['created_at']) ?></td>
       </tr>
       <?php endforeach; ?>
       <?php if (!$links): ?><tr><td colspan="5" style="color:var(--muted);">Zatiaľ žiadne odkazy.</td></tr><?php endif; ?>
@@ -253,20 +253,20 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
 <script>
 function editAdvisor(id){
   document.getElementById('view-'+id).style.display = 'none';
-  document.getElementById('edit-'+id).style.display = 'table-row';
+  document.getElementById('edit-'+id).style.display = '';
 }
 function cancelEdit(id){
   document.getElementById('edit-'+id).style.display = 'none';
   document.getElementById('view-'+id).style.display = '';
 }
 function editPin(id){
-  document.getElementById('pin-'+id).style.display = 'table-row';
+  document.getElementById('pin-'+id).style.display = '';
 }
 function cancelPin(id){
   document.getElementById('pin-'+id).style.display = 'none';
 }
 function editTools(id){
-  document.getElementById('tools-'+id).style.display = 'table-row';
+  document.getElementById('tools-'+id).style.display = '';
 }
 function cancelTools(id){
   document.getElementById('tools-'+id).style.display = 'none';
