@@ -163,6 +163,29 @@ const AGENT_CATEGORIES = ['viazaný finančný agent', 'podriadený finančný a
 const NABOR_ACTIVE_REGIONS = ['Prešovský kraj', 'Košický kraj'];
 
 /**
+ * Vzdušná vzdialenosť dvoch bodov v km (Haversine) — používa sa na
+ * odhalenie zjavne zlých výsledkov presného geokódovania (viď GEOCODE_OUTLIER_KM).
+ */
+function haversineKm(float $lat1, float $lon1, float $lat2, float $lon2): float {
+    $R = 6371.0;
+    $dLat = deg2rad($lat2 - $lat1);
+    $dLon = deg2rad($lon2 - $lon1);
+    $a = sin($dLat / 2) ** 2 + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon / 2) ** 2;
+    return $R * 2 * atan2(sqrt($a), sqrt(1 - $a));
+}
+
+/**
+ * Maximálna prijateľná vzdialenosť medzi presnou polohou z LocationIQ a
+ * približným stredom obce podľa PSČ (coordsForZip) — nad tento limit sa
+ * presný výsledok považuje za pravdepodobne zlý (LocationIQ si pri
+ * nejednoznačnej/neúplnej adrese niekedy vyberie zhodnú ulicu v úplne inom
+ * meste, typicky Bratislavu) a použije sa radšej overený približný bod.
+ * 60 km s rezervou pokrýva aj nepresnosť trojmiestnej PSČ predpony (priemer
+ * cez celý okres), ale spoľahlivo odchytí medzikrajský skok.
+ */
+const GEOCODE_OUTLIER_KM = 60.0;
+
+/**
  * Vráti kraj SR podľa 5-miestneho PSČ, alebo null ak sa nenašlo (napr.
  * neplatné/chýbajúce PSČ). Tabuľka psc-kraj.php je generovaná z overených
  * dát (obce/okresy/kraje SR) — nikdy neupravuj ručne, pozri hlavičku súboru.
@@ -451,6 +474,14 @@ function geocodeBatchProcess(int $limit = 35): array {
         $now = date('Y-m-d H:i:s');
         if ($result['status'] === 'found') {
             [$lat, $lon] = $result['coords'];
+            // Poistka: ak LocationIQ vráti bod ďaleko od približného stredu obce
+            // podľa PSČ (typicky si pri nejednoznačnej adrese vyberie zhodnú
+            // ulicu v inom meste), radšej použiť overený približný bod.
+            [, $zip] = registryParseAddress($row['address']);
+            $approx = $zip !== '' ? coordsForZip($zip) : null;
+            if ($approx && haversineKm($lat, $lon, $approx[0], $approx[1]) > GEOCODE_OUTLIER_KM) {
+                [$lat, $lon] = $approx;
+            }
             $updateCache->execute([$lat, $lon, 'found', $now, $row['address_hash']]);
             $updateRegistry->execute([$lat, $lon, $now, $row['address']]);
             $found++;
@@ -467,6 +498,36 @@ function geocodeBatchProcess(int $limit = 35): array {
 
     $remaining = (int)$pdo->query("SELECT COUNT(*) c FROM formulare_geocode_cache WHERE status = 'pending'")->fetch()['c'];
     return ['processed' => $found + $notFound + $retried, 'found' => $found, 'not_found' => $notFound, 'retried' => $retried, 'remaining' => $remaining, 'first_error' => $firstError];
+}
+
+/**
+ * Jednorazová oprava už uložených presných súradníc, ktoré prešli do appky
+ * PRED zavedením poistky v geocodeBatchProcess() (viď GEOCODE_OUTLIER_KM) —
+ * napr. body zjavne v Bratislave/Žiline namiesto Prešovského/Košického kraja.
+ * Prejde celú formulare_geocode_cache so status='found', porovná uloženú
+ * polohu s približným stredom obce podľa PSČ a odľahlé prepíše približným
+ * bodom (v cache aj v formulare_registry_entities). Bezpečné spúšťať opakovane.
+ */
+function geocodeFixOutliers(): array {
+    $pdo = db();
+    $rows = $pdo->query("SELECT address_hash, address, lat, lon FROM formulare_geocode_cache WHERE status = 'found' AND lat IS NOT NULL")->fetchAll();
+    $updateCache = $pdo->prepare('UPDATE formulare_geocode_cache SET lat = ?, lon = ?, updated_at = ? WHERE address_hash = ?');
+    $updateRegistry = $pdo->prepare('UPDATE formulare_registry_entities SET lat = ?, lon = ?, geocoded_at = ? WHERE address = ?');
+    $now = date('Y-m-d H:i:s');
+    $checked = 0; $fixed = 0;
+    foreach ($rows as $row) {
+        [, $zip] = registryParseAddress($row['address']);
+        if ($zip === '') continue;
+        $approx = coordsForZip($zip);
+        if (!$approx) continue;
+        $checked++;
+        if (haversineKm((float)$row['lat'], (float)$row['lon'], $approx[0], $approx[1]) > GEOCODE_OUTLIER_KM) {
+            $updateCache->execute([$approx[0], $approx[1], $now, $row['address_hash']]);
+            $updateRegistry->execute([$approx[0], $approx[1], $now, $row['address']]);
+            $fixed++;
+        }
+    }
+    return ['checked' => $checked, 'fixed' => $fixed];
 }
 
 function db(): PDO {

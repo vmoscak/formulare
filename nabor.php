@@ -44,6 +44,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['geocode_batch'])) {
     }
 }
 
+$fixOutliersMessage = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fix_outliers'])) {
+    try {
+        $f = geocodeFixOutliers();
+        $fixOutliersMessage = 'Skontrolovaných ' . number_format($f['checked'], 0, ',', ' ') . ', opravených ' . $f['fixed']
+            . ' (súradnice ďaleko od PSČ nahradené približnou polohou obce).';
+    } catch (Throwable $e) {
+        $fixOutliersMessage = 'Chyba: ' . $e->getMessage();
+    }
+}
+
 // -- stav geokódovania (presné adresy agentov) --
 $geoStats = ['pending' => 0, 'found' => 0, 'not_found' => 0];
 try {
@@ -181,6 +192,7 @@ function qs(array $overrides): string {
     </p>
     <?php if ($geocodeMessage): ?><div class="pill submitted" style="margin-bottom:12px; padding:6px 12px;"><?= h($geocodeMessage) ?></div><?php endif; ?>
     <?php if ($geocodeDebug): ?><div class="pill pending" style="margin-bottom:12px; padding:6px 12px; background:var(--rose-soft); color:var(--rose); border-color:#fbd0d5; display:block; white-space:normal;">Diagnostika (dočasné): <?= h($geocodeDebug) ?></div><?php endif; ?>
+    <?php if ($fixOutliersMessage): ?><div class="pill submitted" style="margin-bottom:12px; padding:6px 12px;"><?= h($fixOutliersMessage) ?></div><?php endif; ?>
     <div style="display:flex; align-items:center; gap:18px; flex-wrap:wrap;">
       <div>
         <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em;">Presne nájdených</div>
@@ -197,6 +209,10 @@ function qs(array $overrides): string {
       <form method="post" style="margin-left:auto;">
         <input type="hidden" name="geocode_batch" value="1">
         <button type="submit" class="pillbtn">Spustiť dávku teraz (~50, ručne)</button>
+      </form>
+      <form method="post">
+        <input type="hidden" name="fix_outliers" value="1">
+        <button type="submit" class="pillbtn" title="Nájde a opraví presné súradnice, ktoré sú príliš ďaleko od PSČ (napr. omylom v Bratislave namiesto Košíc) — nahradí ich približnou polohou obce.">Opraviť podozrivé súradnice</button>
       </form>
     </div>
   </div>
