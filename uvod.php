@@ -12,7 +12,7 @@ $curAdvisorId = curAdvisorId();
 if (!$curAdvisorId) { header('Location: /'); exit; }
 
 try {
-    $stmt = db()->prepare('SELECT name, color, disabled_tools FROM formulare_advisors WHERE id = ? AND active = 1');
+    $stmt = db()->prepare('SELECT name, color, disabled_tools, is_admin, is_owner FROM formulare_advisors WHERE id = ? AND active = 1');
     $stmt->execute([$curAdvisorId]);
     $me = $stmt->fetch();
 } catch (Throwable $e) { $me = null; }
@@ -48,6 +48,27 @@ $hubMeta = [
     'pomocky'   => ['ico' => 'message', 'color' => '#e11d48', 'href' => '/pomocky.php'],
 ];
 
+// Skratky na zvyšné časti appky (mimo troch hlavných záložiek) — najmä pre
+// mobil, kde ľavá lišta je skrytá za hamburger menu. Moje dokumenty vidí
+// každý, ostatné len admin/owner presne podľa rovnakých pravidiel ako v
+// ľavej lište (assets/shell.js).
+$extraHubs = [
+    ['label' => 'Moje dokumenty', 'subtitle' => 'História vygenerovaných PDF a odoslaných klientských odkazov.',
+     'ico' => 'folder', 'color' => '#059669', 'href' => '/moje-dokumenty.php', 'tag' => null],
+];
+if (!empty($me['is_admin'])) {
+    $extraHubs[] = ['label' => 'Admin', 'subtitle' => 'Správa poradcov, PIN kódov a zapínanie/vypínanie nástrojov.',
+        'ico' => 'shield', 'color' => '#7c3aed', 'href' => '/admin.php', 'tag' => 'Admin'];
+}
+if (!empty($me['is_owner'])) {
+    $extraHubs[] = ['label' => 'Nábor', 'subtitle' => 'Register agentov NBS — vyhľadávanie a mapa podľa kraja/okresu.',
+        'ico' => 'users', 'color' => '#d97706', 'href' => '/nabor.php', 'tag' => 'Len pre teba'];
+    $extraHubs[] = ['label' => 'Znalostná báza', 'subtitle' => 'Interné FAQ a rýchle texty na kopírovanie jedným klikom.',
+        'ico' => 'book', 'color' => '#0d9488', 'href' => '/znalostna-baza.php', 'tag' => 'Len pre teba'];
+    $extraHubs[] = ['label' => 'Novinky', 'subtitle' => 'Editor noviniek zobrazovaných na tejto stránke.',
+        'ico' => 'megaphone', 'color' => '#ea580c', 'href' => '/novinky.php', 'tag' => 'Len pre teba'];
+}
+
 $news = [];
 try {
     $news = db()->query('SELECT * FROM formulare_news ORDER BY important DESC, created_at DESC LIMIT 5')->fetchAll();
@@ -63,7 +84,7 @@ $newsPalette = ['#4f46e5', '#059669', '#0d9488', '#7c3aed', '#0284c7', '#d97706'
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=9">
+<link rel="stylesheet" href="/assets/panel.css?v=11">
 </head><body class="home-page">
 <div class="home-bg" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
 <header class="topbar">
@@ -123,7 +144,30 @@ $newsPalette = ['#4f46e5', '#059669', '#0d9488', '#7c3aed', '#0284c7', '#d97706'
     </div>
   </div>
 
+  <?php if ($extraHubs): ?>
+  <div class="section">
+    <div class="section-head"><h3>Ďalšie skratky</h3></div>
+    <div class="hub-grid">
+      <?php foreach ($extraHubs as $eh): ?>
+      <a class="hub-card" href="<?= h($eh['href']) ?>" style="--hub-color:<?= h($eh['color']) ?>;">
+        <span class="hub-ic"><?= toolIco($eh['ico']) ?></span>
+        <div class="hub-body">
+          <h4><?= h($eh['label']) ?></h4>
+          <p><?= h($eh['subtitle']) ?></p>
+        </div>
+        <div class="hub-foot">
+          <span class="hub-count"><?= $eh['tag'] ? h($eh['tag']) : '' ?></span>
+          <span class="hub-go">Otvoriť
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </span>
+        </div>
+      </a>
+      <?php endforeach; ?>
+    </div>
+  </div>
+  <?php endif; ?>
+
 </main>
 
-<script src="/assets/shell.js?v=6"></script>
+<script src="/assets/shell.js?v=8"></script>
 </body></html>

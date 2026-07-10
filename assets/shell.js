@@ -39,6 +39,8 @@
     home: '<path d="M3 10.5L12 3l9 7.5"/><path d="M5 9v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9"/>',
     sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
     moon: '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>',
+    menu: '<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>',
+    close: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
   };
 
   // Aktuálne účinná téma — explicitný prepínač (data-theme) má prednosť,
@@ -133,10 +135,38 @@
       '#appRail button.ri:hover{color:var(--ink-2,#4b5563);background:var(--desk,#f5f6f8);transform:scale(1.07);}' +
       '#appRail button.ri:active{transform:scale(.94);}' +
       '#appRail .rbot{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:10px;}' +
-      '#appRail .ravatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;' +
-      'font-size:13px;font-weight:600;color:#fff;text-decoration:none;box-shadow:0 4px 10px -4px rgba(16,24,40,.4);}' +
+      '#appRail .ravatar{display:flex;align-items:center;text-decoration:none;}' +
+      '#appRail .rav-badge{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;' +
+      'font-size:13px;font-weight:600;color:#fff;box-shadow:0 4px 10px -4px rgba(16,24,40,.4);flex-shrink:0;}' +
+      '#appRail .rname{display:none;}' +
       'body.has-rail{padding-left:72px;}' +
-      '@media(max-width:720px){#appRail{display:none;}body.has-rail{padding-left:0;}}';
+      '.rail-toggle,.rail-backdrop{display:none;}' +
+      '@media(max-width:720px){' +
+        '#appRail{align-items:stretch;width:250px;transform:translateX(-100%);transition:transform .25s cubic-bezier(.22,1,.36,1);' +
+        'box-shadow:0 12px 40px -8px rgba(0,0,0,.35);padding:18px 14px;}' +
+        '#appRail.open{transform:translateX(0);}' +
+        '#appRail nav{align-items:stretch;gap:3px;overflow-y:auto;}' +
+        '#appRail a.ri,#appRail button.ri{width:100%;height:auto;justify-content:flex-start;gap:12px;padding:11px 12px;border-radius:10px;}' +
+        '#appRail a.ri .tip,#appRail button.ri .tip{position:static;opacity:1;background:none;color:inherit;padding:0;' +
+        'font-size:13.5px;font-weight:500;box-shadow:none;transform:none;white-space:nowrap;}' +
+        '#appRail a.ri.on::before{left:0;top:8px;bottom:8px;height:auto;}' +
+        '#appRail .rlogo{align-self:flex-start;}' +
+        '#appRail .rbot{width:100%;align-items:stretch;}' +
+        '#appRail .ravatar{width:100%;padding:8px 10px;border-radius:10px;gap:10px;}' +
+        '#appRail .ravatar:hover{background:var(--desk,#f5f6f8);}' +
+        '#appRail .rname{display:inline;font-size:13px;font-weight:600;color:var(--ink,#111827);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
+        'body.has-rail{padding-left:0;}' +
+        // Plávajúce tlačidlo vpravo dole (FAB) — vedome mimo ľavého horného rohu,
+        // kde majú jednotlivé nástroje vlastné "späť" tlačidlo/logo, aby sa s ním
+        // hamburger nikdy neprekrýval bez ohľadu na layout konkrétnej stránky.
+        '.rail-toggle{display:flex;position:fixed;bottom:calc(18px + env(safe-area-inset-bottom,0px));right:18px;z-index:61;' +
+        'width:50px;height:50px;border-radius:50%;background:var(--accent,#4f46e5);border:none;align-items:center;justify-content:center;' +
+        'color:#fff;box-shadow:0 8px 20px -4px rgba(79,70,229,.5);transition:transform .12s ease;}' +
+        '.rail-toggle:active{transform:scale(.92);}' +
+        '.rail-backdrop{display:block;position:fixed;inset:0;background:rgba(15,17,21,.45);z-index:59;' +
+        'opacity:0;pointer-events:none;transition:opacity .2s ease;}' +
+        '.rail-backdrop.show{opacity:1;pointer-events:auto;}' +
+      '}';
 
     var navHtml = NAV.map(function (n) {
       return '<a class="ri' + (n.active ? ' on' : '') + '" href="' + n.href + '">' + svg(n.icon) +
@@ -147,14 +177,18 @@
     var themeIcon = effectiveTheme() === 'dark' ? ICONS.sun : ICONS.moon;
 
     var html =
+      '<button type="button" class="rail-toggle" id="railToggle" aria-label="Menu">' + svg(ICONS.menu) + '</button>' +
+      '<div class="rail-backdrop" id="railBackdrop"></div>' +
       '<div id="appRail">' +
         '<a class="rlogo" href="/uvod.php" title="Formuláre">' + svg(ICONS.logo) + '</a>' +
         '<nav>' + navHtml + '</nav>' +
         '<div class="rbot">' +
           '<button type="button" class="ri" id="themeToggle" title="Prepnúť tmavý/svetlý režim">' + svg(themeIcon) +
           '<span class="tip">Tmavý/svetlý režim</span></button>' +
-          '<a class="ravatar" href="/" title="' + esc(adv.name || '') + ' — zmeniť poradcu" ' +
-          'style="background:' + color + ';">' + esc(initials(adv.name)) + '</a>' +
+          '<a class="ravatar" href="/" title="' + esc(adv.name || '') + ' — zmeniť poradcu">' +
+          '<span class="rav-badge" style="background:' + color + ';">' + esc(initials(adv.name)) + '</span>' +
+          '<span class="rname">' + esc(adv.name || 'Zmeniť poradcu') + '</span>' +
+          '</a>' +
         '</div>' +
       '</div>';
 
@@ -164,11 +198,27 @@
 
     var wrap = document.createElement('div');
     wrap.innerHTML = html;
-    document.body.insertBefore(wrap.firstChild, document.body.firstChild);
+    while (wrap.firstChild) document.body.insertBefore(wrap.firstChild, document.body.firstChild);
     document.body.classList.add('has-rail');
 
     document.getElementById('themeToggle').addEventListener('click', function () {
       setTheme(effectiveTheme() === 'dark' ? 'light' : 'dark');
+    });
+
+    // Mobilné zásuvkové menu — hamburger otvára/zatvára #appRail ako
+    // vysúvací panel (na desktope je .rail-toggle skrytý cez CSS, appRail
+    // zostáva pevná lišta ako doteraz).
+    var railEl = document.getElementById('appRail');
+    var toggleEl = document.getElementById('railToggle');
+    var backdropEl = document.getElementById('railBackdrop');
+    function openRail() { railEl.classList.add('open'); backdropEl.classList.add('show'); toggleEl.innerHTML = svg(ICONS.close); }
+    function closeRail() { railEl.classList.remove('open'); backdropEl.classList.remove('show'); toggleEl.innerHTML = svg(ICONS.menu); }
+    toggleEl.addEventListener('click', function () {
+      railEl.classList.contains('open') ? closeRail() : openRail();
+    });
+    backdropEl.addEventListener('click', closeRail);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeRail();
     });
   }
 
