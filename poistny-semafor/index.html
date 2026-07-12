@@ -168,7 +168,15 @@
    rok 2026), zjednodušené na jedinú referenčnú sumu bez záväzkov a detí.
 =========================================================================== */
 const FUNERAL_COST = 3000;
-const DEATH_MONTHS = 60;
+/* Úmrtie sa pri jednotlivcovi a v páre rieši úplne inak (rovnako ako vo
+   financna-medzera): jednotlivec bez partnera nemá nikoho, kto by dlhodobo
+   potreboval náhradu jeho príjmu — rieši sa len krátky preklenovací bridge
+   (dedičské konanie). Pár naopak potrebuje dlhodobé zabezpečenie pozostalého
+   partnera, preto oveľa vyšší násobok. Tento nástroj nezbiera záväzky/deti
+   (na to slúži plná Kalkulačka finančnej medzery), preto sa pri jednotlivcovi
+   ako orientačná náhrada za splátku záväzkov použijú mesačné výdavky. */
+const DEATH_MONTHS_SINGLE = 12;
+const DEATH_MONTHS_COUPLE = 60;
 const DISABILITY_MONTHS = 36;
 const CRITICAL_ILLNESS_MONTHS = 36;
 const PERMANENT_INJURY_MONTHS = 60;
@@ -220,7 +228,7 @@ function computeSemafor(){
 
   return {
     hasBasicInputs,
-    death: { need: hasBasicInputs ? FUNERAL_COST + DEATH_MONTHS*refSum : 0, covered: num(state.existingDeath) },
+    death: { need: hasBasicInputs ? FUNERAL_COST + (hasPartner ? DEATH_MONTHS_COUPLE : DEATH_MONTHS_SINGLE)*refSum : 0, covered: num(state.existingDeath) },
     disability: { need: hasBasicInputs ? DISABILITY_MONTHS*refSum : 0, covered: num(state.existingDisability) },
     criticalIllness: { need: hasBasicInputs ? CRITICAL_ILLNESS_MONTHS*refSum : 0, covered: num(state.existingCriticalIllness) },
     permanentInjury: { need: hasBasicInputs ? PERMANENT_INJURY_MONTHS*refSum : 0, covered: num(state.existingPermanentInjury) },
