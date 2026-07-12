@@ -42,7 +42,7 @@ jobs:
             file_put_contents(".htaccess", str_replace("__GATE_TOKEN__", getenv("GATE_TOKEN"), $h));
           '
 
-      - name: Deploy Formuláre (lftp mirror, vytvára vnorené priečinky)
+      - name: Deploy Portál (lftp mirror, vytvára vnorené priečinky)
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}

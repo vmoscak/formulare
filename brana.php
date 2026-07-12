@@ -105,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $lockedSeconds === 0) {
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15l2 2 4-4"/>
       </svg>
     </div>
-    <div class="wordmark">Formuláre</div>
+    <div class="wordmark">Portál</div>
     <h1>Vstup pre poradcov</h1>
     <p class="sub">Zadaj bezpečnostný PIN</p>
     <?php if ($error): ?><div class="error"><?= htmlspecialchars($error) ?></div><?php endif; ?>

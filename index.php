@@ -93,7 +93,7 @@ $curAdvisorId = curAdvisorId() ?: null;
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
-<title>Formuláre — výber poradcu</title>
+<title>Portál — výber poradcu</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -229,7 +229,7 @@ $curAdvisorId = curAdvisorId() ?: null;
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15l2 2 4-4"/>
       </svg>
     </div>
-    <span class="wordmark">Formuláre</span>
+    <span class="wordmark">Portál</span>
     <span class="tag">Interný nástroj</span>
   </div>
 
@@ -312,7 +312,7 @@ $curAdvisorId = curAdvisorId() ?: null;
     <?php endif; ?>
   </div>
 
-  <div class="foot">Formuláre · prístup len pre poradcov</div>
+  <div class="foot">Portál · prístup len pre poradcov</div>
   <?php endif; ?>
 
 </body>

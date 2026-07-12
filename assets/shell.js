@@ -220,7 +220,7 @@
       '<button type="button" class="rail-toggle" id="railToggle" aria-label="Menu">' + svg(ICONS.menu) + '</button>' +
       '<div class="rail-backdrop" id="railBackdrop"></div>' +
       '<div id="appRail">' +
-        '<a class="rlogo" href="/uvod.php" title="Formuláre">' + svg(ICONS.logo) + '</a>' +
+        '<a class="rlogo" href="/uvod.php" title="Portál">' + svg(ICONS.logo) + '</a>' +
         '<nav>' + navHtml + moreWrapHtml + '</nav>' +
         '<div class="rbot">' +
           '<button type="button" class="ri" id="themeToggle" title="Prepnúť tmavý/svetlý režim">' + svg(themeIcon) +

@@ -187,7 +187,7 @@ toho, čo sa rozhodneme spraviť.
   klientov) — súčasný stav: klientske údaje sa spracúvajú cez CRM od
   Microsoftu v UNIQA a cez MyPort/Finportal (hypotéky, cez BEplan) —
   spracovanie tam robí firma, nie ty osobne, čo je výhoda (menšia osobná
-  zodpovednosť). Vlastná databáza klientov v appke Formuláre by túto
+  zodpovednosť). Vlastná databáza klientov v appke Portál by túto
   výhodu stratila — stal by si sa ty osobne prevádzkovateľom tých údajov,
   vrátane potreby získať a evidovať súhlas so spracovaním osobných údajov
   od každého klienta zvlášť. Zatiaľ sa do toho nejde — appka ostáva pri
@@ -202,7 +202,7 @@ toho, čo sa rozhodneme spraviť.
   vypneš** pre ostatných (existujúci mechanizmus `disabled_tools`, pár
   klikov). Žiadne SQL na toto už netreba generovať — to bolo zbytočný
   krok navyše.
-- **Pravidlo (od 7/2026):** appka Formuláre nie je systém záznamov o
+- **Pravidlo (od 7/2026):** appka Portál nie je systém záznamov o
   klientoch a ani sa ním zámerne nemá stať. Klientske údaje reálne
   spracúva CRM od Microsoftu (UNIQA) a MyPort/Finportal cez BEplan
   (hypotéky) — zodpovednosť za spracovanie je tam na firme, nie na tebe
