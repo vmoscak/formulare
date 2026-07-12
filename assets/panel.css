@@ -209,6 +209,18 @@ body.rail-scrolled .topbar{box-shadow:var(--shadow-md);}
 .tool-card.c-indigo .go,.tool-card.c-emerald .go,.tool-card.c-rose .go,.tool-card.c-teal .go,.tool-card.c-amber .go,
 .tool-card.c-violet .go,.tool-card.c-sky .go,.tool-card.c-orange .go{color:#fff;}
 
+/* ── Osobné míľniky (uvod.php) — súkromný pokrok, žiadne porovnávanie s tímom ── */
+.milestone-card{
+  display:flex; align-items:center; gap:18px; background:var(--paper); border:1px solid var(--border);
+  border-radius:var(--radius-2xl); padding:20px 24px; box-shadow:var(--shadow-sm);
+}
+.milestone-card .ms-num{font-size:30px; font-weight:800; color:var(--accent); flex-shrink:0; min-width:52px; text-align:center;}
+.milestone-card .ms-body{flex:1; min-width:0;}
+.milestone-card .ms-label{font-size:13.5px; font-weight:700; color:var(--ink); margin-bottom:8px;}
+.milestone-card .ms-bar-track{height:8px; border-radius:999px; background:var(--desk); overflow:hidden;}
+.milestone-card .ms-bar-fill{height:100%; background:var(--accent); border-radius:999px; transition:width .3s ease;}
+.milestone-card .ms-sub{font-size:12px; color:var(--muted); margin-top:6px;}
+
 /* ── Novinky (banner, zdieľané pre uvod.php) ─────────────────────────────── */
 .news-wrap{display:flex; flex-direction:column; gap:10px;}
 .news-item{

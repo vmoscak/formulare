@@ -45,6 +45,9 @@
     menu: '<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>',
     close: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
     more: '<circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>',
+    target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.3"/>',
+    trending: '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+    calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
   };
 
   // Aktuálne účinná téma — explicitný prepínač (data-theme) má prednosť,
@@ -88,6 +91,9 @@
     var isRefi = /refinancny-radar\.php/.test(path);
     var isCopy = /copy-paste\.php/.test(path);
     var isRefiCalc = /oplati-sa-refinancovat\.php/.test(path);
+    var isCesta = /cesta-novacika\.php/.test(path);
+    var isTimPrehlad = /tim-prehlad\.php/.test(path);
+    var isTimKalendar = /tim-kalendar\.php/.test(path);
 
     // Ktorá z troch záložiek (Nástroje/Formuláre/Pomôcky) je aktívna: buď sme
     // priamo na jej prehľadovej stránke, alebo na stránke konkrétneho nástroja
@@ -96,7 +102,7 @@
     if (/\/nastroje\.php/.test(path)) currentGroup = 'nastroje';
     else if (/\/formulare\.php/.test(path)) currentGroup = 'formulare';
     else if (/\/pomocky\.php/.test(path)) currentGroup = 'pomocky';
-    else if (!isDocs && !isAdmin && !isNabor && !isKb && !isNews && !isHome && !isRefi && !isCopy && !isRefiCalc) {
+    else if (!isDocs && !isAdmin && !isNabor && !isKb && !isNews && !isHome && !isRefi && !isCopy && !isRefiCalc && !isCesta && !isTimPrehlad && !isTimKalendar) {
       var slug = (path.split('/').filter(Boolean)[0]) || '';
       currentGroup = (toolGroups && toolGroups[slug]) || 'nastroje';
     }
@@ -107,7 +113,8 @@
       { key: 'nastroje', icon: ICONS.tools, href: '/nastroje.php', label: 'Nástroje', active: currentGroup === 'nastroje' },
       { key: 'formulare', icon: ICONS.formulare, href: '/formulare.php', label: 'Formuláre', active: currentGroup === 'formulare' },
       { key: 'pomocky', icon: ICONS.pomocky, href: '/pomocky.php', label: 'Pomôcky', active: currentGroup === 'pomocky' },
-      { key: 'docs', icon: ICONS.docs, href: '/moje-dokumenty.php', label: 'Moje dokumenty', active: isDocs }
+      { key: 'docs', icon: ICONS.docs, href: '/moje-dokumenty.php', label: 'Moje dokumenty', active: isDocs },
+      { key: 'timKalendar', icon: ICONS.calendar, href: '/tim-kalendar.php', label: 'Tímový kalendár', active: isTimKalendar }
     ];
     // Admin/owner-only položky pribúdajú len tebe — aby lišta nenarastala do
     // neprehľadna, na desktope sa schovajú za jednu ikonu "Viac" (flyout).
@@ -126,6 +133,10 @@
       // Copy-Paste zóna: zatiaľ len pre teba, kým sa overí užitočnosť (potom
       // presunúť späť do základnej NAV, viditeľnej pre každého poradcu).
       MORE.push({ key: 'copy', icon: ICONS.copy, href: '/copy-paste.php', label: 'Copy-Paste zóna', active: isCopy });
+      // Cesta nováčika: zatiaľ len pre teba, kým sa osnova nedoladí — potom
+      // otvoriť pre celý tím (zmena gate v cesta-novacika.php + presun sem hore).
+      MORE.push({ key: 'cesta', icon: ICONS.target, href: '/cesta-novacika.php', label: 'Cesta nováčika', active: isCesta });
+      MORE.push({ key: 'timPrehlad', icon: ICONS.trending, href: '/tim-prehlad.php', label: 'Tímový prehľad', active: isTimPrehlad });
     }
     var moreActive = MORE.some(function (n) { return n.active; });
 
@@ -324,7 +335,7 @@
       .then(function (adv) {
         if (!(adv && adv.id)) { hideSkeleton(); return; }
         var path = location.pathname;
-        var isSpecialPage = /moje-dokumenty|admin\.php|nabor\.php|znalostna-baza|novinky\.php|uvod\.php|refinancny-radar\.php|copy-paste\.php|oplati-sa-refinancovat\.php/.test(path);
+        var isSpecialPage = /moje-dokumenty|admin\.php|nabor\.php|znalostna-baza|novinky\.php|uvod\.php|refinancny-radar\.php|copy-paste\.php|oplati-sa-refinancovat\.php|cesta-novacika\.php|tim-prehlad\.php|tim-kalendar\.php/.test(path);
         var isGroupOverview = /\/(nastroje|formulare|pomocky)\.php/.test(path);
         // Na stránke konkrétneho nástroja (nie prehľad, nie iná sekcia)
         // potrebujeme mapu slug->skupina, aby sa zvýraznila správna záložka.

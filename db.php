@@ -676,4 +676,64 @@ function dbInitSqlite(PDO $pdo): void {
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_onboarding_steps (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        phase TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL DEFAULT '',
+        link_url TEXT NULL,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_onboarding_progress (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        advisor_id INTEGER NOT NULL,
+        step_id INTEGER NOT NULL,
+        done_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(advisor_id, step_id),
+        FOREIGN KEY (advisor_id) REFERENCES formulare_advisors(id),
+        FOREIGN KEY (step_id) REFERENCES formulare_onboarding_steps(id)
+    )");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_team_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_date TEXT NOT NULL,
+        title TEXT NOT NULL,
+        note TEXT NOT NULL DEFAULT '',
+        created_by INTEGER NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (created_by) REFERENCES formulare_advisors(id)
+    )");
+    $pdo->exec("CREATE INDEX IF NOT EXISTS idx_team_events_date ON formulare_team_events(event_date)");
+
+    // Predvolená osnova pre Cestu nováčika — len ak je tabuľka ešte prázdna
+    // (aby sa neduplikovala pri každom reštarte lokálneho servera). Owner si
+    // vie kroky kedykoľvek upraviť/zmazať/pridať vlastné cez samotnú stránku.
+    $stepCount = (int)$pdo->query('SELECT COUNT(*) FROM formulare_onboarding_steps')->fetchColumn();
+    if ($stepCount === 0) {
+        $seedSteps = dbOnboardingSeedSteps();
+        $ins = $pdo->prepare('INSERT INTO formulare_onboarding_steps (phase, title, description, link_url, sort_order) VALUES (?, ?, ?, ?, ?)');
+        foreach ($seedSteps as $i => $s) {
+            $ins->execute([$s['phase'], $s['title'], $s['description'], $s['link_url'], $i]);
+        }
+    }
+}
+
+/**
+ * Predvolená osnova Cesty nováčika — zdieľaná medzi lokálnym SQLite seedom
+ * (dbInitSqlite) aj produkčnou migráciou (sql/017_onboarding_and_events.sql
+ * má rovnaký zoznam natvrdo v SQL, keďže produkcia sa nemigruje z PHP kódu).
+ */
+function dbOnboardingSeedSteps(): array {
+    return [
+        ['phase' => 'Deň 1', 'title' => 'Prihlásenie a prehľad appky', 'description' => 'Over si prístup do Portálu, prejdi si tri hlavné záložky (Nástroje / Formuláre / Pomôcky) a pozri sa do ľavej lišty.', 'link_url' => '/nastroje.php'],
+        ['phase' => 'Deň 1', 'title' => 'Znalostná báza', 'description' => 'Prelistuj si interné FAQ a rýchle texty — nemusíš si nič pamätať naspamäť, appka to má pripravené na kopírovanie.', 'link_url' => '/znalostna-baza.php'],
+        ['phase' => 'Týždeň 1', 'title' => 'Vyskúšaj Kalkulačku finančnej medzery', 'description' => 'Prejdi si nanečisto celý formulár aj s výstupom (checklist, PDF) — na testovacích číslach, nie na reálnom klientovi.', 'link_url' => '/financna-medzera/'],
+        ['phase' => 'Týždeň 1', 'title' => 'Precvič si Vybavovača námietok', 'description' => 'Prejdi si typické námietky klientov („je to drahé“, „musím si to premyslieť“...) a odporúčané reakcie.', 'link_url' => '/vybavovac-namietok/'],
+        ['phase' => 'Týždeň 1', 'title' => 'Argument Builder', 'description' => 'Vyskúšaj si poskladať argumentáciu pre 2-3 rôzne typy klientov, nech vidíš, ako appka odporúča postupovať.', 'link_url' => '/argument-builder/'],
+        ['phase' => 'Týždeň 1', 'title' => 'Prejdi si Pyramídu istoty', 'description' => 'Pochop poradie, v akom sa buduje finančná istota klienta — ochrana, rezerva, ciele, zhodnocovanie.', 'link_url' => '/pyramida-istoty/'],
+        ['phase' => 'Mesiac 1', 'title' => 'Prvé skutočné stretnutie s klientom', 'description' => 'Ideálne so skúsenejším kolegom vedľa seba (shadowing) alebo aspoň s jeho spätnou väzbou hneď po stretnutí.', 'link_url' => null],
+        ['phase' => 'Mesiac 1', 'title' => 'Prvých 30 dní po podpise', 'description' => 'Over si, ako appka pripraví kartičku pre klienta hneď po podpise zmluvy — čo nasleduje, kedy začína platiť krytie.', 'link_url' => '/prvych-30-dni/'],
+        ['phase' => 'Mesiac 1', 'title' => 'Skús Poistný semafor a Simulátor krátenia plnenia', 'description' => 'Dva argumentačné nástroje, ktoré sa oplatí mať poruke pri rozhovore o výške krytia.', 'link_url' => '/poistny-semafor/'],
+        ['phase' => 'Mesiac 1', 'title' => 'Skontroluj si Moje dokumenty', 'description' => 'Pozri sa, čo všetko si za prvý mesiac vygeneroval — dobrý spôsob, ako vidieť vlastný pokrok.', 'link_url' => '/moje-dokumenty.php'],
+    ];
 }

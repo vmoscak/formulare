@@ -55,6 +55,8 @@ $hubMeta = [
 $extraHubs = [
     ['label' => 'Moje dokumenty', 'subtitle' => 'História vygenerovaných PDF a odoslaných klientských odkazov.',
      'ico' => 'folder', 'color' => '#059669', 'href' => '/moje-dokumenty.php', 'tag' => null],
+    ['label' => 'Tímový kalendár', 'subtitle' => 'Dôležité termíny a dátumy pre celý tím.',
+     'ico' => 'calendar', 'color' => '#2563eb', 'href' => '/tim-kalendar.php', 'tag' => null],
 ];
 if (!empty($me['is_admin'])) {
     $extraHubs[] = ['label' => 'Admin', 'subtitle' => 'Správa poradcov, PIN kódov a zapínanie/vypínanie nástrojov.',
@@ -75,6 +77,10 @@ if (!empty($me['is_owner'])) {
     // nepodmienené karty (viditeľné pre každého poradcu).
     $extraHubs[] = ['label' => 'Copy-Paste zóna', 'subtitle' => 'Tvoje osobné rýchle texty na kopírovanie jedným klikom.',
         'ico' => 'clipboard', 'color' => '#0e7490', 'href' => '/copy-paste.php', 'tag' => 'Len pre teba'];
+    $extraHubs[] = ['label' => 'Cesta nováčika', 'subtitle' => 'Onboarding checklist pre nových poradcov — Deň 1 / Týždeň 1 / Mesiac 1.',
+        'ico' => 'target', 'color' => '#be185d', 'href' => '/cesta-novacika.php', 'tag' => 'Len pre teba'];
+    $extraHubs[] = ['label' => 'Tímový prehľad', 'subtitle' => 'Kto z tímu ktoré nástroje používa — pre lepšiu podporu nováčikov.',
+        'ico' => 'trending', 'color' => '#65a30d', 'href' => '/tim-prehlad.php', 'tag' => 'Len pre teba'];
 }
 
 $news = [];
@@ -83,6 +89,31 @@ try {
 } catch (Throwable $e) { /* tabuľka ešte nemusí existovať */ }
 
 $newsPalette = ['#4f46e5', '#059669', '#0d9488', '#7c3aed', '#0284c7', '#d97706'];
+
+// Osobné míľniky — súkromný pokrok podľa počtu vygenerovaných dokumentov,
+// ZÁMERNE bez porovnávania s kolegami (žiadny rebríček, len vlastný pokrok
+// oproti sebe samému). Pozri NAPADY.md "Odložené" — pôvodná "Sieň slávy" bola
+// zámerne odložená kvôli súťaživosti, toto je jej nekonkurenčná náhrada.
+$DOC_MILESTONES = [
+    1 => 'Prvý krok', 5 => 'Rozbieha sa to', 10 => 'Slušný štart',
+    25 => 'Sebaistota rastie', 50 => 'Skúsený pár rúk', 100 => 'Stovka!', 250 => 'Majster remesla',
+];
+$myDocCount = 0;
+try {
+    $c = db()->prepare('SELECT COUNT(*) FROM formulare_generated_documents WHERE advisor_id = ?');
+    $c->execute([$curAdvisorId]);
+    $myDocCount = (int)$c->fetchColumn();
+} catch (Throwable $e) { /* tabuľka ešte nemusí existovať */ }
+
+$reachedMilestone = null;
+$nextMilestone = null;
+foreach ($DOC_MILESTONES as $threshold => $label) {
+    if ($myDocCount >= $threshold) { $reachedMilestone = ['threshold' => $threshold, 'label' => $label]; }
+    elseif ($nextMilestone === null) { $nextMilestone = ['threshold' => $threshold, 'label' => $label]; }
+}
+$milestonePct = $nextMilestone
+    ? round($myDocCount / $nextMilestone['threshold'] * 100)
+    : 100;
 ?>
 <!DOCTYPE html><html lang="sk"><head>
 <meta charset="UTF-8">
@@ -93,7 +124,7 @@ $newsPalette = ['#4f46e5', '#059669', '#0d9488', '#7c3aed', '#0284c7', '#d97706'
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=17">
+<link rel="stylesheet" href="/assets/panel.css?v=18">
 </head><body class="home-page">
 <div class="home-bg" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
 <header class="topbar">
@@ -110,6 +141,23 @@ $newsPalette = ['#4f46e5', '#059669', '#0d9488', '#7c3aed', '#0284c7', '#d97706'
 </header>
 
 <main class="content">
+
+  <?php if ($myDocCount > 0): ?>
+  <div class="section">
+    <div class="milestone-card">
+      <div class="ms-num"><?= $myDocCount ?></div>
+      <div class="ms-body">
+        <div class="ms-label"><?= h($reachedMilestone['label'] ?? 'Tvoj pokrok') ?> · <?= $myDocCount ?> vygenerovaných dokumentov</div>
+        <?php if ($nextMilestone): ?>
+        <div class="ms-bar-track"><div class="ms-bar-fill" style="width:<?= min(100, $milestonePct) ?>%;"></div></div>
+        <div class="ms-sub">Ešte <?= $nextMilestone['threshold'] - $myDocCount ?> do ďalšieho míľnika („<?= h($nextMilestone['label']) ?>“)</div>
+        <?php else: ?>
+        <div class="ms-sub">Dosiahol/-la si najvyšší míľnik — pekná práca!</div>
+        <?php endif; ?>
+      </div>
+    </div>
+  </div>
+  <?php endif; ?>
 
   <?php if ($news): ?>
   <div class="section">

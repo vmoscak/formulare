@@ -137,6 +137,22 @@ toho, čo sa rozhodneme spraviť.
   hodnota): vedľa seba ukáže, koľko by klient reálne dostal pri
   terajšej podpoistenej sume oproti správne nastavenej. Argumentačný
   nástroj pri námietke „to mi stačí“. PDF aj kopírovanie zhrnutia.
+- [x] **Cesta nováčika** — onboarding checklist pre nových poradcov
+  (Deň 1 / Týždeň 1 / Mesiac 1), s odkazmi rovno na konkrétne nástroje
+  appky a vlastnou osnovou, ktorú vieš kedykoľvek upraviť. ZATIAĽ len
+  pre teba (is_owner gate) — až sa osnova doladí, stačí zmeniť gate na
+  bežného poradcu a otvoriť pre celý tím.
+- [x] **Osobné míľniky** — súkromný pokrok podľa počtu vygenerovaných
+  dokumentov (1 / 5 / 10 / 25 / 50 / 100 / 250), zobrazené na Domov.
+  Zámerne BEZ porovnávania s kolegami — nekonkurenčná náhrada pôvodnej
+  "Sieň slávy" myšlienky (pozri "Odložené").
+- [x] **Tímový prehľad** — pre teba ako manažéra: kto z tímu ktoré
+  nástroje reálne používa a kedy naposledy niečo vygeneroval, nad už
+  existujúcimi dátami (žiadne nové osobné údaje klientov). Zoradené od
+  najmenej aktívnych, aby si rýchlo videl, kto potrebuje pomoc. Len pre teba.
+- [x] **Tímový kalendár** — spoločný zoznam dôležitých termínov a
+  dátumov, viditeľný pre celý tím; pridávať/upravovať/mazať smie
+  výhradne owner (rovnaký vzor ako Novinky).
 
 ---
 
@@ -195,7 +211,8 @@ toho, čo sa rozhodneme spraviť.
 - [ ] **Automatický zber dát cez CRON** (plná automatizácia — dôchodky)
 - [ ] **Modul „Lokálny Partner Hub“** (vzájomný referral systém)
 - [ ] **Sezónny marketingový kalendár** (autopilot na kampane)
-- [ ] **„Sieň slávy“** a **Osobný „Provízny simulátor“** *(odložené — pozri nižšie)*
+- [ ] **Osobný „Provízny simulátor“** *(odložené — pozri nižšie; "Sieň slávy"
+  časť už vyriešená nekonkurenčne cez Osobné míľniky, pozri "Už hotové")*
 
 ## Marketing a získavanie klientov
 
@@ -211,10 +228,10 @@ toho, čo sa rozhodneme spraviť.
 
 ## Odložené (nenasadzovať zatiaľ)
 
-- **„Sieň slávy“ / Provízny simulátor** — zámerne **nie ako súťaženie**
-  medzi poradcami, ale skôr ako **uznanie výsledkov** (napr. tichá pochvala/
-  míľnik, nie verejný rebríček). Koncept si necháme premyslieť nanovo, kým
-  sa k tomu vrátime — zatiaľ sa nestavia.
+- **Provízny simulátor** — zámerne sa zatiaľ nestavia, kým sa koncept
+  nepremyslí nanovo. ("Sieň slávy" časť už vyriešená ináč — pozri Osobné
+  míľniky v "Už hotové": tichý súkromný pokrok bez rebríčka a bez
+  porovnávania medzi poradcami.)
 - **CRM-lite / centrálna databáza klientov** (a na nej postavené: história
   stretnutí per klient, história škodových udalostí, segmentácia/tagovanie
   klientov) — súčasný stav: klientske údaje sa spracúvajú cez CRM od
