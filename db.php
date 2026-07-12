@@ -54,6 +54,7 @@ function toolLabel(string $slug): string {
         'karticka-odporucte-ma' => 'Kartička „Odporučte ma priateľom“',
         'vysvetlivky-pre-klienta' => 'Vysvetlivky pre klienta',
         'tahak-co-pytat-od-klienta' => 'Ťahák „Čo pýtať od klienta“',
+        'pyramida-istoty' => 'Interaktívna Pyramída istoty',
     ];
     return $labels[$slug] ?? $slug;
 }

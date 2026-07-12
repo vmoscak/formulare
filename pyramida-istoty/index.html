@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="sk"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interaktívna Pyramída istoty</title>
+
+<!-- =========================================================================
+     INTERAKTÍVNA PYRAMÍDA ISTOTY — samostatný editovateľný súbor
+     -------------------------------------------------------------------------
+     Vizuálny nástroj na vysvetlenie klientovi, v akom poradí budovať finančnú
+     istotu (ochrana -> rezerva -> ciele -> zhodnocovanie). Klikni na vrstvu,
+     rozbalí sa vysvetlenie a krátky kontrolný zoznam na odškrtávanie počas
+     rozhovoru. Bez PDF, bez ukladania dát o klientovi.
+
+     KDE ČO UPRAVIŤ:
+       • Vrstvy, popisy a otázky ... JS, objekt LAYERS
+       • Farby / vzhľad ............ zdieľaný dizajnový systém ../assets/ui.css
+========================================================================== -->
+
+<script src="../assets/theme-init.js"></script>
+<link rel="stylesheet" href="../assets/ui.css?v=8">
+<style>
+  .pyramid{display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px 0 6px;}
+  .pyr-band{
+    display:flex; align-items:center; gap:12px; padding:16px 20px; border-radius:var(--radius-md);
+    border:2px solid transparent; cursor:pointer; transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+    color:#fff; font-weight:600;
+  }
+  .pyr-band:hover{transform:translateY(-2px);}
+  .pyr-band.sel{border-color:#fff; box-shadow:0 8px 20px -8px rgba(0,0,0,.4);}
+  .pyr-band .pyr-ic{
+    width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,.22); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .pyr-band .pyr-txt b{display:block; font-size:14px;}
+  .pyr-band .pyr-txt span{display:block; font-size:11.5px; font-weight:500; opacity:.85;}
+  .pyr-band .pyr-progress{margin-left:auto; font-size:12px; font-weight:700; background:rgba(255,255,255,.22); padding:3px 10px; border-radius:999px; flex-shrink:0;}
+  .pyr-1{width:100%; background:linear-gradient(135deg,#4f46e5,#4338ca);}
+  .pyr-2{width:80%; background:linear-gradient(135deg,#2dd4bf,#0d9488);}
+  .pyr-3{width:60%; background:linear-gradient(135deg,#fbbf24,#d97706);}
+  .pyr-4{width:40%; background:linear-gradient(135deg,#fb7185,#e11d48);}
+  @media(max-width:720px){
+    .pyr-band{width:100% !important; padding:14px 16px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="head">
+    <div class="head-left">
+      <a href="../nastroje.php" class="back-btn" title="Späť na formuláre">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <div class="brand">
+        <div class="logo">P</div>
+        <div>
+          <b>Interaktívna Pyramída istoty</b><br>
+          <small>V akom poradí budovať finančnú istotu</small>
+        </div>
+      </div>
+    </div>
+    <div class="head-actions">
+      <div class="avatar" id="avatar">P</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- ============ PYRAMÍDA ============ -->
+    <div class="form">
+      <div>
+        <div class="step-head"><div class="step-num">1</div><div class="step-title">Klikni na vrstvu, ktorú preberáš s klientom</div></div>
+        <div class="pyramid" id="pyramid"></div>
+        <p style="font-size:12px; color:var(--muted); margin-top:10px; line-height:1.6;">
+          Poradie zdola nahor nie je náhodné — kým nie je zabezpečená spodná vrstva, vyššie vrstvy stoja na vode.
+          Väčšina ľudí chce riešiť rovno investície (vrchol) a preskočí ochranu (základ).
+        </p>
+      </div>
+    </div>
+
+    <!-- ============ DETAIL VRSTVY ============ -->
+    <div class="preview">
+      <div class="preview-head">
+        <span class="t" id="layerTitle">Vrstva</span>
+        <span class="live"><i></i>Odškrtávaj počas rozhovoru</span>
+      </div>
+      <div class="preview-tools">
+        <button class="tool" id="copyBtn">Kopírovať zhrnutie (všetky vrstvy)</button>
+        <button class="tool" id="resetBtn">Vynulovať všetko</button>
+      </div>
+      <div class="letter-wrap">
+        <div id="layerBody" style="background:#fff; border-radius:8px; padding:24px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/advisor-panel.js"></script>
+<script>
+/* ===========================================================================
+   DÁTA — tu meníš vrstvy, popisy a kontrolné otázky
+=========================================================================== */
+const LAYERS = [
+  {
+    key: 'ochrana', tile: '1', cls: 'pyr-1',
+    label: 'Ochrana', sub: 'Základ pyramídy — bez tohto nemá zvyšok zmysel',
+    desc: 'Jedna nehoda, choroba alebo škoda dokáže zmazať roky šetrenia. Kým nie je táto vrstva zabezpečená, všetko vyššie stojí na vode.',
+    items: [
+      'Životné poistenie / poistenie schopnosti zarábať (invalidita, PN)',
+      'Poistenie majetku — domácnosť, nehnuteľnosť',
+      'Poistenie zodpovednosti za škodu',
+      'PZP a havarijné poistenie vozidla',
+    ],
+  },
+  {
+    key: 'rezerva', tile: '2', cls: 'pyr-2',
+    label: 'Rezerva', sub: 'Peniaze na horšie časy, dostupné do pár dní',
+    desc: 'Núdzový fond, ktorý nie je viazaný na roky a dá sa použiť okamžite — nie investícia, len istota na pokrytie výpadku príjmu alebo nečakaného výdavku.',
+    items: [
+      'Mám bokom aspoň 3–6 mesačných výdavkov',
+      'Rezerva je oddelená od bežného účtu',
+      'Viem presne, kde a ako rýchlo sa k nej dostanem',
+    ],
+  },
+  {
+    key: 'ciele', tile: '3', cls: 'pyr-3',
+    label: 'Budovanie cieľov', sub: 'Pravidelné sporenie na konkrétne veci',
+    desc: 'Až keď je ochrana a rezerva na mieste, dáva zmysel pravidelne sporiť na konkrétne životné ciele — bývanie, deti, dôchodok.',
+    items: [
+      'Sporím pravidelne na vlastné bývanie',
+      'Mám nastavené sporenie na deti (ak sú)',
+      'Riešim dôchodkové sporenie (II. alebo III. pilier)',
+    ],
+  },
+  {
+    key: 'zhodnocovanie', tile: '4', cls: 'pyr-4',
+    label: 'Zhodnocovanie', sub: 'Vrchol — voľné prostriedky na rast',
+    desc: 'Peniaze, ktoré momentálne nikde inde nepotrebujem, môžu ísť do rizikovejších investícií na dlhší horizont. Toto prichádza na rad ako posledné, nie prvé.',
+    items: [
+      'Investujem len voľné prostriedky, ktoré teraz nepotrebujem',
+      'Rozumiem rizikám a možným výkyvom investície',
+      'Mám realistický horizont (5+ rokov)',
+    ],
+  },
+];
+
+const state = { layer: 'ochrana', checked: {} };
+
+/* ===========================================================================
+   VYKRESLENIE
+=========================================================================== */
+const $ = id => document.getElementById(id);
+
+function progressFor(key){
+  const layer = LAYERS.find(l => l.key === key);
+  const c = state.checked[key] || {};
+  const done = layer.items.filter((_, i) => c[i]).length;
+  return { done: done, total: layer.items.length };
+}
+
+function renderPyramid(){
+  $('pyramid').innerHTML = LAYERS.map(function(l){
+    const sel = l.key === state.layer ? ' sel' : '';
+    const p = progressFor(l.key);
+    return '<div class="pyr-band ' + l.cls + sel + '" data-layer="' + l.key + '">'
+      + '<span class="pyr-ic">' + l.tile + '</span>'
+      + '<span class="pyr-txt"><b>' + l.label + '</b><span>' + l.sub + '</span></span>'
+      + '<span class="pyr-progress">' + p.done + '/' + p.total + '</span>'
+      + '</div>';
+  }).join('');
+}
+
+function renderLayer(){
+  const layer = LAYERS.find(l => l.key === state.layer);
+  const checkedSet = state.checked[state.layer] || {};
+  $('layerTitle').textContent = layer.label;
+  $('avatar').textContent = layer.tile;
+  $('layerBody').innerHTML =
+    '<div style="font-weight:700; font-size:15px; color:#20242b; margin-bottom:6px;">' + escapeHtml(layer.label) + '</div>'
+    + '<p style="font-size:13px; color:#5b6270; line-height:1.6; margin:0 0 16px;">' + escapeHtml(layer.desc) + '</p>'
+    + layer.items.map(function(q, i){
+        const isChecked = !!checkedSet[i];
+        return '<label style="display:flex; align-items:flex-start; gap:10px; padding:9px 0; border-bottom:1px solid #eef0f3; cursor:pointer;">'
+          + '<input type="checkbox" data-q="' + i + '" ' + (isChecked ? 'checked' : '') + ' style="margin-top:3px; flex-shrink:0; width:16px; height:16px;">'
+          + '<span style="font-size:14px; line-height:1.5; color:' + (isChecked ? '#9aa1ad' : '#20242b') + '; text-decoration:' + (isChecked ? 'line-through' : 'none') + ';">' + escapeHtml(q) + '</span>'
+          + '</label>';
+      }).join('');
+}
+
+function render(){ renderPyramid(); renderLayer(); }
+
+function escapeHtml(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ===========================================================================
+   AKCIE
+=========================================================================== */
+function doCopy(){
+  const txt = LAYERS.map(function(l){
+    const c = state.checked[l.key] || {};
+    return l.label + ' (' + l.sub + ')\n' + l.items.map(function(q, i){
+      return (c[i] ? '[x] ' : '[ ] ') + q;
+    }).join('\n');
+  }).join('\n\n');
+  try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
+  const b=$('copyBtn'); b.textContent='Skopírované ✓'; setTimeout(function(){ b.textContent='Kopírovať zhrnutie (všetky vrstvy)'; },1600);
+}
+
+function doReset(){
+  state.checked = {};
+  render();
+}
+
+/* ===========================================================================
+   UDALOSTI
+=========================================================================== */
+function bind(){
+  document.addEventListener('click', function(e){
+    const b = e.target.closest('[data-layer]'); if(b){ state.layer = b.dataset.layer; render(); return; }
+  });
+  document.addEventListener('change', function(e){
+    if(e.target.matches('input[type="checkbox"][data-q]')){
+      const i = +e.target.dataset.q;
+      if(!state.checked[state.layer]) state.checked[state.layer] = {};
+      state.checked[state.layer][i] = e.target.checked;
+      render();
+    }
+  });
+  $('copyBtn').addEventListener('click', doCopy);
+  $('resetBtn').addEventListener('click', doReset);
+}
+
+/* ===========================================================================
+   ŠTART
+=========================================================================== */
+(function init(){
+  bind(); render();
+})();
+</script>
+
+<script src="/assets/shell.js?v=12"></script>
+</body></html>

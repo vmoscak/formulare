@@ -32,6 +32,7 @@ function toolIco(string $key): string {
         'book'      => '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
         'folder'    => '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
         'megaphone' => '<path d="M3 11v3a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15 8a4 4 0 0 1 0 8"/><path d="M17.5 5.5a8 8 0 0 1 0 13"/>',
+        'pyramid'   => '<path d="M12 3l9 18H3z"/><path d="M7.5 12h9"/><path d="M5.2 16.5h13.6"/>',
     ];
     return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . ($p[$key] ?? $p['help']) . '</svg>';
 }
@@ -55,6 +56,8 @@ $TOOL_CATEGORIES = [
          'desc' => 'Kontrolný zoznam krokov a odporúčaní, s termínmi a zodpovednosťou. Dá sa predvyplniť z Kalkulačky.'],
         ['href' => 'tahak-co-pytat-od-klienta/', 'name' => 'Ťahák „Čo pýtať od klienta“', 'ico' => 'check', 'color' => 'amber',
          'desc' => 'Živý zoznam otázok podľa situácie klienta na odškrtávanie počas stretnutia.'],
+        ['href' => 'pyramida-istoty/', 'name' => 'Interaktívna Pyramída istoty', 'ico' => 'pyramid', 'color' => 'sky',
+         'desc' => 'V akom poradí budovať finančnú istotu — ochrana, rezerva, ciele, zhodnocovanie. Klikacia pyramída s kontrolným zoznamom pre každú vrstvu.'],
     ]],
     ['title' => 'Zmluvy a dokumentácia', 'group' => 'formulare', 'tools' => [
         ['href' => 'splnomocnenie/', 'name' => 'Všeobecné splnomocnenie', 'ico' => 'user-plus', 'color' => 'indigo',

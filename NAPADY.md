@@ -53,8 +53,14 @@ toho, čo sa rozhodneme spraviť.
   na niečo, čo sa môže potichu pokaziť). Viditeľné len pre teba —
   hypotéky riešiš sám, poradcovia to nepotrebujú.
 - [x] **Copy-Paste zóna pre poradcu** — osobné rýchle textové šablóny;
-  na rozdiel od Znalostnej bázy (zdieľaná, len owner) tu každý poradca
-  vidí a upravuje len svoje vlastné texty. Viditeľné pre všetkých.
+  na rozdiel od Znalostnej bázy (zdieľaná, len owner) tu je dátovo
+  pripravené, aby si každý poradca videl a upravoval len svoje vlastné
+  texty. Zatiaľ viditeľné len pre teba (owner), kým sa overí užitočnosť
+  — potom sa sprístupní všetkým jednou zmenou podmienky.
+- [x] **Interaktívna „Pyramída istoty“** — klikacia stupňovitá pyramída
+  (Ochrana → Rezerva → Budovanie cieľov → Zhodnocovanie), pri každej
+  vrstve krátke vysvetlenie a kontrolný zoznam na odškrtávanie počas
+  rozhovoru s klientom. Bez PDF, bez ukladania dát o klientovi.
 
 ---
 
@@ -77,7 +83,6 @@ toho, čo sa rozhodneme spraviť.
 - [ ] **„Crash Test“ nehnuteľnosti** (indexačný radar)
 - [ ] **„Poistný semafor“** (vizuálny audit krytia na 1 klik)
 - [ ] **Matica životných udalostí** (Life-Event Asistent)
-- [ ] **Interaktívna „Pyramída istoty“**
 - [ ] **„Before / After“ Slider** (finančný röntgen) — posuvník na porovnanie
   fotiek "pred/po", aplikovaný na financie klienta
 - [ ] **„Semafor čakacích dôb“** (vizuálna časová os pre nové poistky)
