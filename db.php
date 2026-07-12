@@ -61,6 +61,8 @@ function toolLabel(string $slug): string {
         'vybavovac-namietok' => 'Vybavovač námietok',
         'prvych-30-dni' => 'Prvých 30 dní',
         'emailove-pozdravy' => 'Emailové pozdravy',
+        'sprievodca-udalosti' => 'Sprievodca podľa životnej udalosti',
+        'oplati-sa-refinancovat' => 'Oplatí sa mi refinancovať?',
     ];
     return $labels[$slug] ?? $slug;
 }

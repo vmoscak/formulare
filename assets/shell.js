@@ -38,6 +38,7 @@
     news: '<path d="M3 11v3a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15 8a4 4 0 0 1 0 8"/><path d="M17.5 5.5a8 8 0 0 1 0 13"/>',
     home: '<path d="M3 10.5L12 3l9 7.5"/><path d="M5 9v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9"/>',
     refi: '<path d="M3 17l6-6 4 4 8-8"/><path d="M21 3h-6M21 3v6"/>',
+    refiCalc: '<rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><circle cx="8" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="16" cy="12" r="1"/><circle cx="8" cy="16" r="1"/><circle cx="12" cy="16" r="1"/><circle cx="16" cy="16" r="1"/>',
     copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
     sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
     moon: '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>',
@@ -86,6 +87,7 @@
     var isHome = /uvod\.php/.test(path);
     var isRefi = /refinancny-radar\.php/.test(path);
     var isCopy = /copy-paste\.php/.test(path);
+    var isRefiCalc = /oplati-sa-refinancovat\.php/.test(path);
 
     // Ktorá z troch záložiek (Nástroje/Formuláre/Pomôcky) je aktívna: buď sme
     // priamo na jej prehľadovej stránke, alebo na stránke konkrétneho nástroja
@@ -94,7 +96,7 @@
     if (/\/nastroje\.php/.test(path)) currentGroup = 'nastroje';
     else if (/\/formulare\.php/.test(path)) currentGroup = 'formulare';
     else if (/\/pomocky\.php/.test(path)) currentGroup = 'pomocky';
-    else if (!isDocs && !isAdmin && !isNabor && !isKb && !isNews && !isHome && !isRefi && !isCopy) {
+    else if (!isDocs && !isAdmin && !isNabor && !isKb && !isNews && !isHome && !isRefi && !isCopy && !isRefiCalc) {
       var slug = (path.split('/').filter(Boolean)[0]) || '';
       currentGroup = (toolGroups && toolGroups[slug]) || 'nastroje';
     }
@@ -120,6 +122,7 @@
       MORE.push({ key: 'kb', icon: ICONS.kb, href: '/znalostna-baza.php', label: 'Znalostná báza', active: isKb });
       MORE.push({ key: 'news', icon: ICONS.news, href: '/novinky.php', label: 'Novinky', active: isNews });
       MORE.push({ key: 'refi', icon: ICONS.refi, href: '/refinancny-radar.php', label: 'Refinančný Radar', active: isRefi });
+      MORE.push({ key: 'refiCalc', icon: ICONS.refiCalc, href: '/oplati-sa-refinancovat.php', label: 'Oplatí sa refinancovať?', active: isRefiCalc });
       // Copy-Paste zóna: zatiaľ len pre teba, kým sa overí užitočnosť (potom
       // presunúť späť do základnej NAV, viditeľnej pre každého poradcu).
       MORE.push({ key: 'copy', icon: ICONS.copy, href: '/copy-paste.php', label: 'Copy-Paste zóna', active: isCopy });
@@ -280,7 +283,7 @@
       .then(function (adv) {
         if (!(adv && adv.id)) return;
         var path = location.pathname;
-        var isSpecialPage = /moje-dokumenty|admin\.php|nabor\.php|znalostna-baza|novinky\.php|uvod\.php|refinancny-radar\.php|copy-paste\.php/.test(path);
+        var isSpecialPage = /moje-dokumenty|admin\.php|nabor\.php|znalostna-baza|novinky\.php|uvod\.php|refinancny-radar\.php|copy-paste\.php|oplati-sa-refinancovat\.php/.test(path);
         var isGroupOverview = /\/(nastroje|formulare|pomocky)\.php/.test(path);
         // Na stránke konkrétneho nástroja (nie prehľad, nie iná sekcia)
         // potrebujeme mapu slug->skupina, aby sa zvýraznila správna záložka.

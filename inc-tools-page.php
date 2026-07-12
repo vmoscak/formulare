@@ -105,6 +105,6 @@ $arrow = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="cu
 
 </main>
 
-<script src="/assets/shell.js?v=12"></script>
+<script src="/assets/shell.js?v=13"></script>
 </body>
 </html>

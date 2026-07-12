@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="sk"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sprievodca podľa životnej udalosti</title>
+
+<!-- =========================================================================
+     SPRIEVODCA PODĽA ŽIVOTNEJ UDALOSTI — samostatný editovateľný súbor
+     -------------------------------------------------------------------------
+     Meta-nástroj — nestavia nový obsah, len prepája existujúce nástroje do
+     odporúčaného poradia podľa životnej udalosti klienta. Krok naviazaný na
+     hypotéku (refinancovanie) sa bez majiteľa (is_owner) zobrazí len ako
+     informačná poznámka, bez odkazu — hypotéky rieši výhradne on.
+
+     KDE ČO UPRAVIŤ:
+       • Udalosti a kroky ... JS, objekt EVENTS (pole `href` musí sedieť
+         s priečinkom/PHP stránkou existujúceho nástroja)
+       • Farby / vzhľad ..... zdieľaný dizajnový systém ../assets/ui.css
+========================================================================== -->
+
+<script src="../assets/theme-init.js"></script>
+<link rel="stylesheet" href="../assets/ui.css?v=8">
+<style>
+  .su-step{
+    display:flex; gap:14px; align-items:flex-start; padding:14px 0; border-bottom:1px solid #eef0f3;
+  }
+  .su-step:last-child{border-bottom:none;}
+  .su-num{
+    width:28px; height:28px; border-radius:50%; background:var(--accent-soft); color:var(--accent);
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; flex-shrink:0;
+  }
+  .su-step-body{flex:1; min-width:0;}
+  .su-step-title{font-weight:700; font-size:14.5px; color:#20242b;}
+  .su-step-why{font-size:12.5px; color:#5b6270; margin-top:3px; line-height:1.5;}
+  .su-step-note{font-size:12px; color:#9aa1ad; margin-top:6px; font-style:italic;}
+  .su-step-link{
+    display:inline-block; margin-top:8px; font-size:12.5px; font-weight:700; color:var(--accent);
+    text-decoration:none; padding:5px 12px; border:1.5px solid var(--accent-line); border-radius:999px;
+  }
+  .su-step-link:hover{background:var(--accent-soft);}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="head">
+    <div class="head-left">
+      <a href="../nastroje.php" class="back-btn" title="Späť na formuláre">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <div class="brand">
+        <div class="logo">S</div>
+        <div>
+          <b>Sprievodca podľa životnej udalosti</b><br>
+          <small>Odporúčané poradie existujúcich nástrojov</small>
+        </div>
+      </div>
+    </div>
+    <div class="head-actions">
+      <div class="avatar" id="avatar">?</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- ============ UDALOSŤ ============ -->
+    <div class="form">
+      <div>
+        <div class="step-head"><div class="step-num">1</div><div class="step-title">Aká je životná udalosť klienta?</div></div>
+        <div class="grid3" id="events"></div>
+      </div>
+    </div>
+
+    <!-- ============ ODPORÚČANÉ KROKY ============ -->
+    <div class="preview">
+      <div class="preview-head">
+        <span class="t">Odporúčané kroky</span>
+        <span class="live"><i></i>V poradí, v akom to dáva zmysel</span>
+      </div>
+      <div class="preview-tools">
+        <button class="tool" id="copyBtn">Kopírovať zoznam krokov</button>
+      </div>
+      <div class="letter-wrap">
+        <div id="stepsBody" style="background:#fff; border-radius:8px; padding:24px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/advisor-panel.js"></script>
+<script>
+/* ===========================================================================
+   DÁTA — tu meníš udalosti a odporúčané kroky
+   -------------------------------------------------------------------------
+   href: '../slug/' pre bežné nástroje (priečinok s index.html), alebo
+   '/slug.php' pre samostatné PHP stránky (Refinančný Radar a pod.).
+   ownerOnly: true — krok sa bez majiteľa zobrazí len ako poznámka bez odkazu.
+=========================================================================== */
+const EVENTS = {
+  svadba: {
+    label: 'Svadba / nová domácnosť', tile: '💍',
+    steps: [
+      { title: 'Aké poistenie potrebujem', why: 'Rýchly úvodný dotazník — kde teraz stoja s krytím ako pár.', href: '../wizard-poistenie/' },
+      { title: 'Kalkulačka finančnej medzery', why: 'Prepočet krytia pri páre — počíta sa s výpadkom oboch príjmov naraz.', href: '../financna-medzera/' },
+      { title: 'Interaktívna Pyramída istoty', why: 'Vysvetliť poradie budovania istoty ako nová domácnosť.', href: '../pyramida-istoty/' },
+      { title: 'Univerzálna žiadosť o zmenu', why: 'Zmena priezviska alebo adresy v existujúcich zmluvách.', href: '../univerzalna-ziadost-zmena/' },
+      { title: 'Prvých 30 dní', why: 'Po podpise nových alebo upravených zmlúv.', href: '../prvych-30-dni/' },
+    ],
+  },
+  dieta: {
+    label: 'Narodenie dieťaťa', tile: '👶',
+    steps: [
+      { title: 'Kalkulačka finančnej medzery', why: 'Prepočet znova — pribudla závislá osoba, mení sa potrebné krytie.', href: '../financna-medzera/' },
+      { title: 'Univerzálna žiadosť o zmenu', why: 'Zmena oprávnenej osoby v existujúcich zmluvách.', href: '../univerzalna-ziadost-zmena/' },
+      { title: 'Interaktívna Pyramída istoty', why: 'Prejsť, čo sa mení pridaním dieťaťa — najmä rezerva a dlhodobé ciele.', href: '../pyramida-istoty/' },
+      { title: 'Simulátor dvoch extrémov', why: 'Zdôrazniť riziko náhlej straty príjmu teraz, keď je na starosti dieťa.', href: '../simulator-dvoch-extremov/' },
+    ],
+  },
+  byt: {
+    label: 'Kúpa bytu / domu', tile: '🏠',
+    steps: [
+      { title: 'Kalkulačka finančnej medzery', why: 'Nový záväzok (hypotéka) mení, koľko krytia je potrebné.', href: '../financna-medzera/' },
+      { title: 'Aké poistenie potrebujem', why: 'Overiť, či bude treba doplniť poistenie majetku/domácnosti.', href: '../wizard-poistenie/' },
+      { title: 'Preberací protokol', why: 'Pri odovzdaní nehnuteľnosti alebo dokumentov medzi stranami.', href: '../preberaci-protokol/' },
+      { title: 'Prvých 30 dní', why: 'Po podpise poistenia novej nehnuteľnosti.', href: '../prvych-30-dni/' },
+    ],
+  },
+  zamestnanie: {
+    label: 'Zmena zamestnania / podnikanie', tile: '💼',
+    steps: [
+      { title: 'Kalkulačka finančnej medzery', why: 'Zmena príjmu mení odporúčané krytie aj rezervu.', href: '../financna-medzera/' },
+      { title: 'Ťahák „Čo pýtať od klienta“', why: 'Kategória „Podnikateľ / SZČO“ — špecifické otázky pri prechode na živnosť.', href: '../tahak-co-pytat-od-klienta/' },
+      { title: 'Argument Builder', why: 'Argumenty k poisteniu príjmu, keď stráca nemocenské zamestnanca.', href: '../argument-builder/' },
+      { title: 'Univerzálna žiadosť o zmenu', why: 'Aktualizácia údajov (zamestnávateľ, príjem) v existujúcich zmluvách.', href: '../univerzalna-ziadost-zmena/' },
+    ],
+  },
+  fixacia: {
+    label: 'Končí fixácia hypotéky', tile: '📉',
+    steps: [
+      { title: 'Oplatí sa mi refinancovať?', why: 'Rýchly break-even prepočet, či sa oplatí zmena banky.', href: '/oplati-sa-refinancovat.php', ownerOnly: true },
+      { title: 'Refinančný Radar', why: 'Aktuálny prehľad sadzieb podľa banky a fixácie.', href: '/refinancny-radar.php', ownerOnly: true },
+      { title: 'Prvých 30 dní', why: 'Po podpise novej úverovej zmluvy — kategória „Hypotéka“.', href: '../prvych-30-dni/' },
+    ],
+  },
+};
+
+const state = { event: 'svadba', isOwner: false };
+
+const $ = id => document.getElementById(id);
+function escapeHtml(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ===========================================================================
+   VYKRESLENIE
+=========================================================================== */
+function renderEvents(){
+  $('events').innerHTML = Object.keys(EVENTS).map(function(k){
+    const e = EVENTS[k], sel = k === state.event ? ' sel' : '';
+    return '<div class="type' + sel + '" data-event="' + k + '">'
+      + '<div class="tile">' + e.tile + '</div>'
+      + '<div><div class="t-label">' + escapeHtml(e.label) + '</div></div></div>';
+  }).join('');
+}
+
+function renderSteps(){
+  const ev = EVENTS[state.event];
+  $('avatar').textContent = ev.tile;
+  $('stepsBody').innerHTML = '<div style="font-weight:700; font-size:15px; color:#20242b; margin-bottom:14px;">' + escapeHtml(ev.label) + '</div>'
+    + ev.steps.map(function(s, i){
+        const locked = s.ownerOnly && !state.isOwner;
+        const linkHtml = locked
+          ? '<div class="su-step-note">Toto rieši majiteľ priamo — hypotéky rieši výhradne on.</div>'
+          : '<a class="su-step-link" href="' + escapeHtml(s.href) + '" target="_blank" rel="noopener">Otvoriť nástroj →</a>';
+        return '<div class="su-step">'
+          + '<div class="su-num">' + (i + 1) + '</div>'
+          + '<div class="su-step-body">'
+            + '<div class="su-step-title">' + escapeHtml(s.title) + (s.ownerOnly ? ' <span style="font-weight:500;color:#9aa1ad;font-size:11px;">(len pre majiteľa)</span>' : '') + '</div>'
+            + '<div class="su-step-why">' + escapeHtml(s.why) + '</div>'
+            + linkHtml
+          + '</div></div>';
+      }).join('');
+}
+
+function render(){ renderEvents(); renderSteps(); }
+
+/* ===========================================================================
+   AKCIE
+=========================================================================== */
+function doCopy(){
+  const ev = EVENTS[state.event];
+  const txt = ev.label + '\n\n' + ev.steps.map(function(s, i){
+    const locked = s.ownerOnly && !state.isOwner;
+    return (i + 1) + '. ' + s.title + (locked ? ' (rieši majiteľ)' : '') + ' — ' + s.why;
+  }).join('\n');
+  try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
+  const b = $('copyBtn'); const orig = b.textContent;
+  b.textContent = 'Skopírované ✓'; setTimeout(function(){ b.textContent = orig; }, 1600);
+}
+
+/* ===========================================================================
+   UDALOSTI
+=========================================================================== */
+function bind(){
+  document.addEventListener('click', function(e){
+    const ev = e.target.closest('[data-event]'); if(ev){ state.event = ev.dataset.event; render(); return; }
+  });
+  $('copyBtn').addEventListener('click', doCopy);
+}
+
+/* ===========================================================================
+   ŠTART — zistí, či je prihlásený poradca majiteľ (whoami)
+=========================================================================== */
+(function init(){
+  bind(); render();
+  fetch('/api/whoami.php', { credentials: 'same-origin' })
+    .then(function(r){ return r.ok ? r.json() : {}; })
+    .then(function(adv){
+      state.isOwner = !!(adv && adv.is_owner);
+      renderSteps();
+    })
+    .catch(function(){});
+})();
+</script>
+
+<script src="/assets/shell.js?v=13"></script>
+</body></html>

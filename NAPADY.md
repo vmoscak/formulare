@@ -86,6 +86,16 @@ toho, čo sa rozhodneme spraviť.
   do schránky (nie len text) — vloží sa Ctrl+V rovno do interného
   e-mailového klienta (Outlook a pod.) so zachovaným vzhľadom.
   Šablóna je zámerne „Outlook-safe" (tabuľkový layout, inline štýly).
+- [x] **Sprievodca podľa životnej udalosti** — meta-nástroj, nestavia
+  nový obsah, len prepája existujúce nástroje do odporúčaného
+  poradia podľa udalosti klienta (svadba, dieťa, kúpa bytu, zmena
+  zamestnania, koniec fixácie hypotéky). Krok naviazaný na hypotéku
+  sa bez majiteľa zobrazí len ako poznámka bez odkazu.
+- [x] **„Oplatí sa mi refinancovať?“** — break-even prepočet pri
+  zmene banky: mesačná úspora novej sadzby vs. náklady na prechod
+  (poplatok za predčasné splatenie + nové dojednanie), za koľko
+  mesiacov sa to vráti. Vie predvyplniť sadzbu z Refinančného
+  Radaru. Viditeľné len pre teba — hypotéky riešiš sám.
 
 ---
 
