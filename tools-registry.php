@@ -34,6 +34,7 @@ function toolIco(string $key): string {
         'megaphone' => '<path d="M3 11v3a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15 8a4 4 0 0 1 0 8"/><path d="M17.5 5.5a8 8 0 0 1 0 13"/>',
         'pyramid'   => '<path d="M12 3l9 18H3z"/><path d="M7.5 12h9"/><path d="M5.2 16.5h13.6"/>',
         'coffee'    => '<path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/>',
+        'spectrum'  => '<circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="12" r="2.5"/><path d="M7.5 12h9"/>',
     ];
     return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . ($p[$key] ?? $p['help']) . '</svg>';
 }
@@ -61,6 +62,10 @@ $TOOL_CATEGORIES = [
          'desc' => 'V akom poradí budovať finančnú istotu — ochrana, rezerva, ciele, zhodnocovanie. Klikacia pyramída s kontrolným zoznamom pre každú vrstvu.'],
         ['href' => 'latte-faktor/', 'name' => 'Latte Faktor', 'ico' => 'coffee', 'color' => 'rose',
          'desc' => 'Koľko narastie malý pravidelný výdavok (káva, predplatné…), keby sa namiesto minutia investoval. Naživo prepočítava pri zmene súm, rokov aj zhodnotenia.'],
+        ['href' => 'simulator-dvoch-extremov/', 'name' => 'Simulátor dvoch extrémov', 'ico' => 'spectrum', 'color' => 'teal',
+         'desc' => 'Dva krajné scenáre vedľa seba — dlhý život vs. náhla strata príjmu zajtra. Kontrolný zoznam pre oba, na presvedčenie priamo pri stretnutí.'],
+        ['href' => 'argument-builder/', 'name' => 'Argument Builder', 'ico' => 'megaphone', 'color' => 'orange',
+         'desc' => 'Vyber produkt a typ klienta — poskladá sa zoznam odporúčaných argumentov na jeho predstavenie. Opak Ťaháku „čo pýtať“ — toto je čo povedať.'],
     ]],
     ['title' => 'Zmluvy a dokumentácia', 'group' => 'formulare', 'tools' => [
         ['href' => 'splnomocnenie/', 'name' => 'Všeobecné splnomocnenie', 'ico' => 'user-plus', 'color' => 'indigo',

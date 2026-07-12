@@ -56,6 +56,8 @@ function toolLabel(string $slug): string {
         'tahak-co-pytat-od-klienta' => 'Ťahák „Čo pýtať od klienta“',
         'pyramida-istoty' => 'Interaktívna Pyramída istoty',
         'latte-faktor' => 'Latte Faktor',
+        'simulator-dvoch-extremov' => 'Simulátor dvoch extrémov',
+        'argument-builder' => 'Argument Builder',
     ];
     return $labels[$slug] ?? $slug;
 }

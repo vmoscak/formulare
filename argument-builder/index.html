@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="sk"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Argument Builder</title>
+
+<!-- =========================================================================
+     ARGUMENT BUILDER — samostatný editovateľný súbor
+     -------------------------------------------------------------------------
+     Vyber produkt a (voliteľne) typ klienta — poskladá sa zoznam odporúčaných
+     argumentov/benefitov na predstavenie produktu. Opak Ťaháku „čo pýtať“ —
+     toto je čo POVEDAŤ, nie čo sa pýtať. Odškrtávaj počas rozhovoru, na konci
+     kopírovať alebo stiahnuť ako PDF (scenár rozhovoru). Voliteľné meno
+     klienta, PDF cez zdieľaný ../pdf.php (Dompdf).
+
+     KDE ČO UPRAVIŤ:
+       • Produkty, typy klienta a argumenty ... JS, objekty PRODUCTS / CLIENT_TYPES
+       • Farby / vzhľad ........................ zdieľaný dizajnový systém ../assets/ui.css
+========================================================================== -->
+
+<script src="../assets/theme-init.js"></script>
+<link rel="stylesheet" href="../assets/ui.css?v=8">
+<style>
+  .ab-chips{display:flex; flex-wrap:wrap; gap:8px;}
+  .ab-chip{
+    padding:8px 14px; border-radius:999px; border:1.5px solid var(--border); background:var(--paper);
+    font-size:12.5px; font-weight:600; color:var(--muted); cursor:pointer; transition:all .15s ease;
+  }
+  .ab-chip:hover{border-color:var(--accent-line);}
+  .ab-chip.sel{background:var(--accent); border-color:var(--accent); color:#fff;}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="head">
+    <div class="head-left">
+      <a href="../nastroje.php" class="back-btn" title="Späť na formuláre">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <div class="brand">
+        <div class="logo">A</div>
+        <div>
+          <b>Argument Builder</b><br>
+          <small>Argumenty na predstavenie produktu</small>
+        </div>
+      </div>
+    </div>
+    <div class="head-actions">
+      <div class="avatar" id="avatar">A</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- ============ VÝBER ============ -->
+    <div class="form">
+      <div>
+        <div class="step-head"><div class="step-num">1</div><div class="step-title">Produkt</div></div>
+        <div class="grid3" id="products"></div>
+      </div>
+
+      <div>
+        <div class="step-head"><div class="step-num">2</div><div class="step-title">Typ klienta <span style="font-weight:500;text-transform:none;font-size:12px;color:var(--muted);">(nepovinné, spresní výber)</span></div></div>
+        <div class="ab-chips" id="clientTypes"></div>
+      </div>
+    </div>
+
+    <!-- ============ ARGUMENTY ============ -->
+    <div class="preview">
+      <div class="preview-head">
+        <span class="t">Argumenty na stretnutie</span>
+        <span class="live"><i></i>Odškrtávaj počas rozhovoru</span>
+      </div>
+      <div class="preview-tools">
+        <button class="tool" id="copyBtn">Kopírovať zoznam</button>
+        <button class="tool" id="pdfBtn">Stiahnuť PDF</button>
+        <button class="tool" id="resetBtn">Vynulovať odškrtnuté</button>
+      </div>
+      <div class="letter-wrap">
+        <div style="background:#fff; border-radius:8px; padding:24px;">
+          <div class="field" data-k="contactName" style="margin-bottom:16px;">
+            <label>MENO KLIENTA <span style="font-weight:500;text-transform:none;">(nepovinné, pre PDF)</span></label>
+            <input id="contactName" placeholder="napr. Ján Novák">
+          </div>
+          <div id="argList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/advisor-panel.js"></script>
+<script>
+/* ===========================================================================
+   DÁTA — tu meníš produkty, typy klienta a argumenty
+   -------------------------------------------------------------------------
+   Argument s prázdnym tags = univerzálny (zobrazí sa vždy). Argument s
+   tags = zobrazí sa len keď je zvolený zodpovedajúci typ klienta, alebo keď
+   nie je zvolený žiadny typ (vtedy sa zobrazia úplne všetky).
+=========================================================================== */
+const CLIENT_TYPES = {
+  mlada_rodina: 'Mladá rodina',
+  szco: 'SZČO / podnikateľ',
+  senior: 'Senior / preddôchodok',
+  single: 'Slobodný/á',
+  par: 'Pár bez detí',
+};
+
+const PRODUCTS = {
+  zivotne: {
+    label: 'Životné poistenie', sub: 'Ochrana príjmu a rodiny', tile: 'Ž',
+    arguments: [
+      { text: 'Poistenie nie je výdavok, ale prevod rizika — cena zlyhania je vždy vyššia ako cena poistky.', tags: [] },
+      { text: 'Kto by financoval domácnosť a starostlivosť o deti, keby ste najbližší rok nemohli pracovať?', tags: ['mlada_rodina'] },
+      { text: 'Ako SZČO nemáte nemocenské vo výške bežného príjmu — štátna dávka pokryje len jeho zlomok.', tags: ['szco'] },
+      { text: 'Aj bez detí je dobré mať krytie pre dlhodobú PN alebo invaliditu — príjem potrebujete bez ohľadu na rodinný stav.', tags: ['single'] },
+      { text: 'Pri páre bez detí sa oplatí počítať s výpadkom oboch príjmov naraz, nielen jedného.', tags: ['par'] },
+      { text: 'Poistenie kryjúce záväzky chráni pozostalých pred prevzatím dlhu po vás.', tags: ['senior'] },
+    ],
+  },
+  majetok: {
+    label: 'Poistenie majetku', sub: 'Domácnosť a nehnuteľnosť', tile: 'M',
+    arguments: [
+      { text: 'Hodnota domácnosti sa v priebehu rokov mení — poistná suma by mala rásť spolu s ňou, nie zostať pri pôvodnej hodnote.', tags: [] },
+      { text: 'Pri hypotéke banka vyžaduje poistenie nehnuteľnosti — dá sa nastaviť tak, aby kryla aj vybavenie domácnosti, nielen múry.', tags: ['mlada_rodina'] },
+      { text: 'Ak podnikáte z domu alebo máte v domácnosti drahšie pracovné vybavenie, oplatí sa ho explicitne pripoistiť.', tags: ['szco'] },
+      { text: 'Staršia nehnuteľnosť môže mať vyššie riziko škody (rozvody, strecha) — oplatí sa preveriť, či to poistka pokrýva.', tags: ['senior'] },
+    ],
+  },
+  investicie: {
+    label: 'Investície a III. pilier', sub: 'Dlhodobé zhodnocovanie', tile: 'I',
+    arguments: [
+      { text: 'Peniaze na bežnom účte strácajú hodnotu kvôli inflácii — investovanie nie je hazard, je to obrana pred infláciou.', tags: [] },
+      { text: 'Čím skôr začnete, tým viac pracuje vo váš prospech zložené úrokovanie — čas je tu dôležitejší ako výška sumy.', tags: ['mlada_rodina', 'single', 'par'] },
+      { text: 'Ako SZČO si musíte dôchodok vybudovať sami — štátny dôchodok bude počítaný z nižšieho vymeriavacieho základu.', tags: ['szco'] },
+      { text: 'V tomto veku má zmysel presunúť časť portfólia do konzervatívnejších nástrojov, nie prestať investovať úplne.', tags: ['senior'] },
+    ],
+  },
+  hypoteka: {
+    label: 'Hypotéka / refinancovanie', sub: 'Úver na bývanie', tile: 'H',
+    arguments: [
+      { text: 'Aj malý rozdiel v úrokovej sadzbe sa pri dlhej splatnosti prejaví v státisícoch eur — oplatí sa to prepočítať.', tags: [] },
+      { text: 'Fixácia, ktorá sa blíži ku koncu, je najlepší moment na porovnanie ponúk — banka neponúkne najlepšiu sadzbu sama od seba.', tags: ['mlada_rodina', 'par'] },
+      { text: 'Príjem zo živnosti sa dokladuje inak ako zo zamestnania — oplatí sa vopred vedieť, ktoré banky sú v tomto flexibilnejšie.', tags: ['szco'] },
+    ],
+  },
+  auto: {
+    label: 'PZP a havarijné', sub: 'Poistenie vozidla', tile: 'A',
+    arguments: [
+      { text: 'PZP kryje škodu, ktorú spôsobíte vy — havarijné kryje škodu na vašom aute, aj keď za ňu nemôžete.', tags: [] },
+      { text: 'Pri novšom alebo drahšom aute sa havarijné poistenie oplatí najmä prvé roky, kým hodnota auta neklesne.', tags: ['mlada_rodina', 'szco'] },
+      { text: 'Ak autom jazdí aj mladý vodič v domácnosti, oplatí sa preveriť pripoistenie a vplyv na cenu.', tags: ['mlada_rodina'] },
+    ],
+  },
+};
+
+const state = { product: 'zivotne', clientType: null, checked: {}, clientName: '' };
+
+const $ = id => document.getElementById(id);
+function escapeHtml(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ===========================================================================
+   VÝBER ARGUMENTOV
+=========================================================================== */
+function argsForCurrent(){
+  const prod = PRODUCTS[state.product];
+  if (!state.clientType) return prod.arguments;
+  return prod.arguments.filter(function(a){ return a.tags.length === 0 || a.tags.indexOf(state.clientType) !== -1; });
+}
+
+/* ===========================================================================
+   VYKRESLENIE
+=========================================================================== */
+function renderProducts(){
+  $('products').innerHTML = Object.keys(PRODUCTS).map(function(k){
+    const p = PRODUCTS[k], sel = k === state.product ? ' sel' : '';
+    return '<div class="type' + sel + '" data-product="' + k + '">'
+      + '<div class="tile">' + p.tile + '</div>'
+      + '<div><div class="t-label">' + escapeHtml(p.label) + '</div><div class="t-sub">' + escapeHtml(p.sub) + '</div></div></div>';
+  }).join('');
+}
+
+function renderClientTypes(){
+  $('clientTypes').innerHTML = Object.keys(CLIENT_TYPES).map(function(k){
+    const sel = state.clientType === k ? ' sel' : '';
+    return '<div class="ab-chip' + sel + '" data-client="' + k + '">' + escapeHtml(CLIENT_TYPES[k]) + '</div>';
+  }).join('');
+}
+
+function renderArgs(){
+  const prod = PRODUCTS[state.product];
+  const checkedSet = state.checked[state.product] || {};
+  const args = argsForCurrent();
+  $('avatar').textContent = prod.tile;
+  $('argList').innerHTML = '<div style="font-weight:700; font-size:15px; color:#20242b; margin-bottom:4px;">' + escapeHtml(prod.label) + '</div>'
+    + '<p style="font-size:12.5px; color:#8a8f99; margin-bottom:14px;">' + args.length + ' z ' + prod.arguments.length + ' argumentov'
+      + (state.clientType ? ' pre „' + escapeHtml(CLIENT_TYPES[state.clientType]) + '“' : '') + '</p>'
+    + args.map(function(a){
+        const i = prod.arguments.indexOf(a);
+        const isChecked = !!checkedSet[i];
+        return '<label style="display:flex; align-items:flex-start; gap:10px; padding:9px 0; border-bottom:1px solid #eef0f3; cursor:pointer;">'
+          + '<input type="checkbox" data-q="' + i + '" ' + (isChecked ? 'checked' : '') + ' style="margin-top:3px; flex-shrink:0; width:16px; height:16px;">'
+          + '<span style="font-size:13.5px; line-height:1.55; color:' + (isChecked ? '#9aa1ad' : '#20242b') + '; text-decoration:' + (isChecked ? 'line-through' : 'none') + ';">' + escapeHtml(a.text) + '</span>'
+          + '</label>';
+      }).join('');
+}
+
+function render(){ renderProducts(); renderClientTypes(); renderArgs(); }
+
+/* ===========================================================================
+   AKCIE
+=========================================================================== */
+function doCopy(){
+  const prod = PRODUCTS[state.product];
+  const checkedSet = state.checked[state.product] || {};
+  const args = argsForCurrent();
+  const txt = prod.label + (state.clientType ? ' — ' + CLIENT_TYPES[state.clientType] : '') + '\n\n'
+    + args.map(function(a){
+        const i = prod.arguments.indexOf(a);
+        return (checkedSet[i] ? '[x] ' : '[ ] ') + a.text;
+      }).join('\n');
+  try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
+  const b = $('copyBtn'); const orig = b.textContent;
+  b.textContent = 'Skopírované ✓'; setTimeout(function(){ b.textContent = orig; }, 1600);
+}
+
+function doReset(){
+  state.checked[state.product] = {};
+  renderArgs();
+}
+
+/* ===========================================================================
+   PDF PRE KLIENTA (server-side Dompdf cez zdieľaný ../pdf.php, presné A4)
+=========================================================================== */
+function buildLetterHtml(){
+  const prod = PRODUCTS[state.product];
+  const checkedSet = state.checked[state.product] || {};
+  const args = argsForCurrent();
+  const clientName = state.clientName.trim() || 'Klient';
+  const today = new Date();
+  const SK_MONTHS = ['január','február','marec','apríl','máj','jún','júl','august','september','október','november','december'];
+  const dateStr = today.getDate() + '. ' + SK_MONTHS[today.getMonth()] + ' ' + today.getFullYear();
+
+  const rows = args.map(function(a){
+    const i = prod.arguments.indexOf(a);
+    const done = !!checkedSet[i];
+    return '<div class="ab-item"><span class="ab-mark ' + (done?'on':'') + '">' + (done?'✓':'') + '</span>'
+      + '<span class="ab-q">' + escapeHtml(a.text) + '</span></div>';
+  }).join('');
+
+  const css = `
+    @font-face { font-family:'DejaVu Sans'; src:url('../vendor/dompdf/lib/fonts/DejaVuSans.ttf'); }
+    @font-face { font-family:'DejaVu Sans'; font-weight:bold; src:url('../vendor/dompdf/lib/fonts/DejaVuSans-Bold.ttf'); }
+    * { box-sizing:border-box; }
+    div,p,span { margin:0; padding:0; }
+    body { margin:0; padding:0; font-family:'DejaVu Sans',sans-serif; font-size:10.5pt; line-height:1.5; color:#20242b; background:#fff; }
+    .doctitle { text-align:center; font-size:16pt; letter-spacing:.5pt; font-weight:bold; padding:7pt 0 2pt; }
+    .card-sub { text-align:center; font-size:10.5pt; color:#666; margin-bottom:5mm; }
+    .meta { text-align:center; font-size:9pt; color:#8a8a8a; margin-bottom:9mm; padding-bottom:5mm; border-bottom:1pt solid #e5e5e5; }
+    .ab-hd { color:#fff; background:#ea580c; font-weight:bold; font-size:12pt; padding:3mm 4mm; border-radius:2mm; margin-bottom:5mm; }
+    .ab-item { display:flex; align-items:flex-start; gap:6pt; padding:2.5mm 0; border-bottom:0.5pt solid #eef0f3; }
+    .ab-mark { width:12pt; height:12pt; flex-shrink:0; border:1pt solid #999; border-radius:2pt; text-align:center; font-size:9pt; line-height:11pt; color:#059669; }
+    .ab-mark.on { border-color:#059669; background:#ecfdf5; font-weight:bold; }
+    .ab-q { font-size:10.5pt; }
+    @page{ margin:20mm 20mm 20mm 20mm; }
+  `;
+
+  return '<!DOCTYPE html><html lang="sk"><head>'
+    + '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
+    + '<title>Argument Builder</title><style>' + css + '</style></head><body>'
+    + '<div class="doctitle">Argumenty na predstavenie produktu</div>'
+    + '<div class="card-sub">' + escapeHtml(prod.label) + (state.clientType ? ' — ' + escapeHtml(CLIENT_TYPES[state.clientType]) : '') + '</div>'
+    + '<div class="meta">' + escapeHtml(clientName) + ' &middot; ' + dateStr + '</div>'
+    + '<div class="ab-hd">' + escapeHtml(prod.label) + '</div>'
+    + rows
+    + '</body></html>';
+}
+
+function doPDF(){
+  const btn = $('pdfBtn'); const orig = btn.textContent;
+  btn.textContent = 'Generujem…'; btn.disabled = true;
+
+  const html = buildLetterHtml();
+  const filename = 'Argumenty_' + state.product + (state.clientName.trim() ? '_' + state.clientName.trim().replace(/\s+/g,'_') : '');
+
+  fetch('../pdf.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ html: html, filename: filename })
+  })
+  .then(function(r){
+    const ct = r.headers.get('Content-Type') || '';
+    if (ct.includes('application/json') || ct.includes('text/')) {
+      return r.text().then(function(t){ throw new Error('Server: ' + t); });
+    }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.blob();
+  })
+  .then(function(blob){
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename + '.pdf';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    btn.textContent = orig; btn.disabled = false;
+    logDocument('argument-builder', state.clientName.trim() || 'Klient', state, undefined);
+  })
+  .catch(function(e){
+    console.error(e);
+    btn.textContent = orig; btn.disabled = false;
+    alert('Chyba PDF:\n' + e.message);
+  });
+}
+
+/* ===========================================================================
+   UDALOSTI
+=========================================================================== */
+function bind(){
+  document.addEventListener('click', function(e){
+    const p = e.target.closest('[data-product]'); if(p){ state.product = p.dataset.product; render(); return; }
+    const c = e.target.closest('[data-client]'); if(c){
+      state.clientType = state.clientType === c.dataset.client ? null : c.dataset.client;
+      render(); return;
+    }
+  });
+  document.addEventListener('change', function(e){
+    if(e.target.matches('input[type="checkbox"][data-q]')){
+      const i = +e.target.dataset.q;
+      if(!state.checked[state.product]) state.checked[state.product] = {};
+      state.checked[state.product][i] = e.target.checked;
+      renderArgs();
+    }
+  });
+  $('contactName').addEventListener('input', function(e){ state.clientName = e.target.value; });
+  $('copyBtn').addEventListener('click', doCopy);
+  $('pdfBtn').addEventListener('click', doPDF);
+  $('resetBtn').addEventListener('click', doReset);
+}
+
+/* ===========================================================================
+   ŠTART
+=========================================================================== */
+(function init(){
+  bind(); render();
+})();
+</script>
+
+<script src="/assets/shell.js?v=12"></script>
+</body></html>

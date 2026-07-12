@@ -8,8 +8,8 @@
      INTERAKTÍVNY ŤAHÁK „ČO PÝTAŤ OD KLIENTA“ — samostatný editovateľný súbor
      -------------------------------------------------------------------------
      Živý zoznam otázok na stretnutí podľa situácie klienta — na odškrtávanie
-     počas rozhovoru, nie na odovzdanie klientovi. Bez PDF, bez ukladania dát
-     o klientovi (žiadne osobné údaje sa nezadávajú).
+     počas rozhovoru. Voliteľné meno klienta + PDF cez zdieľaný ../pdf.php
+     (Dompdf), napr. ako poznámka do spisu.
 
      KDE ČO UPRAVIŤ:
        • Situácie a otázky ...... JS, objekt CATEGORIES
@@ -57,8 +57,13 @@
         <span class="t">Otázky na stretnutie</span>
         <span class="live"><i></i>Odškrtávaj počas rozhovoru</span>
       </div>
+      <div class="field" data-k="contactName" style="margin-bottom:12px;">
+        <label>MENO KLIENTA <span style="font-weight:500;text-transform:none;">(nepovinné, pre PDF)</span></label>
+        <input id="contactName" placeholder="napr. Ján Novák">
+      </div>
       <div class="preview-tools">
         <button class="tool" id="copyBtn">Kopírovať zoznam</button>
+        <button class="tool" id="pdfBtn">Stiahnuť PDF</button>
         <button class="tool" id="resetBtn">Vynulovať odškrtnuté</button>
       </div>
       <div class="letter-wrap">
@@ -148,6 +153,7 @@ const CATEGORIES = {
 const state = {
   category: 'nova',
   checked: {},
+  clientName: '',
 };
 
 /* ===========================================================================
@@ -205,6 +211,87 @@ function doReset(){
 }
 
 /* ===========================================================================
+   PDF PRE KLIENTA (server-side Dompdf cez zdieľaný ../pdf.php, presné A4)
+=========================================================================== */
+function buildLetterHtml(){
+  const cat = CATEGORIES[state.category];
+  const checkedSet = state.checked[state.category] || {};
+  const clientName = state.clientName.trim() || 'Klient';
+  const today = new Date();
+  const SK_MONTHS = ['január','február','marec','apríl','máj','jún','júl','august','september','október','november','december'];
+  const dateStr = today.getDate() + '. ' + SK_MONTHS[today.getMonth()] + ' ' + today.getFullYear();
+
+  const rows = cat.questions.map(function(q, i){
+    const done = !!checkedSet[i];
+    return '<div class="q-item"><span class="q-mark ' + (done?'on':'') + '">' + (done?'✓':'') + '</span>'
+      + '<span class="q-txt">' + escapeHtml(q) + '</span></div>';
+  }).join('');
+
+  const css = `
+    @font-face { font-family:'DejaVu Sans'; src:url('../vendor/dompdf/lib/fonts/DejaVuSans.ttf'); }
+    @font-face { font-family:'DejaVu Sans'; font-weight:bold; src:url('../vendor/dompdf/lib/fonts/DejaVuSans-Bold.ttf'); }
+    * { box-sizing:border-box; }
+    div,p,span { margin:0; padding:0; }
+    body { margin:0; padding:0; font-family:'DejaVu Sans',sans-serif; font-size:10.5pt; line-height:1.5; color:#20242b; background:#fff; }
+    .doctitle { text-align:center; font-size:16pt; letter-spacing:.5pt; font-weight:bold; padding:7pt 0 2pt; }
+    .card-sub { text-align:center; font-size:10.5pt; color:#666; margin-bottom:5mm; }
+    .meta { text-align:center; font-size:9pt; color:#8a8a8a; margin-bottom:9mm; padding-bottom:5mm; border-bottom:1pt solid #e5e5e5; }
+    .cat-hd { color:#fff; background:#d97706; font-weight:bold; font-size:12pt; padding:3mm 4mm; border-radius:2mm; margin-bottom:5mm; }
+    .q-item { display:flex; align-items:flex-start; gap:6pt; padding:2.5mm 0; border-bottom:0.5pt solid #eef0f3; }
+    .q-mark { width:12pt; height:12pt; flex-shrink:0; border:1pt solid #999; border-radius:2pt; text-align:center; font-size:9pt; line-height:11pt; color:#059669; }
+    .q-mark.on { border-color:#059669; background:#ecfdf5; font-weight:bold; }
+    .q-txt { font-size:10.5pt; }
+    @page{ margin:20mm 20mm 20mm 20mm; }
+  `;
+
+  return '<!DOCTYPE html><html lang="sk"><head>'
+    + '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
+    + '<title>Ťahák čo pýtať od klienta</title><style>' + css + '</style></head><body>'
+    + '<div class="doctitle">Čo pýtať od klienta</div>'
+    + '<div class="card-sub">Poznámky zo stretnutia podľa situácie klienta</div>'
+    + '<div class="meta">' + escapeHtml(clientName) + ' &middot; ' + dateStr + '</div>'
+    + '<div class="cat-hd">' + escapeHtml(cat.label) + '</div>'
+    + rows
+    + '</body></html>';
+}
+
+function doPDF(){
+  const btn = $('pdfBtn'); const orig = btn.textContent;
+  btn.textContent = 'Generujem…'; btn.disabled = true;
+
+  const html = buildLetterHtml();
+  const filename = 'Co_pytat_od_klienta' + (state.clientName.trim() ? '_' + state.clientName.trim().replace(/\s+/g,'_') : '');
+
+  fetch('../pdf.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ html: html, filename: filename })
+  })
+  .then(function(r){
+    const ct = r.headers.get('Content-Type') || '';
+    if (ct.includes('application/json') || ct.includes('text/')) {
+      return r.text().then(function(t){ throw new Error('Server: ' + t); });
+    }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.blob();
+  })
+  .then(function(blob){
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename + '.pdf';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    btn.textContent = orig; btn.disabled = false;
+    logDocument('tahak-co-pytat-od-klienta', state.clientName.trim() || 'Klient', state, undefined);
+  })
+  .catch(function(e){
+    console.error(e);
+    btn.textContent = orig; btn.disabled = false;
+    alert('Chyba PDF:\n' + e.message);
+  });
+}
+
+/* ===========================================================================
    UDALOSTI
 =========================================================================== */
 function bind(){
@@ -219,7 +306,9 @@ function bind(){
       renderChecklist();
     }
   });
+  $('contactName').addEventListener('input', function(e){ state.clientName = e.target.value; });
   $('copyBtn').addEventListener('click', doCopy);
+  $('pdfBtn').addEventListener('click', doPDF);
   $('resetBtn').addEventListener('click', doReset);
 }
 

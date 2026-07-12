@@ -60,11 +60,19 @@ toho, čo sa rozhodneme spraviť.
 - [x] **Interaktívna „Pyramída istoty“** — klikacia stupňovitá pyramída
   (Ochrana → Rezerva → Budovanie cieľov → Zhodnocovanie), pri každej
   vrstve krátke vysvetlenie a kontrolný zoznam na odškrtávanie počas
-  rozhovoru s klientom. Bez PDF, bez ukladania dát o klientovi.
+  rozhovoru s klientom. Voliteľné meno klienta a export do PDF.
 - [x] **„Latte Faktor“** — kalkulačka malých pravidelných výdavkov
   (napr. káva, predplatné): naživo prepočíta, o koľko by suma narástla
   pri pravidelnom investovaní namiesto minutia (zvolený počet rokov,
-  očakávané ročné zhodnotenie). Bez PDF, bez ukladania dát o klientovi.
+  očakávané ročné zhodnotenie). Voliteľné meno klienta a export do PDF.
+- [x] **Simulátor dvoch extrémov** — vedľa seba dva krajné scenáre
+  (dlhý život/dožitie vs. náhla strata príjmu zajtra), pri každom
+  kontrolný zoznam na odškrtávanie počas rozhovoru. Voliteľné meno
+  klienta a export do PDF.
+- [x] **Argument Builder** — vyber produkt a (voliteľne) typ klienta,
+  poskladá sa zoznam odporúčaných argumentov na jeho predstavenie —
+  opak Ťaháku „čo pýtať“ (toto je čo povedať). Odškrtávanie počas
+  rozhovoru, export do PDF.
 
 ---
 

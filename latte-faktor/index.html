@@ -9,8 +9,7 @@
      -------------------------------------------------------------------------
      Kalkulačka malých pravidelných výdavkov: koľko by narástla suma, keby sa
      namiesto minutia pravidelne investovala. Naživo prepočítava pri každej
-     zmene vstupu. Bez PDF, bez ukladania dát o klientovi (žiadne osobné
-     údaje sa nezadávajú, len sumy a percentá).
+     zmene vstupu. Voliteľné meno klienta + PDF cez zdieľaný ../pdf.php (Dompdf).
 
      KDE ČO UPRAVIŤ:
        • Násobky frekvencie (denne/týždenne/mesačne) ... JS, objekt FREQ_MULT
@@ -128,6 +127,12 @@
       </div>
       <div class="preview-tools">
         <button class="tool" id="copyBtn">Kopírovať zhrnutie pre klienta</button>
+        <button class="tool" id="pdfBtn">Stiahnuť PDF</button>
+      </div>
+
+      <div class="field" data-k="clientName" style="margin-bottom:16px;">
+        <label>MENO KLIENTA <span style="font-weight:500;text-transform:none;">(nepovinné, pre PDF)</span></label>
+        <input id="clientName" placeholder="napr. Ján Novák">
       </div>
 
       <div class="lf-hero">
@@ -143,6 +148,7 @@
   </div>
 </div>
 
+<script src="../assets/advisor-panel.js"></script>
 <script>
 /* ===========================================================================
    DÁTA A METODIKA
@@ -155,7 +161,7 @@
 const FREQ_MULT = { denne: 30.44, tyzdenne: 4.345, mesacne: 1 };
 const FREQ_LABEL = { denne: 'denne', tyzdenne: 'týždenne', mesacne: 'mesačne' };
 
-const state = { amount: 3.50, freq: 'denne', years: 20, rate: 6 };
+const state = { amount: 3.50, freq: 'denne', years: 20, rate: 6, clientName: '' };
 
 const $ = id => document.getElementById(id);
 function num(v){ const n = Number(v); return isFinite(n) && n > 0 ? n : 0; }
@@ -235,6 +241,93 @@ function syncInputs(){
 }
 
 /* ===========================================================================
+   PDF PRE KLIENTA (server-side Dompdf cez zdieľaný ../pdf.php, presné A4)
+=========================================================================== */
+function buildLetterHtml(){
+  const r = computeFV();
+  const clientName = state.clientName.trim() || 'Klient';
+  const today = new Date();
+  const SK_MONTHS = ['január','február','marec','apríl','máj','jún','júl','august','september','október','november','december'];
+  const dateStr = today.getDate() + '. ' + SK_MONTHS[today.getMonth()] + ' ' + today.getFullYear();
+
+  const css = `
+    @font-face { font-family:'DejaVu Sans'; src:url('../vendor/dompdf/lib/fonts/DejaVuSans.ttf'); }
+    @font-face { font-family:'DejaVu Sans'; font-weight:bold; src:url('../vendor/dompdf/lib/fonts/DejaVuSans-Bold.ttf'); }
+    * { box-sizing:border-box; }
+    div,p,span,table,tr,td { margin:0; padding:0; }
+    body { margin:0; padding:0; font-family:'DejaVu Sans',sans-serif; font-size:10.5pt; line-height:1.5; color:#20242b; background:#fff; }
+    .doctitle { text-align:center; font-size:16pt; letter-spacing:.5pt; font-weight:bold; padding:7pt 0 2pt; }
+    .card-sub { text-align:center; font-size:10.5pt; color:#666; margin-bottom:5mm; }
+    .meta { text-align:center; font-size:9pt; color:#8a8a8a; margin-bottom:9mm; padding-bottom:5mm; border-bottom:1pt solid #e5e5e5; }
+    .hero { background:#e11d48; color:#fff; border-radius:3mm; padding:6mm 8mm; margin-bottom:7mm; }
+    .hero .lbl { font-size:8.5pt; font-weight:bold; text-transform:uppercase; letter-spacing:.5pt; opacity:.85; }
+    .hero .big { font-size:20pt; font-weight:bold; margin-top:2mm; }
+    table.rows { width:100%; border-collapse:collapse; }
+    table.rows td { padding:3mm 0; border-bottom:0.5pt solid #eef0f3; font-size:10pt; }
+    table.rows td.v { text-align:right; font-weight:bold; }
+    table.rows tr.gain td.v { color:#059669; }
+    .foot { font-size:8.5pt; color:#999; margin-top:8mm; }
+    @page{ margin:20mm 20mm 20mm 20mm; }
+  `;
+
+  const body = '<div class="doctitle">Latte Faktor</div>'
+    + '<div class="card-sub">Malé výdavky, veľký rozdiel v čase</div>'
+    + '<div class="meta">' + escapeHtml(clientName) + ' &middot; ' + dateStr + '</div>'
+    + '<div class="hero"><div class="lbl">Za ' + state.years + ' rokov by mohlo pribudnúť navyše</div><div class="big">' + eur(r.gain) + '</div></div>'
+    + '<p style="font-size:10pt; color:#5b6270; margin-bottom:5mm;">'
+      + eur2(num(state.amount)) + ' ' + FREQ_LABEL[state.freq] + ' je cca ' + eur2(r.monthly) + '/mesačne. '
+      + 'Prepočet pri priemernom ročnom zhodnotení ' + state.rate + ' %.'
+    + '</p>'
+    + '<table class="rows">'
+      + '<tr><td>Mesačne (prepočítané)</td><td class="v">' + eur2(r.monthly) + '</td></tr>'
+      + '<tr><td>Celkovo vložené za ' + state.years + ' r.</td><td class="v">' + eur(r.invested) + '</td></tr>'
+      + '<tr class="gain"><td>Zhodnotenie (efekt zloženého úroku)</td><td class="v">+' + eur(r.gain) + '</td></tr>'
+      + '<tr><td>Konečná hodnota</td><td class="v">' + eur(r.fv) + '</td></tr>'
+    + '</table>'
+    + '<div class="foot">Orientačný prepočet, nie investičné poradenstvo. Skutočný výnos závisí od zvoleného produktu a trhových podmienok.</div>';
+
+  return '<!DOCTYPE html><html lang="sk"><head>'
+    + '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
+    + '<title>Latte Faktor</title><style>' + css + '</style></head><body>' + body + '</body></html>';
+}
+
+function doPDF(){
+  const btn = $('pdfBtn'); const orig = btn.textContent;
+  btn.textContent = 'Generujem…'; btn.disabled = true;
+
+  const html = buildLetterHtml();
+  const filename = 'Latte_faktor' + (state.clientName.trim() ? '_' + state.clientName.trim().replace(/\s+/g,'_') : '');
+
+  fetch('../pdf.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ html: html, filename: filename })
+  })
+  .then(function(r){
+    const ct = r.headers.get('Content-Type') || '';
+    if (ct.includes('application/json') || ct.includes('text/')) {
+      return r.text().then(function(t){ throw new Error('Server: ' + t); });
+    }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.blob();
+  })
+  .then(function(blob){
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename + '.pdf';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    btn.textContent = orig; btn.disabled = false;
+    logDocument('latte-faktor', state.clientName.trim() || 'Klient', state, undefined);
+  })
+  .catch(function(e){
+    console.error(e);
+    btn.textContent = orig; btn.disabled = false;
+    alert('Chyba PDF:\n' + e.message);
+  });
+}
+
+/* ===========================================================================
    UDALOSTI
 =========================================================================== */
 function bind(){
@@ -242,7 +335,9 @@ function bind(){
   $('freq').addEventListener('change', function(e){ state.freq = e.target.value; render(); });
   $('years').addEventListener('input', function(e){ state.years = Number(e.target.value); render(); });
   $('rate').addEventListener('input', function(e){ state.rate = Number(e.target.value); render(); });
+  $('clientName').addEventListener('input', function(e){ state.clientName = e.target.value; });
   $('copyBtn').addEventListener('click', doCopy);
+  $('pdfBtn').addEventListener('click', doPDF);
   $('resetBtn').addEventListener('click', doReset);
 }
 
