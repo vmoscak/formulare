@@ -88,6 +88,17 @@ html.preload body{opacity:0;}
 }
 a{color:inherit; text-decoration:none;}
 
+/* Vlastný outline pri navigácii klávesnicou (Tab) — namiesto (alebo navyše
+   k) prehliadačovému default; myšou/dotykom sa nezobrazuje. */
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:4px;}
+
+/* Tenký scrollbar ladený s motívom (Firefox aj WebKit). */
+*{scrollbar-width:thin; scrollbar-color:var(--line-strong) transparent;}
+*::-webkit-scrollbar{width:10px; height:10px;}
+*::-webkit-scrollbar-track{background:transparent;}
+*::-webkit-scrollbar-thumb{background:var(--line-strong); border-radius:99px; border:2px solid transparent; background-clip:padding-box;}
+*::-webkit-scrollbar-thumb:hover{background:var(--muted); background-clip:padding-box;}
+
 /* ── Horný header (biely sticky pruh) ──────────────────────────────────── */
 .topbar{
   position:sticky; top:0; z-index:20;
@@ -95,7 +106,10 @@ a{color:inherit; text-decoration:none;}
   padding:16px 32px; min-height:72px;
   background:var(--topbar-bg,rgba(255,255,255,.85)); backdrop-filter:saturate(1.1) blur(8px);
   border-bottom:1px solid var(--border);
+  box-shadow:0 4px 20px -12px transparent;
+  transition:box-shadow .2s ease;
 }
+body.rail-scrolled .topbar{box-shadow:var(--shadow-md);}
 .topbar .tb-title h1{margin:0; font-size:20px; font-weight:600; letter-spacing:-.02em; color:var(--ink);}
 .topbar .tb-title p{margin:2px 0 0; font-size:12.5px; color:var(--muted);}
 .topbar .tb-actions{display:flex; align-items:center; gap:12px;}
@@ -306,8 +320,8 @@ th{
   color:var(--label); border-bottom:1px solid var(--border); padding:0 10px 12px;
 }
 td{padding:12px 10px; border-bottom:1px solid var(--border); vertical-align:middle; color:var(--ink-2);}
-tbody tr{transition:background-color .15s ease;}
-tbody tr:hover{background-color:var(--desk);}
+tbody tr{transition:background-color .15s ease, box-shadow .15s ease;}
+tbody tr:hover{background-color:var(--desk); box-shadow:inset 3px 0 0 var(--accent-line);}
 tbody tr:last-child td{border-bottom:none;}
 tr.inactive td{color:var(--muted); text-decoration:line-through;}
 td.mono,.date{font-family:var(--mono); font-size:11.5px; color:var(--muted); white-space:nowrap;}
@@ -410,9 +424,10 @@ td .strong{font-weight:600; color:var(--ink);}
 .toggle-btn{
   display:inline-block; padding:6px 12px; border:1px solid var(--line-strong); border-radius:var(--radius-md);
   background:var(--paper); font-size:12px; font-weight:600; cursor:pointer; color:var(--ink-2); text-decoration:none;
-  transition:border-color .15s, color .15s, background .15s;
+  transition:border-color .15s, color .15s, background .15s, transform .1s;
 }
 .toggle-btn:hover{border-color:var(--accent); color:var(--accent); background:var(--accent-soft);}
+.toggle-btn:active{transform:scale(.95);}
 
 /* formulár pridania poradcu (admin) */
 .add-form{display:grid; grid-template-columns:repeat(4,1fr) auto; gap:10px; margin-top:16px;}

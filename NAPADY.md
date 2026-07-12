@@ -117,6 +117,15 @@ toho, čo sa rozhodneme spraviť.
   režim; (4) „shine" efekt — svetelný pruh prechádzajúci cez kartu
   nástroja pri prejdení myšou; (5) ikona zámku pri štítku „Len pre
   teba"/„Admin" na kartách Domov — vizuálne, nielen textovo.
+- [x] **Tretie kolo grafického doladenia** — (1) jemný tieň pod
+  hornou lištou po odscrollovaní obsahu; (2) vlastný focus-outline
+  v brand farbe pri navigácii klávesnicou (namiesto prehliadačového
+  default); (3) tenký scrollbar ladený s motívom (svetlý/tmavý);
+  (4) farebný akcent na riadku tabuľky pri prejdení myšou (Moje
+  dokumenty, Znalostná báza, Admin); (5) "count-up" animácia
+  hlavných výsledných čísel v "Oplatí sa mi refinancovať?"
+  (mesačná úspora, čistá úspora) — nabehnú plynulo namiesto
+  okamžitého prepočtu.
 
 ---
 

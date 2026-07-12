@@ -33,7 +33,7 @@ try {
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
 <script src="/assets/toast.js?v=1"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=16">
+<link rel="stylesheet" href="/assets/panel.css?v=17">
 <style>
   .rf-verdict{margin-top:16px; padding:16px 18px; border-radius:var(--radius-lg); font-weight:700; font-size:14.5px;}
   .rf-verdict.good{background:var(--good-soft,#ecfdf5); color:var(--good,#059669);}
@@ -137,6 +137,26 @@ const $ = id => document.getElementById(id);
 function num(v){ const n = Number(v); return isFinite(n) && n >= 0 ? n : 0; }
 function eur(n){ return Math.round(n).toLocaleString('sk-SK') + ' €'; }
 
+/* Krátka "count-up" animácia hlavných výsledných čísel — od predchádzajúcej
+   hodnoty k novej, nech prepočet po zmene vstupu pôsobí menej trhavo. */
+const numAnimState = {};
+function animateNumber(el, from, to, prefix, formatFn){
+  const key = el.id;
+  if (numAnimState[key]) cancelAnimationFrame(numAnimState[key]);
+  if (!isFinite(from)) from = to;
+  const start = performance.now();
+  const dur = 450;
+  function step(now){
+    const t = Math.min(1, (now - start) / dur);
+    const eased = 1 - Math.pow(1 - t, 3);
+    const val = from + (to - from) * eased;
+    el.textContent = prefix + formatFn(val);
+    if (t < 1) numAnimState[key] = requestAnimationFrame(step);
+    else delete numAnimState[key];
+  }
+  numAnimState[key] = requestAnimationFrame(step);
+}
+
 /* Mesačná splátka anuitného úveru: M = P*r*(1+r)^n / ((1+r)^n - 1), r = mesačná sadzba, n = počet mesiacov. */
 function monthlyPayment(principal, annualRatePct, months){
   if (principal <= 0 || months <= 0) return 0;
@@ -193,16 +213,25 @@ function renderChart(r){
   $('tlProfitLabel').textContent = profitPct > 0 ? 'Čistý zisk: ' + Math.round(profitPct) + ' % doby' : '';
 }
 
+const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let prevMonthlySaving = 0, prevNetSaving = 0;
 function compute(){
   const r = calc();
   lastResult = r;
 
   $('rOldMonthly').textContent = r.hasData ? eur(r.oldMonthly) + '/mes.' : '—';
   $('rNewMonthly').textContent = r.hasData ? eur(r.newMonthly) + '/mes.' : '—';
-  $('rMonthlySaving').textContent = r.hasData ? (r.monthlySaving >= 0 ? '+' : '') + eur(r.monthlySaving) + '/mes.' : '—';
+  if (r.hasData && !reduceMotion){
+    animateNumber($('rMonthlySaving'), prevMonthlySaving, r.monthlySaving, r.monthlySaving >= 0 ? '+' : '', v => eur(v) + '/mes.');
+    animateNumber($('rNetSaving'), prevNetSaving, r.netSaving, r.netSaving >= 0 ? '+' : '', eur);
+  } else {
+    $('rMonthlySaving').textContent = r.hasData ? (r.monthlySaving >= 0 ? '+' : '') + eur(r.monthlySaving) + '/mes.' : '—';
+    $('rNetSaving').textContent = r.hasData ? (r.netSaving >= 0 ? '+' : '') + eur(r.netSaving) : '—';
+  }
+  prevMonthlySaving = r.hasData ? r.monthlySaving : 0;
+  prevNetSaving = r.hasData ? r.netSaving : 0;
   $('rTotalCost').textContent = eur(r.totalCost);
   $('rBreakEven').textContent = isFinite(r.breakEvenMonths) ? Math.ceil(r.breakEvenMonths) + ' mesiacov' : '—';
-  $('rNetSaving').textContent = r.hasData ? (r.netSaving >= 0 ? '+' : '') + eur(r.netSaving) : '—';
 
   renderChart(r);
 
@@ -360,5 +389,5 @@ if (rateSuggest) {
 $('pdfBtn').addEventListener('click', doPDF);
 compute();
 </script>
-<script src="/assets/shell.js?v=15"></script>
+<script src="/assets/shell.js?v=16"></script>
 </body></html>

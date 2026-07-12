@@ -58,7 +58,7 @@ try {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=16">
+<link rel="stylesheet" href="/assets/panel.css?v=17">
 </head><body>
 <header class="topbar">
   <div class="tb-title">
@@ -157,5 +157,5 @@ function kbCopy(id) {
   navigator.clipboard.writeText(text).catch(function () {});
 }
 </script>
-<script src="/assets/shell.js?v=15"></script>
+<script src="/assets/shell.js?v=16"></script>
 </body></html>

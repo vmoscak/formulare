@@ -275,6 +275,14 @@
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') { closeRail(); if (moreListEl) moreListEl.classList.remove('open'); }
     });
+
+    // Jemný tieň pod .topbar (panel.css stránky) po odscrollovaní — vizuálne
+    // oddelí lištu od obsahu, ktorý pod ňu prechádza (position:sticky).
+    function syncScrollShadow() {
+      document.body.classList.toggle('rail-scrolled', window.scrollY > 8);
+    }
+    syncScrollShadow();
+    window.addEventListener('scroll', syncScrollShadow, { passive: true });
   }
 
   // Skeleton počas načítavania whoami — zabraňuje "výskoku" ľavej lišty na
