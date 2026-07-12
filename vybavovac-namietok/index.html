@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="sk"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vybavovač námietok</title>
+
+<!-- =========================================================================
+     VYBAVOVAČ NÁMIETOK — samostatný editovateľný súbor
+     -------------------------------------------------------------------------
+     Opak Argument Builderu — ten je proaktívny (čo povedať na začiatku),
+     toto je reaktívny (čo povedať, keď klient zaváha). Vyber typickú
+     námietku klienta, appka ukáže odporúčané reakcie. Interný nástroj pre
+     poradcu, nie na odovzdanie klientovi — bez PDF, len kopírovanie pre
+     vlastné poznámky.
+
+     KDE ČO UPRAVIŤ:
+       • Námietky a reakcie ... JS, objekt OBJECTIONS
+       • Farby / vzhľad ....... zdieľaný dizajnový systém ../assets/ui.css
+========================================================================== -->
+
+<script src="../assets/theme-init.js"></script>
+<link rel="stylesheet" href="../assets/ui.css?v=8">
+</head>
+<body>
+
+<div class="app">
+  <div class="head">
+    <div class="head-left">
+      <a href="../nastroje.php" class="back-btn" title="Späť na formuláre">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <div class="brand">
+        <div class="logo">V</div>
+        <div>
+          <b>Vybavovač námietok</b><br>
+          <small>Čo povedať, keď klient zaváha</small>
+        </div>
+      </div>
+    </div>
+    <div class="head-actions">
+      <div class="avatar" id="avatar">?</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- ============ NÁMIETKA ============ -->
+    <div class="form">
+      <div>
+        <div class="step-head"><div class="step-num">1</div><div class="step-title">Čo povedal klient?</div></div>
+        <div class="grid3" id="objections"></div>
+      </div>
+    </div>
+
+    <!-- ============ ODPORÚČANÉ REAKCIE ============ -->
+    <div class="preview">
+      <div class="preview-head">
+        <span class="t">Odporúčané reakcie</span>
+        <span class="live"><i></i>Odškrtávaj, čo si vyskúšal/-a</span>
+      </div>
+      <div class="preview-tools">
+        <button class="tool" id="copyBtn">Kopírovať reakcie</button>
+        <button class="tool" id="resetBtn">Vynulovať odškrtnuté</button>
+      </div>
+      <div class="letter-wrap">
+        <div id="responses" style="background:#fff; border-radius:8px; padding:24px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/advisor-panel.js"></script>
+<script>
+/* ===========================================================================
+   DÁTA — tu meníš námietky a odporúčané reakcie
+=========================================================================== */
+const OBJECTIONS = {
+  drahe: {
+    label: '„Je to drahé“', tile: '€',
+    responses: [
+      'Porovnajme to nie s nulou, ale s cenou toho, čo sa stane, keď na to nebudete pripravení — mesačná suma je zlomok toho, o čo by ste prišli.',
+      'Skúsme sa pozrieť, či vieme rozsah krytia doladiť tak, aby cena sedela — nie je to len áno/nie, dá sa to poskladať.',
+      'Cena rastie s vekom — čím skôr začnete, tým je nižšia na celé obdobie, kým ju máte dojednanú.',
+      'Porovnajte si to k bežnému mesačnému výdavku, ktorý si možno ani nevšimnete — často je to porovnateľná suma.',
+    ],
+  },
+  premyslim: {
+    label: '„Musím si to premyslieť / poradiť sa“', tile: '?',
+    responses: [
+      'Rozumiem, je to dôležité rozhodnutie. Čo konkrétne by ste chceli ešte premyslieť — môžeme si to teraz spolu prejsť, nech máte jasno.',
+      'Môžeme dohodnúť krátky spoločný hovor či stretnutie aj s partnerom/-kou, aby ste sa rozhodovali spolu s plnou informáciou.',
+      'Nechajme si otvorenú ponuku na týždeň — pošlem vám zhrnutie, nech si to viete v pokoji prejsť.',
+    ],
+  },
+  uz_mam: {
+    label: '„Už mám poistené (cez banku/inde)“', tile: '✓',
+    responses: [
+      'Skvelé, že to riešite. Poďme sa pozrieť, čo presne kryje — banky často ponúkajú len základné krytie viazané na úver, nie na celú rodinu.',
+      'Môžem vám bezplatne porovnať, čo máte, s tým, čo by ste reálne potrebovali — nič sa nemusí meniť, len uvidíte, či je to dostatočné.',
+      'Ak je to výhodné, dá sa to doplniť, nie nutne nahradiť — nemusíte rušiť, čo už máte.',
+    ],
+  },
+  nedoveram: {
+    label: '„Poisťovniam neverím, nikdy to nevyplatia“', tile: '⚠',
+    responses: [
+      'Rozumiem tú obavu — poďme sa pozrieť na konkrétne poistné podmienky, nie na povesť, presne vieme, čo je a nie je kryté.',
+      'Práve preto som tu ja — moja úloha je dohliadnuť, aby sa vám to pri poistnej udalosti aj reálne vyplatilo.',
+      'Môžem vám ukázať, ako reálne prebieha likvidácia u klientov, ktorých som sprevádzal.',
+    ],
+  },
+  nemam_cas: {
+    label: '„Teraz nemám čas, vybavím to neskôr“', tile: '⏱',
+    responses: [
+      'Chápem, poďme na to najrýchlejšou možnou cestou — základné veci vieme dohodnúť za pár minút, zvyšok doladíme neskôr.',
+      'Riziko medzitým beží ďalej — kým to odkladáte, ste bez krytia. Poďme aspoň dojednať to najdôležitejšie teraz.',
+      'Dohodnime si konkrétny termín na dokončenie, nech to nezapadne.',
+    ],
+  },
+  nic_sa_nestane: {
+    label: '„Mne sa nič nestane, som mladý/á a zdravý/á“', tile: '☺',
+    responses: [
+      'Presne preto je teraz najlacnejší a najjednoduchší čas to dojednať — kým ste zdraví, dostanete najlepšie podmienky.',
+      'Poistenie nie je o tom, že sa niečo určite stane — je to o tom, že ak sa stane, nezruinuje vás to.',
+      'Riziko štatisticky nie je nulové ani v mladom veku — a práve vtedy je poistka najdostupnejšia.',
+    ],
+  },
+};
+
+const state = { objection: 'drahe', checked: {} };
+
+const $ = id => document.getElementById(id);
+function escapeHtml(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ===========================================================================
+   VYKRESLENIE
+=========================================================================== */
+function renderObjections(){
+  $('objections').innerHTML = Object.keys(OBJECTIONS).map(function(k){
+    const o = OBJECTIONS[k], sel = k === state.objection ? ' sel' : '';
+    return '<div class="type' + sel + '" data-objection="' + k + '">'
+      + '<div class="tile">' + o.tile + '</div>'
+      + '<div><div class="t-label">' + escapeHtml(o.label) + '</div></div></div>';
+  }).join('');
+}
+
+function renderResponses(){
+  const obj = OBJECTIONS[state.objection];
+  const checkedSet = state.checked[state.objection] || {};
+  $('avatar').textContent = obj.tile;
+  $('responses').innerHTML = '<div style="font-weight:700; font-size:15px; color:#20242b; margin-bottom:14px;">' + escapeHtml(obj.label) + '</div>'
+    + obj.responses.map(function(r, i){
+        const isChecked = !!checkedSet[i];
+        return '<label style="display:flex; align-items:flex-start; gap:10px; padding:9px 0; border-bottom:1px solid #eef0f3; cursor:pointer;">'
+          + '<input type="checkbox" data-q="' + i + '" ' + (isChecked ? 'checked' : '') + ' style="margin-top:3px; flex-shrink:0; width:16px; height:16px;">'
+          + '<span style="font-size:13.5px; line-height:1.6; color:' + (isChecked ? '#9aa1ad' : '#20242b') + '; text-decoration:' + (isChecked ? 'line-through' : 'none') + ';">' + escapeHtml(r) + '</span>'
+          + '</label>';
+      }).join('');
+}
+
+function render(){ renderObjections(); renderResponses(); }
+
+/* ===========================================================================
+   AKCIE
+=========================================================================== */
+function doCopy(){
+  const obj = OBJECTIONS[state.objection];
+  const checkedSet = state.checked[state.objection] || {};
+  const txt = obj.label + '\n\n' + obj.responses.map(function(r, i){
+    return (checkedSet[i] ? '[x] ' : '[ ] ') + r;
+  }).join('\n');
+  try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
+  const b = $('copyBtn'); const orig = b.textContent;
+  b.textContent = 'Skopírované ✓'; setTimeout(function(){ b.textContent = orig; }, 1600);
+}
+
+function doReset(){
+  state.checked[state.objection] = {};
+  renderResponses();
+}
+
+/* ===========================================================================
+   UDALOSTI
+=========================================================================== */
+function bind(){
+  document.addEventListener('click', function(e){
+    const o = e.target.closest('[data-objection]'); if(o){ state.objection = o.dataset.objection; render(); return; }
+  });
+  document.addEventListener('change', function(e){
+    if(e.target.matches('input[type="checkbox"][data-q]')){
+      const i = +e.target.dataset.q;
+      if(!state.checked[state.objection]) state.checked[state.objection] = {};
+      state.checked[state.objection][i] = e.target.checked;
+      renderResponses();
+    }
+  });
+  $('copyBtn').addEventListener('click', doCopy);
+  $('resetBtn').addEventListener('click', doReset);
+}
+
+/* ===========================================================================
+   ŠTART
+=========================================================================== */
+(function init(){
+  renderObjections(); bind(); render();
+})();
+</script>
+
+<script src="/assets/shell.js?v=12"></script>
+</body></html>

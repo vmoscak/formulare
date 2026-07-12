@@ -73,6 +73,14 @@ toho, čo sa rozhodneme spraviť.
   poskladá sa zoznam odporúčaných argumentov na jeho predstavenie —
   opak Ťaháku „čo pýtať“ (toto je čo povedať). Odškrtávanie počas
   rozhovoru, export do PDF.
+- [x] **Vybavovač námietok** — opak Argument Builderu: vyber typickú
+  námietku klienta („je to drahé“, „musím si to premyslieť“...),
+  appka ukáže odporúčané reakcie. Interný nástroj pre poradcu, nie na
+  odovzdanie klientovi — bez PDF, len kopírovanie pre vlastné poznámky.
+- [x] **„Prvých 30 dní“** — kartička pre klienta hneď po podpise: čo
+  teraz nasleduje, kedy začína platiť krytie, ako postupovať pri
+  poistnej udalosti. Vyber produkt, voliteľné meno klienta, PDF aj
+  text na SMS/WhatsApp, kontakt poradcu sa predvyplní automaticky.
 
 ---
 

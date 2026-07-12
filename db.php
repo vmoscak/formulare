@@ -58,6 +58,8 @@ function toolLabel(string $slug): string {
         'latte-faktor' => 'Latte Faktor',
         'simulator-dvoch-extremov' => 'Simulátor dvoch extrémov',
         'argument-builder' => 'Argument Builder',
+        'vybavovac-namietok' => 'Vybavovač námietok',
+        'prvych-30-dni' => 'Prvých 30 dní',
     ];
     return $labels[$slug] ?? $slug;
 }
