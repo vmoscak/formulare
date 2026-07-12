@@ -18,6 +18,7 @@
 ========================================================================== -->
 
 <script src="../assets/theme-init.js"></script>
+<script src="../assets/toast.js?v=1"></script>
 <link rel="stylesheet" href="../assets/ui.css?v=8">
 <style>
   .ext-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
@@ -212,7 +213,7 @@ function buildLetterHtml(){
     * { box-sizing:border-box; }
     div,p,span { margin:0; padding:0; }
     body { margin:0; padding:0; font-family:'DejaVu Sans',sans-serif; font-size:10.5pt; line-height:1.5; color:#20242b; background:#fff; }
-    .doctitle { text-align:center; font-size:16pt; letter-spacing:.5pt; font-weight:bold; padding:7pt 0 2pt; }
+    .pdf-topbar { height:3mm; background:#0d9488; border-radius:0.8mm; margin-bottom:6mm; } .doctitle { text-align:center; font-size:16pt; letter-spacing:.5pt; font-weight:bold; padding:7pt 0 2pt; }
     .card-sub { text-align:center; font-size:10.5pt; color:#666; margin-bottom:5mm; }
     .meta { text-align:center; font-size:9pt; color:#8a8a8a; margin-bottom:9mm; padding-bottom:5mm; border-bottom:1pt solid #e5e5e5; }
     .ex-sec { margin-bottom:6mm; }
@@ -229,7 +230,7 @@ function buildLetterHtml(){
   return '<!DOCTYPE html><html lang="sk"><head>'
     + '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
     + '<title>Simulátor dvoch extrémov</title><style>' + css + '</style></head><body>'
-    + '<div class="doctitle">Simulátor dvoch extrémov</div>'
+    + '<div class="pdf-topbar"></div><div class="doctitle">Simulátor dvoch extrémov</div>'
     + '<div class="card-sub">Dlhý život vs. náhla strata príjmu</div>'
     + '<div class="meta">' + escapeHtml(clientName) + ' &middot; ' + dateStr + '</div>'
     + sections
@@ -269,7 +270,7 @@ function doPDF(){
   .catch(function(e){
     console.error(e);
     btn.textContent = orig; btn.disabled = false;
-    alert('Chyba PDF:\n' + e.message);
+    showToast('Chyba PDF: ' + e.message, 'error');
   });
 }
 
@@ -299,5 +300,5 @@ function bind(){
 })();
 </script>
 
-<script src="/assets/shell.js?v=13"></script>
+<script src="/assets/shell.js?v=14"></script>
 </body></html>

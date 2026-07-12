@@ -22,6 +22,7 @@
 ========================================================================== -->
 
 <script src="../assets/theme-init.js"></script>
+<script src="../assets/toast.js?v=1"></script>
 <link rel="stylesheet" href="../assets/ui.css?v=8">
 </head>
 <body>
@@ -447,7 +448,7 @@ function buildLetterHtml(previewMode){
   const placeDate = (state.place||'…') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '…');
 
   const body = `
-    <div class="doctitle">Splnomocnenie</div>
+    <div class="pdf-topbar"></div><div class="doctitle">Splnomocnenie</div>
     <div class="body-text">
       <p>${escapeHtml(d.intro)}</p>
       <p>${escapeHtml(d.powersIntro)}</p>
@@ -477,7 +478,7 @@ function buildLetterHtml(previewMode){
   const css = `
     div,p,table,tr,td,th,strong,span,ul,li { box-sizing:border-box; margin:0; padding:0; }
     body { margin:0; padding:0; font-family:'DejaVu Sans',sans-serif; font-size:11pt; line-height:1.6; color:#20242b; background:#fff; }
-    .doctitle { text-align:center; font-size:16pt; letter-spacing:3pt; text-transform:uppercase; font-weight:bold;
+    .pdf-topbar { height:3mm; background:#4338ca; border-radius:0.8mm; margin-bottom:6mm; } .doctitle { text-align:center; font-size:16pt; letter-spacing:3pt; text-transform:uppercase; font-weight:bold;
       padding:7pt 0; border-top:1pt solid #20242b; border-bottom:1pt solid #20242b; margin-bottom:11mm; }
     .body-text p { margin-bottom:4.5mm; text-align:justify; }
     .powers-list { margin:0 0 4.5mm 0; padding-left:5mm; }
@@ -543,7 +544,7 @@ function doPDF(){
   .catch(function(e){
     console.error(e);
     btn.textContent='Vygenerovať a stiahnuť PDF'; btn.disabled=false;
-    alert('Chyba PDF:\n' + e.message);
+    showToast('Chyba PDF: ' + e.message, 'error');
   });
 }
 
@@ -648,5 +649,5 @@ function bind(){
 })();
 </script>
 
-<script src="/assets/shell.js?v=13"></script>
+<script src="/assets/shell.js?v=14"></script>
 </body></html>

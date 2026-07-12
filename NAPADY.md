@@ -96,6 +96,15 @@ toho, čo sa rozhodneme spraviť.
   (poplatok za predčasné splatenie + nové dojednanie), za koľko
   mesiacov sa to vráti. Vie predvyplniť sadzbu z Refinančného
   Radaru. Viditeľné len pre teba — hypotéky riešiš sám.
+- [x] **Grafické a vizuálne vylepšenia naprieč appkou** —
+  (1) vlastné toast notifikácie (`assets/toast.js`) namiesto natívneho
+  `alert()` na chybové/validačné hlášky vo všetkých nástrojoch;
+  (2) kruhový progress namiesto textovej pilulky na Pyramíde istoty;
+  (3) jednotný farebný pruh v hlavičke každého generovaného PDF
+  (farba podľa farby nástroja, bez loga — len akcentový pruh);
+  (4) krajšie prázdne stavy (ikona + priateľská hláška) v Moje
+  dokumenty a Znalostnej báze; (5) jemný loading shimmer na ľavej
+  lište namiesto náhleho "výskoku" pri pomalšom pripojení.
 
 ---
 

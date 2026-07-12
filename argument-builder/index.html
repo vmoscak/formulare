@@ -19,6 +19,7 @@
 ========================================================================== -->
 
 <script src="../assets/theme-init.js"></script>
+<script src="../assets/toast.js?v=1"></script>
 <link rel="stylesheet" href="../assets/ui.css?v=8">
 <style>
   .ab-chips{display:flex; flex-wrap:wrap; gap:8px;}
@@ -254,7 +255,7 @@ function buildLetterHtml(){
     * { box-sizing:border-box; }
     div,p,span { margin:0; padding:0; }
     body { margin:0; padding:0; font-family:'DejaVu Sans',sans-serif; font-size:10.5pt; line-height:1.5; color:#20242b; background:#fff; }
-    .doctitle { text-align:center; font-size:16pt; letter-spacing:.5pt; font-weight:bold; padding:7pt 0 2pt; }
+    .pdf-topbar { height:3mm; background:#ea580c; border-radius:0.8mm; margin-bottom:6mm; } .doctitle { text-align:center; font-size:16pt; letter-spacing:.5pt; font-weight:bold; padding:7pt 0 2pt; }
     .card-sub { text-align:center; font-size:10.5pt; color:#666; margin-bottom:5mm; }
     .meta { text-align:center; font-size:9pt; color:#8a8a8a; margin-bottom:9mm; padding-bottom:5mm; border-bottom:1pt solid #e5e5e5; }
     .ab-hd { color:#fff; background:#ea580c; font-weight:bold; font-size:12pt; padding:3mm 4mm; border-radius:2mm; margin-bottom:5mm; }
@@ -268,7 +269,7 @@ function buildLetterHtml(){
   return '<!DOCTYPE html><html lang="sk"><head>'
     + '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
     + '<title>Argument Builder</title><style>' + css + '</style></head><body>'
-    + '<div class="doctitle">Argumenty na predstavenie produktu</div>'
+    + '<div class="pdf-topbar"></div><div class="doctitle">Argumenty na predstavenie produktu</div>'
     + '<div class="card-sub">' + escapeHtml(prod.label) + (state.clientType ? ' — ' + escapeHtml(CLIENT_TYPES[state.clientType]) : '') + '</div>'
     + '<div class="meta">' + escapeHtml(clientName) + ' &middot; ' + dateStr + '</div>'
     + '<div class="ab-hd">' + escapeHtml(prod.label) + '</div>'
@@ -308,7 +309,7 @@ function doPDF(){
   .catch(function(e){
     console.error(e);
     btn.textContent = orig; btn.disabled = false;
-    alert('Chyba PDF:\n' + e.message);
+    showToast('Chyba PDF: ' + e.message, 'error');
   });
 }
 
@@ -345,5 +346,5 @@ function bind(){
 })();
 </script>
 
-<script src="/assets/shell.js?v=13"></script>
+<script src="/assets/shell.js?v=14"></script>
 </body></html>

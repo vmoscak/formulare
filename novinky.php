@@ -53,7 +53,7 @@ try {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=14">
+<link rel="stylesheet" href="/assets/panel.css?v=15">
 </head><body>
 <header class="topbar">
   <div class="tb-title">
@@ -130,5 +130,5 @@ function newsCancel(id) {
   item.querySelector('.kb-edit').style.display = 'none';
 }
 </script>
-<script src="/assets/shell.js?v=13"></script>
+<script src="/assets/shell.js?v=14"></script>
 </body></html>

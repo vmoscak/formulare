@@ -18,6 +18,7 @@
 ========================================================================== -->
 
 <script src="../assets/theme-init.js"></script>
+<script src="../assets/toast.js?v=1"></script>
 <link rel="stylesheet" href="../assets/ui.css?v=8">
 <style>
   .pyramid{display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px 0 6px;}
@@ -34,7 +35,12 @@
   }
   .pyr-band .pyr-txt b{display:block; font-size:14px;}
   .pyr-band .pyr-txt span{display:block; font-size:11.5px; font-weight:500; opacity:.85;}
-  .pyr-band .pyr-progress{margin-left:auto; font-size:12px; font-weight:700; background:rgba(255,255,255,.22); padding:3px 10px; border-radius:999px; flex-shrink:0;}
+  .pyr-band .pyr-ring{position:relative; margin-left:auto; width:34px; height:34px; flex-shrink:0; display:flex; align-items:center; justify-content:center;}
+  .pyr-band .pyr-ring svg{transform:rotate(-90deg);}
+  .pyr-band .pyr-ring circle{fill:none; stroke-width:3;}
+  .pyr-band .pyr-ring .ring-track{stroke:rgba(255,255,255,.28);}
+  .pyr-band .pyr-ring .ring-fill{stroke:#fff; stroke-linecap:round; transition:stroke-dashoffset .3s ease;}
+  .pyr-band .pyr-ring .ring-label{position:absolute; font-size:10px; font-weight:800; color:#fff;}
   .pyr-1{width:100%; background:linear-gradient(135deg,#4f46e5,#4338ca);}
   .pyr-2{width:80%; background:linear-gradient(135deg,#2dd4bf,#0d9488);}
   .pyr-3{width:60%; background:linear-gradient(135deg,#fbbf24,#d97706);}
@@ -163,6 +169,21 @@ function progressFor(key){
   return { done: done, total: layer.items.length };
 }
 
+const RING_R = 15.5;
+const RING_C = 2 * Math.PI * RING_R;
+
+function ringHtml(done, total){
+  const frac = total > 0 ? done / total : 0;
+  const offset = RING_C * (1 - frac);
+  return '<span class="pyr-ring">'
+    + '<svg width="34" height="34" viewBox="0 0 36 36">'
+      + '<circle class="ring-track" cx="18" cy="18" r="' + RING_R + '"/>'
+      + '<circle class="ring-fill" cx="18" cy="18" r="' + RING_R + '" stroke-dasharray="' + RING_C + '" stroke-dashoffset="' + offset + '"/>'
+    + '</svg>'
+    + '<span class="ring-label">' + done + '/' + total + '</span>'
+    + '</span>';
+}
+
 function renderPyramid(){
   $('pyramid').innerHTML = LAYERS.map(function(l){
     const sel = l.key === state.layer ? ' sel' : '';
@@ -170,7 +191,7 @@ function renderPyramid(){
     return '<div class="pyr-band ' + l.cls + sel + '" data-layer="' + l.key + '">'
       + '<span class="pyr-ic">' + l.tile + '</span>'
       + '<span class="pyr-txt"><b>' + l.label + '</b><span>' + l.sub + '</span></span>'
-      + '<span class="pyr-progress">' + p.done + '/' + p.total + '</span>'
+      + ringHtml(p.done, p.total)
       + '</div>';
   }).join('');
 }
@@ -246,7 +267,7 @@ function buildLetterHtml(){
     * { box-sizing:border-box; }
     div,p,span { margin:0; padding:0; }
     body { margin:0; padding:0; font-family:'DejaVu Sans',sans-serif; font-size:10.5pt; line-height:1.5; color:#20242b; background:#fff; }
-    .doctitle { text-align:center; font-size:16pt; letter-spacing:.5pt; font-weight:bold; padding:7pt 0 2pt; }
+    .pdf-topbar { height:3mm; background:#0284c7; border-radius:0.8mm; margin-bottom:6mm; } .doctitle { text-align:center; font-size:16pt; letter-spacing:.5pt; font-weight:bold; padding:7pt 0 2pt; }
     .card-sub { text-align:center; font-size:10.5pt; color:#666; margin-bottom:5mm; }
     .meta { text-align:center; font-size:9pt; color:#8a8a8a; margin-bottom:9mm; padding-bottom:5mm; border-bottom:1pt solid #e5e5e5; }
     .pyr-sec { margin-bottom:6mm; }
@@ -262,7 +283,7 @@ function buildLetterHtml(){
   return '<!DOCTYPE html><html lang="sk"><head>'
     + '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
     + '<title>Pyramída istoty</title><style>' + css + '</style></head><body>'
-    + '<div class="doctitle">Pyramída istoty</div>'
+    + '<div class="pdf-topbar"></div><div class="doctitle">Pyramída istoty</div>'
     + '<div class="card-sub">V akom poradí budovať finančnú istotu</div>'
     + '<div class="meta">' + escapeHtml(clientName) + ' &middot; ' + dateStr + '</div>'
     + sections
@@ -301,7 +322,7 @@ function doPDF(){
   .catch(function(e){
     console.error(e);
     btn.textContent = orig; btn.disabled = false;
-    alert('Chyba PDF:\n' + e.message);
+    showToast('Chyba PDF: ' + e.message, 'error');
   });
 }
 
@@ -334,5 +355,5 @@ function bind(){
 })();
 </script>
 
-<script src="/assets/shell.js?v=13"></script>
+<script src="/assets/shell.js?v=14"></script>
 </body></html>

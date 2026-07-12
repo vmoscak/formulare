@@ -277,23 +277,56 @@
     });
   }
 
+  // Skeleton počas načítavania whoami — zabraňuje "výskoku" ľavej lišty na
+  // pomalšom pripojení. Zámerne s malým oneskorením (150ms): bežná rýchla
+  // odpoveď skeleton vôbec nezobrazí, takže na klientskych stránkach (kde sa
+  // lišta napokon vôbec nezobrazí, whoami vracia prázdno) nevznikne zbytočný
+  // bliknutý paddingu naviac.
+  var skeletonTimer = null;
+  var skeletonEl = null;
+  function showSkeleton() {
+    var css = document.createElement('style');
+    css.textContent =
+      '#appRailSkeleton{position:fixed;left:0;top:0;bottom:0;width:72px;background:var(--paper,#fff);' +
+      'border-right:1px solid var(--border,#eef0f3);z-index:59;overflow:hidden;}' +
+      '#appRailSkeleton::after{content:"";position:absolute;inset:0;' +
+      'background:linear-gradient(90deg,transparent,rgba(0,0,0,.05),transparent);background-size:200% 100%;' +
+      'animation:railShimmer 1.4s ease-in-out infinite;}' +
+      '@keyframes railShimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}' +
+      'body.has-rail-skeleton{padding-left:72px;}' +
+      '@media(prefers-reduced-motion:reduce){#appRailSkeleton::after{animation:none;}}' +
+      '@media(max-width:720px){#appRailSkeleton{display:none;} body.has-rail-skeleton{padding-left:0;}}';
+    document.head.appendChild(css);
+    skeletonEl = document.createElement('div');
+    skeletonEl.id = 'appRailSkeleton';
+    document.body.insertBefore(skeletonEl, document.body.firstChild);
+    document.body.classList.add('has-rail-skeleton');
+  }
+  function hideSkeleton() {
+    clearTimeout(skeletonTimer);
+    if (skeletonEl && skeletonEl.parentNode) skeletonEl.parentNode.removeChild(skeletonEl);
+    skeletonEl = null;
+    document.body.classList.remove('has-rail-skeleton');
+  }
+
   function boot() {
+    skeletonTimer = setTimeout(showSkeleton, 150);
     fetch('/api/whoami.php', { credentials: 'same-origin' })
       .then(function (r) { return r.ok ? r.json() : {}; })
       .then(function (adv) {
-        if (!(adv && adv.id)) return;
+        if (!(adv && adv.id)) { hideSkeleton(); return; }
         var path = location.pathname;
         var isSpecialPage = /moje-dokumenty|admin\.php|nabor\.php|znalostna-baza|novinky\.php|uvod\.php|refinancny-radar\.php|copy-paste\.php|oplati-sa-refinancovat\.php/.test(path);
         var isGroupOverview = /\/(nastroje|formulare|pomocky)\.php/.test(path);
         // Na stránke konkrétneho nástroja (nie prehľad, nie iná sekcia)
         // potrebujeme mapu slug->skupina, aby sa zvýraznila správna záložka.
-        if (isSpecialPage || isGroupOverview) { render(adv, null); return; }
+        if (isSpecialPage || isGroupOverview) { hideSkeleton(); render(adv, null); return; }
         fetch('/api/tool-groups.php', { credentials: 'same-origin' })
           .then(function (r) { return r.ok ? r.json() : {}; })
-          .then(function (map) { render(adv, map || {}); })
-          .catch(function () { render(adv, {}); });
+          .then(function (map) { hideSkeleton(); render(adv, map || {}); })
+          .catch(function () { hideSkeleton(); render(adv, {}); });
       })
-      .catch(function () { /* bez lišty — appka funguje normálne */ });
+      .catch(function () { hideSkeleton(); /* bez lišty — appka funguje normálne */ });
   }
 
   if (document.readyState === 'loading') {

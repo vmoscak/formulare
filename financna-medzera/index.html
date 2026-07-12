@@ -22,6 +22,7 @@
 ========================================================================== -->
 
 <script src="../assets/theme-init.js"></script>
+<script src="../assets/toast.js?v=1"></script>
 <link rel="stylesheet" href="../assets/ui.css?v=8">
 <style>
   /* odchýlky tejto stránky od zdieľaného dizajnu (assets/ui.css) */
@@ -757,7 +758,7 @@ function doCreateLink(){
   })
   .catch(e=>{
     btn.textContent = orig; btn.disabled = false;
-    alert('Chyba: '+e.message);
+    showToast('Chyba: ' + e.message, 'error');
   });
 }
 
@@ -860,7 +861,7 @@ function doClientSubmit(){
   })
   .catch(e=>{
     btn.textContent = orig; btn.disabled = false;
-    alert('Chyba: '+e.message);
+    showToast('Chyba: ' + e.message, 'error');
   });
 }
 
@@ -1038,7 +1039,7 @@ function generatePdf(mode, btn){
   .catch(function(e){
     console.error(e);
     btn.textContent = orig; btn.disabled = false;
-    alert('Chyba PDF:\n' + e.message);
+    showToast('Chyba PDF: ' + e.message, 'error');
   });
 }
 
@@ -1186,5 +1187,5 @@ function bind(){
 })();
 </script>
 
-<script src="/assets/shell.js?v=13"></script>
+<script src="/assets/shell.js?v=14"></script>
 </body></html>

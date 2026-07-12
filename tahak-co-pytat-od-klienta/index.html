@@ -17,6 +17,7 @@
 ========================================================================== -->
 
 <script src="../assets/theme-init.js"></script>
+<script src="../assets/toast.js?v=1"></script>
 <link rel="stylesheet" href="../assets/ui.css?v=8">
 </head>
 <body>
@@ -233,7 +234,7 @@ function buildLetterHtml(){
     * { box-sizing:border-box; }
     div,p,span { margin:0; padding:0; }
     body { margin:0; padding:0; font-family:'DejaVu Sans',sans-serif; font-size:10.5pt; line-height:1.5; color:#20242b; background:#fff; }
-    .doctitle { text-align:center; font-size:16pt; letter-spacing:.5pt; font-weight:bold; padding:7pt 0 2pt; }
+    .pdf-topbar { height:3mm; background:#d97706; border-radius:0.8mm; margin-bottom:6mm; } .doctitle { text-align:center; font-size:16pt; letter-spacing:.5pt; font-weight:bold; padding:7pt 0 2pt; }
     .card-sub { text-align:center; font-size:10.5pt; color:#666; margin-bottom:5mm; }
     .meta { text-align:center; font-size:9pt; color:#8a8a8a; margin-bottom:9mm; padding-bottom:5mm; border-bottom:1pt solid #e5e5e5; }
     .cat-hd { color:#fff; background:#d97706; font-weight:bold; font-size:12pt; padding:3mm 4mm; border-radius:2mm; margin-bottom:5mm; }
@@ -247,7 +248,7 @@ function buildLetterHtml(){
   return '<!DOCTYPE html><html lang="sk"><head>'
     + '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
     + '<title>Ťahák čo pýtať od klienta</title><style>' + css + '</style></head><body>'
-    + '<div class="doctitle">Čo pýtať od klienta</div>'
+    + '<div class="pdf-topbar"></div><div class="doctitle">Čo pýtať od klienta</div>'
     + '<div class="card-sub">Poznámky zo stretnutia podľa situácie klienta</div>'
     + '<div class="meta">' + escapeHtml(clientName) + ' &middot; ' + dateStr + '</div>'
     + '<div class="cat-hd">' + escapeHtml(cat.label) + '</div>'
@@ -287,7 +288,7 @@ function doPDF(){
   .catch(function(e){
     console.error(e);
     btn.textContent = orig; btn.disabled = false;
-    alert('Chyba PDF:\n' + e.message);
+    showToast('Chyba PDF: ' + e.message, 'error');
   });
 }
 
@@ -320,5 +321,5 @@ function bind(){
 })();
 </script>
 
-<script src="/assets/shell.js?v=13"></script>
+<script src="/assets/shell.js?v=14"></script>
 </body></html>

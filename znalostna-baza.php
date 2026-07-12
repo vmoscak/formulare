@@ -58,7 +58,7 @@ try {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=14">
+<link rel="stylesheet" href="/assets/panel.css?v=15">
 </head><body>
 <header class="topbar">
   <div class="tb-title">
@@ -131,7 +131,11 @@ try {
         </form>
       </div>
       <?php endforeach; ?>
-      <?php if (!$entries): ?><p class="empty">Zatiaľ žiadne záznamy<?= $q ? ' pre „' . h($q) . '“' : '' ?>.</p><?php endif; ?>
+      <?php if (!$entries): ?><div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <span class="es-title">Žiadne výsledky<?= $q ? ' pre „' . h($q) . '“' : '' ?></span>
+        <span class="es-sub"><?= $q ? 'Skús iné slovo, alebo pridaj nový záznam nižšie.' : 'Zatiaľ tu nič nie je — pridaj prvý záznam nižšie.' ?></span>
+      </div><?php endif; ?>
     </div>
   </div>
 
@@ -153,5 +157,5 @@ function kbCopy(id) {
   navigator.clipboard.writeText(text).catch(function () {});
 }
 </script>
-<script src="/assets/shell.js?v=13"></script>
+<script src="/assets/shell.js?v=14"></script>
 </body></html>

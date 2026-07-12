@@ -22,6 +22,7 @@
 ========================================================================== -->
 
 <script src="../assets/theme-init.js"></script>
+<script src="../assets/toast.js?v=1"></script>
 <link rel="stylesheet" href="../assets/ui.css?v=8">
 <style>
   .ep-preview-frame{
@@ -279,7 +280,7 @@ function doCopyEmail(){
     })
     .catch(function(e){
       console.error(e);
-      alert('Kopírovanie zlyhalo — skús „Kopírovať ako čistý text“.\n' + e.message);
+      showToast('Kopírovanie zlyhalo — skús „Kopírovať ako čistý text“. ' + e.message, 'error');
     });
 }
 
@@ -333,5 +334,5 @@ function bind(){
 })();
 </script>
 
-<script src="/assets/shell.js?v=13"></script>
+<script src="/assets/shell.js?v=14"></script>
 </body></html>

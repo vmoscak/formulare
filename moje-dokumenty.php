@@ -49,7 +49,7 @@ function advisorInitials(string $name): string {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=14">
+<link rel="stylesheet" href="/assets/panel.css?v=15">
 </head><body>
 
 <header class="topbar">
@@ -87,7 +87,11 @@ function advisorInitials(string $name): string {
         </td>
       </tr>
       <?php endforeach; ?>
-      <?php if (!$docs): ?><tr><td colspan="5" class="empty">Zatiaľ žiadne dokumenty.</td></tr><?php endif; ?>
+      <?php if (!$docs): ?><tr><td colspan="5"><div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="14" y2="17"/></svg>
+        <span class="es-title">Zatiaľ žiadne dokumenty</span>
+        <span class="es-sub">Vygenerované PDF sa tu objavia automaticky, hneď ako si nejaké stiahneš z niektorého nástroja.</span>
+      </div></td></tr><?php endif; ?>
     </table>
   </div>
 
@@ -103,11 +107,15 @@ function advisorInitials(string $name): string {
         <td class="date"><?= h($l['created_at']) ?></td>
       </tr>
       <?php endforeach; ?>
-      <?php if (!$links): ?><tr><td colspan="4" class="empty">Zatiaľ žiadne odkazy.</td></tr><?php endif; ?>
+      <?php if (!$links): ?><tr><td colspan="4"><div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <span class="es-title">Zatiaľ žiadne odkazy</span>
+        <span class="es-sub">Klientske odkazy vytvorené z niektorého nástroja sa tu objavia spolu s ich stavom (čaká/vyplnené).</span>
+      </div></td></tr><?php endif; ?>
     </table>
   </div>
 
 </main>
 
-<script src="/assets/shell.js?v=13"></script>
+<script src="/assets/shell.js?v=14"></script>
 </body></html>

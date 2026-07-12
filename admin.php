@@ -98,7 +98,7 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=14">
+<link rel="stylesheet" href="/assets/panel.css?v=15">
 </head><body>
 <header class="topbar">
   <div class="tb-title">
@@ -249,7 +249,7 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
     </table>
   </div>
 </main>
-<script src="/assets/shell.js?v=13"></script>
+<script src="/assets/shell.js?v=14"></script>
 <script>
 function editAdvisor(id){
   document.getElementById('view-'+id).style.display = 'none';

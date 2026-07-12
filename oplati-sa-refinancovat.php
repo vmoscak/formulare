@@ -32,7 +32,8 @@ try {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=14">
+<script src="/assets/toast.js?v=1"></script>
+<link rel="stylesheet" href="/assets/panel.css?v=15">
 <style>
   .rf-verdict{margin-top:16px; padding:16px 18px; border-radius:var(--radius-lg); font-weight:700; font-size:14.5px;}
   .rf-verdict.good{background:var(--good-soft,#ecfdf5); color:var(--good,#059669);}
@@ -258,7 +259,7 @@ function buildReportHtml(r){
     * { box-sizing:border-box; }
     div,p,span,table,tr,td { margin:0; padding:0; }
     body { margin:0; padding:0; font-family:'DejaVu Sans',sans-serif; font-size:10.5pt; line-height:1.5; color:#20242b; background:#fff; }
-    .doctitle { text-align:center; font-size:16pt; letter-spacing:.5pt; font-weight:bold; padding:7pt 0 2pt; }
+    .pdf-topbar { height:3mm; background:#0891b2; border-radius:0.8mm; margin-bottom:6mm; } .doctitle { text-align:center; font-size:16pt; letter-spacing:.5pt; font-weight:bold; padding:7pt 0 2pt; }
     .card-sub { text-align:center; font-size:10.5pt; color:#666; margin-bottom:5mm; }
     .meta { text-align:center; font-size:9pt; color:#8a8a8a; margin-bottom:9mm; padding-bottom:5mm; border-bottom:1pt solid #e5e5e5; }
     .sec-hd { font-weight:bold; font-size:11pt; margin:7mm 0 3mm; }
@@ -285,7 +286,7 @@ function buildReportHtml(r){
     @page{ margin:18mm 18mm 18mm 18mm; }
   `;
 
-  const body = '<div class="doctitle">Oplatí sa mi refinancovať?</div>'
+  const body = '<div class="pdf-topbar"></div><div class="doctitle">Oplatí sa mi refinancovať?</div>'
     + '<div class="card-sub">Break-even prepočet pri zmene banky</div>'
     + '<div class="meta">' + escapeHtml(clientName) + ' &middot; ' + dateStr + '</div>'
     + '<div class="sec-hd">Mesačná splátka</div>'
@@ -311,7 +312,7 @@ function buildReportHtml(r){
 }
 
 function doPDF(){
-  if (!lastResult || !lastResult.hasData) { alert('Najprv vyplň vstupy — istinu, sadzby a dobu splácania.'); return; }
+  if (!lastResult || !lastResult.hasData) { showToast('Najprv vyplň vstupy — istinu, sadzby a dobu splácania.', 'error'); return; }
   const btn = $('pdfBtn'); const orig = btn.textContent;
   btn.textContent = 'Generujem…'; btn.disabled = true;
 
@@ -343,7 +344,7 @@ function doPDF(){
   .catch(function(e){
     console.error(e);
     btn.textContent = orig; btn.disabled = false;
-    alert('Chyba PDF:\n' + e.message);
+    showToast('Chyba PDF: ' + e.message, 'error');
   });
 }
 
@@ -359,5 +360,5 @@ if (rateSuggest) {
 $('pdfBtn').addEventListener('click', doPDF);
 compute();
 </script>
-<script src="/assets/shell.js?v=13"></script>
+<script src="/assets/shell.js?v=14"></script>
 </body></html>

@@ -15,6 +15,7 @@
 ========================================================================== -->
 
 <script src="../assets/theme-init.js"></script>
+<script src="../assets/toast.js?v=1"></script>
 <link rel="stylesheet" href="../assets/ui.css?v=8">
 </head>
 <body>
@@ -194,7 +195,7 @@ function buildLetterHtml(previewMode){
   const greeting = state.clientName ? 'Dobrý deň, ' + escapeHtml(state.clientName) + ',' : 'Dobrý deň,';
 
   const body = `
-    <div class="doctitle">Checklist — ${escapeHtml(t.label)}</div>
+    <div class="pdf-topbar"></div><div class="doctitle">Checklist — ${escapeHtml(t.label)}</div>
     <p class="intro">${greeting} pre rýchle vybavenie škody si prosím priprav nasledovné podklady:</p>
     ${itemsHtml}
     <p class="outro">S vyplnením a odoslaním ti rád/rada pomôžem — stačí mi podklady poslať.</p>
@@ -208,7 +209,7 @@ function buildLetterHtml(previewMode){
   const css = `
     div,p,table,tr,td,th,strong,span,ul,li { box-sizing:border-box; margin:0; padding:0; }
     body { margin:0; padding:0; font-family:'DejaVu Sans',sans-serif; font-size:11pt; line-height:1.6; color:#20242b; background:#fff; }
-    .doctitle { text-align:center; font-size:15pt; letter-spacing:0.5pt; font-weight:bold;
+    .pdf-topbar { height:3mm; background:#d97706; border-radius:0.8mm; margin-bottom:6mm; } .doctitle { text-align:center; font-size:15pt; letter-spacing:0.5pt; font-weight:bold;
       padding:7pt 0; border-bottom:1pt solid #20242b; margin-bottom:8mm; }
     .intro, .outro { margin-bottom:5mm; }
     .checklist { padding-left:5mm; margin-bottom:6mm; }
@@ -265,7 +266,7 @@ function doPDF(){
   .catch(function(e){
     console.error(e);
     btn.textContent='Vygenerovať a stiahnuť PDF'; btn.disabled=false;
-    alert('Chyba PDF:\n' + e.message);
+    showToast('Chyba PDF: ' + e.message, 'error');
   });
 }
 
@@ -309,5 +310,5 @@ function bind(){
 })();
 </script>
 
-<script src="/assets/shell.js?v=13"></script>
+<script src="/assets/shell.js?v=14"></script>
 </body></html>
