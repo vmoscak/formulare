@@ -67,6 +67,8 @@ if (!empty($me['is_owner'])) {
         'ico' => 'book', 'color' => '#0d9488', 'href' => '/znalostna-baza.php', 'tag' => 'Len pre teba'];
     $extraHubs[] = ['label' => 'Novinky', 'subtitle' => 'Editor noviniek zobrazovaných na tejto stránke.',
         'ico' => 'megaphone', 'color' => '#ea580c', 'href' => '/novinky.php', 'tag' => 'Len pre teba'];
+    $extraHubs[] = ['label' => 'Refinančný Radar', 'subtitle' => 'Ručne udržiavaný prehľad hypotekárnych sadzieb podľa banky a fixácie.',
+        'ico' => 'euro', 'color' => '#475569', 'href' => '/refinancny-radar.php', 'tag' => 'Len pre teba'];
 }
 
 $news = [];
@@ -84,7 +86,7 @@ $newsPalette = ['#4f46e5', '#059669', '#0d9488', '#7c3aed', '#0284c7', '#d97706'
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=12">
+<link rel="stylesheet" href="/assets/panel.css?v=13">
 </head><body class="home-page">
 <div class="home-bg" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
 <header class="topbar">
@@ -169,5 +171,5 @@ $newsPalette = ['#4f46e5', '#059669', '#0d9488', '#7c3aed', '#0284c7', '#d97706'
 
 </main>
 
-<script src="/assets/shell.js?v=8"></script>
+<script src="/assets/shell.js?v=9"></script>
 </body></html>

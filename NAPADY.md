@@ -46,6 +46,12 @@ toho, čo sa rozhodneme spraviť.
   z index.php) a veľké karty na Nástroje/Formuláre/Pomôcky v novom,
   jemnejšom dizajne (biele karty, farebný pruh hore, kruhová ikona) —
   odlišnom od farebných gradientových kariet jednotlivých nástrojov.
+- [x] **Refinančný Radar** (sledovač sadzieb) — ručne udržiavaný
+  prehľad hypotekárnych sadzieb podľa banky/fixácie, s viditeľným
+  „stáří" každého záznamu. Zámerne bez akéhokoľvek automatického
+  sťahovania (rozhodnutie: pri číslach pre klienta sa nedá spoliehať
+  na niečo, čo sa môže potichu pokaziť). Viditeľné len pre teba —
+  hypotéky riešiš sám, poradcovia to nepotrebujú.
 
 ---
 
@@ -94,7 +100,6 @@ toho, čo sa rozhodneme spraviť.
 - [ ] **Copy-Paste zóna pre poradcu**
 - [ ] **60-sekundový „Zápisník po stretnutí“**
 - [ ] **Hlasový zápisník z auta** (AI, moderná produktivita)
-- [ ] **Refinančný Radar** (sledovač sadzieb)
 - [ ] **„Hypo-Refinance Autopilot“** s notifikáciou pre poradcu
 
 ## Manažérske a tímové funkcie

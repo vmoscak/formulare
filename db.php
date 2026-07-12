@@ -649,4 +649,12 @@ function dbInitSqlite(PDO $pdo): void {
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_refi_rates (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        bank TEXT NOT NULL,
+        fixation TEXT NOT NULL,
+        rate REAL NOT NULL,
+        note TEXT NOT NULL DEFAULT '',
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )");
 }
