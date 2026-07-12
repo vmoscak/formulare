@@ -78,6 +78,13 @@ body{
   margin:0; background:var(--bg); color:var(--ink-2);
   font-family:var(--sans); -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
   min-height:100vh;
+  opacity:1;
+  transition:opacity .18s ease, background-color .25s ease, color .25s ease;
+}
+html.preload body{opacity:0;}
+@media(prefers-reduced-motion:reduce){
+  body{transition:none;}
+  html.preload body{opacity:1;}
 }
 a{color:inherit; text-decoration:none;}
 
@@ -130,6 +137,15 @@ a{color:inherit; text-decoration:none;}
 }
 .tool-card:hover{transform:translateY(-3px); box-shadow:var(--shadow-md); border-color:var(--line-strong);}
 .tool-card:active{transform:translateY(-1px) scale(.99);}
+.tool-card::before{
+  content:''; position:absolute; top:0; left:-75%; width:45%; height:100%;
+  background:linear-gradient(115deg, transparent, rgba(255,255,255,.4), transparent);
+  transform:skewX(-18deg); pointer-events:none; z-index:1;
+}
+@media (prefers-reduced-motion: no-preference){
+  .tool-card::before{transition:left .55s cubic-bezier(.22,1,.36,1);}
+  .tool-card:hover::before{left:130%;}
+}
 @media (prefers-reduced-motion: no-preference){
   .tool-card{animation:cardIn .45s cubic-bezier(.22,1,.36,1) backwards;}
   .tool-grid .tool-card:nth-child(1){animation-delay:.02s;}
@@ -218,7 +234,8 @@ a{color:inherit; text-decoration:none;}
   display:flex; align-items:center; justify-content:space-between; margin-top:auto;
   padding-top:14px; border-top:1px solid var(--border);
 }
-.hub-count{font-size:12px; font-weight:600; color:var(--muted);}
+.hub-count{font-size:12px; font-weight:600; color:var(--muted); display:inline-flex; align-items:center; gap:5px;}
+.hub-count svg{flex-shrink:0; opacity:.8;}
 .hub-go{display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; color:var(--hub-color,var(--accent));}
 .hub-go svg{transition:transform .18s ease;}
 .hub-card:hover .hub-go svg{transform:translateX(3px);}
@@ -281,7 +298,7 @@ body.home-page{position:relative;}
 :root[data-theme="dark"] .home-bg span{opacity:.5;}
 
 /* ── Karty s tabuľkami ─────────────────────────────────────────────────── */
-.card{background:var(--paper); border:1px solid var(--border); border-radius:var(--radius-2xl); padding:22px 24px; box-shadow:var(--shadow-sm); margin-bottom:22px;}
+.card{background:var(--paper); border:1px solid var(--border); border-radius:var(--radius-2xl); padding:22px 24px; box-shadow:var(--shadow-sm); margin-bottom:22px; transition:background-color .25s ease, border-color .25s ease;}
 .card > h3{margin:0 0 16px; font-size:15px; font-weight:700; color:var(--ink);}
 table{width:100%; border-collapse:collapse; font-size:13px;}
 th{

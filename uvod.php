@@ -88,11 +88,12 @@ $newsPalette = ['#4f46e5', '#059669', '#0d9488', '#7c3aed', '#0284c7', '#d97706'
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <title>Portál — Domov</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=15">
+<link rel="stylesheet" href="/assets/panel.css?v=16">
 </head><body class="home-page">
 <div class="home-bg" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
 <header class="topbar">
@@ -164,7 +165,7 @@ $newsPalette = ['#4f46e5', '#059669', '#0d9488', '#7c3aed', '#0284c7', '#d97706'
           <p><?= h($eh['subtitle']) ?></p>
         </div>
         <div class="hub-foot">
-          <span class="hub-count"><?= $eh['tag'] ? h($eh['tag']) : '' ?></span>
+          <span class="hub-count"><?php if ($eh['tag']): ?><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><?= h($eh['tag']) ?><?php endif; ?></span>
           <span class="hub-go">Otvoriť
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </span>

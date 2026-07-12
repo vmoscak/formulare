@@ -105,6 +105,18 @@ toho, čo sa rozhodneme spraviť.
   (4) krajšie prázdne stavy (ikona + priateľská hláška) v Moje
   dokumenty a Znalostnej báze; (5) jemný loading shimmer na ľavej
   lište namiesto náhleho "výskoku" pri pomalšom pripojení.
+- [x] **Rebranding na „Portál"** — appka sa už nevolá „Formuláre",
+  premenované všade, kde ide o názov appky (titulky, wordmark, päta
+  prihlasovacej obrazovky, tooltip loga). Záložka „Formuláre" v ľavej
+  lište (zmluvy/žiadosti) ostala — je to legitímny názov kategórie
+  dokumentov, nie brand appky.
+- [x] **Ďalšie grafické doladenie** — (1) vlastný favicon (indigo
+  štvorec s fajkou, `favicon.ico` + `assets/favicon.svg`); (2) jemný
+  fade-in pri načítaní každej stránky namiesto tvrdého "výskoku"
+  obsahu; (3) plynulý crossfade farieb pri prepínaní tmavý/svetlý
+  režim; (4) „shine" efekt — svetelný pruh prechádzajúci cez kartu
+  nástroja pri prejdení myšou; (5) ikona zámku pri štítku „Len pre
+  teba"/„Admin" na kartách Domov — vizuálne, nielen textovo.
 
 ---
 
