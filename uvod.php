@@ -55,8 +55,6 @@ $hubMeta = [
 $extraHubs = [
     ['label' => 'Moje dokumenty', 'subtitle' => 'História vygenerovaných PDF a odoslaných klientských odkazov.',
      'ico' => 'folder', 'color' => '#059669', 'href' => '/moje-dokumenty.php', 'tag' => null],
-    ['label' => 'Copy-Paste zóna', 'subtitle' => 'Tvoje osobné rýchle texty na kopírovanie jedným klikom.',
-     'ico' => 'clipboard', 'color' => '#0e7490', 'href' => '/copy-paste.php', 'tag' => null],
 ];
 if (!empty($me['is_admin'])) {
     $extraHubs[] = ['label' => 'Admin', 'subtitle' => 'Správa poradcov, PIN kódov a zapínanie/vypínanie nástrojov.',
@@ -71,6 +69,10 @@ if (!empty($me['is_owner'])) {
         'ico' => 'megaphone', 'color' => '#ea580c', 'href' => '/novinky.php', 'tag' => 'Len pre teba'];
     $extraHubs[] = ['label' => 'Refinančný Radar', 'subtitle' => 'Ručne udržiavaný prehľad hypotekárnych sadzieb podľa banky a fixácie.',
         'ico' => 'euro', 'color' => '#475569', 'href' => '/refinancny-radar.php', 'tag' => 'Len pre teba'];
+    // Zatiaľ len pre teba, kým sa overí užitočnosť — potom presunúť medzi
+    // nepodmienené karty (viditeľné pre každého poradcu).
+    $extraHubs[] = ['label' => 'Copy-Paste zóna', 'subtitle' => 'Tvoje osobné rýchle texty na kopírovanie jedným klikom.',
+        'ico' => 'clipboard', 'color' => '#0e7490', 'href' => '/copy-paste.php', 'tag' => 'Len pre teba'];
 }
 
 $news = [];
@@ -173,5 +175,5 @@ $newsPalette = ['#4f46e5', '#059669', '#0d9488', '#7c3aed', '#0284c7', '#d97706'
 
 </main>
 
-<script src="/assets/shell.js?v=11"></script>
+<script src="/assets/shell.js?v=12"></script>
 </body></html>

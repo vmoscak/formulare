@@ -2,15 +2,16 @@
 /**
  * Copy-Paste zóna — osobné rýchle textové šablóny poradcu (nie pre klienta,
  * len pre teba — bežné odpovede, frázy, čokoľvek si často píšeš dokola).
- * Na rozdiel od Znalostnej bázy (zdieľaná, len owner) tu KAŽDÝ poradca vidí
- * a upravuje len svoje vlastné záznamy (rovnaký vzor ako moje-dokumenty.php).
+ *
+ * Zatiaľ VÝHRADNE pre is_owner=1 (rovnaký vzor ako nabor.php/znalostna-baza.php) —
+ * kým sa neoverí, že je to užitočné, potom sa sprístupní aj ostatným poradcom.
+ * Dáta aj tak zostávajú scoped podľa advisor_id, takže rozšírenie prístupu
+ * neskôr nebude vyžadovať žiadnu zmenu schémy, len úpravu tejto podmienky.
  */
 require_once __DIR__ . '/db.php';
 
 $advisorId = curAdvisorId();
-if (!$advisorId) { header('Location: /'); exit; }
-
-$stmt = db()->prepare('SELECT * FROM formulare_advisors WHERE id = ? AND active = 1');
+$stmt = db()->prepare('SELECT * FROM formulare_advisors WHERE id = ? AND is_owner = 1 AND active = 1');
 $stmt->execute([$advisorId]);
 $me = $stmt->fetch();
 if (!$me) { header('Location: /'); exit; }
@@ -154,5 +155,5 @@ function kbCopy(id) {
   navigator.clipboard.writeText(text).catch(function () {});
 }
 </script>
-<script src="/assets/shell.js?v=11"></script>
+<script src="/assets/shell.js?v=12"></script>
 </body></html>

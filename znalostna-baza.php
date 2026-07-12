@@ -153,5 +153,5 @@ function kbCopy(id) {
   navigator.clipboard.writeText(text).catch(function () {});
 }
 </script>
-<script src="/assets/shell.js?v=11"></script>
+<script src="/assets/shell.js?v=12"></script>
 </body></html>

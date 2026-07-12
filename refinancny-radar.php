@@ -145,5 +145,5 @@ function cancelEdit(id){
   document.getElementById('view-'+id).style.display = '';
 }
 </script>
-<script src="/assets/shell.js?v=11"></script>
+<script src="/assets/shell.js?v=12"></script>
 </body></html>

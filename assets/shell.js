@@ -105,8 +105,7 @@
       { key: 'nastroje', icon: ICONS.tools, href: '/nastroje.php', label: 'Nástroje', active: currentGroup === 'nastroje' },
       { key: 'formulare', icon: ICONS.formulare, href: '/formulare.php', label: 'Formuláre', active: currentGroup === 'formulare' },
       { key: 'pomocky', icon: ICONS.pomocky, href: '/pomocky.php', label: 'Pomôcky', active: currentGroup === 'pomocky' },
-      { key: 'docs', icon: ICONS.docs, href: '/moje-dokumenty.php', label: 'Moje dokumenty', active: isDocs },
-      { key: 'copy', icon: ICONS.copy, href: '/copy-paste.php', label: 'Copy-Paste zóna', active: isCopy }
+      { key: 'docs', icon: ICONS.docs, href: '/moje-dokumenty.php', label: 'Moje dokumenty', active: isDocs }
     ];
     // Admin/owner-only položky pribúdajú len tebe — aby lišta nenarastala do
     // neprehľadna, na desktope sa schovajú za jednu ikonu "Viac" (flyout).
@@ -121,6 +120,9 @@
       MORE.push({ key: 'kb', icon: ICONS.kb, href: '/znalostna-baza.php', label: 'Znalostná báza', active: isKb });
       MORE.push({ key: 'news', icon: ICONS.news, href: '/novinky.php', label: 'Novinky', active: isNews });
       MORE.push({ key: 'refi', icon: ICONS.refi, href: '/refinancny-radar.php', label: 'Refinančný Radar', active: isRefi });
+      // Copy-Paste zóna: zatiaľ len pre teba, kým sa overí užitočnosť (potom
+      // presunúť späť do základnej NAV, viditeľnej pre každého poradcu).
+      MORE.push({ key: 'copy', icon: ICONS.copy, href: '/copy-paste.php', label: 'Copy-Paste zóna', active: isCopy });
     }
     var moreActive = MORE.some(function (n) { return n.active; });
 
