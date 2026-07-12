@@ -52,6 +52,9 @@ toho, čo sa rozhodneme spraviť.
   sťahovania (rozhodnutie: pri číslach pre klienta sa nedá spoliehať
   na niečo, čo sa môže potichu pokaziť). Viditeľné len pre teba —
   hypotéky riešiš sám, poradcovia to nepotrebujú.
+- [x] **Copy-Paste zóna pre poradcu** — osobné rýchle textové šablóny;
+  na rozdiel od Znalostnej bázy (zdieľaná, len owner) tu každý poradca
+  vidí a upravuje len svoje vlastné texty. Viditeľné pre všetkých.
 
 ---
 
@@ -97,7 +100,6 @@ toho, čo sa rozhodneme spraviť.
 - [ ] **„Tichý radar“ pre poradcov** (pripomienkovač aktivít)
 - [ ] **Šablóny na riešenie „Zásekov“** (trablšúting) — rýchle texty na
   vyžiadanie dokladov, keď proces v poisťovni zastane
-- [ ] **Copy-Paste zóna pre poradcu**
 - [ ] **60-sekundový „Zápisník po stretnutí“**
 - [ ] **Hlasový zápisník z auta** (AI, moderná produktivita)
 - [ ] **„Hypo-Refinance Autopilot“** s notifikáciou pre poradcu

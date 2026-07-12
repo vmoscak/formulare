@@ -657,4 +657,12 @@ function dbInitSqlite(PDO $pdo): void {
         note TEXT NOT NULL DEFAULT '',
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_snippets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        advisor_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        body TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )");
 }

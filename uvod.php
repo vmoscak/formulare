@@ -55,6 +55,8 @@ $hubMeta = [
 $extraHubs = [
     ['label' => 'Moje dokumenty', 'subtitle' => 'História vygenerovaných PDF a odoslaných klientských odkazov.',
      'ico' => 'folder', 'color' => '#059669', 'href' => '/moje-dokumenty.php', 'tag' => null],
+    ['label' => 'Copy-Paste zóna', 'subtitle' => 'Tvoje osobné rýchle texty na kopírovanie jedným klikom.',
+     'ico' => 'clipboard', 'color' => '#0e7490', 'href' => '/copy-paste.php', 'tag' => null],
 ];
 if (!empty($me['is_admin'])) {
     $extraHubs[] = ['label' => 'Admin', 'subtitle' => 'Správa poradcov, PIN kódov a zapínanie/vypínanie nástrojov.',
@@ -86,7 +88,7 @@ $newsPalette = ['#4f46e5', '#059669', '#0d9488', '#7c3aed', '#0284c7', '#d97706'
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=13">
+<link rel="stylesheet" href="/assets/panel.css?v=14">
 </head><body class="home-page">
 <div class="home-bg" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
 <header class="topbar">
@@ -171,5 +173,5 @@ $newsPalette = ['#4f46e5', '#059669', '#0d9488', '#7c3aed', '#0284c7', '#d97706'
 
 </main>
 
-<script src="/assets/shell.js?v=9"></script>
+<script src="/assets/shell.js?v=10"></script>
 </body></html>
