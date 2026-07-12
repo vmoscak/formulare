@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="sk"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulátor krátenia plnenia</title>
+
+<!-- =========================================================================
+     SIMULÁTOR KRÁTENIA PLNENIA (podpoistenie) — samostatný editovateľný súbor
+     -------------------------------------------------------------------------
+     Princíp pomerného plnenia pri podpoistení majetku: Plnenie = Škoda ×
+     (Poistná suma / Skutočná hodnota), zhora ohraničené poistnou sumou.
+     Ukáže vedľa seba, koľko by klient reálne dostal pri terajšej (nižšej)
+     poistnej sume oproti správne nastavenej. Naživo prepočítava. Voliteľné
+     meno klienta + PDF cez zdieľaný ../pdf.php (Dompdf).
+
+     KDE ČO UPRAVIŤ:
+       • Vzorec pomerného plnenia ........ JS, funkcia compute()
+       • Farby / vzhľad .................. zdieľaný dizajnový systém ../assets/ui.css
+========================================================================== -->
+
+<script src="../assets/theme-init.js"></script>
+<script src="../assets/toast.js?v=1"></script>
+<link rel="stylesheet" href="../assets/ui.css?v=10">
+<style>
+  .kp-badge{
+    display:inline-flex; align-items:center; gap:8px; padding:8px 14px; border-radius:999px;
+    font-size:12.5px; font-weight:700; margin-bottom:16px;
+  }
+  .kp-badge.ok{background:var(--good-soft,#ecfdf5); color:var(--good,#059669);}
+  .kp-badge.bad{background:var(--err-soft,#fff1f2); color:var(--err,#e11d48);}
+  .kp-ratio-track{height:20px; border-radius:999px; background:var(--desk); overflow:hidden; margin:6px 0 4px;}
+  .kp-ratio-fill{height:100%; background:var(--accent); display:flex; align-items:center; justify-content:flex-end; padding-right:8px; color:#fff; font-size:10.5px; font-weight:700; white-space:nowrap; box-sizing:border-box;}
+  .kp-ratio-label{display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-bottom:14px;}
+  .kp-chart-row{margin-bottom:14px;}
+  .kp-chart-row:last-child{margin-bottom:0;}
+  .kp-chart-label{display:flex; justify-content:space-between; font-size:12.5px; color:var(--muted); margin-bottom:6px;}
+  .kp-chart-track{height:26px; border-radius:6px; background:var(--desk); overflow:hidden;}
+  .kp-chart-fill{height:100%; display:flex; align-items:center; justify-content:flex-end; padding-right:9px; color:#fff; font-size:11.5px; font-weight:700; white-space:nowrap; box-sizing:border-box;}
+  .kp-chart-fill.correct{background:#059669;}
+  .kp-chart-fill.under{background:#e11d48;}
+  .kp-hero{
+    border-radius:var(--radius-lg); padding:20px 22px; margin:16px 0; color:#fff;
+    background:linear-gradient(150deg,#fb7185,#e11d48); box-shadow:0 14px 30px -14px rgba(225,29,72,.5);
+  }
+  .kp-hero .kp-label{font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; opacity:.85;}
+  .kp-hero .kp-big{font-size:30px; font-weight:800; margin-top:6px; line-height:1.15;}
+  .kp-hero .kp-sub{font-size:12.5px; opacity:.9; margin-top:6px; line-height:1.5;}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="head">
+    <div class="head-left">
+      <a href="../nastroje.php" class="back-btn" title="Späť na nástroje">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <div class="brand">
+        <div class="logo">K</div>
+        <div>
+          <b>Simulátor krátenia plnenia</b><br>
+          <small>Koľko reálne stratíte pri podpoistení</small>
+        </div>
+      </div>
+    </div>
+    <div class="head-actions">
+      <div class="avatar" id="avatar">%</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- ============ VSTUPY ============ -->
+    <div class="form">
+      <div>
+        <div class="step-head"><div class="step-num">1</div><div class="step-title">Majetok a poistná suma</div></div>
+        <div class="fields">
+          <div class="field" data-k="actualValue">
+            <label>SKUTOČNÁ HODNOTA MAJETKU (€)</label>
+            <input type="number" min="0" id="actualValue" placeholder="napr. 150000">
+            <span class="hint">Napr. reprodukčná hodnota nehnuteľnosti alebo domácnosti podľa znaleckého odhadu.</span>
+          </div>
+          <div class="field" data-k="insuredSum">
+            <label>POISTNÁ SUMA V ZMLUVE (€)</label>
+            <input type="number" min="0" id="insuredSum" placeholder="napr. 100000">
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="step-head"><div class="step-num">2</div><div class="step-title">Škodová udalosť</div></div>
+        <div class="fields">
+          <div class="field" data-k="lossAmount">
+            <label>VÝŠKA ŠKODY (€)</label>
+            <input type="number" min="0" id="lossAmount" placeholder="napr. 40000">
+            <span class="hint">Napr. škoda po požiari alebo víchrici — koľko by reálne stálo uviesť majetok do pôvodného stavu.</span>
+          </div>
+        </div>
+      </div>
+
+      <p style="font-size:12px; color:var(--muted); line-height:1.6;">
+        Princíp <b>pomerného plnenia</b>: ak je poistná suma nižšia než skutočná hodnota majetku, poisťovňa
+        kráti plnenie v rovnakom pomere — bez ohľadu na to, že škoda môže byť len čiastočná. Orientačný prepočet,
+        presné podmienky sa vždy overia v konkrétnej poistnej zmluve.
+      </p>
+
+      <div class="actions">
+        <button class="btn-ghost" id="resetBtn">Vynulovať</button>
+      </div>
+    </div>
+
+    <!-- ============ VÝSLEDOK ============ -->
+    <div class="preview">
+      <div class="preview-head">
+        <span class="t">Výsledok</span>
+        <span class="live"><i></i>Prepočítava sa naživo</span>
+      </div>
+      <div class="preview-tools">
+        <button class="tool" id="copyBtn">Kopírovať zhrnutie</button>
+        <button class="tool" id="pdfBtn">Stiahnuť PDF</button>
+      </div>
+
+      <div class="field" data-k="clientName" style="margin-bottom:8px;">
+        <label>MENO KLIENTA <span style="font-weight:500;text-transform:none;">(nepovinné, pre PDF)</span></label>
+        <input id="clientName" placeholder="napr. Ján Novák">
+      </div>
+
+      <div id="kpBadgeWrap"></div>
+
+      <div class="kp-ratio-label"><span>Poistené na</span><span id="kpRatioPct">—</span></div>
+      <div class="kp-ratio-track"><div class="kp-ratio-fill" id="kpRatioFill" style="width:0%;"></div></div>
+
+      <div class="kp-hero" id="kpHero" style="display:none;">
+        <div class="kp-label">O toľko menej reálne dostanete pri škode <span id="kpHeroLoss">0 €</span></div>
+        <div class="kp-big" id="kpHeroShortfall">0 €</div>
+        <div class="kp-sub" id="kpHeroSub"></div>
+      </div>
+
+      <div id="kpChartCard" style="display:none;">
+        <div class="kp-chart-row">
+          <div class="kp-chart-label"><span>Pri správnej poistnej sume</span></div>
+          <div class="kp-chart-track"><div class="kp-chart-fill correct" id="kpBarCorrect" style="width:0%;"></div></div>
+        </div>
+        <div class="kp-chart-row">
+          <div class="kp-chart-label"><span>Pri terajšej (podpoistenej) sume</span></div>
+          <div class="kp-chart-track"><div class="kp-chart-fill under" id="kpBarUnder" style="width:0%;"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/advisor-panel.js"></script>
+<script>
+const state = { actualValue:'', insuredSum:'', lossAmount:'', clientName:'' };
+
+const $ = id => document.getElementById(id);
+function num(v){ const n = Number(v); return isFinite(n) && n >= 0 ? n : 0; }
+function eur(n){ return Math.round(n).toLocaleString('sk-SK') + ' €'; }
+function escapeHtml(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ===========================================================================
+   VÝPOČET — princíp pomerného plnenia: Plnenie = Škoda × (Poistná suma /
+   Skutočná hodnota), zhora ohraničené poistnou sumou.
+=========================================================================== */
+function compute(){
+  const actualValue = num(state.actualValue);
+  const insuredSum = num(state.insuredSum);
+  const lossAmount = num(state.lossAmount);
+  const hasData = actualValue > 0 && insuredSum > 0 && lossAmount > 0;
+
+  const ratio = actualValue > 0 ? Math.min(1, insuredSum/actualValue) : 1;
+  const isUnderinsured = actualValue > 0 && insuredSum < actualValue;
+
+  const payoutCorrect = Math.min(lossAmount, actualValue);
+  const payoutUnderinsured = isUnderinsured ? Math.min(lossAmount*ratio, insuredSum) : payoutCorrect;
+  const shortfall = Math.max(0, payoutCorrect - payoutUnderinsured);
+  const shortfallPct = payoutCorrect > 0 ? (shortfall/payoutCorrect*100) : 0;
+
+  return { actualValue, insuredSum, lossAmount, hasData, ratio, isUnderinsured, payoutCorrect, payoutUnderinsured, shortfall, shortfallPct };
+}
+
+/* ===========================================================================
+   VYKRESLENIE
+=========================================================================== */
+function render(){
+  const r = compute();
+
+  $('kpRatioPct').textContent = r.actualValue > 0 ? Math.round(r.ratio*100) + ' % hodnoty' : '—';
+  $('kpRatioFill').style.width = Math.round(r.ratio*100) + '%';
+
+  const badgeWrap = $('kpBadgeWrap');
+  if (r.actualValue > 0 && r.insuredSum > 0) {
+    badgeWrap.innerHTML = r.isUnderinsured
+      ? '<div class="kp-badge bad">⚠ Podpoistené — chýba ' + eur(r.actualValue - r.insuredSum) + ' do skutočnej hodnoty</div>'
+      : '<div class="kp-badge ok">✓ Poistná suma pokrýva skutočnú hodnotu</div>';
+  } else {
+    badgeWrap.innerHTML = '';
+  }
+
+  if (!r.hasData) {
+    $('kpHero').style.display = 'none';
+    $('kpChartCard').style.display = 'none';
+    return r;
+  }
+
+  $('kpChartCard').style.display = 'block';
+  const maxPayout = Math.max(r.payoutCorrect, r.payoutUnderinsured, 1);
+  $('kpBarCorrect').style.width = Math.max(4, r.payoutCorrect/maxPayout*100) + '%';
+  $('kpBarCorrect').textContent = eur(r.payoutCorrect);
+  $('kpBarUnder').style.width = Math.max(4, r.payoutUnderinsured/maxPayout*100) + '%';
+  $('kpBarUnder').textContent = eur(r.payoutUnderinsured);
+
+  if (r.shortfall > 0) {
+    $('kpHero').style.display = 'block';
+    $('kpHeroLoss').textContent = eur(r.lossAmount);
+    $('kpHeroShortfall').textContent = '−' + eur(r.shortfall);
+    $('kpHeroSub').textContent = 'To je o ' + Math.round(r.shortfallPct) + ' % menej, než by dostal pri správne nastavenej poistnej sume.';
+  } else {
+    $('kpHero').style.display = 'none';
+  }
+
+  return r;
+}
+
+/* ===========================================================================
+   AKCIE
+=========================================================================== */
+function summaryText(r){
+  const lines = [];
+  lines.push('Simulátor krátenia plnenia' + (state.clientName.trim() ? ' — ' + state.clientName.trim() : ''));
+  lines.push('');
+  lines.push('Skutočná hodnota majetku: ' + eur(r.actualValue));
+  lines.push('Poistná suma v zmluve: ' + eur(r.insuredSum) + ' (' + Math.round(r.ratio*100) + ' % hodnoty)');
+  lines.push('Výška škody: ' + eur(r.lossAmount));
+  lines.push('');
+  lines.push('Plnenie pri správnej poistnej sume: ' + eur(r.payoutCorrect));
+  lines.push('Plnenie pri terajšej (podpoistenej) sume: ' + eur(r.payoutUnderinsured));
+  if (r.shortfall > 0) lines.push('Rozdiel (krátenie): −' + eur(r.shortfall) + ' (' + Math.round(r.shortfallPct) + ' %)');
+  return lines.join('\n');
+}
+
+function doCopy(){
+  const r = compute();
+  if (!r.hasData) { showToast('Najprv vyplň hodnotu majetku, poistnú sumu aj škodu.', 'error'); return; }
+  const txt = summaryText(r);
+  try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
+  const b = $('copyBtn'); const orig = b.textContent;
+  b.textContent = 'Skopírované ✓'; setTimeout(function(){ b.textContent = orig; }, 1600);
+}
+
+function doReset(){
+  state.actualValue=''; state.insuredSum=''; state.lossAmount='';
+  ['actualValue','insuredSum','lossAmount'].forEach(function(id){ $(id).value = ''; });
+  render();
+}
+
+/* ===========================================================================
+   PDF PRE KLIENTA (server-side Dompdf cez zdieľaný ../pdf.php, presné A4)
+=========================================================================== */
+function buildLetterHtml(r){
+  const clientName = state.clientName.trim() || 'Klient';
+  const today = new Date();
+  const SK_MONTHS = ['január','február','marec','apríl','máj','jún','júl','august','september','október','november','december'];
+  const dateStr = today.getDate() + '. ' + SK_MONTHS[today.getMonth()] + ' ' + today.getFullYear();
+
+  const maxPayout = Math.max(r.payoutCorrect, r.payoutUnderinsured, 1);
+  const pctCorrect = Math.max(4, r.payoutCorrect/maxPayout*100);
+  const pctUnder = Math.max(4, r.payoutUnderinsured/maxPayout*100);
+
+  const badge = r.isUnderinsured
+    ? '<div class="kp-badge bad">⚠ Podpoistené — chýba ' + eur(r.actualValue - r.insuredSum) + ' do skutočnej hodnoty (poistené na ' + Math.round(r.ratio*100) + ' %)</div>'
+    : '<div class="kp-badge ok">✓ Poistná suma pokrýva skutočnú hodnotu</div>';
+
+  const shortfallBlock = r.shortfall > 0
+    ? '<div class="concl"><b>Rozdiel (krátenie): −' + eur(r.shortfall) + '</b> — o ' + Math.round(r.shortfallPct)
+      + ' % menej, než by klient dostal pri správne nastavenej poistnej sume.</div>'
+    : '';
+
+  const css = `
+    @font-face { font-family:'DejaVu Sans'; src:url('../vendor/dompdf/lib/fonts/DejaVuSans.ttf'); }
+    @font-face { font-family:'DejaVu Sans'; font-weight:bold; src:url('../vendor/dompdf/lib/fonts/DejaVuSans-Bold.ttf'); }
+    * { box-sizing:border-box; }
+    div,p,span { margin:0; padding:0; }
+    body { margin:0; padding:0; font-family:'DejaVu Sans',sans-serif; font-size:10.5pt; line-height:1.5; color:#20242b; background:#fff; }
+    .pdf-topbar { height:3mm; background:#e11d48; border-radius:0.8mm; margin-bottom:6mm; }
+    .doctitle { text-align:center; font-size:16pt; letter-spacing:.5pt; font-weight:bold; padding:7pt 0 2pt; }
+    .card-sub { text-align:center; font-size:10.5pt; color:#666; margin-bottom:5mm; }
+    .meta { text-align:center; font-size:9pt; color:#8a8a8a; margin-bottom:9mm; padding-bottom:5mm; border-bottom:1pt solid #e5e5e5; }
+    .kp-badge{ display:block; padding:3mm 4mm; border-radius:2mm; font-size:10pt; font-weight:bold; margin-bottom:5mm; }
+    .kp-badge.ok{ background:#ecfdf5; color:#059669; }
+    .kp-badge.bad{ background:#fff1f2; color:#e11d48; }
+    .kv{ display:table; width:100%; margin-bottom:2mm; }
+    .kv .k{ display:table-cell; font-size:9.5pt; color:#666; padding:1.5mm 0; }
+    .kv .v{ display:table-cell; font-size:9.5pt; font-weight:bold; text-align:right; }
+    .chart-row{ margin:5mm 0 2mm; }
+    .chart-label{ font-size:9.5pt; color:#666; margin-bottom:1.5mm; }
+    .chart-track{ height:6mm; border-radius:1.5mm; background:#f5f6f8; }
+    .chart-fill{ height:6mm; border-radius:1.5mm; color:#fff; font-size:9pt; font-weight:bold; text-align:right; padding-right:2mm; line-height:6mm; box-sizing:border-box; }
+    .chart-fill.correct{ background:#059669; }
+    .chart-fill.under{ background:#e11d48; }
+    .concl { margin-top:5mm; padding:4mm 5mm; background:#fff1f2; border-radius:2mm; font-size:9.5pt; color:#9f1239; }
+    @page{ margin:20mm 20mm 20mm 20mm; }
+  `;
+
+  return '<!DOCTYPE html><html lang="sk"><head>'
+    + '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
+    + '<title>Simulátor krátenia plnenia</title><style>' + css + '</style></head><body>'
+    + '<div class="pdf-topbar"></div><div class="doctitle">Simulátor krátenia plnenia</div>'
+    + '<div class="card-sub">Koľko reálne stratíte pri podpoistení</div>'
+    + '<div class="meta">' + escapeHtml(clientName) + ' &middot; ' + dateStr + '</div>'
+    + badge
+    + '<div class="kv"><span class="k">Skutočná hodnota majetku</span><span class="v">' + eur(r.actualValue) + '</span></div>'
+    + '<div class="kv"><span class="k">Poistná suma v zmluve</span><span class="v">' + eur(r.insuredSum) + '</span></div>'
+    + '<div class="kv"><span class="k">Výška škody</span><span class="v">' + eur(r.lossAmount) + '</span></div>'
+    + '<div class="chart-row"><div class="chart-label">Plnenie pri správnej poistnej sume</div>'
+    + '<div class="chart-track"><div class="chart-fill correct" style="width:' + pctCorrect + '%;">' + eur(r.payoutCorrect) + '</div></div></div>'
+    + '<div class="chart-row"><div class="chart-label">Plnenie pri terajšej (podpoistenej) sume</div>'
+    + '<div class="chart-track"><div class="chart-fill under" style="width:' + pctUnder + '%;">' + eur(r.payoutUnderinsured) + '</div></div></div>'
+    + shortfallBlock
+    + '<div class="concl" style="background:#f5f6f8; color:#5b6270; margin-top:3mm;">Princíp pomerného plnenia — orientačný prepočet, presné podmienky sa vždy overia v konkrétnej poistnej zmluve.</div>'
+    + '</body></html>';
+}
+
+function doPDF(){
+  const r = compute();
+  if (!r.hasData) { showToast('Najprv vyplň hodnotu majetku, poistnú sumu aj škodu.', 'error'); return; }
+
+  const btn = $('pdfBtn'); const orig = btn.textContent;
+  btn.textContent = 'Generujem…'; btn.disabled = true;
+
+  const html = buildLetterHtml(r);
+  const filename = 'Kratenie_plnenia' + (state.clientName.trim() ? '_' + state.clientName.trim().replace(/\s+/g,'_') : '');
+
+  fetch('../pdf.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ html: html, filename: filename })
+  })
+  .then(function(r){
+    const ct = r.headers.get('Content-Type') || '';
+    if (ct.includes('application/json') || ct.includes('text/')) {
+      return r.text().then(function(t){ throw new Error('Server: ' + t); });
+    }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.blob();
+  })
+  .then(function(blob){
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename + '.pdf';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    btn.textContent = orig; btn.disabled = false;
+    logDocument('simulator-kratenia-plnenia', state.clientName.trim() || 'Klient', state, undefined);
+  })
+  .catch(function(e){
+    console.error(e);
+    btn.textContent = orig; btn.disabled = false;
+    showToast('Chyba PDF: ' + e.message, 'error');
+  });
+}
+
+/* ===========================================================================
+   UDALOSTI
+=========================================================================== */
+function bind(){
+  ['actualValue','insuredSum','lossAmount'].forEach(function(id){
+    $(id).addEventListener('input', function(e){ state[id] = e.target.value; render(); });
+  });
+  $('clientName').addEventListener('input', function(e){ state.clientName = e.target.value; });
+  $('copyBtn').addEventListener('click', doCopy);
+  $('pdfBtn').addEventListener('click', doPDF);
+  $('resetBtn').addEventListener('click', doReset);
+}
+
+/* ===========================================================================
+   ŠTART
+=========================================================================== */
+(function init(){
+  bind(); render();
+})();
+</script>
+
+<script src="/assets/shell.js?v=16"></script>
+</body></html>

@@ -126,6 +126,17 @@ toho, čo sa rozhodneme spraviť.
   hlavných výsledných čísel v "Oplatí sa mi refinancovať?"
   (mesačná úspora, čistá úspora) — nabehnú plynulo namiesto
   okamžitého prepočtu.
+- [x] **Poistný semafor** — rýchly vizuálny audit krytia na 1 klik:
+  úmrtie, invalidita, kritické choroby, trvalé následky, dlhodobá PN
+  a finančná rezerva ako farebné svetlo (červená/oranžová/zelená)
+  podľa pomeru existujúce krytie / odporúčaná suma. Rovnaká základná
+  metodika ako Kalkulačka finančnej medzery, zjednodušená bez
+  záväzkov a detí. PDF aj kopírovanie zhrnutia.
+- [x] **Simulátor krátenia plnenia** — princíp pomerného plnenia pri
+  podpoistení majetku (Plnenie = Škoda × Poistná suma / Skutočná
+  hodnota): vedľa seba ukáže, koľko by klient reálne dostal pri
+  terajšej podpoistenej sume oproti správne nastavenej. Argumentačný
+  nástroj pri námietke „to mi stačí“. PDF aj kopírovanie zhrnutia.
 
 ---
 
@@ -136,16 +147,17 @@ toho, čo sa rozhodneme spraviť.
 - [ ] **Kalkulačka príjmových cieľov** (Reverse-engineering úspechu)
 - [ ] **Mini-kalkulačka pre sociálne siete** (Lead Magnet)
 - [ ] **Kalkulačka „Zvýšenie platu vs. Zamestnanecký benefit“**
-- [ ] **Simulátor „Krátenia plnenia z dôvodu podpoistenia“**
-- [ ] **Finančný Index Ochrany (FIO Skóre)**
+- [ ] **Finančný Index Ochrany (FIO Skóre)** — jedno súhrnné číslo/skóre za
+  celú domácnosť (na rozdiel od Poistného semaforu, ktorý ukazuje 6
+  oblastí samostatne)
 - [ ] **Porovnávač „Čo sa stane, ak...“** (scenáre životných rizík)
 - [ ] **Kalkulačka „Štart do života pre dieťa“**
 - [ ] **„Bancassurance Killer“** (bankové poistenie úveru vs. UNIQA)
 - [ ] **„Obchádzač notára“** (kalkulačka dedičského konania a zmrazených účtov) —
   vhodné pre bonitnejších klientov, seniorov, predaj III. piliera/ŽP/investícií
-- [ ] **„Dôchodkový Tacho-meter“** (presný vek odchodu do dôchodku)
+- [ ] **„Dôchodkový Tacho-meter“** (presný vek odchodu do dôchodku) — odložené,
+  čaká sa na presnú tabuľku dôchodkového veku podľa ročníka od Sociálnej poisťovne
 - [ ] **„Crash Test“ nehnuteľnosti** (indexačný radar)
-- [ ] **„Poistný semafor“** (vizuálny audit krytia na 1 klik)
 - [ ] **Matica životných udalostí** (Life-Event Asistent)
 - [ ] **„Before / After“ Slider** (finančný röntgen) — posuvník na porovnanie
   fotiek "pred/po", aplikovaný na financie klienta
