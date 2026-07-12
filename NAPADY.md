@@ -61,6 +61,10 @@ toho, čo sa rozhodneme spraviť.
   (Ochrana → Rezerva → Budovanie cieľov → Zhodnocovanie), pri každej
   vrstve krátke vysvetlenie a kontrolný zoznam na odškrtávanie počas
   rozhovoru s klientom. Bez PDF, bez ukladania dát o klientovi.
+- [x] **„Latte Faktor“** — kalkulačka malých pravidelných výdavkov
+  (napr. káva, predplatné): naživo prepočíta, o koľko by suma narástla
+  pri pravidelnom investovaní namiesto minutia (zvolený počet rokov,
+  očakávané ročné zhodnotenie). Bez PDF, bez ukladania dát o klientovi.
 
 ---
 
@@ -74,7 +78,6 @@ toho, čo sa rozhodneme spraviť.
 - [ ] **Simulátor „Krátenia plnenia z dôvodu podpoistenia“**
 - [ ] **Finančný Index Ochrany (FIO Skóre)**
 - [ ] **Porovnávač „Čo sa stane, ak...“** (scenáre životných rizík)
-- [ ] **„Latte Faktor“** (kalkulačka malých nerestí/výdavkov)
 - [ ] **Kalkulačka „Štart do života pre dieťa“**
 - [ ] **„Bancassurance Killer“** (bankové poistenie úveru vs. UNIQA)
 - [ ] **„Obchádzač notára“** (kalkulačka dedičského konania a zmrazených účtov) —
