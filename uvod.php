@@ -69,6 +69,8 @@ if (!empty($me['is_owner'])) {
         'ico' => 'megaphone', 'color' => '#ea580c', 'href' => '/novinky.php', 'tag' => 'Len pre teba'];
     $extraHubs[] = ['label' => 'Refinančný Radar', 'subtitle' => 'Ručne udržiavaný prehľad hypotekárnych sadzieb podľa banky a fixácie.',
         'ico' => 'euro', 'color' => '#475569', 'href' => '/refinancny-radar.php', 'tag' => 'Len pre teba'];
+    $extraHubs[] = ['label' => 'Oplatí sa mi refinancovať?', 'subtitle' => 'Break-even prepočet — mesačná úspora novej sadzby vs. náklady na prechod.',
+        'ico' => 'chart', 'color' => '#0891b2', 'href' => '/oplati-sa-refinancovat.php', 'tag' => 'Len pre teba'];
     // Zatiaľ len pre teba, kým sa overí užitočnosť — potom presunúť medzi
     // nepodmienené karty (viditeľné pre každého poradcu).
     $extraHubs[] = ['label' => 'Copy-Paste zóna', 'subtitle' => 'Tvoje osobné rýchle texty na kopírovanie jedným klikom.',
