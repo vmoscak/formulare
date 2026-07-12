@@ -150,6 +150,16 @@ toho, čo sa rozhodneme spraviť.
   medzi poradcami, ale skôr ako **uznanie výsledkov** (napr. tichá pochvala/
   míľnik, nie verejný rebríček). Koncept si necháme premyslieť nanovo, kým
   sa k tomu vrátime — zatiaľ sa nestavia.
+- **CRM-lite / centrálna databáza klientov** (a na nej postavené: história
+  stretnutí per klient, história škodových udalostí, segmentácia/tagovanie
+  klientov) — súčasný stav: klientske údaje sa spracúvajú cez CRM od
+  Microsoftu v UNIQA a cez MyPort/Finportal (hypotéky, cez BEplan) —
+  spracovanie tam robí firma, nie ty osobne, čo je výhoda (menšia osobná
+  zodpovednosť). Vlastná databáza klientov v appke Formuláre by túto
+  výhodu stratila — stal by si sa ty osobne prevádzkovateľom tých údajov,
+  vrátane potreby získať a evidovať súhlas so spracovaním osobných údajov
+  od každého klienta zvlášť. Zatiaľ sa do toho nejde — appka ostáva pri
+  nástrojoch a jednorazových dokumentoch, nie systém záznamov o klientoch.
 
 ---
 
@@ -160,3 +170,13 @@ toho, čo sa rozhodneme spraviť.
   vypneš** pre ostatných (existujúci mechanizmus `disabled_tools`, pár
   klikov). Žiadne SQL na toto už netreba generovať — to bolo zbytočný
   krok navyše.
+- **Pravidlo (od 7/2026):** appka Formuláre nie je systém záznamov o
+  klientoch a ani sa ním zámerne nemá stať. Klientske údaje reálne
+  spracúva CRM od Microsoftu (UNIQA) a MyPort/Finportal cez BEplan
+  (hypotéky) — zodpovednosť za spracovanie je tam na firme, nie na tebe
+  osobne. Nová databáza klientov v tejto appke (aj čiastková, napr. len
+  história stretnutí) by túto zodpovednosť presunula na teba, vrátane
+  nutnosti získať súhlas so spracovaním osobných údajov od každého
+  klienta. Appka preto ostáva pri nástrojoch a jednorazových dokumentoch
+  (PDF s menom klienta sa negeneruje ako trvalá evidencia, len na
+  stiahnutie/odovzdanie) — nie pri centrálnej evidencii.
