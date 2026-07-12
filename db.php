@@ -60,6 +60,7 @@ function toolLabel(string $slug): string {
         'argument-builder' => 'Argument Builder',
         'vybavovac-namietok' => 'Vybavovač námietok',
         'prvych-30-dni' => 'Prvých 30 dní',
+        'emailove-pozdravy' => 'Emailové pozdravy',
     ];
     return $labels[$slug] ?? $slug;
 }

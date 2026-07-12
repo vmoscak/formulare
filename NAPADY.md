@@ -81,6 +81,11 @@ toho, čo sa rozhodneme spraviť.
   teraz nasleduje, kedy začína platiť krytie, ako postupovať pri
   poistnej udalosti. Vyber produkt, voliteľné meno klienta, PDF aj
   text na SMS/WhatsApp, kontakt poradcu sa predvyplní automaticky.
+- [x] **Emailové pozdravy** — narodeniny, Vianoce/Nový rok, výročie
+  zmluvy. Tlačidlo skopíruje NAFORMÁTOVANÝ (grafický) e-mail priamo
+  do schránky (nie len text) — vloží sa Ctrl+V rovno do interného
+  e-mailového klienta (Outlook a pod.) so zachovaným vzhľadom.
+  Šablóna je zámerne „Outlook-safe" (tabuľkový layout, inline štýly).
 
 ---
 

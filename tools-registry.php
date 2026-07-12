@@ -36,6 +36,7 @@ function toolIco(string $key): string {
         'coffee'    => '<path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/>',
         'spectrum'  => '<circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="12" r="2.5"/><path d="M7.5 12h9"/>',
         'calendar'  => '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/>',
+        'mail'      => '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/>',
     ];
     return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . ($p[$key] ?? $p['help']) . '</svg>';
 }
@@ -115,6 +116,8 @@ $TOOL_CATEGORIES = [
          'desc' => 'Poďakovanie a kontakt pre klienta, aby odporučil poradcu ďalej – PDF aj text na SMS/WhatsApp.'],
         ['href' => 'vysvetlivky-pre-klienta/', 'name' => 'Vysvetlivky pre klienta', 'ico' => 'book', 'color' => 'sky',
          'desc' => 'Krátke jednostránkové vysvetlenie bežného poistného pojmu v ľudskej reči – PDF aj text.'],
+        ['href' => 'emailove-pozdravy/', 'name' => 'Emailové pozdravy', 'ico' => 'mail', 'color' => 'violet',
+         'desc' => 'Narodeniny, Vianoce/Nový rok, výročie zmluvy – formátovaný (grafický) e-mail na skopírovanie priamo do interného e-mailového klienta.'],
     ]],
 ];
 
