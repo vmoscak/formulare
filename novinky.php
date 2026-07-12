@@ -130,5 +130,5 @@ function newsCancel(id) {
   item.querySelector('.kb-edit').style.display = 'none';
 }
 </script>
-<script src="/assets/shell.js?v=10"></script>
+<script src="/assets/shell.js?v=11"></script>
 </body></html>

@@ -173,5 +173,5 @@ $newsPalette = ['#4f46e5', '#059669', '#0d9488', '#7c3aed', '#0284c7', '#d97706'
 
 </main>
 
-<script src="/assets/shell.js?v=10"></script>
+<script src="/assets/shell.js?v=11"></script>
 </body></html>

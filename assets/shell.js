@@ -43,6 +43,7 @@
     moon: '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>',
     menu: '<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>',
     close: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+    more: '<circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>',
   };
 
   // Aktuálne účinná téma — explicitný prepínač (data-theme) má prednosť,
@@ -98,6 +99,7 @@
       currentGroup = (toolGroups && toolGroups[slug]) || 'nastroje';
     }
 
+    // Základná lišta — rovnaká pre každého poradcu, nikdy nenarastá.
     var NAV = [
       { key: 'home', icon: ICONS.home, href: '/uvod.php', label: 'Domov', active: isHome },
       { key: 'nastroje', icon: ICONS.tools, href: '/nastroje.php', label: 'Nástroje', active: currentGroup === 'nastroje' },
@@ -106,19 +108,21 @@
       { key: 'docs', icon: ICONS.docs, href: '/moje-dokumenty.php', label: 'Moje dokumenty', active: isDocs },
       { key: 'copy', icon: ICONS.copy, href: '/copy-paste.php', label: 'Copy-Paste zóna', active: isCopy }
     ];
-    // Admin ikona sa zobrazí len poradcovi s is_admin=1 (server-side to aj
-    // tak stráži admin.php samotné — toto je len viditeľnosť v navigácii).
+    // Admin/owner-only položky pribúdajú len tebe — aby lišta nenarastala do
+    // neprehľadna, na desktope sa schovajú za jednu ikonu "Viac" (flyout).
+    // Na mobile (vysúvací panel) sa aj tak zobrazujú rovno v zozname (CSS
+    // nižšie), tam viac položiek prekáža menej než na úzkej pevnej lište.
+    var MORE = [];
     if (adv.is_admin) {
-      NAV.push({ key: 'admin', icon: ICONS.admin, href: '/admin.php', label: 'Admin', active: isAdmin });
+      MORE.push({ key: 'admin', icon: ICONS.admin, href: '/admin.php', label: 'Admin', active: isAdmin });
     }
-    // Náborová zóna aj znalostná báza — viditeľné VÝHRADNE pre is_owner (nie
-    // každý admin), obe stránky si to aj tak strážia server-side rovnako prísne.
     if (adv.is_owner) {
-      NAV.push({ key: 'nabor', icon: ICONS.nabor, href: '/nabor.php', label: 'Nábor', active: isNabor });
-      NAV.push({ key: 'kb', icon: ICONS.kb, href: '/znalostna-baza.php', label: 'Znalostná báza', active: isKb });
-      NAV.push({ key: 'news', icon: ICONS.news, href: '/novinky.php', label: 'Novinky', active: isNews });
-      NAV.push({ key: 'refi', icon: ICONS.refi, href: '/refinancny-radar.php', label: 'Refinančný Radar', active: isRefi });
+      MORE.push({ key: 'nabor', icon: ICONS.nabor, href: '/nabor.php', label: 'Nábor', active: isNabor });
+      MORE.push({ key: 'kb', icon: ICONS.kb, href: '/znalostna-baza.php', label: 'Znalostná báza', active: isKb });
+      MORE.push({ key: 'news', icon: ICONS.news, href: '/novinky.php', label: 'Novinky', active: isNews });
+      MORE.push({ key: 'refi', icon: ICONS.refi, href: '/refinancny-radar.php', label: 'Refinančný Radar', active: isRefi });
     }
+    var moreActive = MORE.some(function (n) { return n.active; });
 
     var css =
       '#appRail{position:fixed;left:0;top:0;bottom:0;width:72px;background:var(--paper,#fff);border-right:1px solid var(--border,#eef0f3);' +
@@ -140,6 +144,17 @@
       'color:var(--label,#98a2b3);background:none;border:none;cursor:pointer;transition:color .15s,background .15s,transform .12s ease;font:inherit;}' +
       '#appRail button.ri:hover{color:var(--ink-2,#4b5563);background:var(--desk,#f5f6f8);transform:scale(1.07);}' +
       '#appRail button.ri:active{transform:scale(.94);}' +
+      // "Viac" — flyout s admin/owner-only položkami, aby lišta nenarástla
+      // donekonečna s pribúdajúcimi nástrojmi len pre teba (viď MORE vyššie).
+      '#appRail .rail-more-wrap{position:relative;}' +
+      '#appRail .rail-more-list{display:none;position:absolute;left:56px;top:0;background:var(--paper,#fff);' +
+      'border:1px solid var(--border,#eef0f3);border-radius:12px;box-shadow:0 14px 32px -8px rgba(0,0,0,.28);' +
+      'padding:7px;min-width:210px;z-index:70;flex-direction:column;gap:1px;}' +
+      '#appRail .rail-more-list.open{display:flex;}' +
+      '#appRail .rail-more-list a.ri{position:static;width:100%;height:auto;flex-direction:row;justify-content:flex-start;gap:10px;padding:9px 10px;border-radius:8px;}' +
+      '#appRail .rail-more-list a.ri.on::before{content:none;}' +
+      '#appRail .rail-more-list a.ri .tip{position:static;opacity:1;background:none;color:inherit;padding:0;' +
+      'font-size:13px;font-weight:500;box-shadow:none;transform:none;white-space:nowrap;}' +
       '#appRail .rbot{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:10px;}' +
       '#appRail .ravatar{display:flex;align-items:center;text-decoration:none;}' +
       '#appRail .rav-badge{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;' +
@@ -162,6 +177,12 @@
         '#appRail .ravatar:hover{background:var(--desk,#f5f6f8);}' +
         '#appRail .rname{display:inline;font-size:13px;font-weight:600;color:var(--ink,#111827);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
         'body.has-rail{padding-left:0;}' +
+        // Vo vysúvacom paneli sa "Viac" nezobrazuje ako samostatné tlačidlo —
+        // admin/owner-only položky sú tam rovno v zozname (na mobile nie je
+        // dôvod nič schovávať, prekáža tam skôr výška pevnej lišty na desktope).
+        '#appRail button.rail-more-toggle{display:none;}' +
+        '#appRail .rail-more-list{display:flex !important;position:static;flex-direction:column;box-shadow:none;' +
+        'border:none;padding:0;background:none;min-width:0;gap:3px;}' +
         // Plávajúce tlačidlo vpravo dole (FAB) — vedome mimo ľavého horného rohu,
         // kde majú jednotlivé nástroje vlastné "späť" tlačidlo/logo, aby sa s ním
         // hamburger nikdy neprekrýval bez ohľadu na layout konkrétnej stránky.
@@ -174,10 +195,18 @@
         '.rail-backdrop.show{opacity:1;pointer-events:auto;}' +
       '}';
 
-    var navHtml = NAV.map(function (n) {
+    function navItemHtml(n) {
       return '<a class="ri' + (n.active ? ' on' : '') + '" href="' + n.href + '">' + svg(n.icon) +
         '<span class="tip">' + esc(n.label) + '</span></a>';
-    }).join('');
+    }
+    var navHtml = NAV.map(navItemHtml).join('');
+    var moreWrapHtml = MORE.length ? (
+      '<div class="rail-more-wrap">' +
+        '<button type="button" class="ri rail-more-toggle' + (moreActive ? ' on' : '') + '" id="railMoreToggle">' + svg(ICONS.more) +
+        '<span class="tip">Viac</span></button>' +
+        '<div class="rail-more-list" id="railMoreList">' + MORE.map(navItemHtml).join('') + '</div>' +
+      '</div>'
+    ) : '';
 
     var color = /^#[0-9a-fA-F]{6}$/.test(adv.color || '') ? adv.color : '#4f46e5';
     var themeIcon = effectiveTheme() === 'dark' ? ICONS.sun : ICONS.moon;
@@ -187,7 +216,7 @@
       '<div class="rail-backdrop" id="railBackdrop"></div>' +
       '<div id="appRail">' +
         '<a class="rlogo" href="/uvod.php" title="Formuláre">' + svg(ICONS.logo) + '</a>' +
-        '<nav>' + navHtml + '</nav>' +
+        '<nav>' + navHtml + moreWrapHtml + '</nav>' +
         '<div class="rbot">' +
           '<button type="button" class="ri" id="themeToggle" title="Prepnúť tmavý/svetlý režim">' + svg(themeIcon) +
           '<span class="tip">Tmavý/svetlý režim</span></button>' +
@@ -223,8 +252,23 @@
       railEl.classList.contains('open') ? closeRail() : openRail();
     });
     backdropEl.addEventListener('click', closeRail);
+
+    // "Viac" flyout (desktop) — na mobile je tlačidlo skryté cez CSS a zoznam
+    // je vždy rozbalený rovno v paneli, takže tento kód tam jednoducho nemá čo robiť.
+    var moreToggleEl = document.getElementById('railMoreToggle');
+    var moreListEl = document.getElementById('railMoreList');
+    if (moreToggleEl && moreListEl) {
+      moreToggleEl.addEventListener('click', function (e) {
+        e.stopPropagation();
+        moreListEl.classList.toggle('open');
+      });
+      document.addEventListener('click', function (e) {
+        if (!moreListEl.contains(e.target) && e.target !== moreToggleEl) moreListEl.classList.remove('open');
+      });
+    }
+
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') closeRail();
+      if (e.key === 'Escape') { closeRail(); if (moreListEl) moreListEl.classList.remove('open'); }
     });
   }
 
