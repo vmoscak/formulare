@@ -314,5 +314,5 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
 
 </main>
 
-<script src="/assets/shell.js?v=17"></script>
+<script src="/assets/shell.js?v=18"></script>
 </body></html>

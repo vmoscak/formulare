@@ -112,5 +112,5 @@ function daysAgo(?string $dt, DateTimeImmutable $now): ?int {
   </div>
 
 </main>
-<script src="/assets/shell.js?v=17"></script>
+<script src="/assets/shell.js?v=18"></script>
 </body></html>

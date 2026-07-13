@@ -164,6 +164,12 @@ toho, čo sa rozhodneme spraviť.
   vozidlo (značka/model, EČV, VIN, typ poistenia, platnosť od), s
   dôvodom žiadosti (nová zmluva, prevod vozidla, evidencia vozidiel,
   obnovenie, iné) a voľbou spôsobu doručenia (e-mail/pošta/pobočka).
+- [x] **Kandidáti na nábor** — vlastná evidencia ľudí, ktorých si
+  oslovil/-a ty alebo ktorí oslovili teba, nezávislá od registra
+  NBS/mapy (nabor.php) — kandidát nemusí byť vôbec v tom datasete.
+  Meno, kontakt, kto koho oslovil, stav (nový/oslovený/záujem/
+  stretnutie/pripojil sa/odmietol/stratený kontakt), poznámka a dátum
+  posledného kontaktu; filter podľa stavu. Len pre teba.
 
 ---
 

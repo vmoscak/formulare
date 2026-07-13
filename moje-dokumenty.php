@@ -117,5 +117,5 @@ function advisorInitials(string $name): string {
 
 </main>
 
-<script src="/assets/shell.js?v=17"></script>
+<script src="/assets/shell.js?v=18"></script>
 </body></html>

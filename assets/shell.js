@@ -84,7 +84,7 @@
     var path = location.pathname;
     var isDocs = /moje-dokumenty/.test(path);
     var isAdmin = /admin\.php/.test(path);
-    var isNabor = /nabor\.php/.test(path);
+    var isNabor = /nabor(-kandidati)?\.php/.test(path);
     var isKb = /znalostna-baza/.test(path);
     var isNews = /novinky\.php/.test(path);
     var isHome = /uvod\.php/.test(path);
@@ -337,7 +337,7 @@
       .then(function (adv) {
         if (!(adv && adv.id)) { hideSkeleton(); return; }
         var path = location.pathname;
-        var isSpecialPage = /moje-dokumenty|admin\.php|nabor\.php|znalostna-baza|novinky\.php|uvod\.php|refinancny-radar\.php|copy-paste\.php|oplati-sa-refinancovat\.php|cesta-novacika\.php|tim-prehlad\.php|tim-kalendar\.php/.test(path);
+        var isSpecialPage = /moje-dokumenty|admin\.php|nabor(-kandidati)?\.php|znalostna-baza|novinky\.php|uvod\.php|refinancny-radar\.php|copy-paste\.php|oplati-sa-refinancovat\.php|cesta-novacika\.php|tim-prehlad\.php|tim-kalendar\.php/.test(path);
         var isGroupOverview = /\/(nastroje|formulare|pomocky)\.php/.test(path);
         // Na stránke konkrétneho nástroja (nie prehľad, nie iná sekcia)
         // potrebujeme mapu slug->skupina, aby sa zvýraznila správna záložka.

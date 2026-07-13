@@ -140,6 +140,7 @@ function qs(array $overrides): string {
     <p>Register inštitúcií a finančných agentov (NBS) · len Prešovský a Košický kraj · viditeľné len tebe</p>
   </div>
   <div class="tb-actions">
+    <a class="pillbtn solid" href="/nabor-kandidati.php">Moji kandidáti</a>
     <a class="pillbtn" href="/nastroje.php">← Späť na nástroje</a>
   </div>
 </header>
@@ -355,5 +356,5 @@ function qs(array $overrides): string {
     .catch(function () { countEl.textContent = '· chyba načítania'; });
 })();
 </script>
-<script src="/assets/shell.js?v=17"></script>
+<script src="/assets/shell.js?v=18"></script>
 </body></html>

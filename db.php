@@ -737,6 +737,24 @@ function dbInitSqlite(PDO $pdo): void {
             $ins->execute([$s['phase'], $s['title'], $s['description'], $s['link_url'], $i]);
         }
     }
+
+    // Náborová zóna — vlastná evidencia oslovených kandidátov (nezávislá od
+    // registra NBS/mapy — kandidát nemusí byť vôbec v tom datasete). Len owner.
+    $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_recruit_candidates (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        phone TEXT NOT NULL DEFAULT '',
+        email TEXT NOT NULL DEFAULT '',
+        initiator TEXT NOT NULL DEFAULT 'ja',
+        status TEXT NOT NULL DEFAULT 'novy',
+        note TEXT NOT NULL DEFAULT '',
+        contact_date TEXT NULL,
+        created_by INTEGER NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (created_by) REFERENCES formulare_advisors(id)
+    )");
+    $pdo->exec("CREATE INDEX IF NOT EXISTS idx_recruit_candidates_status ON formulare_recruit_candidates(status)");
 }
 
 /**
