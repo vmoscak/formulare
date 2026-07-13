@@ -155,8 +155,11 @@ $editAssigneeIds = $editEventId ? ($assigneesByEvent[$editEventId] ?? []) : [];
   .cal-day.selected{background:var(--accent); border-color:var(--accent);}
   .cal-day.selected .cal-day-num{color:#fff;}
   .cal-day-num{font-size:12.5px; font-weight:700;}
-  .cal-day-dots{display:flex; flex-wrap:wrap; gap:2px; justify-content:center; margin-top:4px; max-width:100%;}
-  .cal-dot{width:6px; height:6px; border-radius:50%; flex-shrink:0;}
+  .cal-day-dots{display:flex; flex-wrap:wrap; gap:3px; justify-content:center; margin-top:5px; max-width:100%;}
+  .cal-dot{width:17px; height:17px; border-radius:50%; flex-shrink:0; color:#fff; display:flex; align-items:center; justify-content:center;
+    font-size:8px; font-weight:700; letter-spacing:-.02em; border:1.5px solid var(--paper); box-shadow:0 1px 2px rgba(16,24,40,.15);}
+  .cal-dot-more{background:var(--desk); color:var(--muted); border-color:var(--border); box-shadow:none;}
+  @media(max-width:720px){ .cal-dot{width:15px; height:15px; font-size:7px;} }
   .cal-legend{display:flex; flex-wrap:wrap; gap:12px; margin-top:16px; padding-top:14px; border-top:1px solid var(--border);}
   .cal-legend-item{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted);}
   .cal-legend-dot{width:9px; height:9px; border-radius:50%; flex-shrink:0;}
@@ -215,15 +218,24 @@ $editAssigneeIds = $editEventId ? ($assigneesByEvent[$editEventId] ?? []) : [];
       ?>
       <a class="cal-day <?= implode(' ', $cls) ?>" href="?month=<?= $monthParam ?>&day=<?= $dStr ?>">
         <span class="cal-day-num"><?= (int)$d->format('j') ?></span>
-        <?php if ($dayEvents): ?>
+        <?php if ($dayEvents):
+          $dayCount = count($dayEvents);
+          $shownCount = $dayCount > 2 ? 1 : min($dayCount, 2);
+        ?>
         <div class="cal-day-dots">
-          <?php foreach (array_slice($dayEvents, 0, 4) as $ev):
+          <?php foreach (array_slice($dayEvents, 0, $shownCount) as $ev):
             $evAssignees = eventAssigneeAdvisors($ev, $assigneesByEvent, $advisorsById);
-            $dotColors = $evAssignees ? array_column($evAssignees, 'color') : [$UNASSIGNED_COLOR];
-            foreach (array_slice($dotColors, 0, 3) as $col):
+            $first = $evAssignees[0] ?? null;
+            $who = $evAssignees ? implode(', ', array_column($evAssignees, 'name')) : 'Celý tím';
+            $tooltip = $ev['title'] . ' — ' . $who;
           ?>
-          <span class="cal-dot" style="background:<?= h($col) ?>;" title="<?= h($ev['title']) ?>"></span>
-          <?php endforeach; endforeach; ?>
+          <span class="cal-dot" style="background:<?= h($first['color'] ?? $UNASSIGNED_COLOR) ?>;" title="<?= h($tooltip) ?>">
+            <?= $first ? h(advisorInitials($first['name'])) : '⚑' ?>
+          </span>
+          <?php endforeach; ?>
+          <?php if ($dayCount > $shownCount): ?>
+          <span class="cal-dot cal-dot-more" title="<?= (int)($dayCount - $shownCount) ?> ďalšie udalosti">+<?= $dayCount - $shownCount ?></span>
+          <?php endif; ?>
         </div>
         <?php endif; ?>
       </a>
