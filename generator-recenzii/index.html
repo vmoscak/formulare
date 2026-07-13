@@ -83,7 +83,7 @@
         <div class="step-head"><div class="step-num">4</div><div class="step-title">Odkaz na recenziu</div></div>
         <div class="fields">
           <div class="field col-full" data-k="reviewLink">
-            <label>ODKAZ <span style="font-weight:500;text-transform:none;">(Google profil / Facebook — pamätá sa v prehliadači)</span></label>
+            <label>ODKAZ NA GOOGLE RECENZIU <span style="font-weight:500;text-transform:none;">(predvyplnené, dá sa zmeniť napr. na Facebook)</span></label>
             <input id="reviewLink" placeholder="https://g.page/r/...">
             <span class="err">Zadaj odkaz na recenziu</span>
           </div>
@@ -132,10 +132,12 @@ const CHANNELS = {
   email:    { label:'E-mail', sub:'Formálnejšia správa', tile:'@' },
 };
 
+const GOOGLE_REVIEW_LINK = 'https://g.page/r/CSgYoZDlbPFzEBM/review';
+
 const state = {
   clientName:'', clientPhone:'', clientEmail:'',
   reason:'zmluva', channel:'whatsapp',
-  reviewLink: localStorage.getItem('kb_reviewLink') || '',
+  reviewLink: localStorage.getItem('kb_reviewLink') || GOOGLE_REVIEW_LINK,
   advisorName:'',
   touched:false,
 };
