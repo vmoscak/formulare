@@ -12,7 +12,7 @@ $curAdvisorId = curAdvisorId();
 if (!$curAdvisorId) { header('Location: /'); exit; }
 
 try {
-    $stmt = db()->prepare('SELECT name, color, disabled_tools, is_admin, is_owner FROM formulare_advisors WHERE id = ? AND active = 1');
+    $stmt = db()->prepare('SELECT name, color, disabled_tools, is_admin, is_owner, onboarding_started_at FROM formulare_advisors WHERE id = ? AND active = 1');
     $stmt->execute([$curAdvisorId]);
     $me = $stmt->fetch();
 } catch (Throwable $e) { $me = null; }
@@ -114,6 +114,22 @@ foreach ($DOC_MILESTONES as $threshold => $label) {
 $milestonePct = $nextMilestone
     ? round($myDocCount / $nextMilestone['threshold'] * 100)
     : 100;
+
+// Ak ti owner priradil onboarding, ukáž nápadnú pripomienku hore na Domov,
+// nech vieš, že máš s Cestou nováčika pracovať — s vlastným postupom.
+$onboarding = null;
+if (!empty($me['onboarding_started_at'])) {
+    try {
+        $totalObSteps = (int)db()->query('SELECT COUNT(*) FROM formulare_onboarding_steps')->fetchColumn();
+        $doneObStmt = db()->prepare('SELECT COUNT(*) FROM formulare_onboarding_progress WHERE advisor_id = ?');
+        $doneObStmt->execute([$curAdvisorId]);
+        $doneObSteps = (int)$doneObStmt->fetchColumn();
+        $onboarding = [
+            'total' => $totalObSteps, 'done' => $doneObSteps,
+            'pct' => $totalObSteps > 0 ? round($doneObSteps / $totalObSteps * 100) : 0,
+        ];
+    } catch (Throwable $e) { /* tabuľka ešte nemusí existovať */ }
+}
 ?>
 <!DOCTYPE html><html lang="sk"><head>
 <meta charset="UTF-8">
@@ -124,7 +140,7 @@ $milestonePct = $nextMilestone
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=18">
+<link rel="stylesheet" href="/assets/panel.css?v=19">
 </head><body class="home-page">
 <div class="home-bg" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
 <header class="topbar">
@@ -141,6 +157,23 @@ $milestonePct = $nextMilestone
 </header>
 
 <main class="content">
+
+  <?php if ($onboarding): ?>
+  <div class="section">
+    <a class="onboarding-banner" href="/cesta-novacika.php">
+      <span class="ob-banner-ic">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.3"/></svg>
+      </span>
+      <div class="ob-banner-body">
+        <div class="ob-banner-title">Tvoja Cesta nováčika · <?= (int)$onboarding['done'] ?>/<?= (int)$onboarding['total'] ?> dokončené</div>
+        <div class="ob-banner-bar-track"><div class="ob-banner-bar-fill" style="width:<?= (int)$onboarding['pct'] ?>%;"></div></div>
+      </div>
+      <span class="ob-banner-go">Pokračovať
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </span>
+    </a>
+  </div>
+  <?php endif; ?>
 
   <?php if ($myDocCount > 0): ?>
   <div class="section">
@@ -226,5 +259,5 @@ $milestonePct = $nextMilestone
 
 </main>
 
-<script src="/assets/shell.js?v=16"></script>
+<script src="/assets/shell.js?v=17"></script>
 </body></html>

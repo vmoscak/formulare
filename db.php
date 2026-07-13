@@ -580,6 +580,7 @@ function dbInitSqlite(PDO $pdo): void {
     try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN pin_hash TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
     try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN disabled_tools TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
     try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN is_owner INTEGER NOT NULL DEFAULT 0"); } catch (Throwable $e) { /* stĺpec už existuje */ }
+    try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN onboarding_started_at TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
     $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_login_throttle (
         scope TEXT PRIMARY KEY,
         fail_count INTEGER NOT NULL DEFAULT 0,
@@ -725,7 +726,7 @@ function dbInitSqlite(PDO $pdo): void {
  */
 function dbOnboardingSeedSteps(): array {
     return [
-        ['phase' => 'Deň 1', 'title' => 'Prihlásenie a prehľad appky', 'description' => 'Over si prístup do Portálu, prejdi si tri hlavné záložky (Nástroje / Formuláre / Pomôcky) a pozri sa do ľavej lišty.', 'link_url' => '/nastroje.php'],
+        ['phase' => 'Deň 1', 'title' => 'Prehľad appky', 'description' => 'Prejdi si tri hlavné záložky (Nástroje / Formuláre / Pomôcky) a pozri sa do ľavej lišty — nemusíš si nič zapamätať, len vedieť, kde čo nájsť.', 'link_url' => '/nastroje.php'],
         ['phase' => 'Deň 1', 'title' => 'Znalostná báza', 'description' => 'Prelistuj si interné FAQ a rýchle texty — nemusíš si nič pamätať naspamäť, appka to má pripravené na kopírovanie.', 'link_url' => '/znalostna-baza.php'],
         ['phase' => 'Týždeň 1', 'title' => 'Vyskúšaj Kalkulačku finančnej medzery', 'description' => 'Prejdi si nanečisto celý formulár aj s výstupom (checklist, PDF) — na testovacích číslach, nie na reálnom klientovi.', 'link_url' => '/financna-medzera/'],
         ['phase' => 'Týždeň 1', 'title' => 'Precvič si Vybavovača námietok', 'description' => 'Prejdi si typické námietky klientov („je to drahé“, „musím si to premyslieť“...) a odporúčané reakcie.', 'link_url' => '/vybavovac-namietok/'],

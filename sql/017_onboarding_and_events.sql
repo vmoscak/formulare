@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS formulare_team_events (
 -- Predvolená osnova Cesty nováčika (Deň 1 / Týždeň 1 / Mesiac 1) — owner si
 -- vie kroky kedykoľvek upraviť, pridať alebo zmazať priamo na stránke.
 INSERT INTO formulare_onboarding_steps (phase, title, description, link_url, sort_order) VALUES
-('Deň 1', 'Prihlásenie a prehľad appky', 'Over si prístup do Portálu, prejdi si tri hlavné záložky (Nástroje / Formuláre / Pomôcky) a pozri sa do ľavej lišty.', '/nastroje.php', 0),
+('Deň 1', 'Prehľad appky', 'Prejdi si tri hlavné záložky (Nástroje / Formuláre / Pomôcky) a pozri sa do ľavej lišty — nemusíš si nič zapamätať, len vedieť, kde čo nájsť.', '/nastroje.php', 0),
 ('Deň 1', 'Znalostná báza', 'Prelistuj si interné FAQ a rýchle texty — nemusíš si nič pamätať naspamäť, appka to má pripravené na kopírovanie.', '/znalostna-baza.php', 1),
 ('Týždeň 1', 'Vyskúšaj Kalkulačku finančnej medzery', 'Prejdi si nanečisto celý formulár aj s výstupom (checklist, PDF) — na testovacích číslach, nie na reálnom klientovi.', '/financna-medzera/', 2),
 ('Týždeň 1', 'Precvič si Vybavovača námietok', 'Prejdi si typické námietky klientov („je to drahé“, „musím si to premyslieť“...) a odporúčané reakcie.', '/vybavovac-namietok/', 3),

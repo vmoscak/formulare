@@ -133,10 +133,12 @@
       // Copy-Paste zóna: zatiaľ len pre teba, kým sa overí užitočnosť (potom
       // presunúť späť do základnej NAV, viditeľnej pre každého poradcu).
       MORE.push({ key: 'copy', icon: ICONS.copy, href: '/copy-paste.php', label: 'Copy-Paste zóna', active: isCopy });
-      // Cesta nováčika: zatiaľ len pre teba, kým sa osnova nedoladí — potom
-      // otvoriť pre celý tím (zmena gate v cesta-novacika.php + presun sem hore).
       MORE.push({ key: 'cesta', icon: ICONS.target, href: '/cesta-novacika.php', label: 'Cesta nováčika', active: isCesta });
       MORE.push({ key: 'timPrehlad', icon: ICONS.trending, href: '/tim-prehlad.php', label: 'Tímový prehľad', active: isTimPrehlad });
+    } else if (adv.is_onboarding) {
+      // Poradca, ktorému owner práve priradil Cestu nováčika — vidí len túto
+      // jednu položku navyše, nič iné z owner-only zoznamu vyššie.
+      MORE.push({ key: 'cesta', icon: ICONS.target, href: '/cesta-novacika.php', label: 'Cesta nováčika', active: isCesta });
     }
     var moreActive = MORE.some(function (n) { return n.active; });
 

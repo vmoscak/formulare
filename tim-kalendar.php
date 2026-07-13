@@ -64,7 +64,7 @@ function eventBadge(string $dateStr, array $months): array {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=18">
+<link rel="stylesheet" href="/assets/panel.css?v=19">
 <style>
   .tk-event{display:flex; align-items:flex-start; gap:14px; padding:13px 4px; border-bottom:1px solid var(--border);}
   .tk-event:last-child{border-bottom:none;}
@@ -181,5 +181,5 @@ function tkCancel(id) {
   document.getElementById('tk-edit-' + id).style.display = 'none';
 }
 </script>
-<script src="/assets/shell.js?v=16"></script>
+<script src="/assets/shell.js?v=17"></script>
 </body></html>

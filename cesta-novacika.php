@@ -2,25 +2,32 @@
 /**
  * Cesta nováčika — onboarding checklist pre nových poradcov v tíme (Deň 1 /
  * Týždeň 1 / Mesiac 1), s odkazmi rovno na konkrétne nástroje appky.
- * ZÁMERNE zatiaľ len pre is_owner=1 (rovnaký vzor ako nabor.php/
- * znalostna-baza.php) — kým sa osnova nedoladí, nezobrazuje sa celému tímu.
- * Až bude pripravená, stačí zmeniť gate nižšie z "is_owner = 1 AND" na
- * bežný curAdvisorId() ako v moje-dokumenty.php — zvyšok stránky (checklist,
- * progress, prepínanie krokov) funguje pre hocijakého poradcu bez zmeny,
- * len tlačidlá Pridať/Upraviť/Zmazať sa aj potom ukážu iba ownerovi.
+ *
+ * Prístup: owner (spravuje osnovu, priraďuje/odoberá nováčikov, vidí
+ * a upravuje všetko) ALEBO poradca, ktorému owner priradil onboarding
+ * (onboarding_started_at IS NOT NULL) — ten vidí len checklist a odškrtáva
+ * si vlastný postup, bez možnosti niečo pridať/upraviť/zmazať.
  */
 require_once __DIR__ . '/db.php';
 
 $advisorId = curAdvisorId();
-$stmt = db()->prepare('SELECT * FROM formulare_advisors WHERE id = ? AND is_owner = 1 AND active = 1');
+$stmt = db()->prepare('SELECT * FROM formulare_advisors WHERE id = ? AND active = 1');
 $stmt->execute([$advisorId]);
 $me = $stmt->fetch();
-if (!$me) { header('Location: /'); exit; }
+$isOwner = $me && !empty($me['is_owner']);
+$isOnboarding = $me && !empty($me['onboarding_started_at']);
+if (!$me || (!$isOwner && !$isOnboarding)) { header('Location: /'); exit; }
 
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
+function advisorInitials(string $name): string {
+    $parts = preg_split('/\s+/', trim($name));
+    $first = mb_substr($parts[0] ?? '', 0, 1);
+    $last = count($parts) > 1 ? mb_substr($parts[count($parts) - 1], 0, 1) : '';
+    return mb_strtoupper($first . $last);
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['add'])) {
+    if ($isOwner && isset($_POST['add'])) {
         $phase = trim((string)($_POST['phase'] ?? ''));
         $title = trim((string)($_POST['title'] ?? ''));
         $description = trim((string)($_POST['description'] ?? ''));
@@ -30,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             db()->prepare('INSERT INTO formulare_onboarding_steps (phase, title, description, link_url, sort_order) VALUES (?, ?, ?, ?, ?)')
                 ->execute([$phase, $title, $description, $linkUrl !== '' ? $linkUrl : null, $maxSort + 1]);
         }
-    } elseif (isset($_POST['edit_id'])) {
+    } elseif ($isOwner && isset($_POST['edit_id'])) {
         $id = (int)$_POST['edit_id'];
         $phase = trim((string)($_POST['phase'] ?? ''));
         $title = trim((string)($_POST['title'] ?? ''));
@@ -40,10 +47,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             db()->prepare('UPDATE formulare_onboarding_steps SET phase = ?, title = ?, description = ?, link_url = ? WHERE id = ?')
                 ->execute([$phase, $title, $description, $linkUrl !== '' ? $linkUrl : null, $id]);
         }
-    } elseif (isset($_POST['delete_id'])) {
+    } elseif ($isOwner && isset($_POST['delete_id'])) {
         $id = (int)$_POST['delete_id'];
         db()->prepare('DELETE FROM formulare_onboarding_progress WHERE step_id = ?')->execute([$id]);
         db()->prepare('DELETE FROM formulare_onboarding_steps WHERE id = ?')->execute([$id]);
+    } elseif ($isOwner && isset($_POST['assign_advisor_id'])) {
+        $id = (int)$_POST['assign_advisor_id'];
+        if ($id) {
+            db()->prepare('UPDATE formulare_advisors SET onboarding_started_at = ? WHERE id = ? AND is_owner = 0')
+                ->execute([date('Y-m-d H:i:s'), $id]);
+        }
+    } elseif ($isOwner && isset($_POST['unassign_advisor_id'])) {
+        $id = (int)$_POST['unassign_advisor_id'];
+        if ($id) {
+            db()->prepare('UPDATE formulare_advisors SET onboarding_started_at = NULL WHERE id = ?')->execute([$id]);
+            db()->prepare('DELETE FROM formulare_onboarding_progress WHERE advisor_id = ?')->execute([$id]);
+        }
     }
     header('Location: /cesta-novacika.php');
     exit;
@@ -67,6 +86,23 @@ foreach ($steps as $s) {
 $totalSteps = count($steps);
 $doneCount = count($doneStepIds);
 $pct = $totalSteps > 0 ? round($doneCount / $totalSteps * 100) : 0;
+
+// Pre ownera: zoznam ostatných aktívnych poradcov (na priradenie/odobratie)
+// spolu s ich vlastným postupom, ak už majú onboarding spustený.
+$teamAdvisors = [];
+if ($isOwner) {
+    $teamAdvisors = db()->query(
+        "SELECT id, name, color, onboarding_started_at FROM formulare_advisors WHERE is_owner = 0 AND active = 1 ORDER BY name"
+    )->fetchAll();
+    if ($teamAdvisors && $totalSteps > 0) {
+        $progAll = db()->query('SELECT advisor_id, COUNT(*) AS c FROM formulare_onboarding_progress GROUP BY advisor_id')->fetchAll();
+        $progByAdvisor = array_column($progAll, 'c', 'advisor_id');
+        foreach ($teamAdvisors as &$ta) {
+            $ta['doneCount'] = (int)($progByAdvisor[$ta['id']] ?? 0);
+        }
+        unset($ta);
+    }
+}
 ?>
 <!DOCTYPE html><html lang="sk"><head>
 <meta charset="UTF-8">
@@ -76,7 +112,7 @@ $pct = $totalSteps > 0 ? round($doneCount / $totalSteps * 100) : 0;
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=18">
+<link rel="stylesheet" href="/assets/panel.css?v=19">
 <style>
   .ob-progress-card{display:flex; align-items:center; gap:18px;}
   .ob-progress-num{font-size:26px; font-weight:800; color:var(--accent); flex-shrink:0;}
@@ -92,16 +128,21 @@ $pct = $totalSteps > 0 ? round($doneCount / $totalSteps * 100) : 0;
   .ob-step.done .ob-step-title{color:var(--muted); text-decoration:line-through;}
   .ob-step-desc{font-size:12.5px; color:var(--muted); line-height:1.5; margin-top:2px;}
   .ob-step-actions{display:flex; align-items:center; gap:6px; flex-shrink:0;}
-  .ob-add-form{display:grid; grid-template-columns:1fr 2fr; gap:10px;}
-  .ob-add-form textarea,.ob-add-form input{grid-column:1 / -1;}
-  .ob-add-form input:nth-child(1){grid-column:1;}
-  .ob-add-form input:nth-child(2){grid-column:2;}
+  .ob-add-form{display:flex; flex-direction:column; gap:10px;}
+  .ob-add-row{display:grid; grid-template-columns:1fr 2fr; gap:10px;}
+  .ob-team-row{display:flex; align-items:center; gap:12px; padding:12px 4px; border-bottom:1px solid var(--border);}
+  .ob-team-row:last-child{border-bottom:none;}
+  .ob-team-ini{width:34px; height:34px; border-radius:50%; color:#fff; display:flex; align-items:center; justify-content:center; font-size:12.5px; font-weight:600; flex-shrink:0;}
+  .ob-team-body{flex:1; min-width:0;}
+  .ob-team-name{font-size:13.5px; font-weight:600; color:var(--ink);}
+  .ob-team-status{font-size:12px; color:var(--muted); margin-top:1px;}
+  @media(max-width:720px){ .ob-add-row{grid-template-columns:1fr;} }
 </style>
 </head><body>
 <header class="topbar">
   <div class="tb-title">
     <h1>Cesta nováčika</h1>
-    <p>Onboarding checklist pre nových poradcov · zatiaľ viditeľné len tebe</p>
+    <p><?= $isOwner ? 'Onboarding checklist pre nových poradcov · spravuješ osnovu a priraďuješ nováčikov' : 'Tvoj postup pri zaučovaní — odškrtávaj, ako napredúvaš' ?></p>
   </div>
   <div class="tb-actions">
     <a class="pillbtn" href="/nastroje.php">← Späť na nástroje</a>
@@ -118,13 +159,48 @@ $pct = $totalSteps > 0 ? round($doneCount / $totalSteps * 100) : 0;
     </div>
   </div>
 
+  <?php if ($isOwner): ?>
+  <div class="card">
+    <h3>Priradiť nováčikovi</h3>
+    <p style="margin:-6px 0 16px; font-size:12.5px; color:var(--muted);">
+      Priradený poradca uvidí Cestu nováčika vo svojej ľavej lište aj pripomienku na Domov — vidí len checklist, osnovu upravuješ výhradne ty.
+    </p>
+    <?php if (!$teamAdvisors): ?>
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        <span class="es-title">Zatiaľ žiadni ďalší poradcovia</span>
+        <span class="es-sub">Pridaj poradcu v Admin sekcii, potom mu sem vieš priradiť onboarding.</span>
+      </div>
+    <?php endif; ?>
+    <?php foreach ($teamAdvisors as $ta): $assigned = !empty($ta['onboarding_started_at']); ?>
+    <div class="ob-team-row">
+      <span class="ob-team-ini" style="background:<?= h($ta['color']) ?>;"><?= h(advisorInitials($ta['name'])) ?></span>
+      <div class="ob-team-body">
+        <div class="ob-team-name"><?= h($ta['name']) ?></div>
+        <div class="ob-team-status">
+          <?php if ($assigned): ?>
+            Priradené · <?= (int)($ta['doneCount'] ?? 0) ?>/<?= $totalSteps ?> dokončené
+          <?php else: ?>
+            Zatiaľ nepriradené
+          <?php endif; ?>
+        </div>
+      </div>
+      <form method="post" style="margin:0;">
+        <input type="hidden" name="<?= $assigned ? 'unassign_advisor_id' : 'assign_advisor_id' ?>" value="<?= (int)$ta['id'] ?>">
+        <button type="submit" class="toggle-btn"><?= $assigned ? 'Odobrať' : 'Priradiť' ?></button>
+      </form>
+    </div>
+    <?php endforeach; ?>
+  </div>
+  <?php endif; ?>
+
   <div class="card">
     <h3>Osnova</h3>
     <?php if (!$phases): ?>
       <div class="empty-state">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
         <span class="es-title">Zatiaľ žiadne kroky</span>
-        <span class="es-sub">Pridaj prvý krok osnovy nižšie.</span>
+        <span class="es-sub"><?= $isOwner ? 'Pridaj prvý krok osnovy nižšie.' : 'Owner sem zatiaľ nič nepridal.' ?></span>
       </div>
     <?php endif; ?>
     <?php foreach ($phases as $phaseName => $phaseSteps): ?>
@@ -138,13 +214,16 @@ $pct = $totalSteps > 0 ? round($doneCount / $totalSteps * 100) : 0;
         </div>
         <div class="ob-step-actions">
           <?php if ($s['link_url']): ?><a class="toggle-btn" href="<?= h($s['link_url']) ?>" target="_blank">Otvoriť</a><?php endif; ?>
+          <?php if ($isOwner): ?>
           <button type="button" class="toggle-btn" onclick="obEdit(<?= (int)$s['id'] ?>)">Upraviť</button>
           <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj zmazať tento krok?');">
             <input type="hidden" name="delete_id" value="<?= (int)$s['id'] ?>">
             <button type="submit" class="toggle-btn">Zmazať</button>
           </form>
+          <?php endif; ?>
         </div>
       </div>
+      <?php if ($isOwner): ?>
       <form method="post" class="kb-edit" id="ob-edit-<?= (int)$s['id'] ?>" style="display:none; margin-bottom:12px;">
         <input type="hidden" name="edit_id" value="<?= (int)$s['id'] ?>">
         <input type="text" name="phase" value="<?= h($s['phase']) ?>" placeholder="Fáza (napr. Deň 1)" required>
@@ -156,21 +235,26 @@ $pct = $totalSteps > 0 ? round($doneCount / $totalSteps * 100) : 0;
           <button type="button" class="pillbtn" onclick="obCancel(<?= (int)$s['id'] ?>)">Zrušiť</button>
         </div>
       </form>
+      <?php endif; ?>
       <?php endforeach; ?>
     <?php endforeach; ?>
   </div>
 
+  <?php if ($isOwner): ?>
   <div class="card">
     <h3>Pridať krok</h3>
     <form method="post" class="ob-add-form">
       <input type="hidden" name="add" value="1">
-      <input type="text" name="phase" placeholder="Fáza (napr. Deň 1, Týždeň 1, Mesiac 1)" required>
-      <input type="text" name="title" placeholder="Názov kroku" required>
+      <div class="ob-add-row">
+        <input type="text" name="phase" placeholder="Fáza (napr. Deň 1, Týždeň 1, Mesiac 1)" required>
+        <input type="text" name="title" placeholder="Názov kroku" required>
+      </div>
       <textarea name="description" rows="2" placeholder="Popis (nepovinné)"></textarea>
       <input type="text" name="link_url" placeholder="Odkaz (nepovinné, napr. /financna-medzera/)">
-      <button type="submit" class="pillbtn solid" style="grid-column:1 / -1; align-self:start; width:max-content;">Pridať krok</button>
+      <button type="submit" class="pillbtn solid" style="align-self:start; width:max-content;">Pridať krok</button>
     </form>
   </div>
+  <?php endif; ?>
 
 </main>
 <script>
@@ -206,5 +290,5 @@ document.addEventListener('change', function(e){
   document.querySelector('.ob-progress-num').textContent = doneNow + '/' + OB_TOTAL;
 });
 </script>
-<script src="/assets/shell.js?v=16"></script>
+<script src="/assets/shell.js?v=17"></script>
 </body></html>

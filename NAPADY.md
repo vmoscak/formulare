@@ -139,9 +139,10 @@ toho, čo sa rozhodneme spraviť.
   nástroj pri námietke „to mi stačí“. PDF aj kopírovanie zhrnutia.
 - [x] **Cesta nováčika** — onboarding checklist pre nových poradcov
   (Deň 1 / Týždeň 1 / Mesiac 1), s odkazmi rovno na konkrétne nástroje
-  appky a vlastnou osnovou, ktorú vieš kedykoľvek upraviť. ZATIAĽ len
-  pre teba (is_owner gate) — až sa osnova doladí, stačí zmeniť gate na
-  bežného poradcu a otvoriť pre celý tím.
+  appky a vlastnou osnovou, ktorú vieš kedykoľvek upraviť. Priraďuješ
+  konkrétnemu poradcovi priamo na stránke ("Priradiť nováčikovi") —
+  priradenému sa hneď zobrazí nápadná pripomienka s postupom na Domov
+  a položka v ľavej lište; osnovu naďalej upravuješ výhradne ty.
 - [x] **Osobné míľniky** — súkromný pokrok podľa počtu vygenerovaných
   dokumentov (1 / 5 / 10 / 25 / 50 / 100 / 250), zobrazené na Domov.
   Zámerne BEZ porovnávania s kolegami — nekonkurenčná náhrada pôvodnej
