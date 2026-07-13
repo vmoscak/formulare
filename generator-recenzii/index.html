@@ -209,6 +209,17 @@ function buildPreviewText(){
   return state.channel === 'email' ? ('Predmet: ' + buildSubject() + '\n\n' + buildMessage()) : buildMessage();
 }
 
+function escapeHtml(x){ return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function buildPreviewHtml(){
+  const escaped = escapeHtml(buildPreviewText());
+  const link = state.reviewLink.trim();
+  if (!link) return escaped;
+  const escapedLink = escapeHtml(link);
+  const anchor = '<a href="' + escapedLink + '" target="_blank" rel="noopener" style="color:var(--accent,#4f46e5); text-decoration:underline;">' + escapedLink + '</a>';
+  return escaped.split(escapedLink).join(anchor);
+}
+
 function render(){
   const errors = validate();
   document.querySelectorAll('.field[data-k]').forEach(function(f){
@@ -224,7 +235,7 @@ function render(){
   var _p=(state.clientName||'').trim().split(/\s+/), _av=_p.length>=2?_p[0][0]+_p[_p.length-1][0]:(_p[0]?_p[0][0]:'?');
   $('avatar').textContent=_av.toUpperCase();
 
-  $('msgPreview').textContent = buildPreviewText();
+  $('msgPreview').innerHTML = buildPreviewHtml();
 
   var labels = { whatsapp:'Otvoriť WhatsApp', sms:'Otvoriť SMS', email:'Otvoriť e-mail' };
   $('openBtn').textContent = labels[state.channel];
