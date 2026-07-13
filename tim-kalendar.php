@@ -219,22 +219,28 @@ $editAssigneeIds = $editEventId ? ($assigneesByEvent[$editEventId] ?? []) : [];
       <a class="cal-day <?= implode(' ', $cls) ?>" href="?month=<?= $monthParam ?>&day=<?= $dStr ?>">
         <span class="cal-day-num"><?= (int)$d->format('j') ?></span>
         <?php if ($dayEvents):
-          $dayCount = count($dayEvents);
-          $shownCount = $dayCount > 2 ? 1 : min($dayCount, 2);
+          // Jeden odznak = jeden priradený kolega (nie jedna udalosť) — udalosť
+          // s viacerými priradenými tak zobrazí každého z nich, nie len prvého.
+          $dayChips = [];
+          foreach ($dayEvents as $ev) {
+            $evAssignees = eventAssigneeAdvisors($ev, $assigneesByEvent, $advisorsById);
+            if (!$evAssignees) {
+              $dayChips[] = ['color' => $UNASSIGNED_COLOR, 'label' => '⚑', 'title' => $ev['title'] . ' — Celý tím'];
+            } else {
+              foreach ($evAssignees as $a) {
+                $dayChips[] = ['color' => $a['color'], 'label' => advisorInitials($a['name']), 'title' => $ev['title'] . ' — ' . $a['name']];
+              }
+            }
+          }
+          $chipTotal = count($dayChips);
+          $chipShown = $chipTotal > 2 ? 1 : min($chipTotal, 2);
         ?>
         <div class="cal-day-dots">
-          <?php foreach (array_slice($dayEvents, 0, $shownCount) as $ev):
-            $evAssignees = eventAssigneeAdvisors($ev, $assigneesByEvent, $advisorsById);
-            $first = $evAssignees[0] ?? null;
-            $who = $evAssignees ? implode(', ', array_column($evAssignees, 'name')) : 'Celý tím';
-            $tooltip = $ev['title'] . ' — ' . $who;
-          ?>
-          <span class="cal-dot" style="background:<?= h($first['color'] ?? $UNASSIGNED_COLOR) ?>;" title="<?= h($tooltip) ?>">
-            <?= $first ? h(advisorInitials($first['name'])) : '⚑' ?>
-          </span>
+          <?php foreach (array_slice($dayChips, 0, $chipShown) as $chip): ?>
+          <span class="cal-dot" style="background:<?= h($chip['color']) ?>;" title="<?= h($chip['title']) ?>"><?= h($chip['label']) ?></span>
           <?php endforeach; ?>
-          <?php if ($dayCount > $shownCount): ?>
-          <span class="cal-dot cal-dot-more" title="<?= (int)($dayCount - $shownCount) ?> ďalšie udalosti">+<?= $dayCount - $shownCount ?></span>
+          <?php if ($chipTotal > $chipShown): $rem = $chipTotal - $chipShown; ?>
+          <span class="cal-dot cal-dot-more" title="<?= (int)$rem ?> ďalší">+<?= $rem ?></span>
           <?php endif; ?>
         </div>
         <?php endif; ?>
