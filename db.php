@@ -708,6 +708,22 @@ function dbInitSqlite(PDO $pdo): void {
     )");
     $pdo->exec("CREATE INDEX IF NOT EXISTS idx_team_events_date ON formulare_team_events(event_date)");
     try { $pdo->exec("ALTER TABLE formulare_team_events ADD COLUMN assigned_advisor_id INTEGER NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
+    // Viacnásobné priradenie udalosti (2-3 kolegom naraz) — nahrádza pôvodný
+    // jediný assigned_advisor_id stĺpec, ktorý ostáva v DB len kvôli starým
+    // riadkom (nečíta sa už nikde v kóde). Prázdna množina priradení = celý tím.
+    $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_team_event_assignees (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_id INTEGER NOT NULL,
+        advisor_id INTEGER NOT NULL,
+        UNIQUE(event_id, advisor_id),
+        FOREIGN KEY (event_id) REFERENCES formulare_team_events(id),
+        FOREIGN KEY (advisor_id) REFERENCES formulare_advisors(id)
+    )");
+    $pdo->exec("CREATE INDEX IF NOT EXISTS idx_team_event_assignees_event ON formulare_team_event_assignees(event_id)");
+    try {
+        $pdo->exec("INSERT OR IGNORE INTO formulare_team_event_assignees (event_id, advisor_id)
+                     SELECT id, assigned_advisor_id FROM formulare_team_events WHERE assigned_advisor_id IS NOT NULL");
+    } catch (Throwable $e) { /* jednorazový presun starých dát, bezpečné spustiť opakovane (OR IGNORE) */ }
 
     // Predvolená osnova pre Cestu nováčika — len ak je tabuľka ešte prázdna
     // (aby sa neduplikovala pri každom reštarte lokálneho servera). Owner si

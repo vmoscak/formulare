@@ -151,7 +151,10 @@ body.rail-scrolled .topbar{box-shadow:var(--shadow-md);}
 .tew-badge .m{font-size:8.5px; font-weight:700; letter-spacing:.04em;}
 .tew-body{flex:1; min-width:0;}
 .tew-title{font-size:13.5px; font-weight:600; color:var(--ink);}
-.tew-avatar{width:26px; height:26px; border-radius:50%; color:#fff; display:flex; align-items:center; justify-content:center; font-size:10.5px; font-weight:700; flex-shrink:0;}
+.tew-avatars{display:flex; flex-shrink:0;}
+.tew-avatar{width:26px; height:26px; border-radius:50%; color:#fff; display:flex; align-items:center; justify-content:center; font-size:10.5px; font-weight:700; flex-shrink:0; border:2px solid var(--paper);}
+.tew-avatars .tew-avatar + .tew-avatar{margin-left:-8px;}
+.tew-who{font-size:11px; color:var(--muted); margin-top:1px;}
 
 /* ── Mriežka nástrojov (karty ako v predlohe) ──────────────────────────── */
 .tool-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:18px;}

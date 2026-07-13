@@ -153,10 +153,13 @@ toho, čo sa rozhodneme spraviť.
   najmenej aktívnych, aby si rýchlo videl, kto potrebuje pomoc. Len pre teba.
 - [x] **Tímový kalendár** — klasický mesačný kalendár (mriežka, navigácia
   medzi mesiacmi), kde owner pridáva udalosti/úlohy a priraďuje ich
-  konkrétnemu kolegovi — farba bodky/avatara v kalendári zodpovedá
-  farbe daného poradcu (rovnaká farba ako jeho iniciálky inde v appke),
-  prázdna/sivá = "celý tím". Kompaktný náhľad najbližších udalostí je
-  aj priamo na Domov. Vidí celý tím, upravuje výhradne owner.
+  jednému ALEBO viacerým kolegom naraz (napr. obchodníci + owner) —
+  farba bodky/avatara v kalendári zodpovedá farbe daného poradcu
+  (rovnaká farba ako jeho iniciálky inde v appke), prázdna/sivá = "celý
+  tím". Výber cez farebné "chipy" s kliknutím, vlastník je pri pridávaní
+  predvolene zaškrtnutý. Kompaktný náhľad najbližších udalostí (so
+  všetkými priradenými avatarmi) je aj priamo na Domov. Vidí celý tím,
+  upravuje výhradne owner.
 
 ---
 

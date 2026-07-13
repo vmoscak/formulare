@@ -132,16 +132,26 @@ if (!empty($me['onboarding_started_at'])) {
 }
 
 // Náhľad najbližších udalostí z Tímového kalendára — viditeľný pre celý tím.
+// Udalosť môže byť priradená viacerým kolegom naraz (napr. obchodníci + owner).
 $upcomingEvents = [];
 try {
     $today = date('Y-m-d');
-    $evStmt = db()->prepare(
-        'SELECT e.*, a.name AS assignee_name, a.color AS assignee_color
-         FROM formulare_team_events e LEFT JOIN formulare_advisors a ON a.id = e.assigned_advisor_id
-         WHERE e.event_date >= ? ORDER BY e.event_date ASC LIMIT 4'
-    );
+    $evStmt = db()->prepare('SELECT * FROM formulare_team_events WHERE event_date >= ? ORDER BY event_date ASC LIMIT 4');
     $evStmt->execute([$today]);
     $upcomingEvents = $evStmt->fetchAll();
+    if ($upcomingEvents) {
+        $eventIds = array_column($upcomingEvents, 'id');
+        $placeholders = implode(',', array_fill(0, count($eventIds), '?'));
+        $asStmt = db()->prepare(
+            "SELECT ea.event_id, a.name, a.color FROM formulare_team_event_assignees ea
+             JOIN formulare_advisors a ON a.id = ea.advisor_id WHERE ea.event_id IN ($placeholders)"
+        );
+        $asStmt->execute($eventIds);
+        $assigneesByEvent = [];
+        foreach ($asStmt->fetchAll() as $row) { $assigneesByEvent[$row['event_id']][] = $row; }
+        foreach ($upcomingEvents as &$ev) { $ev['assignees'] = $assigneesByEvent[$ev['id']] ?? []; }
+        unset($ev);
+    }
 } catch (Throwable $e) { /* tabuľka ešte nemusí existovať */ }
 $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 'AUG', 'SEP', 'OKT', 'NOV', 'DEC'];
 ?>
@@ -154,7 +164,7 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=20">
+<link rel="stylesheet" href="/assets/panel.css?v=21">
 </head><body class="home-page">
 <div class="home-bg" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
 <header class="topbar">
@@ -213,15 +223,22 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
         <h3>Najbližšie udalosti</h3>
         <a class="pillbtn" href="/tim-kalendar.php">Otvoriť kalendár</a>
       </div>
-      <?php foreach ($upcomingEvents as $e): $ts = strtotime($e['event_date']); ?>
+      <?php foreach ($upcomingEvents as $e): $ts = strtotime($e['event_date']); $assignees = $e['assignees'] ?? []; ?>
       <div class="tew-row">
         <div class="tew-badge"><span class="d"><?= (int)date('j', $ts) ?></span><span class="m"><?= $EVT_SK_MONTHS_SHORT[(int)date('n', $ts)] ?></span></div>
         <div class="tew-body">
           <div class="tew-title"><?= h($e['title']) ?></div>
+          <?php if ($assignees): ?><div class="tew-who"><?= h(implode(', ', array_column($assignees, 'name'))) ?></div><?php endif; ?>
         </div>
-        <span class="tew-avatar" style="background:<?= h($e['assignee_color'] ?: '#94a3b8') ?>;" title="<?= h($e['assignee_name'] ?: 'Celý tím') ?>">
-          <?= $e['assignee_name'] ? h(mb_strtoupper(mb_substr($e['assignee_name'], 0, 1))) : '⚑' ?>
-        </span>
+        <div class="tew-avatars">
+          <?php if (!$assignees): ?>
+          <span class="tew-avatar" style="background:#94a3b8;" title="Celý tím">⚑</span>
+          <?php else: foreach (array_slice($assignees, 0, 3) as $a): ?>
+          <span class="tew-avatar" style="background:<?= h($a['color']) ?>;" title="<?= h($a['name']) ?>">
+            <?= h(mb_strtoupper(mb_substr($a['name'], 0, 1))) ?>
+          </span>
+          <?php endforeach; endif; ?>
+        </div>
       </div>
       <?php endforeach; ?>
     </div>

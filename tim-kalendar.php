@@ -1,10 +1,11 @@
 <?php
 /**
  * Tímový kalendár — klasický mesačný kalendár s udalosťami/úlohami, ktoré
- * owner priraďuje konkrétnym kolegom (farebne podľa ich farby, rovnako ako
- * iniciálky inde v appke) alebo necháva pre celý tím (sivá bodka). Vidí
- * každý prihlásený poradca, pridávať/upravovať/mazať smie výhradne owner.
- * Kompaktný náhľad najbližších udalostí je aj na Domov (uvod.php).
+ * owner priraďuje jednému alebo viacerým kolegom naraz (farebne podľa ich
+ * farby, rovnako ako iniciálky inde v appke), alebo necháva pre celý tím
+ * (sivá bodka = nikto konkrétny priradený). Vidí každý prihlásený poradca,
+ * pridávať/upravovať/mazať smie výhradne owner. Kompaktný náhľad
+ * najbližších udalostí je aj na Domov (uvod.php).
  */
 require_once __DIR__ . '/db.php';
 
@@ -31,6 +32,11 @@ function backUrl(string $month, ?string $day): string {
     if ($day) $qs['day'] = $day;
     return '/tim-kalendar.php?' . http_build_query($qs);
 }
+function setEventAssignees(int $eventId, array $advisorIds): void {
+    db()->prepare('DELETE FROM formulare_team_event_assignees WHERE event_id = ?')->execute([$eventId]);
+    $ins = db()->prepare('INSERT INTO formulare_team_event_assignees (event_id, advisor_id) VALUES (?, ?)');
+    foreach (array_unique(array_filter($advisorIds)) as $aid) { $ins->execute([$eventId, $aid]); }
+}
 
 $monthParam = preg_match('/^\d{4}-\d{2}$/', (string)($_GET['month'] ?? '')) ? $_GET['month'] : date('Y-m');
 $selectedDay = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)($_GET['day'] ?? '')) ? $_GET['day'] : null;
@@ -39,14 +45,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $backMonth = (string)($_POST['_month'] ?? $monthParam);
     $backDay = (string)($_POST['_day'] ?? '') ?: null;
     if ($isOwner) {
+        $assigneeIds = array_map('intval', (array)($_POST['assignee_ids'] ?? []));
         if (isset($_POST['add'])) {
             $eventDate = trim((string)($_POST['event_date'] ?? ''));
             $title = trim((string)($_POST['title'] ?? ''));
             $note = trim((string)($_POST['note'] ?? ''));
-            $assignedId = (int)($_POST['assigned_advisor_id'] ?? 0);
             if ($eventDate !== '' && $title !== '') {
-                db()->prepare('INSERT INTO formulare_team_events (event_date, title, note, assigned_advisor_id, created_by) VALUES (?, ?, ?, ?, ?)')
-                    ->execute([$eventDate, $title, $note, $assignedId ?: null, $advisorId]);
+                db()->prepare('INSERT INTO formulare_team_events (event_date, title, note, created_by) VALUES (?, ?, ?, ?)')
+                    ->execute([$eventDate, $title, $note, $advisorId]);
+                setEventAssignees((int)db()->lastInsertId(), $assigneeIds);
                 $backMonth = substr($eventDate, 0, 7);
                 $backDay = $eventDate;
             }
@@ -55,15 +62,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $eventDate = trim((string)($_POST['event_date'] ?? ''));
             $title = trim((string)($_POST['title'] ?? ''));
             $note = trim((string)($_POST['note'] ?? ''));
-            $assignedId = (int)($_POST['assigned_advisor_id'] ?? 0);
             if ($id && $eventDate !== '' && $title !== '') {
-                db()->prepare('UPDATE formulare_team_events SET event_date = ?, title = ?, note = ?, assigned_advisor_id = ? WHERE id = ?')
-                    ->execute([$eventDate, $title, $note, $assignedId ?: null, $id]);
+                db()->prepare('UPDATE formulare_team_events SET event_date = ?, title = ?, note = ? WHERE id = ?')
+                    ->execute([$eventDate, $title, $note, $id]);
+                setEventAssignees($id, $assigneeIds);
                 $backMonth = substr($eventDate, 0, 7);
                 $backDay = $eventDate;
             }
         } elseif (isset($_POST['delete_id'])) {
-            db()->prepare('DELETE FROM formulare_team_events WHERE id = ?')->execute([(int)$_POST['delete_id']]);
+            $id = (int)$_POST['delete_id'];
+            db()->prepare('DELETE FROM formulare_team_event_assignees WHERE event_id = ?')->execute([$id]);
+            db()->prepare('DELETE FROM formulare_team_events WHERE id = ?')->execute([$id]);
         }
     }
     header('Location: ' . backUrl($backMonth, $backDay));
@@ -88,8 +97,9 @@ $rangeEnd = end($gridDays)->format('Y-m-d');
 
 $evStmt = db()->prepare('SELECT * FROM formulare_team_events WHERE event_date BETWEEN ? AND ? ORDER BY event_date, id');
 $evStmt->execute([$rangeStart, $rangeEnd]);
+$eventsInRange = $evStmt->fetchAll();
 $eventsByDate = [];
-foreach ($evStmt->fetchAll() as $e) { $eventsByDate[$e['event_date']][] = $e; }
+foreach ($eventsInRange as $e) { $eventsByDate[$e['event_date']][] = $e; }
 
 $advisorsById = [];
 $assignableAdvisors = [];
@@ -99,9 +109,26 @@ foreach (db()->query('SELECT id, name, color FROM formulare_advisors WHERE activ
 }
 $UNASSIGNED_COLOR = '#94a3b8';
 
+// Priradení kolegovia pre všetky udalosti zobrazené v mriežke, jedným dotazom.
+$assigneesByEvent = [];
+if ($eventsInRange) {
+    $eventIds = array_column($eventsInRange, 'id');
+    $placeholders = implode(',', array_fill(0, count($eventIds), '?'));
+    $asStmt = db()->prepare("SELECT event_id, advisor_id FROM formulare_team_event_assignees WHERE event_id IN ($placeholders)");
+    $asStmt->execute($eventIds);
+    foreach ($asStmt->fetchAll() as $row) { $assigneesByEvent[$row['event_id']][] = (int)$row['advisor_id']; }
+}
+function eventAssigneeAdvisors(array $e, array $assigneesByEvent, array $advisorsById): array {
+    $ids = $assigneesByEvent[$e['id']] ?? [];
+    $out = [];
+    foreach ($ids as $id) { if (isset($advisorsById[$id])) $out[] = $advisorsById[$id]; }
+    return $out;
+}
+
 $today = date('Y-m-d');
 $selectedEvents = $selectedDay ? ($eventsByDate[$selectedDay] ?? []) : [];
 $editEventId = (int)($_GET['edit'] ?? 0);
+$editAssigneeIds = $editEventId ? ($assigneesByEvent[$editEventId] ?? []) : [];
 ?>
 <!DOCTYPE html><html lang="sk"><head>
 <meta charset="UTF-8">
@@ -111,7 +138,7 @@ $editEventId = (int)($_GET['edit'] ?? 0);
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=20">
+<link rel="stylesheet" href="/assets/panel.css?v=21">
 <style>
   .cal-nav{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
   .cal-nav h3{margin:0; font-size:16px; text-transform:capitalize;}
@@ -135,14 +162,26 @@ $editEventId = (int)($_GET['edit'] ?? 0);
   .cal-legend-dot{width:9px; height:9px; border-radius:50%; flex-shrink:0;}
   .tk-event{display:flex; align-items:flex-start; gap:12px; padding:12px 4px; border-bottom:1px solid var(--border);}
   .tk-event:last-child{border-bottom:none;}
-  .tk-avatar{width:32px; height:32px; border-radius:50%; color:#fff; display:flex; align-items:center; justify-content:center; font-size:11.5px; font-weight:600; flex-shrink:0;}
+  .tk-avatars{display:flex; flex-shrink:0;}
+  .tk-avatar{width:32px; height:32px; border-radius:50%; color:#fff; display:flex; align-items:center; justify-content:center;
+    font-size:11.5px; font-weight:600; flex-shrink:0; border:2px solid var(--paper);}
+  .tk-avatars .tk-avatar + .tk-avatar{margin-left:-10px;}
   .tk-body{flex:1; min-width:0;}
   .tk-title{font-size:14px; font-weight:600; color:var(--ink);}
   .tk-who{font-size:11.5px; color:var(--muted); margin-top:1px;}
   .tk-note{font-size:12.5px; color:var(--muted); line-height:1.5; margin-top:4px;}
   .tk-actions{display:flex; gap:6px; flex-shrink:0;}
   .tk-add-form{display:flex; flex-direction:column; gap:10px;}
-  .tk-add-row{display:grid; grid-template-columns:160px 1fr 1fr; gap:10px;}
+  .tk-add-row{display:grid; grid-template-columns:160px 1fr; gap:10px;}
+  .tk-assignee-picker{display:flex; flex-wrap:wrap; gap:8px;}
+  .tk-chip{display:inline-flex; align-items:center; gap:7px; padding:7px 12px 7px 8px; border:1px solid var(--line-strong);
+    border-radius:999px; background:var(--paper); font-size:12.5px; font-weight:600; color:var(--ink-2); cursor:pointer;
+    transition:border-color .15s, background .15s;}
+  .tk-chip input{position:absolute; opacity:0; width:0; height:0;}
+  .tk-chip .tk-chip-dot{width:18px; height:18px; border-radius:50%; color:#fff; display:flex; align-items:center; justify-content:center;
+    font-size:9px; font-weight:700; flex-shrink:0;}
+  .tk-chip:has(input:checked){border-color:var(--accent); background:var(--accent-soft); color:var(--accent);}
+  .tk-assignee-hint{font-size:11.5px; color:var(--muted); margin-top:-2px;}
   @media(max-width:720px){ .tk-add-row{grid-template-columns:1fr;} .cal-day-num{font-size:11px;} }
 </style>
 </head><body>
@@ -178,11 +217,13 @@ $editEventId = (int)($_GET['edit'] ?? 0);
         <span class="cal-day-num"><?= (int)$d->format('j') ?></span>
         <?php if ($dayEvents): ?>
         <div class="cal-day-dots">
-          <?php foreach (array_slice($dayEvents, 0, 6) as $ev):
-            $col = ($ev['assigned_advisor_id'] && isset($advisorsById[$ev['assigned_advisor_id']])) ? $advisorsById[$ev['assigned_advisor_id']]['color'] : $UNASSIGNED_COLOR;
+          <?php foreach (array_slice($dayEvents, 0, 4) as $ev):
+            $evAssignees = eventAssigneeAdvisors($ev, $assigneesByEvent, $advisorsById);
+            $dotColors = $evAssignees ? array_column($evAssignees, 'color') : [$UNASSIGNED_COLOR];
+            foreach (array_slice($dotColors, 0, 3) as $col):
           ?>
           <span class="cal-dot" style="background:<?= h($col) ?>;" title="<?= h($ev['title']) ?>"></span>
-          <?php endforeach; ?>
+          <?php endforeach; endforeach; ?>
         </div>
         <?php endif; ?>
       </a>
@@ -208,8 +249,8 @@ $editEventId = (int)($_GET['edit'] ?? 0);
       </div>
     <?php endif; ?>
     <?php foreach ($selectedEvents as $e):
-      $assignee = $e['assigned_advisor_id'] ? ($advisorsById[$e['assigned_advisor_id']] ?? null) : null;
-      $col = $assignee ? $assignee['color'] : $UNASSIGNED_COLOR;
+      $evAssignees = eventAssigneeAdvisors($e, $assigneesByEvent, $advisorsById);
+      $evAssigneeIds = $assigneesByEvent[$e['id']] ?? [];
     ?>
     <?php if ($editEventId === (int)$e['id']): ?>
     <form method="post" class="kb-edit" style="margin-bottom:12px;">
@@ -219,12 +260,16 @@ $editEventId = (int)($_GET['edit'] ?? 0);
       <div class="tk-add-row">
         <input type="date" name="event_date" value="<?= h($e['event_date']) ?>" required>
         <input type="text" name="title" value="<?= h($e['title']) ?>" placeholder="Názov" required>
-        <select name="assigned_advisor_id">
-          <option value="0">Celý tím</option>
-          <?php foreach ($assignableAdvisors as $a): ?>
-          <option value="<?= (int)$a['id'] ?>" <?= $e['assigned_advisor_id'] == $a['id'] ? 'selected' : '' ?>><?= h($a['name']) ?></option>
-          <?php endforeach; ?>
-        </select>
+      </div>
+      <div class="tk-assignee-hint">Prázdne = celý tím. Zaškrtni 1 alebo viac kolegov, ktorých sa to týka.</div>
+      <div class="tk-assignee-picker">
+        <?php foreach ($assignableAdvisors as $a): ?>
+        <label class="tk-chip">
+          <input type="checkbox" name="assignee_ids[]" value="<?= (int)$a['id'] ?>" <?= in_array((int)$a['id'], $editAssigneeIds, true) ? 'checked' : '' ?>>
+          <span class="tk-chip-dot" style="background:<?= h($a['color']) ?>;"><?= h(advisorInitials($a['name'])) ?></span>
+          <?= h($a['name']) ?>
+        </label>
+        <?php endforeach; ?>
       </div>
       <textarea name="note" rows="2" placeholder="Poznámka (nepovinné)"><?= h($e['note']) ?></textarea>
       <div style="display:flex; gap:8px;">
@@ -234,10 +279,16 @@ $editEventId = (int)($_GET['edit'] ?? 0);
     </form>
     <?php else: ?>
     <div class="tk-event">
-      <span class="tk-avatar" style="background:<?= h($col) ?>;"><?= $assignee ? h(advisorInitials($assignee['name'])) : '⚑' ?></span>
+      <div class="tk-avatars">
+        <?php if (!$evAssignees): ?>
+        <span class="tk-avatar" style="background:<?= $UNASSIGNED_COLOR ?>;">⚑</span>
+        <?php else: foreach (array_slice($evAssignees, 0, 4) as $a): ?>
+        <span class="tk-avatar" style="background:<?= h($a['color']) ?>;" title="<?= h($a['name']) ?>"><?= h(advisorInitials($a['name'])) ?></span>
+        <?php endforeach; endif; ?>
+      </div>
       <div class="tk-body">
         <div class="tk-title"><?= h($e['title']) ?></div>
-        <div class="tk-who"><?= $assignee ? h($assignee['name']) : 'Celý tím' ?></div>
+        <div class="tk-who"><?= $evAssignees ? h(implode(', ', array_column($evAssignees, 'name'))) : 'Celý tím' ?></div>
         <?php if ($e['note']): ?><div class="tk-note"><?= nl2br(h($e['note'])) ?></div><?php endif; ?>
       </div>
       <?php if ($isOwner): ?>
@@ -267,12 +318,16 @@ $editEventId = (int)($_GET['edit'] ?? 0);
       <div class="tk-add-row">
         <input type="date" name="event_date" value="<?= h($selectedDay ?: $today) ?>" required>
         <input type="text" name="title" placeholder="Názov (napr. Uzávierka provízií)" required>
-        <select name="assigned_advisor_id">
-          <option value="0">Celý tím</option>
-          <?php foreach ($assignableAdvisors as $a): ?>
-          <option value="<?= (int)$a['id'] ?>"><?= h($a['name']) ?></option>
-          <?php endforeach; ?>
-        </select>
+      </div>
+      <div class="tk-assignee-hint">Prázdne = celý tím. Zaškrtni 1 alebo viac kolegov, ktorých sa to týka (napr. obchodníkov + seba).</div>
+      <div class="tk-assignee-picker">
+        <?php foreach ($assignableAdvisors as $a): ?>
+        <label class="tk-chip">
+          <input type="checkbox" name="assignee_ids[]" value="<?= (int)$a['id'] ?>" <?= (int)$a['id'] === (int)$advisorId ? 'checked' : '' ?>>
+          <span class="tk-chip-dot" style="background:<?= h($a['color']) ?>;"><?= h(advisorInitials($a['name'])) ?></span>
+          <?= h($a['name']) ?>
+        </label>
+        <?php endforeach; ?>
       </div>
       <textarea name="note" rows="2" placeholder="Poznámka (nepovinné)"></textarea>
       <button type="submit" class="pillbtn solid" style="align-self:start; width:max-content;">Pridať udalosť</button>
