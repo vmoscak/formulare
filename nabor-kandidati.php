@@ -123,7 +123,8 @@ $joinedCount = $statusCounts['pripojil'] ?? 0;
     <p>Ľudia, ktorých si oslovil/-a ty alebo ktorí oslovili teba — nezávisle od registra/mapy · viditeľné len tebe</p>
   </div>
   <div class="tb-actions">
-    <a class="pillbtn" href="/nabor.php">← Náborová zóna (register a mapa)</a>
+    <a class="pillbtn" href="/nabor.php">Register a mapa (NBS) →</a>
+    <a class="pillbtn" href="/nastroje.php">← Späť na nástroje</a>
   </div>
 </header>
 

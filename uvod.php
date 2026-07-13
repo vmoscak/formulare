@@ -63,8 +63,8 @@ if (!empty($me['is_admin'])) {
         'ico' => 'shield', 'color' => '#7c3aed', 'href' => '/admin.php', 'tag' => 'Admin'];
 }
 if (!empty($me['is_owner'])) {
-    $extraHubs[] = ['label' => 'Nábor', 'subtitle' => 'Register agentov NBS — vyhľadávanie a mapa podľa kraja/okresu.',
-        'ico' => 'users', 'color' => '#d97706', 'href' => '/nabor.php', 'tag' => 'Len pre teba'];
+    $extraHubs[] = ['label' => 'Nábor', 'subtitle' => 'Evidencia oslovených kandidátov, register agentov NBS a mapa ako doplnok.',
+        'ico' => 'users', 'color' => '#d97706', 'href' => '/nabor-kandidati.php', 'tag' => 'Len pre teba'];
     $extraHubs[] = ['label' => 'Znalostná báza', 'subtitle' => 'Interné FAQ a rýchle texty na kopírovanie jedným klikom.',
         'ico' => 'book', 'color' => '#0d9488', 'href' => '/znalostna-baza.php', 'tag' => 'Len pre teba'];
     $extraHubs[] = ['label' => 'Novinky', 'subtitle' => 'Editor noviniek zobrazovaných na tejto stránke.',

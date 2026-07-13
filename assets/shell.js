@@ -125,7 +125,7 @@
       MORE.push({ key: 'admin', icon: ICONS.admin, href: '/admin.php', label: 'Admin', active: isAdmin });
     }
     if (adv.is_owner) {
-      MORE.push({ key: 'nabor', icon: ICONS.nabor, href: '/nabor.php', label: 'Nábor', active: isNabor });
+      MORE.push({ key: 'nabor', icon: ICONS.nabor, href: '/nabor-kandidati.php', label: 'Nábor', active: isNabor });
       MORE.push({ key: 'kb', icon: ICONS.kb, href: '/znalostna-baza.php', label: 'Znalostná báza', active: isKb });
       MORE.push({ key: 'news', icon: ICONS.news, href: '/novinky.php', label: 'Novinky', active: isNews });
       MORE.push({ key: 'refi', icon: ICONS.refi, href: '/refinancny-radar.php', label: 'Refinančný Radar', active: isRefi });

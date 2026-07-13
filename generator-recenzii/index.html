@@ -9,7 +9,7 @@
      -------------------------------------------------------------------------
      Prosba o recenziu po uzatvorení zmluvy / vybavení škody / revízii a pod.
      Bez PDF — len text na kopírovanie alebo priamy odkaz (WhatsApp/SMS/e-mail).
-     Odkaz na recenziu sa pamätá v prehliadači (localStorage).
+     Odkaz na recenziu je predvyplnený fixnou hodnotou GOOGLE_REVIEW_LINK.
 
      Poznámka: texty a presné znenie sú zámerne len pracovná verzia — dizajn
      aj presné formulácie sa budú ešte dolaďovať.
@@ -137,7 +137,7 @@ const GOOGLE_REVIEW_LINK = 'https://g.page/r/CSgYoZDlbPFzEBM/review';
 const state = {
   clientName:'', clientPhone:'', clientEmail:'',
   reason:'zmluva', channel:'whatsapp',
-  reviewLink: localStorage.getItem('kb_reviewLink') || GOOGLE_REVIEW_LINK,
+  reviewLink: GOOGLE_REVIEW_LINK,
   advisorName:'',
   touched:false,
 };
@@ -228,8 +228,6 @@ function render(){
 
   var labels = { whatsapp:'Otvoriť WhatsApp', sms:'Otvoriť SMS', email:'Otvoriť e-mail' };
   $('openBtn').textContent = labels[state.channel];
-
-  localStorage.setItem('kb_reviewLink', state.reviewLink);
 }
 
 /* ===========================================================================

@@ -128,7 +128,7 @@ function qs(array $overrides): string {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
-<title>Náborová zóna</title>
+<title>Register a mapa (NBS) — Nábor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
@@ -136,12 +136,11 @@ function qs(array $overrides): string {
 </head><body>
 <header class="topbar">
   <div class="tb-title">
-    <h1>Náborová zóna</h1>
-    <p>Register inštitúcií a finančných agentov (NBS) · len Prešovský a Košický kraj · viditeľné len tebe</p>
+    <h1>Register a mapa (NBS)</h1>
+    <p>Register inštitúcií a finančných agentov · len Prešovský a Košický kraj · doplnok ku Kandidátom na nábor · viditeľné len tebe</p>
   </div>
   <div class="tb-actions">
-    <a class="pillbtn solid" href="/nabor-kandidati.php">Moji kandidáti</a>
-    <a class="pillbtn" href="/nastroje.php">← Späť na nástroje</a>
+    <a class="pillbtn solid" href="/nabor-kandidati.php">← Kandidáti na nábor</a>
   </div>
 </header>
 
