@@ -211,12 +211,18 @@ function buildPreviewText(){
 
 function escapeHtml(x){ return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+function linkLabel(link){
+  if (/g\.page|google/i.test(link)) return 'Google recenzia';
+  if (/facebook\.com|fb\.me/i.test(link)) return 'Facebook recenzia';
+  return 'odkaz na recenziu';
+}
+
 function buildPreviewHtml(){
   const escaped = escapeHtml(buildPreviewText());
   const link = state.reviewLink.trim();
   if (!link) return escaped;
   const escapedLink = escapeHtml(link);
-  const anchor = '<a href="' + escapedLink + '" target="_blank" rel="noopener" style="color:var(--accent,#4f46e5); text-decoration:underline;">' + escapedLink + '</a>';
+  const anchor = '<a href="' + escapedLink + '" target="_blank" rel="noopener" style="color:var(--accent,#4f46e5); text-decoration:underline;">' + escapeHtml(linkLabel(link)) + '</a>';
   return escaped.split(escapedLink).join(anchor);
 }
 
