@@ -53,7 +53,7 @@ function daysAgo(?string $dt, DateTimeImmutable $now): ?int {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=22">
+<link rel="stylesheet" href="/assets/panel.css?v=23">
 <style>
   .tp-who{display:flex; align-items:center; gap:10px;}
   .tp-ini{width:32px; height:32px; border-radius:50%; color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; flex-shrink:0;}

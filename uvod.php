@@ -164,7 +164,7 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=22">
+<link rel="stylesheet" href="/assets/panel.css?v=23">
 </head><body class="home-page">
 <div class="home-bg" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
 <header class="topbar">
@@ -216,35 +216,6 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
   </div>
   <?php endif; ?>
 
-  <?php if ($upcomingEvents): ?>
-  <div class="section">
-    <div class="card">
-      <div class="section-head-inline">
-        <h3>Najbližšie udalosti</h3>
-        <a class="pillbtn" href="/tim-kalendar.php">Otvoriť kalendár</a>
-      </div>
-      <?php foreach ($upcomingEvents as $e): $ts = strtotime($e['event_date']); $assignees = $e['assignees'] ?? []; ?>
-      <div class="tew-row">
-        <div class="tew-badge"><span class="d"><?= (int)date('j', $ts) ?></span><span class="m"><?= $EVT_SK_MONTHS_SHORT[(int)date('n', $ts)] ?></span></div>
-        <div class="tew-body">
-          <div class="tew-title"><?= h($e['title']) ?></div>
-          <?php if ($assignees): ?><div class="tew-who"><?= h(implode(', ', array_column($assignees, 'name'))) ?></div><?php endif; ?>
-        </div>
-        <div class="tew-avatars">
-          <?php if (!$assignees): ?>
-          <span class="tew-avatar" style="background:#94a3b8;" title="Celý tím">⚑</span>
-          <?php else: foreach (array_slice($assignees, 0, 3) as $a): ?>
-          <span class="tew-avatar" style="background:<?= h($a['color']) ?>;" title="<?= h($a['name']) ?>">
-            <?= h(mb_strtoupper(mb_substr($a['name'], 0, 1))) ?>
-          </span>
-          <?php endforeach; endif; ?>
-        </div>
-      </div>
-      <?php endforeach; ?>
-    </div>
-  </div>
-  <?php endif; ?>
-
   <?php if ($news): ?>
   <div class="section">
     <div class="section-head"><h3>Novinky</h3></div>
@@ -266,49 +237,82 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
   </div>
   <?php endif; ?>
 
-  <div class="section">
-    <div class="section-head"><h3>Kam chceš ísť?</h3></div>
-    <div class="hub-grid">
-      <?php foreach ($TOOL_GROUPS as $key => $meta): ?>
-      <a class="hub-card" href="<?= h($hubMeta[$key]['href']) ?>" style="--hub-color:<?= h($hubMeta[$key]['color']) ?>;">
-        <span class="hub-ic"><?= toolIco($hubMeta[$key]['ico']) ?></span>
-        <div class="hub-body">
-          <h4><?= h($meta['label']) ?></h4>
-          <p><?= h($meta['subtitle']) ?></p>
+  <div class="domov-layout<?= $upcomingEvents ? ' has-sidebar' : '' ?>">
+    <div class="domov-main">
+      <div class="section">
+        <div class="section-head"><h3>Kam chceš ísť?</h3></div>
+        <div class="hub-grid">
+          <?php foreach ($TOOL_GROUPS as $key => $meta): ?>
+          <a class="hub-card" href="<?= h($hubMeta[$key]['href']) ?>" style="--hub-color:<?= h($hubMeta[$key]['color']) ?>;">
+            <span class="hub-ic"><?= toolIco($hubMeta[$key]['ico']) ?></span>
+            <div class="hub-body">
+              <h4><?= h($meta['label']) ?></h4>
+              <p><?= h($meta['subtitle']) ?></p>
+            </div>
+            <div class="hub-foot">
+              <span class="hub-count"><?= (int)$groupCounts[$key] ?> nástrojov</span>
+              <span class="hub-go">Otvoriť
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </span>
+            </div>
+          </a>
+          <?php endforeach; ?>
         </div>
-        <div class="hub-foot">
-          <span class="hub-count"><?= (int)$groupCounts[$key] ?> nástrojov</span>
-          <span class="hub-go">Otvoriť
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </span>
-        </div>
-      </a>
-      <?php endforeach; ?>
-    </div>
-  </div>
+      </div>
 
-  <?php if ($extraHubs): ?>
-  <div class="section">
-    <div class="section-head"><h3>Ďalšie skratky</h3></div>
-    <div class="hub-grid">
-      <?php foreach ($extraHubs as $eh): ?>
-      <a class="hub-card" href="<?= h($eh['href']) ?>" style="--hub-color:<?= h($eh['color']) ?>;">
-        <span class="hub-ic"><?= toolIco($eh['ico']) ?></span>
-        <div class="hub-body">
-          <h4><?= h($eh['label']) ?></h4>
-          <p><?= h($eh['subtitle']) ?></p>
+      <?php if ($extraHubs): ?>
+      <div class="section">
+        <div class="section-head"><h3>Ďalšie skratky</h3></div>
+        <div class="hub-grid">
+          <?php foreach ($extraHubs as $eh): ?>
+          <a class="hub-card" href="<?= h($eh['href']) ?>" style="--hub-color:<?= h($eh['color']) ?>;">
+            <span class="hub-ic"><?= toolIco($eh['ico']) ?></span>
+            <div class="hub-body">
+              <h4><?= h($eh['label']) ?></h4>
+              <p><?= h($eh['subtitle']) ?></p>
+            </div>
+            <div class="hub-foot">
+              <span class="hub-count"><?php if ($eh['tag']): ?><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><?= h($eh['tag']) ?><?php endif; ?></span>
+              <span class="hub-go">Otvoriť
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </span>
+            </div>
+          </a>
+          <?php endforeach; ?>
         </div>
-        <div class="hub-foot">
-          <span class="hub-count"><?php if ($eh['tag']): ?><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><?= h($eh['tag']) ?><?php endif; ?></span>
-          <span class="hub-go">Otvoriť
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </span>
-        </div>
-      </a>
-      <?php endforeach; ?>
+      </div>
+      <?php endif; ?>
     </div>
+
+    <?php if ($upcomingEvents): ?>
+    <aside class="domov-sidebar">
+      <div class="card">
+        <div class="section-head-inline">
+          <h3>Najbližšie udalosti</h3>
+          <a class="pillbtn" href="/tim-kalendar.php">Otvoriť kalendár</a>
+        </div>
+        <?php foreach ($upcomingEvents as $e): $ts = strtotime($e['event_date']); $assignees = $e['assignees'] ?? []; ?>
+        <div class="tew-row">
+          <div class="tew-badge"><span class="d"><?= (int)date('j', $ts) ?></span><span class="m"><?= $EVT_SK_MONTHS_SHORT[(int)date('n', $ts)] ?></span></div>
+          <div class="tew-body">
+            <div class="tew-title"><?= h($e['title']) ?></div>
+            <?php if ($assignees): ?><div class="tew-who"><?= h(implode(', ', array_column($assignees, 'name'))) ?></div><?php endif; ?>
+          </div>
+          <div class="tew-avatars">
+            <?php if (!$assignees): ?>
+            <span class="tew-avatar" style="background:#94a3b8;" title="Celý tím">⚑</span>
+            <?php else: foreach (array_slice($assignees, 0, 3) as $a): ?>
+            <span class="tew-avatar" style="background:<?= h($a['color']) ?>;" title="<?= h($a['name']) ?>">
+              <?= h(mb_strtoupper(mb_substr($a['name'], 0, 1))) ?>
+            </span>
+            <?php endforeach; endif; ?>
+          </div>
+        </div>
+        <?php endforeach; ?>
+      </div>
+    </aside>
+    <?php endif; ?>
   </div>
-  <?php endif; ?>
 
 </main>
 

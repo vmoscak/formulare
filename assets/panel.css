@@ -161,6 +161,15 @@ body.rail-scrolled .topbar{box-shadow:var(--shadow-md);}
 .section-head-inline{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px;}
 .section-head-inline h3{margin:0; font-size:15px; font-weight:700; color:var(--ink);}
 
+/* ── Dvojstĺpcové rozloženie Domov (nástroje vľavo, Najbližšie udalosti vpravo) ── */
+.domov-layout{display:block;}
+.domov-layout.has-sidebar{display:grid; grid-template-columns:1fr 340px; gap:24px; align-items:start;}
+.domov-sidebar{position:sticky; top:16px;}
+@media(max-width:960px){
+  .domov-layout.has-sidebar{grid-template-columns:1fr;}
+  .domov-sidebar{position:static;}
+}
+
 /* ── Widget "Najbližšie udalosti" (uvod.php, náhľad Tímového kalendára) ── */
 .tew-row{display:flex; align-items:center; gap:12px; padding:11px 4px; border-bottom:1px solid var(--border);}
 .tew-row:last-child{border-bottom:none;}
