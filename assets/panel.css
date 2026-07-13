@@ -164,10 +164,10 @@ body.rail-scrolled .topbar{box-shadow:var(--shadow-md);}
 /* ── Dvojstĺpcové rozloženie Domov (nástroje vľavo, Najbližšie udalosti vpravo) ── */
 .domov-layout{display:block;}
 .domov-layout.has-sidebar{display:grid; grid-template-columns:1fr 340px; gap:24px; align-items:start;}
-.domov-sidebar{position:sticky; top:16px;}
+.domov-sidebar{position:sticky; top:16px; margin-top:31px;}
 @media(max-width:960px){
   .domov-layout.has-sidebar{grid-template-columns:1fr;}
-  .domov-sidebar{position:static;}
+  .domov-sidebar{position:static; margin-top:0;}
 }
 
 /* ── Widget "Najbližšie udalosti" (uvod.php, náhľad Tímového kalendára) ── */
