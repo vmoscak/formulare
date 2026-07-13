@@ -239,49 +239,24 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
 
   <div class="domov-layout<?= $upcomingEvents ? ' has-sidebar' : '' ?>">
     <div class="domov-main">
-      <div class="section">
-        <div class="section-head"><h3>Kam chceš ísť?</h3></div>
-        <div class="hub-grid">
-          <?php foreach ($TOOL_GROUPS as $key => $meta): ?>
-          <a class="hub-card" href="<?= h($hubMeta[$key]['href']) ?>" style="--hub-color:<?= h($hubMeta[$key]['color']) ?>;">
-            <span class="hub-ic"><?= toolIco($hubMeta[$key]['ico']) ?></span>
-            <div class="hub-body">
-              <h4><?= h($meta['label']) ?></h4>
-              <p><?= h($meta['subtitle']) ?></p>
-            </div>
-            <div class="hub-foot">
-              <span class="hub-count"><?= (int)$groupCounts[$key] ?> nástrojov</span>
-              <span class="hub-go">Otvoriť
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-              </span>
-            </div>
-          </a>
-          <?php endforeach; ?>
-        </div>
+      <div class="section-head"><h3>Kam chceš ísť?</h3></div>
+      <div class="hub-grid">
+        <?php foreach ($TOOL_GROUPS as $key => $meta): ?>
+        <a class="hub-card" href="<?= h($hubMeta[$key]['href']) ?>" style="--hub-color:<?= h($hubMeta[$key]['color']) ?>;">
+          <span class="hub-ic"><?= toolIco($hubMeta[$key]['ico']) ?></span>
+          <div class="hub-body">
+            <h4><?= h($meta['label']) ?></h4>
+            <p><?= h($meta['subtitle']) ?></p>
+          </div>
+          <div class="hub-foot">
+            <span class="hub-count"><?= (int)$groupCounts[$key] ?> nástrojov</span>
+            <span class="hub-go">Otvoriť
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </span>
+          </div>
+        </a>
+        <?php endforeach; ?>
       </div>
-
-      <?php if ($extraHubs): ?>
-      <div class="section">
-        <div class="section-head"><h3>Ďalšie skratky</h3></div>
-        <div class="hub-grid">
-          <?php foreach ($extraHubs as $eh): ?>
-          <a class="hub-card" href="<?= h($eh['href']) ?>" style="--hub-color:<?= h($eh['color']) ?>;">
-            <span class="hub-ic"><?= toolIco($eh['ico']) ?></span>
-            <div class="hub-body">
-              <h4><?= h($eh['label']) ?></h4>
-              <p><?= h($eh['subtitle']) ?></p>
-            </div>
-            <div class="hub-foot">
-              <span class="hub-count"><?php if ($eh['tag']): ?><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><?= h($eh['tag']) ?><?php endif; ?></span>
-              <span class="hub-go">Otvoriť
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-              </span>
-            </div>
-          </a>
-          <?php endforeach; ?>
-        </div>
-      </div>
-      <?php endif; ?>
     </div>
 
     <?php if ($upcomingEvents): ?>
@@ -313,6 +288,29 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
     </aside>
     <?php endif; ?>
   </div>
+
+  <?php if ($extraHubs): ?>
+  <div class="section">
+    <div class="section-head"><h3>Ďalšie skratky</h3></div>
+    <div class="hub-grid">
+      <?php foreach ($extraHubs as $eh): ?>
+      <a class="hub-card" href="<?= h($eh['href']) ?>" style="--hub-color:<?= h($eh['color']) ?>;">
+        <span class="hub-ic"><?= toolIco($eh['ico']) ?></span>
+        <div class="hub-body">
+          <h4><?= h($eh['label']) ?></h4>
+          <p><?= h($eh['subtitle']) ?></p>
+        </div>
+        <div class="hub-foot">
+          <span class="hub-count"><?php if ($eh['tag']): ?><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><?= h($eh['tag']) ?><?php endif; ?></span>
+          <span class="hub-go">Otvoriť
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </span>
+        </div>
+      </a>
+      <?php endforeach; ?>
+    </div>
+  </div>
+  <?php endif; ?>
 
 </main>
 
