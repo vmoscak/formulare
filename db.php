@@ -700,11 +700,14 @@ function dbInitSqlite(PDO $pdo): void {
         event_date TEXT NOT NULL,
         title TEXT NOT NULL,
         note TEXT NOT NULL DEFAULT '',
+        assigned_advisor_id INTEGER NULL,
         created_by INTEGER NOT NULL,
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (created_by) REFERENCES formulare_advisors(id)
+        FOREIGN KEY (created_by) REFERENCES formulare_advisors(id),
+        FOREIGN KEY (assigned_advisor_id) REFERENCES formulare_advisors(id)
     )");
     $pdo->exec("CREATE INDEX IF NOT EXISTS idx_team_events_date ON formulare_team_events(event_date)");
+    try { $pdo->exec("ALTER TABLE formulare_team_events ADD COLUMN assigned_advisor_id INTEGER NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
 
     // Predvolená osnova pre Cestu nováčika — len ak je tabuľka ešte prázdna
     // (aby sa neduplikovala pri každom reštarte lokálneho servera). Owner si

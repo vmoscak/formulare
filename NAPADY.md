@@ -151,9 +151,12 @@ toho, čo sa rozhodneme spraviť.
   nástroje reálne používa a kedy naposledy niečo vygeneroval, nad už
   existujúcimi dátami (žiadne nové osobné údaje klientov). Zoradené od
   najmenej aktívnych, aby si rýchlo videl, kto potrebuje pomoc. Len pre teba.
-- [x] **Tímový kalendár** — spoločný zoznam dôležitých termínov a
-  dátumov, viditeľný pre celý tím; pridávať/upravovať/mazať smie
-  výhradne owner (rovnaký vzor ako Novinky).
+- [x] **Tímový kalendár** — klasický mesačný kalendár (mriežka, navigácia
+  medzi mesiacmi), kde owner pridáva udalosti/úlohy a priraďuje ich
+  konkrétnemu kolegovi — farba bodky/avatara v kalendári zodpovedá
+  farbe daného poradcu (rovnaká farba ako jeho iniciálky inde v appke),
+  prázdna/sivá = "celý tím". Kompaktný náhľad najbližších udalostí je
+  aj priamo na Domov. Vidí celý tím, upravuje výhradne owner.
 
 ---
 

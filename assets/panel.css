@@ -139,6 +139,19 @@ body.rail-scrolled .topbar{box-shadow:var(--shadow-md);}
 .section-head{display:flex; align-items:baseline; gap:10px; margin:0 0 14px;}
 .section-head h3{margin:0; font-size:15px; font-weight:700; color:var(--ink); letter-spacing:-.01em;}
 .section-head .count{font-size:12px; font-weight:600; color:var(--muted); background:var(--paper); border:1px solid var(--border); border-radius:999px; padding:2px 10px;}
+.section-head-inline{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px;}
+.section-head-inline h3{margin:0; font-size:15px; font-weight:700; color:var(--ink);}
+
+/* ── Widget "Najbližšie udalosti" (uvod.php, náhľad Tímového kalendára) ── */
+.tew-row{display:flex; align-items:center; gap:12px; padding:11px 4px; border-bottom:1px solid var(--border);}
+.tew-row:last-child{border-bottom:none;}
+.tew-badge{width:40px; height:40px; border-radius:var(--radius-md); background:var(--accent-soft); color:var(--accent);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0;}
+.tew-badge .d{font-size:13.5px; font-weight:800; line-height:1.1;}
+.tew-badge .m{font-size:8.5px; font-weight:700; letter-spacing:.04em;}
+.tew-body{flex:1; min-width:0;}
+.tew-title{font-size:13.5px; font-weight:600; color:var(--ink);}
+.tew-avatar{width:26px; height:26px; border-radius:50%; color:#fff; display:flex; align-items:center; justify-content:center; font-size:10.5px; font-weight:700; flex-shrink:0;}
 
 /* ── Mriežka nástrojov (karty ako v predlohe) ──────────────────────────── */
 .tool-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:18px;}

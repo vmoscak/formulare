@@ -55,7 +55,7 @@ $hubMeta = [
 $extraHubs = [
     ['label' => 'Moje dokumenty', 'subtitle' => 'História vygenerovaných PDF a odoslaných klientských odkazov.',
      'ico' => 'folder', 'color' => '#059669', 'href' => '/moje-dokumenty.php', 'tag' => null],
-    ['label' => 'Tímový kalendár', 'subtitle' => 'Dôležité termíny a dátumy pre celý tím.',
+    ['label' => 'Tímový kalendár', 'subtitle' => 'Udalosti a úlohy pre celý tím, farebne priradené konkrétnym kolegom.',
      'ico' => 'calendar', 'color' => '#2563eb', 'href' => '/tim-kalendar.php', 'tag' => null],
 ];
 if (!empty($me['is_admin'])) {
@@ -130,6 +130,20 @@ if (!empty($me['onboarding_started_at'])) {
         ];
     } catch (Throwable $e) { /* tabuľka ešte nemusí existovať */ }
 }
+
+// Náhľad najbližších udalostí z Tímového kalendára — viditeľný pre celý tím.
+$upcomingEvents = [];
+try {
+    $today = date('Y-m-d');
+    $evStmt = db()->prepare(
+        'SELECT e.*, a.name AS assignee_name, a.color AS assignee_color
+         FROM formulare_team_events e LEFT JOIN formulare_advisors a ON a.id = e.assigned_advisor_id
+         WHERE e.event_date >= ? ORDER BY e.event_date ASC LIMIT 4'
+    );
+    $evStmt->execute([$today]);
+    $upcomingEvents = $evStmt->fetchAll();
+} catch (Throwable $e) { /* tabuľka ešte nemusí existovať */ }
+$EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 'AUG', 'SEP', 'OKT', 'NOV', 'DEC'];
 ?>
 <!DOCTYPE html><html lang="sk"><head>
 <meta charset="UTF-8">
@@ -140,7 +154,7 @@ if (!empty($me['onboarding_started_at'])) {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=19">
+<link rel="stylesheet" href="/assets/panel.css?v=20">
 </head><body class="home-page">
 <div class="home-bg" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
 <header class="topbar">
@@ -188,6 +202,28 @@ if (!empty($me['onboarding_started_at'])) {
         <div class="ms-sub">Dosiahol/-la si najvyšší míľnik — pekná práca!</div>
         <?php endif; ?>
       </div>
+    </div>
+  </div>
+  <?php endif; ?>
+
+  <?php if ($upcomingEvents): ?>
+  <div class="section">
+    <div class="card">
+      <div class="section-head-inline">
+        <h3>Najbližšie udalosti</h3>
+        <a class="pillbtn" href="/tim-kalendar.php">Otvoriť kalendár</a>
+      </div>
+      <?php foreach ($upcomingEvents as $e): $ts = strtotime($e['event_date']); ?>
+      <div class="tew-row">
+        <div class="tew-badge"><span class="d"><?= (int)date('j', $ts) ?></span><span class="m"><?= $EVT_SK_MONTHS_SHORT[(int)date('n', $ts)] ?></span></div>
+        <div class="tew-body">
+          <div class="tew-title"><?= h($e['title']) ?></div>
+        </div>
+        <span class="tew-avatar" style="background:<?= h($e['assignee_color'] ?: '#94a3b8') ?>;" title="<?= h($e['assignee_name'] ?: 'Celý tím') ?>">
+          <?= $e['assignee_name'] ? h(mb_strtoupper(mb_substr($e['assignee_name'], 0, 1))) : '⚑' ?>
+        </span>
+      </div>
+      <?php endforeach; ?>
     </div>
   </div>
   <?php endif; ?>
