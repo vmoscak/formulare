@@ -39,6 +39,7 @@ function toolLabel(string $slug): string {
         'vypoved-poistenia' => 'Výpoveď poistnej zmluvy',
         'preberaci-protokol' => 'Preberací protokol',
         'univerzalna-ziadost-zmena' => 'Univerzálna žiadosť o zmenu',
+        'ziadost-krycie-list' => 'Žiadosť o vystavenie krycieho listu',
         'nahrada-skody-zodpovednost' => 'Žiadosť o náhradu škody',
         'cestne-vyhlasenie-inej-poistky' => 'Čestné prehlásenie',
         'cestne-vyhlasenie-kupa-veci' => 'Čestné prehlásenie o kúpe veci',

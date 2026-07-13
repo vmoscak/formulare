@@ -93,6 +93,8 @@ $TOOL_CATEGORIES = [
          'desc' => 'Všeobecný preberací / odovzdávací protokol – zoznam odovzdávaných dokumentov, obe strany a podpisy.'],
         ['href' => 'univerzalna-ziadost-zmena/', 'name' => 'Univerzálna žiadosť o zmenu', 'ico' => 'edit', 'color' => 'amber',
          'desc' => 'Zmena osobných údajov, adresy alebo oprávnenej osoby v existujúcej zmluve – jeden formulár na všetko.'],
+        ['href' => 'ziadost-krycie-list/', 'name' => 'Žiadosť o vystavenie krycieho listu', 'ico' => 'shield', 'color' => 'sky',
+         'desc' => 'Vozidlo, typ poistenia, platnosť od a dôvod žiadosti (nová zmluva, prevod, evidencia vozidiel) – text sa doplní automaticky.'],
     ]],
     ['title' => 'Poistné udalosti a škody', 'group' => 'formulare', 'tools' => [
         ['href' => 'nahrada-skody-zodpovednost/', 'name' => 'Žiadosť o náhradu škody', 'ico' => 'alert', 'color' => 'orange',

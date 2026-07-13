@@ -160,6 +160,10 @@ toho, čo sa rozhodneme spraviť.
   predvolene zaškrtnutý. Kompaktný náhľad najbližších udalostí (so
   všetkými priradenými avatarmi) je aj priamo na Domov. Vidí celý tím,
   upravuje výhradne owner.
+- [x] **Žiadosť o vystavenie krycieho listu** — formálna žiadosť pre
+  vozidlo (značka/model, EČV, VIN, typ poistenia, platnosť od), s
+  dôvodom žiadosti (nová zmluva, prevod vozidla, evidencia vozidiel,
+  obnovenie, iné) a voľbou spôsobu doručenia (e-mail/pošta/pobočka).
 
 ---
 
