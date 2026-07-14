@@ -1,6 +1,6 @@
--- Nahradenie osnovy "Cesta nováčika" pôvodným zjednodušeným obsahom (Deň 1 /
--- Týždeň 1 / Mesiac 1) curovaným výberom z oficiálnej "Karty výkonnosti
--- a rozvoja VFA 2025" (UNIQA onboarding). Spustiť RUČNE v phpMyAdmin.
+-- Nahradenie osnovy "Cesta nováčika" (pôvodne Deň 1 / Týždeň 1 / Mesiac 1)
+-- curovaným výberom z oficiálnej "Karty výkonnosti a rozvoja VFA 2025"
+-- (UNIQA onboarding). Spustiť RUČNE v phpMyAdmin.
 --
 -- POZOR: zmaže existujúce kroky aj rozpracovaný postup (odškrtnuté kroky)
 -- všetkých poradcov, ktorí majú onboarding spustený — po tejto migrácii
@@ -23,7 +23,7 @@ INSERT INTO formulare_onboarding_steps (phase, title, description, link_url, sor
 ('0. mesiac', 'IT systémy — školenie a nastavenie', 'UNIHUB, Albert, UNIQA Studio, UNIPOINT, HCL. Tréning kalkulácie ponúk.', NULL, 10),
 ('0. mesiac', 'Štart II. Autá — samoštúdium a príprava ponuky pred kurzom', '', NULL, 11),
 ('0. mesiac', 'Štart II. Autá — aktívna účasť a samoštúdium po štarte', 'Online. PZP a KASKO — technické parametre a spôsob dojednania.', NULL, 12),
-('0. mesiac', 'Databáza klientov — min. 50 kontaktov v CRM', '', NULL, 13),
+('0. mesiac', 'Databáza klientov — min. 100 kontaktov v CRM', '', NULL, 13),
 ('I. mesiac', 'Štart III. Úvod do predaja — aktívna účasť a samoštúdium', 'Prezenčne, 1 deň. Podmienka: min. 300 bodov za školenia. Prehľad produktov, filozofia životného poistenia, telefonovanie a zvládanie námietok, analýza potrieb klienta.', NULL, 14),
 ('I. mesiac', 'Štart IV. On-line majetok — samoštúdium, účasť a samoštúdium po štarte', 'Online, 1 deň. Domov a bezpečie — technické parametre, terminológia, kalkulácia ponuky.', NULL, 15),
 ('I. mesiac', 'Štart V. Poistenie osôb — samoštúdium, účasť a samoštúdium po štarte', 'Prezenčne/online, 1 deň. Cestovné poistenie, pohrebné náklady, Uniqáčik.', NULL, 16),
@@ -37,9 +37,4 @@ INSERT INTO formulare_onboarding_steps (phase, title, description, link_url, sor
 ('IV. mesiac', 'Blok III. Predaj — splniť podmienky pred blokom', 'Absolvovanie všetkých školení z 0.-3. mesiaca, zopakovanie produktov životného a neživotného poistenia, produkcia 4000 Pb.', NULL, 24),
 ('IV. mesiac', 'Blok III. Predaj — aktívna účasť a samoštúdium', 'Prezenčne, 3 dni. Vstup do sveta klienta, analýza potrieb, efektívna argumentácia, riešenie námietok, uzatváracie techniky, príprava na maturitu.', NULL, 25),
 ('V. mesiac', 'Príprava na maturitu', 'Štúdium produktovej časti maturity vrátane skúšobných testov.', NULL, 26),
-('V. mesiac', 'Maturita', 'Podmienka: absolvovanie všetkých školení z 0.-4. mesiaca. Overenie produktových znalostí a predajných zručností.', NULL, 27),
-('Priebežne (každý mesiac)', 'Potenciál biznisu — min. 50 kontaktov v CRM', '', NULL, 28),
-('Priebežne (každý mesiac)', 'Telefonovanie — min. 25 denne', '', NULL, 29),
-('Priebežne (každý mesiac)', 'Stretnutia s klientom — 2-3 denne', '', NULL, 30),
-('Priebežne (každý mesiac)', 'Príprava minimálne 10 analýz', '', '/wizard-poistenie/', 31),
-('Priebežne (každý mesiac)', 'Kontaktovanie klienta a analýza klientových potrieb', 'Zisti, čo klient potrebuje, a spočítaj presné krytie.', '/financna-medzera/', 32);
+('V. mesiac', 'Maturita', 'Podmienka: absolvovanie všetkých školení z 0.-4. mesiaca. Overenie produktových znalostí a predajných zručností.', NULL, 27);

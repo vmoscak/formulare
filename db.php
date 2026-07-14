@@ -789,7 +789,7 @@ function dbOnboardingSeedSteps(): array {
         ['phase' => '0. mesiac', 'title' => 'IT systémy — školenie a nastavenie', 'description' => 'UNIHUB, Albert, UNIQA Studio, UNIPOINT, HCL. Tréning kalkulácie ponúk.', 'link_url' => null],
         ['phase' => '0. mesiac', 'title' => 'Štart II. Autá — samoštúdium a príprava ponuky pred kurzom', 'description' => '', 'link_url' => null],
         ['phase' => '0. mesiac', 'title' => 'Štart II. Autá — aktívna účasť a samoštúdium po štarte', 'description' => 'Online. PZP a KASKO — technické parametre a spôsob dojednania.', 'link_url' => null],
-        ['phase' => '0. mesiac', 'title' => 'Databáza klientov — min. 50 kontaktov v CRM', 'description' => '', 'link_url' => null],
+        ['phase' => '0. mesiac', 'title' => 'Databáza klientov — min. 100 kontaktov v CRM', 'description' => '', 'link_url' => null],
 
         ['phase' => 'I. mesiac', 'title' => 'Štart III. Úvod do predaja — aktívna účasť a samoštúdium', 'description' => 'Prezenčne, 1 deň. Podmienka: min. 300 bodov za školenia. Prehľad produktov, filozofia životného poistenia, telefonovanie a zvládanie námietok, analýza potrieb klienta.', 'link_url' => null],
         ['phase' => 'I. mesiac', 'title' => 'Štart IV. On-line majetok — samoštúdium, účasť a samoštúdium po štarte', 'description' => 'Online, 1 deň. Domov a bezpečie — technické parametre, terminológia, kalkulácia ponuky.', 'link_url' => null],
@@ -809,11 +809,5 @@ function dbOnboardingSeedSteps(): array {
 
         ['phase' => 'V. mesiac', 'title' => 'Príprava na maturitu', 'description' => 'Štúdium produktovej časti maturity vrátane skúšobných testov.', 'link_url' => null],
         ['phase' => 'V. mesiac', 'title' => 'Maturita', 'description' => 'Podmienka: absolvovanie všetkých školení z 0.-4. mesiaca. Overenie produktových znalostí a predajných zručností.', 'link_url' => null],
-
-        ['phase' => 'Priebežne (každý mesiac)', 'title' => 'Potenciál biznisu — min. 50 kontaktov v CRM', 'description' => '', 'link_url' => null],
-        ['phase' => 'Priebežne (každý mesiac)', 'title' => 'Telefonovanie — min. 25 denne', 'description' => '', 'link_url' => null],
-        ['phase' => 'Priebežne (každý mesiac)', 'title' => 'Stretnutia s klientom — 2-3 denne', 'description' => '', 'link_url' => null],
-        ['phase' => 'Priebežne (každý mesiac)', 'title' => 'Príprava minimálne 10 analýz', 'description' => '', 'link_url' => '/wizard-poistenie/'],
-        ['phase' => 'Priebežne (každý mesiac)', 'title' => 'Kontaktovanie klienta a analýza klientových potrieb', 'description' => 'Zisti, čo klient potrebuje, a spočítaj presné krytie.', 'link_url' => '/financna-medzera/'],
     ];
 }

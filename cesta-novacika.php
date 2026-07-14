@@ -122,6 +122,16 @@ foreach ($steps as $s) {
     if (!in_array((int)$s['id'], $doneStepIds, true)) { $nextStep = $s; break; }
 }
 
+// Krátky motivačný odkaz podľa rozostupu percenta — drží "wow" pocit pri
+// odškrtávaní, rovnaká logika sa prepočíta aj na klientovi v JS (viď nižšie).
+function obMotivation(int $pct): string {
+    if ($pct >= 100) return 'Hotovo! 🎉';
+    if ($pct >= 67) return 'Už len kúsok! 🔥';
+    if ($pct >= 34) return 'Skvelý postup! 💪';
+    if ($pct >= 1) return 'Pekný štart! 🙌';
+    return 'Poďme na to! 🚀';
+}
+
 // Pre ownera: zoznam ostatných aktívnych poradcov (na priradenie/odobratie)
 // spolu s ich vlastným postupom, ak už majú onboarding spustený.
 $teamAdvisors = [];
@@ -149,18 +159,28 @@ if ($isOwner) {
 <script src="/assets/theme-init.js"></script>
 <link rel="stylesheet" href="/assets/panel.css?v=27">
 <style>
-  .ob-progress-card{display:flex; align-items:center; gap:20px; flex-wrap:wrap;}
-  .ob-ring{--pct:0; width:92px; height:92px; border-radius:50%; flex-shrink:0; position:relative;
-    background:conic-gradient(var(--accent) calc(var(--pct) * 3.6deg), var(--desk) 0deg);}
-  .ob-ring::after{content:''; position:absolute; inset:8px; border-radius:50%; background:var(--paper);}
-  .ob-ring-label{position:absolute; inset:8px; border-radius:50%; z-index:1; display:flex; flex-direction:column; align-items:center; justify-content:center;}
-  .ob-ring-pct{font-size:19px; font-weight:800; color:var(--ink); line-height:1.1;}
-  .ob-ring-sub{font-size:9.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-top:1px;}
-  .ob-progress-info{flex:1; min-width:180px;}
-  .ob-progress-info h4{margin:0 0 4px; font-size:15px; color:var(--ink);}
-  .ob-progress-info p{margin:0; font-size:12.5px; color:var(--muted);}
+  .ob-hero{position:relative; overflow:hidden; display:flex; align-items:center; gap:22px; flex-wrap:wrap;
+    background:linear-gradient(135deg, var(--accent) 0%, var(--accent-ink) 100%); border:none; color:#fff;}
+  .ob-hero::before,.ob-hero::after{content:''; position:absolute; border-radius:50%; background:#fff; opacity:.14; pointer-events:none;}
+  .ob-hero::before{width:240px; height:240px; top:-110px; right:-70px;}
+  .ob-hero::after{width:130px; height:130px; bottom:-80px; right:140px;}
+  .ob-ring{--pct:0; width:104px; height:104px; border-radius:50%; flex-shrink:0; position:relative; z-index:1;
+    background:conic-gradient(#fff calc(var(--pct) * 3.6deg), rgba(255,255,255,.28) 0deg);
+    transition:transform .4s ease;}
+  .ob-ring.pulse{animation:obRingPulse .55s ease;}
+  @keyframes obRingPulse{0%{transform:scale(1);}40%{transform:scale(1.1);}100%{transform:scale(1);}}
+  .ob-ring::after{content:''; position:absolute; inset:9px; border-radius:50%; background:var(--accent-ink);}
+  .ob-ring-label{position:absolute; inset:9px; border-radius:50%; z-index:1; display:flex; flex-direction:column; align-items:center; justify-content:center;}
+  .ob-ring-pct{font-size:21px; font-weight:800; color:#fff; line-height:1.1;}
+  .ob-ring-sub{font-size:9.5px; color:rgba(255,255,255,.8); text-transform:uppercase; letter-spacing:.04em; margin-top:1px;}
+  .ob-progress-info{flex:1; min-width:180px; position:relative; z-index:1;}
+  .ob-progress-info h4{margin:0 0 4px; font-size:16px; color:#fff;}
+  .ob-progress-info p{margin:0; font-size:12.5px; color:rgba(255,255,255,.88);}
+  .ob-progress-badge{display:inline-block; margin-top:9px; padding:4px 12px; border-radius:999px; background:rgba(255,255,255,.2);
+    font-size:11.5px; font-weight:700; letter-spacing:.02em; color:#fff;}
 
-  .ob-next-card{display:flex; align-items:center; gap:14px; background:var(--accent-soft); border:1px solid var(--accent-line); flex-wrap:wrap;}
+  .ob-next-card{display:flex; align-items:center; gap:14px; background:linear-gradient(135deg, var(--accent-soft), var(--paper)); border:1px solid var(--accent-line); flex-wrap:wrap;}
+  .ob-next-icon{font-size:24px; flex-shrink:0;}
   .ob-next-body{flex:1; min-width:160px;}
   .ob-next-label{font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--accent-ink);}
   .ob-next-title{font-size:14.5px; font-weight:600; color:var(--ink); margin-top:3px;}
@@ -168,38 +188,47 @@ if ($isOwner) {
   .ob-next-done .ob-next-title{color:var(--good);}
 
   .ob-trail{display:flex; align-items:center; gap:0; overflow-x:auto; padding:4px 2px 12px; margin:-4px 0 4px;}
-  .ob-trail-item{display:flex; align-items:center; gap:7px; flex-shrink:0; cursor:pointer; padding:6px 10px; border-radius:999px; border:none; background:none; font:inherit;}
-  .ob-trail-item:hover{background:var(--desk);}
+  .ob-trail-item{display:flex; align-items:center; gap:7px; flex-shrink:0; cursor:pointer; padding:6px 10px; border-radius:999px; border:none; background:none; font:inherit; transition:transform .15s ease, background .15s ease;}
+  .ob-trail-item:hover{background:var(--desk); transform:translateY(-1px);}
   .ob-trail-dot{width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10.5px; font-weight:700; flex-shrink:0;}
   .ob-trail-name{font-size:12px; font-weight:600; white-space:nowrap;}
-  .ob-trail-line{width:20px; height:2px; background:var(--border); flex-shrink:0;}
+  .ob-trail-line{width:20px; height:2px; background:var(--border); flex-shrink:0; transition:background .3s ease;}
+  .ob-trail-line.filled{background:var(--good);}
   .ob-trail-item.status-done .ob-trail-dot{background:var(--good); color:#fff;}
   .ob-trail-item.status-done .ob-trail-name{color:var(--muted);}
-  .ob-trail-item.status-current .ob-trail-dot{background:var(--accent); color:#fff; box-shadow:0 0 0 4px var(--accent-soft);}
+  .ob-trail-item.status-current .ob-trail-dot{background:var(--accent); color:#fff; animation:obDotPulse 2.2s ease-in-out infinite;}
   .ob-trail-item.status-current .ob-trail-name{color:var(--ink);}
   .ob-trail-item.status-upcoming .ob-trail-dot{background:var(--desk); color:var(--muted); border:1px solid var(--border);}
   .ob-trail-item.status-upcoming .ob-trail-name{color:var(--muted);}
+  @keyframes obDotPulse{0%,100%{box-shadow:0 0 0 4px var(--accent-soft);}50%{box-shadow:0 0 0 8px transparent;}}
 
-  .ob-phase{border:none; margin:0 0 4px;}
+  .ob-phase{border:none; border-left:3px solid transparent; margin:0 0 6px; border-radius:0 var(--radius-md) var(--radius-md) 0; transition:background .2s ease;}
+  .ob-phase.status-current{border-left-color:var(--accent); background:var(--accent-soft);}
+  .ob-phase.status-done{border-left-color:var(--good);}
   .ob-phase-summary{list-style:none; cursor:pointer; display:flex; align-items:center; gap:10px; padding:11px 8px; border-radius:var(--radius-md); user-select:none;}
   .ob-phase-summary::-webkit-details-marker{display:none;}
   .ob-phase-summary::marker{content:'';}
   .ob-phase-summary:hover{background:var(--desk);}
   .ob-phase-badge{width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0;}
   .ob-phase.status-done .ob-phase-badge{background:var(--good-soft); color:var(--good);}
-  .ob-phase.status-current .ob-phase-badge{background:var(--accent); color:#fff;}
+  .ob-phase.status-current .ob-phase-badge{background:var(--accent); color:#fff; animation:obBadgePulse 2.2s ease-in-out infinite;}
   .ob-phase.status-upcoming .ob-phase-badge{background:var(--desk); color:var(--muted); border:1px solid var(--border);}
+  @keyframes obBadgePulse{0%,100%{box-shadow:0 0 0 0 var(--accent-soft);}50%{box-shadow:0 0 0 6px transparent;}}
   .ob-phase-name{flex:1; font-size:13px; font-weight:700; color:var(--ink); text-transform:uppercase; letter-spacing:.03em;}
   .ob-phase-count{font-size:12px; color:var(--muted); font-weight:600; flex-shrink:0;}
   .ob-phase.status-upcoming .ob-phase-summary{opacity:.72;}
   .ob-phase-body{padding:0 8px 8px 42px;}
 
-  .ob-phase-title{font-size:13px; font-weight:700; color:var(--ink); text-transform:uppercase; letter-spacing:.04em; margin:22px 0 10px;}
-  .ob-phase-title:first-child{margin-top:0;}
   .ob-step{display:flex; align-items:flex-start; gap:12px; padding:12px 4px; border-bottom:1px solid var(--border); transition:background .25s ease;}
   .ob-step:last-child{border-bottom:none;}
   .ob-step.ob-highlight{background:var(--accent-soft); border-radius:var(--radius-md);}
-  .ob-step input[type=checkbox]{width:19px; height:19px; margin-top:1px; accent-color:var(--accent); cursor:pointer; flex-shrink:0;}
+  .ob-step input[type=checkbox]{appearance:none; -webkit-appearance:none; width:22px; height:22px; margin-top:0; flex-shrink:0;
+    border:2px solid var(--line-strong); border-radius:50%; cursor:pointer; position:relative; transition:background .2s ease, border-color .2s ease;}
+  .ob-step input[type=checkbox]:hover{border-color:var(--accent);}
+  .ob-step input[type=checkbox]:checked{background:var(--good); border-color:var(--good); animation:obCheckPop .3s ease;}
+  .ob-step input[type=checkbox]:checked::after{content:''; position:absolute; left:6px; top:2px; width:5px; height:10px;
+    border:solid #fff; border-width:0 2px 2px 0; transform:rotate(45deg);}
+  @keyframes obCheckPop{0%{transform:scale(.65);}60%{transform:scale(1.18);}100%{transform:scale(1);}}
   .ob-step-body{flex:1; min-width:0;}
   .ob-step-title{font-size:14px; font-weight:600; color:var(--ink);}
   .ob-step.done .ob-step-title{color:var(--muted); text-decoration:line-through;}
@@ -214,6 +243,10 @@ if ($isOwner) {
   .ob-team-name{font-size:13.5px; font-weight:600; color:var(--ink);}
   .ob-team-status{font-size:12px; color:var(--muted); margin-top:1px;}
   @media(max-width:720px){ .ob-add-row{grid-template-columns:1fr;} }
+
+  .ob-confetti{position:fixed; inset:0; pointer-events:none; z-index:9999; overflow:hidden;}
+  .ob-confetti span{position:absolute; top:-12px; width:8px; height:14px; opacity:.9; border-radius:2px; animation:obConfettiFall linear forwards;}
+  @keyframes obConfettiFall{0%{transform:translateY(0) rotate(0deg); opacity:1;}100%{transform:translateY(110vh) rotate(560deg); opacity:.35;}}
 </style>
 </head><body>
 <header class="topbar">
@@ -228,7 +261,7 @@ if ($isOwner) {
 
 <main class="content">
 
-  <div class="card ob-progress-card">
+  <div class="card ob-hero">
     <div class="ob-ring" id="obRing" style="--pct:<?= (int)$pct ?>;">
       <div class="ob-ring-label">
         <div class="ob-ring-pct" id="obRingPct"><?= (int)$pct ?>%</div>
@@ -238,21 +271,23 @@ if ($isOwner) {
     <div class="ob-progress-info">
       <h4 id="obProgressHeading"><?= $doneCount ?> z <?= $totalSteps ?> krokov dokončených</h4>
       <p><?php if ($currentPhaseName !== null): ?>Aktuálna fáza: <?= h($currentPhaseName) ?><?php elseif ($totalSteps > 0): ?>Celá osnova je dokončená — skvelá práca!<?php else: ?>Osnova zatiaľ nie je pripravená.<?php endif; ?></p>
+      <span class="ob-progress-badge" id="obMotivation"><?= h(obMotivation((int)$pct)) ?></span>
     </div>
   </div>
 
   <?php if ($totalSteps > 0): ?>
   <div class="card ob-trail">
-    <?php $i = 0; foreach ($phaseList as $phaseName => $st): if ($i > 0): ?><span class="ob-trail-line"></span><?php endif; ?>
+    <?php $i = 0; $prevStatus = null; foreach ($phaseList as $phaseName => $st): if ($i > 0): ?><span class="ob-trail-line<?= $prevStatus === 'done' ? ' filled' : '' ?>"></span><?php endif; ?>
     <button type="button" class="ob-trail-item status-<?= $st['status'] ?>" onclick="obJumpPhase(<?= $st['idx'] ?>)">
       <span class="ob-trail-dot"><?= $st['status'] === 'done' ? '✓' : ($st['idx'] + 1) ?></span>
       <span class="ob-trail-name"><?= h($phaseName) ?></span>
     </button>
-    <?php $i++; endforeach; ?>
+    <?php $i++; $prevStatus = $st['status']; endforeach; ?>
   </div>
 
   <?php if ($nextStep): $npIdx = $phaseIndexByName[$nextStep['phase']]; ?>
   <div class="card ob-next-card">
+    <span class="ob-next-icon">🚀</span>
     <div class="ob-next-body">
       <div class="ob-next-label">Ďalší krok</div>
       <div class="ob-next-title"><?= h($nextStep['title']) ?></div>
@@ -398,6 +433,28 @@ function obJumpStep(phaseIdx, stepId) {
   row.classList.add('ob-highlight');
   setTimeout(function () { row.classList.remove('ob-highlight'); }, 1600);
 }
+function obMotivationText(pct) {
+  if (pct >= 100) return 'Hotovo! 🎉';
+  if (pct >= 67) return 'Už len kúsok! 🔥';
+  if (pct >= 34) return 'Skvelý postup! 💪';
+  if (pct >= 1) return 'Pekný štart! 🙌';
+  return 'Poďme na to! 🚀';
+}
+function obConfetti() {
+  var colors = ['#ffffff', '#fde68a', '#a7f3d0', '#bfdbfe', '#fbcfe8'];
+  var wrap = document.createElement('div');
+  wrap.className = 'ob-confetti';
+  for (var i = 0; i < 44; i++) {
+    var s = document.createElement('span');
+    s.style.left = (Math.random() * 100) + 'vw';
+    s.style.background = colors[Math.floor(Math.random() * colors.length)];
+    s.style.animationDuration = (2 + Math.random() * 1.5) + 's';
+    s.style.animationDelay = (Math.random() * 0.4) + 's';
+    wrap.appendChild(s);
+  }
+  document.body.appendChild(wrap);
+  setTimeout(function () { wrap.remove(); }, 4000);
+}
 
 var OB_TOTAL = <?= $totalSteps ?>;
 document.addEventListener('change', function(e){
@@ -416,11 +473,20 @@ document.addEventListener('change', function(e){
   var doneNow = document.querySelectorAll('input[data-toggle-step]:checked').length;
   var pct = OB_TOTAL > 0 ? Math.round(doneNow / OB_TOTAL * 100) : 0;
   var ring = document.getElementById('obRing');
-  if (ring) ring.style.setProperty('--pct', pct);
+  if (ring) {
+    ring.style.setProperty('--pct', pct);
+    ring.classList.remove('pulse');
+    void ring.offsetWidth;
+    ring.classList.add('pulse');
+  }
   var ringPct = document.getElementById('obRingPct');
   if (ringPct) ringPct.textContent = pct + '%';
   var heading = document.getElementById('obProgressHeading');
   if (heading) heading.textContent = doneNow + ' z ' + OB_TOTAL + ' krokov dokončených';
+  var motivation = document.getElementById('obMotivation');
+  if (motivation) motivation.textContent = obMotivationText(pct);
+
+  if (done && OB_TOTAL > 0 && doneNow === OB_TOTAL) obConfetti();
 
   var phaseIdx = row.dataset.phaseIdx;
   if (phaseIdx !== undefined) {
