@@ -7,9 +7,12 @@
 <!-- =========================================================================
      INTERAKTÍVNY ŤAHÁK „ČO PÝTAŤ OD KLIENTA“ — samostatný editovateľný súbor
      -------------------------------------------------------------------------
-     Živý zoznam otázok na stretnutí podľa situácie klienta — na odškrtávanie
-     počas rozhovoru. Voliteľné meno klienta + PDF cez zdieľaný ../pdf.php
-     (Dompdf), napr. ako poznámka do spisu.
+     Otázky ku upisovacím detailom, na ktoré sa dostaneme až pri konkrétnej
+     ponuke (nie pri celkovej analýze — tú riešia wizard-poistenie a
+     Kalkulačka poistného krytia). Ku každej otázke sa priamo počas
+     rozhovoru zapíše krátka poznámka/odpoveď. PDF cez zdieľaný ../pdf.php
+     (Dompdf), uložené do "Moje dokumenty" (rovnaký mechanizmus ako ostatné
+     nástroje — žiadna nová databáza klientov).
 
      KDE ČO UPRAVIŤ:
        • Situácie a otázky ...... JS, objekt CATEGORIES
@@ -19,6 +22,18 @@
 <script src="../assets/theme-init.js"></script>
 <script src="../assets/toast.js?v=1"></script>
 <link rel="stylesheet" href="../assets/ui.css?v=11">
+<style>
+  /* odchýlky tejto stránky od zdieľaného dizajnu (assets/ui.css) */
+  .tq-row{padding:10px 0; border-bottom:1px solid var(--border);}
+  .tq-row:last-child{border-bottom:none;}
+  .tq-question{font-size:13.5px; color:var(--ink); line-height:1.45; margin-bottom:6px;}
+  .tq-answer{
+    width:100%; padding:8px 11px; border:1px solid var(--line-strong); border-radius:var(--radius-md);
+    background:var(--desk); font-size:13.5px; color:var(--ink); transition:border-color .15s, background .15s;
+  }
+  .tq-answer:focus{background:var(--paper);}
+  .tq-answer:not(:placeholder-shown){border-color:var(--accent-line); background:var(--accent-soft);}
+</style>
 </head>
 <body>
 
@@ -56,7 +71,7 @@
     <div class="preview">
       <div class="preview-head">
         <span class="t">Otázky na stretnutie</span>
-        <span class="live"><i></i>Odškrtávaj počas rozhovoru</span>
+        <span class="live"><i></i>Zapisuj počas rozhovoru</span>
       </div>
       <div class="field" data-k="contactName" style="margin-bottom:12px;">
         <label>MENO KLIENTA <span style="font-weight:500;text-transform:none;">(nepovinné, pre PDF)</span></label>
@@ -65,10 +80,16 @@
       <div class="preview-tools">
         <button class="tool" id="copyBtn">Kopírovať zoznam</button>
         <button class="tool" id="pdfBtn">Stiahnuť PDF</button>
-        <button class="tool" id="resetBtn">Vynulovať odškrtnuté</button>
+        <button class="tool" id="resetBtn">Vynulovať poznámky</button>
       </div>
       <div class="letter-wrap">
         <div id="checklist" style="background:#fff; border-radius:8px; padding:24px;"></div>
+      </div>
+
+      <div class="contact-card" id="myDocumentsCard" style="display:none; margin-top:16px;">
+        <h3>Moje vygenerované dokumenty</h3>
+        <p>Vráť sa k poznámkam z predošlého stretnutia a pokračuj tam, kde si skončil/-a.</p>
+        <div class="items" id="myDocumentsList"></div>
       </div>
     </div>
   </div>
@@ -79,24 +100,15 @@
 /* ===========================================================================
    DÁTA — tu meníš situácie a otázky
 =========================================================================== */
+/* "Nová poistná zmluva" kategória bola vyradená — jej otázky (rodinný stav,
+   príjem/výdavky, existujúce poistenie, najväčšia obava) sa dnes riešia už
+   v dotazníku "Aké poistenie potrebujem" a Kalkulačke poistného krytia.
+   Tu ostávajú len otázky, ku ktorým sa dostaneme až pri konkrétnej ponuke —
+   upisovacie detaily, ktoré analýza nezbiera (a ani nemá). */
 const CATEGORIES = {
-  nova: {
-    label: 'Nová poistná zmluva', sub: 'Všeobecný úvod', tile: 'N',
-    questions: [
-      'Aký je Váš súčasný rodinný stav a počet detí/závislých osôb?',
-      'Aký je Váš mesačný príjem a základné výdavky/záväzky (úver, nájom)?',
-      'Máte už nejaké poistenie? Aké a od kedy?',
-      'Čo je pre Vás najväčšou obavou — strata príjmu, zdravie, majetok?',
-      'Plánujete v najbližších rokoch väčšie zmeny (kúpa bytu, dieťa, zmena zamestnania)?',
-    ],
-  },
   zivotne: {
-    label: 'Životné poistenie', sub: 'Riziká a záväzky', tile: 'Ž',
+    label: 'Životné poistenie', sub: 'Zdravotný a rizikový profil', tile: 'Ž',
     questions: [
-      'Kto všetko je na Vás finančne závislý?',
-      'Aké máte záväzky (hypotéka, úver) a na ako dlho?',
-      'Máte už životné poistenie od zamestnávateľa alebo inde?',
-      'Aký príjem by rodina potrebovala, keby ste Vy (alebo partner/-ka) vypadli na dlhší čas?',
       'Fajčíte, alebo máte rizikové zamestnanie/koníček?',
     ],
   },
@@ -115,7 +127,6 @@ const CATEGORIES = {
     questions: [
       'Máte domáce zvieratá alebo deti, ktoré by mohli spôsobiť škodu tretej osobe?',
       'Venujete sa športu alebo aktivitám s vyšším rizikom škody?',
-      'Vlastníte nehnuteľnosť, ktorú prenajímate?',
       'Mali ste v minulosti škodovú udalosť, za ktorú ste zodpovedali?',
     ],
   },
@@ -129,6 +140,8 @@ const CATEGORIES = {
       'Mali ste v posledných rokoch nejakú škodovú udalosť?',
     ],
   },
+  // TODO: presunúť/zrušiť, keď pribudne krok "Ciele do budúcnosti" (II./III.
+  // pilier, investície) medzi Kalkulačku poistného krytia a Checklist.
   dochodok: {
     label: 'Dôchodok a investície', sub: 'Dlhodobé sporenie', tile: 'D',
     questions: [
@@ -151,9 +164,11 @@ const CATEGORIES = {
   },
 };
 
+const TOOL_NAME = 'tahak-co-pytat-od-klienta';
+
 const state = {
-  category: 'nova',
-  checked: {},
+  category: 'zivotne',
+  answers: {},
   clientName: '',
 };
 
@@ -173,15 +188,14 @@ function renderCategories(){
 
 function renderChecklist(){
   const cat = CATEGORIES[state.category];
-  const checkedSet = state.checked[state.category] || {};
+  const answers = state.answers[state.category] || {};
   $('checklist').innerHTML = '<div style="font-weight:700; font-size:15px; color:#20242b; margin-bottom:14px;">'
     + cat.label + '</div>'
     + cat.questions.map(function(q, i){
-        const isChecked = !!checkedSet[i];
-        return '<label style="display:flex; align-items:flex-start; gap:10px; padding:9px 0; border-bottom:1px solid #eef0f3; cursor:pointer;">'
-          + '<input type="checkbox" data-q="'+i+'" '+(isChecked?'checked':'')+' style="margin-top:3px; flex-shrink:0; width:16px; height:16px;">'
-          + '<span style="font-size:14px; line-height:1.5; color:'+(isChecked?'#9aa1ad':'#20242b')+'; text-decoration:'+(isChecked?'line-through':'none')+';">'+escapeHtml(q)+'</span>'
-          + '</label>';
+        return '<div class="tq-row">'
+          + '<div class="tq-question">'+escapeHtml(q)+'</div>'
+          + '<input type="text" class="tq-answer" data-q="'+i+'" value="'+escapeHtml(answers[i]||'')+'" placeholder="Poznámka / odpoveď…">'
+          + '</div>';
       }).join('');
 }
 
@@ -198,16 +212,17 @@ function escapeHtml(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replac
 =========================================================================== */
 function doCopy(){
   const cat = CATEGORIES[state.category];
-  const checkedSet = state.checked[state.category] || {};
+  const answers = state.answers[state.category] || {};
   const txt = cat.label + '\n\n' + cat.questions.map(function(q, i){
-    return (checkedSet[i] ? '[x] ' : '[ ] ') + q;
-  }).join('\n');
+    const a = (answers[i]||'').trim();
+    return q + (a ? '\n→ ' + a : '');
+  }).join('\n\n');
   try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
   const b=$('copyBtn'); b.textContent='Skopírované ✓'; setTimeout(function(){ b.textContent='Kopírovať zoznam'; },1600);
 }
 
 function doReset(){
-  state.checked[state.category] = {};
+  state.answers[state.category] = {};
   renderChecklist();
 }
 
@@ -216,16 +231,16 @@ function doReset(){
 =========================================================================== */
 function buildLetterHtml(){
   const cat = CATEGORIES[state.category];
-  const checkedSet = state.checked[state.category] || {};
+  const answers = state.answers[state.category] || {};
   const clientName = state.clientName.trim() || 'Klient';
   const today = new Date();
   const SK_MONTHS = ['január','február','marec','apríl','máj','jún','júl','august','september','október','november','december'];
   const dateStr = today.getDate() + '. ' + SK_MONTHS[today.getMonth()] + ' ' + today.getFullYear();
 
   const rows = cat.questions.map(function(q, i){
-    const done = !!checkedSet[i];
-    return '<div class="q-item"><span class="q-mark ' + (done?'on':'') + '">' + (done?'✓':'') + '</span>'
-      + '<span class="q-txt">' + escapeHtml(q) + '</span></div>';
+    const a = (answers[i]||'').trim();
+    return '<div class="q-item"><div class="q-txt">' + escapeHtml(q) + '</div>'
+      + '<div class="q-ans' + (a?'':' q-ans-empty') + '">' + (a?escapeHtml(a):'—') + '</div></div>';
   }).join('');
 
   const css = `
@@ -238,10 +253,10 @@ function buildLetterHtml(){
     .card-sub { text-align:center; font-size:10.5pt; color:#666; margin-bottom:5mm; }
     .meta { text-align:center; font-size:9pt; color:#8a8a8a; margin-bottom:9mm; padding-bottom:5mm; border-bottom:1pt solid #e5e5e5; }
     .cat-hd { color:#fff; background:#d97706; font-weight:bold; font-size:12pt; padding:3mm 4mm; border-radius:2mm; margin-bottom:5mm; }
-    .q-item { display:flex; align-items:flex-start; gap:6pt; padding:2.5mm 0; border-bottom:0.5pt solid #eef0f3; }
-    .q-mark { width:12pt; height:12pt; flex-shrink:0; border:1pt solid #999; border-radius:2pt; text-align:center; font-size:9pt; line-height:11pt; color:#059669; }
-    .q-mark.on { border-color:#059669; background:#ecfdf5; font-weight:bold; }
-    .q-txt { font-size:10.5pt; }
+    .q-item { padding:3mm 0; border-bottom:0.5pt solid #eef0f3; }
+    .q-txt { font-size:10.5pt; margin-bottom:1.5mm; }
+    .q-ans { font-size:10.5pt; font-weight:bold; color:#059669; }
+    .q-ans-empty { font-weight:normal; color:#b0aca2; }
     @page{ margin:20mm 20mm 20mm 20mm; }
   `;
 
@@ -283,7 +298,8 @@ function doPDF(){
     document.body.appendChild(a); a.click();
     setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
     btn.textContent = orig; btn.disabled = false;
-    logDocument('tahak-co-pytat-od-klienta', state.clientName.trim() || 'Klient', state, undefined);
+    logDocument(TOOL_NAME, state.clientName.trim() || 'Klient', state, undefined);
+    loadMyDocuments();
   })
   .catch(function(e){
     console.error(e);
@@ -299,12 +315,13 @@ function bind(){
   document.addEventListener('click', function(e){
     const c=e.target.closest('[data-cat]'); if(c){ state.category=c.dataset.cat; renderCategories(); render(); return; }
   });
-  document.addEventListener('change', function(e){
-    if(e.target.matches('input[type="checkbox"][data-q]')){
+  // Priebežné písanie do poznámky sa neprekresľuje (stratil by sa focus/kurzor) —
+  // stačí uložiť do state, vstupné pole už zobrazuje to, čo poradca píše.
+  document.addEventListener('input', function(e){
+    if(e.target.matches('.tq-answer[data-q]')){
       const i = +e.target.dataset.q;
-      if(!state.checked[state.category]) state.checked[state.category] = {};
-      state.checked[state.category][i] = e.target.checked;
-      renderChecklist();
+      if(!state.answers[state.category]) state.answers[state.category] = {};
+      state.answers[state.category][i] = e.target.value;
     }
   });
   $('contactName').addEventListener('input', function(e){ state.clientName = e.target.value; });
@@ -314,10 +331,48 @@ function bind(){
 }
 
 /* ===========================================================================
+   MOJE VYGENEROVANÉ DOKUMENTY (poradcovský pohľad — návrat k poznámkam
+   zo stretnutia) — zdieľané loadHistoryList/logDocument/escapeHtml cez
+   ../assets/advisor-panel.js, rovnaký vzor ako financna-medzera/wizard-poistenie.
+   Žiadna nová databáza — len história vlastných vygenerovaných PDF poradcu.
+=========================================================================== */
+function loadMyDocuments(){
+  loadHistoryList({
+    endpoint: '../api/my-documents.php',
+    tool: TOOL_NAME,
+    cardId: 'myDocumentsCard',
+    listId: 'myDocumentsList',
+    rowHtml: function(row){
+      const date = (row.generated_at || '').slice(0,10);
+      return '<div class="item">'
+        + '<div class="item-top">'
+        + '<div class="item-body">'
+          + '<div style="font-weight:700;">'+escapeHtml(row.client_label)+'</div>'
+          + '<div style="font-size:12px;color:var(--muted);">'+date+'</div>'
+        + '</div>'
+        + '<button type="button" class="add-item" data-open-id="'+row.id+'">Otvoriť</button>'
+        + '</div></div>';
+    },
+    onOpen: openHistoryRow,
+  });
+}
+
+function openHistoryRow(row){
+  if(!row || !row.form_data) return;
+  Object.assign(state, JSON.parse(row.form_data));
+  $('contactName').value = state.clientName;
+  renderCategories();
+  render();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* ===========================================================================
    ŠTART
 =========================================================================== */
 (function init(){
   renderCategories(); bind(); render();
+  loadMyDocuments();
+  autoOpenSavedDocument(function(d){ Object.assign(state, d); }, doPDF);
 })();
 </script>
 

@@ -65,7 +65,7 @@ $TOOL_CATEGORIES = [
         ['href' => 'checklist-analyza/', 'name' => 'Checklist – výstup z analýzy', 'ico' => 'check', 'color' => 'emerald',
          'desc' => 'Kontrolný zoznam krokov a odporúčaní, s termínmi a zodpovednosťou. Dá sa predvyplniť z Kalkulačky.'],
         ['href' => 'tahak-co-pytat-od-klienta/', 'name' => 'Ťahák „Čo pýtať od klienta“', 'ico' => 'check', 'color' => 'amber',
-         'desc' => 'Živý zoznam otázok podľa situácie klienta na odškrtávanie počas stretnutia.'],
+         'desc' => 'Upisovacie otázky ku konkrétnej ponuke (majetok, zodpovednosť, auto...) so zápisom odpovedí počas stretnutia.'],
         ['href' => 'pyramida-istoty/', 'name' => 'Interaktívna Pyramída istoty', 'ico' => 'pyramid', 'color' => 'sky',
          'desc' => 'V akom poradí budovať finančnú istotu — ochrana, rezerva, ciele, zhodnocovanie. Klikacia pyramída s kontrolným zoznamom pre každú vrstvu.'],
         ['href' => 'latte-faktor/', 'name' => 'Latte Faktor', 'ico' => 'coffee', 'color' => 'rose',
