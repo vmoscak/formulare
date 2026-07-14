@@ -366,7 +366,7 @@ if ($isOwner) {
   <?php else: ?>
   <div class="card ob-next-card ob-next-done">
     <span class="ob-next-title">🎉 Celá cesta nováčika je dokončená — gratulujeme!</span>
-    <button type="button" class="pillbtn solid" id="certBtn" data-advisor-name="<?= h($me['name']) ?>">Stiahnuť certifikát</button>
+    <button type="button" class="pillbtn solid" id="certBtn" data-advisor-name="<?= h($me['name']) ?>" data-total-steps="<?= (int)$totalSteps ?>" data-phase-count="<?= count($phases) ?>">Stiahnuť certifikát</button>
   </div>
   <?php endif; ?>
   <?php endif; ?>
@@ -531,40 +531,64 @@ function obConfetti() {
 
 function obEscapeHtml(x) { return String(x == null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
-function obBuildCertificateHtml(name) {
+function obBuildCertificateHtml(name, totalSteps, phaseCount) {
   var dateStr = new Date().toLocaleDateString('sk-SK', { day: 'numeric', month: 'long', year: 'numeric' });
   var css = "\n"
     + "@font-face { font-family:'DejaVu Sans'; src:url('vendor/dompdf/lib/fonts/DejaVuSans.ttf'); }\n"
     + "@font-face { font-family:'DejaVu Sans'; font-weight:bold; src:url('vendor/dompdf/lib/fonts/DejaVuSans-Bold.ttf'); }\n"
+    + "@font-face { font-family:'DejaVu Serif'; src:url('vendor/dompdf/lib/fonts/DejaVuSerif.ttf'); }\n"
+    + "@font-face { font-family:'DejaVu Serif'; font-weight:bold; src:url('vendor/dompdf/lib/fonts/DejaVuSerif-Bold.ttf'); }\n"
+    + "@font-face { font-family:'DejaVu Serif'; font-style:italic; src:url('vendor/dompdf/lib/fonts/DejaVuSerif-Italic.ttf'); }\n"
     + "* { box-sizing:border-box; }\n"
     + "body { margin:0; padding:0; font-family:'DejaVu Sans',sans-serif; color:#20242b; background:#fff; }\n"
-    + ".cert-border { border:2pt solid #4f46e5; border-radius:4mm; padding:20mm 16mm; text-align:center; margin-top:10mm; }\n"
-    + ".cert-kicker { font-size:10.5pt; letter-spacing:2pt; text-transform:uppercase; color:#4f46e5; font-weight:bold; margin-bottom:8mm; }\n"
-    + ".cert-title { font-size:22pt; font-weight:bold; margin-bottom:10mm; }\n"
-    + ".cert-sub { font-size:11pt; color:#555; margin-bottom:12mm; }\n"
-    + ".cert-name { font-size:20pt; font-weight:bold; color:#4f46e5; margin-bottom:12mm; padding-bottom:6mm; border-bottom:1pt solid #e5e5e5; display:inline-block; }\n"
-    + ".cert-body { font-size:11pt; line-height:1.7; color:#333; margin-bottom:16mm; padding:0 6mm; }\n"
-    + ".cert-date { font-size:10pt; color:#888; }\n"
-    + "@page{ margin:20mm; }\n";
+    + ".cert-outer { border:0.75pt solid #c7d2fe; border-radius:3mm; padding:3mm; margin-top:8mm; }\n"
+    + ".cert-border { border:1.5pt solid #4f46e5; border-radius:2mm; padding:16mm 14mm 14mm; text-align:center; }\n"
+    + ".cert-badge { width:20mm; height:20mm; line-height:20mm; border-radius:50%; background:#4f46e5; border:2pt solid #c7d2fe; margin:0 auto 6mm; text-align:center; }\n"
+    + ".cert-badge span { color:#fff; font-size:15pt; font-weight:bold; }\n"
+    + ".cert-kicker { font-size:9.5pt; letter-spacing:2.5pt; text-transform:uppercase; color:#4f46e5; font-weight:bold; margin-bottom:5mm; }\n"
+    + ".cert-title { font-family:'DejaVu Serif',serif; font-size:26pt; font-weight:bold; color:#1f2333; margin-bottom:6mm; }\n"
+    + ".cert-ornament { width:50mm; margin:0 auto 8mm; border-collapse:collapse; }\n"
+    + ".cert-ornament td { padding:0; }\n"
+    + ".cert-ornament .cert-line { height:0.75pt; background:#c7d2fe; }\n"
+    + ".cert-ornament .cert-dot { width:8pt; text-align:center; }\n"
+    + ".cert-ornament .cert-dot span { display:inline-block; width:4pt; height:4pt; border-radius:50%; background:#4f46e5; }\n"
+    + ".cert-sub { font-family:'DejaVu Serif',serif; font-style:italic; font-size:11.5pt; color:#666; margin-bottom:7mm; }\n"
+    + ".cert-name { font-family:'DejaVu Serif',serif; font-size:21pt; font-weight:bold; color:#4f46e5; margin-bottom:8mm; }\n"
+    + ".cert-body { font-size:11pt; line-height:1.7; color:#3a3f4a; margin:0 auto 8mm; padding:0 6mm; max-width:130mm; }\n"
+    + ".cert-stats { font-size:10pt; color:#4f46e5; font-weight:bold; letter-spacing:.3pt; margin-bottom:14mm; }\n"
+    + ".cert-footer { width:100%; margin-top:4mm; border-collapse:collapse; }\n"
+    + ".cert-footer td { width:50%; text-align:center; vertical-align:top; padding:0; }\n"
+    + ".cert-footer-line { width:42mm; height:0.75pt; background:#d6dae3; margin:0 auto 3mm; }\n"
+    + ".cert-footer-label { font-size:9pt; color:#8a8f9c; }\n"
+    + ".cert-footer-value { font-size:10pt; color:#333; font-weight:bold; margin-top:1mm; }\n"
+    + "@page{ margin:18mm; }\n";
   return '<!DOCTYPE html><html lang="sk"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
     + '<title>Certifikát — Cesta nováčika</title><style>' + css + '</style></head><body>'
-    + '<div class="cert-border">'
+    + '<div class="cert-outer"><div class="cert-border">'
+    + '<div class="cert-badge"><span>&#10003;</span></div>'
     + '<div class="cert-kicker">Certifikát o dokončení</div>'
     + '<div class="cert-title">Cesta nováčika</div>'
+    + '<table class="cert-ornament"><tr><td class="cert-line"></td><td class="cert-dot"><span></span></td><td class="cert-line"></td></tr></table>'
     + '<div class="cert-sub">Tento certifikát potvrdzuje, že</div>'
     + '<div class="cert-name">' + obEscapeHtml(name) + '</div>'
     + '<div class="cert-body">úspešne absolvoval(a) celý adaptačný program v UNIQA — od podpisu zmluvy, cez všetky vzdelávacie bloky, až po maturitnú skúšku.</div>'
-    + '<div class="cert-date">' + dateStr + '</div>'
-    + '</div></body></html>';
+    + '<div class="cert-stats">' + (totalSteps || 0) + ' krokov &middot; ' + (phaseCount || 0) + ' fáz osnovy</div>'
+    + '<table class="cert-footer"><tr>'
+    + '<td><div class="cert-footer-line"></div><div class="cert-footer-label">Dátum dokončenia</div><div class="cert-footer-value">' + dateStr + '</div></td>'
+    + '<td><div class="cert-footer-line"></div><div class="cert-footer-label">Program</div><div class="cert-footer-value">Onboarding VFA</div></td>'
+    + '</tr></table>'
+    + '</div></div></body></html>';
 }
 
 function obDoCertificate() {
   var btn = document.getElementById('certBtn');
   if (!btn) return;
   var name = btn.dataset.advisorName;
+  var totalSteps = +btn.dataset.totalSteps || 0;
+  var phaseCount = +btn.dataset.phaseCount || 0;
   var orig = btn.textContent;
   btn.textContent = 'Generujem…'; btn.disabled = true;
-  var html = obBuildCertificateHtml(name);
+  var html = obBuildCertificateHtml(name, totalSteps, phaseCount);
   fetch('/pdf.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
