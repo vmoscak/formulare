@@ -170,6 +170,17 @@ toho, čo sa rozhodneme spraviť.
   Meno, kontakt, kto koho oslovil, stav (nový/oslovený/záujem/
   stretnutie/pripojil sa/odmietol/stratený kontakt), poznámka a dátum
   posledného kontaktu; filter podľa stavu. Len pre teba.
+- [x] **„Bancassurance Killer“** (poistenie úveru: banka vs. UNIQA) —
+  porovnanie celkových nákladov bankového poistenia úveru oproti
+  samostatnej poistke UNIQA za celú dobu úveru (obe ceny zadáva
+  poradca, appka len počíta rozdiel), plus zoznam výhod samostatnej
+  poistky mimo ceny (neviazaná na úver, neklesajúca poistná suma,
+  plnenie priamo klientovi).
+- [x] **„Obchádzač notára“** (dedičské konanie a zmrazené účty) —
+  koľko okamžitej hotovosti rodina potrebuje počas dedičského
+  konania (mesačné výdavky × dĺžka konania + náklady na pohreb),
+  porovnané s existujúcim poistným krytím, ktoré ide priamo
+  oprávnenej osobe mimo dedičského konania.
 
 ---
 
@@ -185,9 +196,6 @@ toho, čo sa rozhodneme spraviť.
   oblastí samostatne)
 - [ ] **Porovnávač „Čo sa stane, ak...“** (scenáre životných rizík)
 - [ ] **Kalkulačka „Štart do života pre dieťa“**
-- [ ] **„Bancassurance Killer“** (bankové poistenie úveru vs. UNIQA)
-- [ ] **„Obchádzač notára“** (kalkulačka dedičského konania a zmrazených účtov) —
-  vhodné pre bonitnejších klientov, seniorov, predaj III. piliera/ŽP/investícií
 - [ ] **„Dôchodkový Tacho-meter“** (presný vek odchodu do dôchodku) — odložené,
   čaká sa na presnú tabuľku dôchodkového veku podľa ročníka od Sociálnej poisťovne
 - [ ] **„Crash Test“ nehnuteľnosti** (indexačný radar)

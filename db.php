@@ -66,6 +66,8 @@ function toolLabel(string $slug): string {
         'oplati-sa-refinancovat' => 'Oplatí sa mi refinancovať?',
         'poistny-semafor' => 'Poistný semafor',
         'simulator-kratenia-plnenia' => 'Simulátor krátenia plnenia',
+        'poistenie-uveru-banka-vs-uniqa' => 'Poistenie úveru: banka vs. UNIQA',
+        'obchadzac-notara' => 'Obchádzač notára',
     ];
     return $labels[$slug] ?? $slug;
 }

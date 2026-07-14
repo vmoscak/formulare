@@ -83,6 +83,10 @@ $TOOL_CATEGORIES = [
          'desc' => 'Rýchly vizuálny audit krytia na 1 klik – červená/oranžová/zelená pre úmrtie, invaliditu, kritické choroby, trvalé následky, PN a rezervu.'],
         ['href' => 'simulator-kratenia-plnenia/', 'name' => 'Simulátor krátenia plnenia', 'ico' => 'percent', 'color' => 'rose',
          'desc' => 'Koľko reálne dostane klient pri škode, ak je majetok podpoistený – princíp pomerného plnenia, so správnou sumou vedľa seba na porovnanie.'],
+        ['href' => 'poistenie-uveru-banka-vs-uniqa/', 'name' => 'Poistenie úveru: banka vs. UNIQA', 'ico' => 'swap', 'color' => 'indigo',
+         'desc' => 'Porovnanie celkových nákladov bankového poistenia úveru oproti samostatnej poistke UNIQA – aj zoznam výhod mimo ceny.'],
+        ['href' => 'obchadzac-notara/', 'name' => 'Obchádzač notára', 'ico' => 'shield', 'color' => 'violet',
+         'desc' => 'Koľko hotovosti rodina potrebuje počas dedičského konania, kým sú účty zmrazené – porovnanie s rýchlym poistným plnením mimo dedičstva.'],
     ]],
     ['title' => 'Zmluvy a dokumentácia', 'group' => 'formulare', 'tools' => [
         ['href' => 'splnomocnenie/', 'name' => 'Všeobecné splnomocnenie', 'ico' => 'user-plus', 'color' => 'indigo',
