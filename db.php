@@ -771,15 +771,49 @@ function dbInitSqlite(PDO $pdo): void {
  */
 function dbOnboardingSeedSteps(): array {
     return [
-        ['phase' => 'Deň 1', 'title' => 'Prehľad appky', 'description' => 'Prejdi si tri hlavné záložky (Nástroje / Formuláre / Pomôcky) a pozri sa do ľavej lišty — nemusíš si nič zapamätať, len vedieť, kde čo nájsť.', 'link_url' => '/nastroje.php'],
-        ['phase' => 'Deň 1', 'title' => 'Znalostná báza', 'description' => 'Prelistuj si interné FAQ a rýchle texty — nemusíš si nič pamätať naspamäť, appka to má pripravené na kopírovanie.', 'link_url' => '/znalostna-baza.php'],
-        ['phase' => 'Týždeň 1', 'title' => 'Vyskúšaj Kalkulačku poistného krytia', 'description' => 'Prejdi si nanečisto celý formulár aj s výstupom (checklist, PDF) — na testovacích číslach, nie na reálnom klientovi.', 'link_url' => '/financna-medzera/'],
-        ['phase' => 'Týždeň 1', 'title' => 'Precvič si Vybavovača námietok', 'description' => 'Prejdi si typické námietky klientov („je to drahé“, „musím si to premyslieť“...) a odporúčané reakcie.', 'link_url' => '/vybavovac-namietok/'],
-        ['phase' => 'Týždeň 1', 'title' => 'Argument Builder', 'description' => 'Vyskúšaj si poskladať argumentáciu pre 2-3 rôzne typy klientov, nech vidíš, ako appka odporúča postupovať.', 'link_url' => '/argument-builder/'],
-        ['phase' => 'Týždeň 1', 'title' => 'Prejdi si Pyramídu istoty', 'description' => 'Pochop poradie, v akom sa buduje finančná istota klienta — ochrana, rezerva, ciele, zhodnocovanie.', 'link_url' => '/pyramida-istoty/'],
-        ['phase' => 'Mesiac 1', 'title' => 'Prvé skutočné stretnutie s klientom', 'description' => 'Ideálne so skúsenejším kolegom vedľa seba (shadowing) alebo aspoň s jeho spätnou väzbou hneď po stretnutí.', 'link_url' => null],
-        ['phase' => 'Mesiac 1', 'title' => 'Prvých 30 dní po podpise', 'description' => 'Over si, ako appka pripraví kartičku pre klienta hneď po podpise zmluvy — čo nasleduje, kedy začína platiť krytie.', 'link_url' => '/prvych-30-dni/'],
-        ['phase' => 'Mesiac 1', 'title' => 'Skús Simulátor krátenia plnenia', 'description' => 'Argumentačný nástroj, ktorý sa oplatí mať poruke pri rozhovore o výške krytia majetku.', 'link_url' => '/simulator-kratenia-plnenia/'],
-        ['phase' => 'Mesiac 1', 'title' => 'Skontroluj si Moje dokumenty', 'description' => 'Pozri sa, čo všetko si za prvý mesiac vygeneroval — dobrý spôsob, ako vidieť vlastný pokrok.', 'link_url' => '/moje-dokumenty.php'],
+        // Prevzaté a skrátené z oficiálnej "Karty výkonnosti a rozvoja VFA 2025"
+        // (UNIQA onboarding VFA) — len kroky, ktoré si nováčik sám odškrtáva.
+        // Vynechané: rozpis učiva jednotlivých kurzov (samostatná príloha) a
+        // tabuľka bodov/provízií na 24 mesiacov (iný účel, nie checklist).
+        ['phase' => 'Pred nástupom', 'title' => 'Podpis zmluvy o obchodnom zastúpení', 'description' => '', 'link_url' => null],
+        ['phase' => 'Pred nástupom', 'title' => 'Registrácia e-learning UNIQA', 'description' => '', 'link_url' => null],
+        ['phase' => 'Pred nástupom', 'title' => 'IT systémy — pridelenie prístupových práv', 'description' => 'Albert, UNIHUB, HCL.', 'link_url' => null],
+        ['phase' => 'Pred nástupom', 'title' => 'Registrácia e-learning SLASPO', 'description' => 'Podľa podpísanej zmluvy o OZ a návodu na e-learning.', 'link_url' => null],
+        ['phase' => 'Pred nástupom', 'title' => 'OFV/SLASPO štúdium pre sektory', 'description' => 'Poistenie a zaistenie — pred vstupným školením. SDS, DDS a Kapitálový trh (KT) — do konca 0. mesiaca.', 'link_url' => null],
+        ['phase' => 'Pred nástupom', 'title' => 'Povinné kurzy UNIQA Studio (e-learning)', 'description' => 'Ochrana osobných údajov (GDPR), Compliance, Fraud management, Informačná bezpečnosť.', 'link_url' => null],
+        ['phase' => 'Pred nástupom', 'title' => 'UNIHUB — ochutnávka', 'description' => 'Predstavenie systému na dojednávanie a servis poistných zmlúv klienta.', 'link_url' => null],
+
+        ['phase' => '0. mesiac', 'title' => 'Prvé kroky v UNIQA — úvodné školenie', 'description' => 'Poisťovacia abeceda, informácie o spoločnosti, firemná kultúra, systém vzdelávania, moja vízia v UNIQA.', 'link_url' => null],
+        ['phase' => '0. mesiac', 'title' => 'Štart I. Životné poistenie — povinné samoštúdium pred štartom', 'description' => 'Život&Radosť.', 'link_url' => null],
+        ['phase' => '0. mesiac', 'title' => 'Štart I. Životné poistenie — aktívna účasť a samoštúdium po štarte', 'description' => 'Prezenčne, 1 deň. Život&Radosť a pripoistenia — parametre, výhody, práca v UNIHUB.', 'link_url' => null],
+        ['phase' => '0. mesiac', 'title' => 'IT systémy — školenie a nastavenie', 'description' => 'UNIHUB, Albert, UNIQA Studio, UNIPOINT, HCL. Tréning kalkulácie ponúk.', 'link_url' => null],
+        ['phase' => '0. mesiac', 'title' => 'Štart II. Autá — samoštúdium a príprava ponuky pred kurzom', 'description' => '', 'link_url' => null],
+        ['phase' => '0. mesiac', 'title' => 'Štart II. Autá — aktívna účasť a samoštúdium po štarte', 'description' => 'Online. PZP a KASKO — technické parametre a spôsob dojednania.', 'link_url' => null],
+        ['phase' => '0. mesiac', 'title' => 'Databáza klientov — min. 50 kontaktov v CRM', 'description' => '', 'link_url' => null],
+
+        ['phase' => 'I. mesiac', 'title' => 'Štart III. Úvod do predaja — aktívna účasť a samoštúdium', 'description' => 'Prezenčne, 1 deň. Podmienka: min. 300 bodov za školenia. Prehľad produktov, filozofia životného poistenia, telefonovanie a zvládanie námietok, analýza potrieb klienta.', 'link_url' => null],
+        ['phase' => 'I. mesiac', 'title' => 'Štart IV. On-line majetok — samoštúdium, účasť a samoštúdium po štarte', 'description' => 'Online, 1 deň. Domov a bezpečie — technické parametre, terminológia, kalkulácia ponuky.', 'link_url' => null],
+        ['phase' => 'I. mesiac', 'title' => 'Štart V. Poistenie osôb — samoštúdium, účasť a samoštúdium po štarte', 'description' => 'Prezenčne/online, 1 deň. Cestovné poistenie, pohrebné náklady, Uniqáčik.', 'link_url' => null],
+        ['phase' => 'I. mesiac', 'title' => 'Štart VI. Dôchodky — samoštúdium, účasť a samoštúdium po štarte', 'description' => 'Prezenčne, 1 deň. Starobné dôchodkové sporenie — SDS, DDS.', 'link_url' => null],
+
+        ['phase' => 'II. mesiac', 'title' => 'UNIPOINT — povinné štúdium pred Blokom Majetkové poistenie', 'description' => 'Domov a bezpečie.', 'link_url' => null],
+        ['phase' => 'II. mesiac', 'title' => 'Blok I. Majetkové poistenie — splniť podmienky pred blokom', 'description' => 'Účasť na Štarte IV, produkcia 1500 Pb, min. 600 bodov za školenia.', 'link_url' => null],
+        ['phase' => 'II. mesiac', 'title' => 'Blok I. Majetkové poistenie — aktívna účasť a samoštúdium po bloku', 'description' => 'Prezenčne, 3 dni. Filozofia majetkového poistenia, technické parametre D&B, návrh správnych poistných súm, práca v UNIPOINT a CRM.', 'link_url' => null],
+
+        ['phase' => 'III. mesiac', 'title' => 'UNIPOINT — príprava pred Blokom II', 'description' => 'Životné poistenie, SDS, Tempo — opakovanie produktov a základné informácie.', 'link_url' => null],
+        ['phase' => 'III. mesiac', 'title' => 'Blok II. Životné poistenie, SDS, PF — splniť podmienky pred blokom', 'description' => 'Absolvovanie všetkých školení z 0.-2. mesiaca, zopakovanie nastavenia poistných súm v ŽP, produkcia 3000 Pb.', 'link_url' => null],
+        ['phase' => 'III. mesiac', 'title' => 'Blok II. Životné poistenie — aktívna účasť a samoštúdium po bloku', 'description' => 'Prezenčne, 3 dni. Filozofia a zmysel životného poistenia, finančná matematika, nastavenie poistných súm v UNIPOINT, SDS, Tempo, investovanie.', 'link_url' => null],
+
+        ['phase' => 'IV. mesiac', 'title' => 'Blok III. Predaj — splniť podmienky pred blokom', 'description' => 'Absolvovanie všetkých školení z 0.-3. mesiaca, zopakovanie produktov životného a neživotného poistenia, produkcia 4000 Pb.', 'link_url' => null],
+        ['phase' => 'IV. mesiac', 'title' => 'Blok III. Predaj — aktívna účasť a samoštúdium', 'description' => 'Prezenčne, 3 dni. Vstup do sveta klienta, analýza potrieb, efektívna argumentácia, riešenie námietok, uzatváracie techniky, príprava na maturitu.', 'link_url' => null],
+
+        ['phase' => 'V. mesiac', 'title' => 'Príprava na maturitu', 'description' => 'Štúdium produktovej časti maturity vrátane skúšobných testov.', 'link_url' => null],
+        ['phase' => 'V. mesiac', 'title' => 'Maturita', 'description' => 'Podmienka: absolvovanie všetkých školení z 0.-4. mesiaca. Overenie produktových znalostí a predajných zručností.', 'link_url' => null],
+
+        ['phase' => 'Priebežne (každý mesiac)', 'title' => 'Potenciál biznisu — min. 50 kontaktov v CRM', 'description' => '', 'link_url' => null],
+        ['phase' => 'Priebežne (každý mesiac)', 'title' => 'Telefonovanie — min. 25 denne', 'description' => '', 'link_url' => null],
+        ['phase' => 'Priebežne (každý mesiac)', 'title' => 'Stretnutia s klientom — 2-3 denne', 'description' => '', 'link_url' => null],
+        ['phase' => 'Priebežne (každý mesiac)', 'title' => 'Príprava minimálne 10 analýz', 'description' => '', 'link_url' => '/wizard-poistenie/'],
+        ['phase' => 'Priebežne (každý mesiac)', 'title' => 'Kontaktovanie klienta a analýza klientových potrieb', 'description' => 'Zisti, čo klient potrebuje, a spočítaj presné krytie.', 'link_url' => '/financna-medzera/'],
     ];
 }

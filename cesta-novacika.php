@@ -1,7 +1,9 @@
 <?php
 /**
- * Cesta nováčika — onboarding checklist pre nových poradcov v tíme (Deň 1 /
- * Týždeň 1 / Mesiac 1), s odkazmi rovno na konkrétne nástroje appky.
+ * Cesta nováčika — onboarding checklist pre nových poradcov v tíme, s odkazmi
+ * rovno na konkrétne nástroje appky. Fázy sa zobrazujú ako "cesta" (trail +
+ * prstenec postupu + odporúčaný ďalší krok), aby bolo vizuálne jasné, koľko
+ * je hotovo a kam ísť ďalej.
  *
  * Prístup: owner (spravuje osnovu, priraďuje/odoberá nováčikov, vidí
  * a upravuje všetko) ALEBO poradca, ktorému owner priradil onboarding
@@ -87,6 +89,39 @@ $totalSteps = count($steps);
 $doneCount = count($doneStepIds);
 $pct = $totalSteps > 0 ? round($doneCount / $totalSteps * 100) : 0;
 
+// Stav každej fázy ("cesta") — prvá nedokončená fáza je "current" (tam sa
+// nováčik práve nachádza), fázy pred ňou "done", fázy po nej "upcoming".
+// Slúži na trail, prstenec a odporúčaný ďalší krok nižšie.
+$phaseList = [];
+$phaseIndexByName = [];
+$idx = 0;
+$foundCurrent = false;
+foreach ($phases as $phaseName => $phaseSteps) {
+    $total = count($phaseSteps);
+    $done = 0;
+    foreach ($phaseSteps as $s) { if (in_array((int)$s['id'], $doneStepIds, true)) $done++; }
+    $complete = $total > 0 && $done === $total;
+    if (!$complete && !$foundCurrent) {
+        $status = 'current';
+        $foundCurrent = true;
+    } elseif ($complete) {
+        $status = 'done';
+    } else {
+        $status = 'upcoming';
+    }
+    $phaseList[$phaseName] = ['idx' => $idx, 'total' => $total, 'done' => $done, 'status' => $status];
+    $phaseIndexByName[$phaseName] = $idx;
+    if ($status === 'current') { $currentPhaseName = $phaseName; }
+    $idx++;
+}
+$currentPhaseName = $currentPhaseName ?? null;
+
+// Prvý neodškrtnutý krok naprieč celou osnovou — "Ďalší krok" callout.
+$nextStep = null;
+foreach ($steps as $s) {
+    if (!in_array((int)$s['id'], $doneStepIds, true)) { $nextStep = $s; break; }
+}
+
 // Pre ownera: zoznam ostatných aktívnych poradcov (na priradenie/odobratie)
 // spolu s ich vlastným postupom, ak už majú onboarding spustený.
 $teamAdvisors = [];
@@ -114,14 +149,56 @@ if ($isOwner) {
 <script src="/assets/theme-init.js"></script>
 <link rel="stylesheet" href="/assets/panel.css?v=27">
 <style>
-  .ob-progress-card{display:flex; align-items:center; gap:18px;}
-  .ob-progress-num{font-size:26px; font-weight:800; color:var(--accent); flex-shrink:0;}
-  .ob-progress-bar{flex:1; height:10px; border-radius:999px; background:var(--desk); overflow:hidden;}
-  .ob-progress-fill{height:100%; background:var(--accent); border-radius:999px; transition:width .3s ease;}
+  .ob-progress-card{display:flex; align-items:center; gap:20px; flex-wrap:wrap;}
+  .ob-ring{--pct:0; width:92px; height:92px; border-radius:50%; flex-shrink:0; position:relative;
+    background:conic-gradient(var(--accent) calc(var(--pct) * 3.6deg), var(--desk) 0deg);}
+  .ob-ring::after{content:''; position:absolute; inset:8px; border-radius:50%; background:var(--paper);}
+  .ob-ring-label{position:absolute; inset:8px; border-radius:50%; z-index:1; display:flex; flex-direction:column; align-items:center; justify-content:center;}
+  .ob-ring-pct{font-size:19px; font-weight:800; color:var(--ink); line-height:1.1;}
+  .ob-ring-sub{font-size:9.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-top:1px;}
+  .ob-progress-info{flex:1; min-width:180px;}
+  .ob-progress-info h4{margin:0 0 4px; font-size:15px; color:var(--ink);}
+  .ob-progress-info p{margin:0; font-size:12.5px; color:var(--muted);}
+
+  .ob-next-card{display:flex; align-items:center; gap:14px; background:var(--accent-soft); border:1px solid var(--accent-line); flex-wrap:wrap;}
+  .ob-next-body{flex:1; min-width:160px;}
+  .ob-next-label{font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--accent-ink);}
+  .ob-next-title{font-size:14.5px; font-weight:600; color:var(--ink); margin-top:3px;}
+  .ob-next-done{display:flex; align-items:center; gap:10px;}
+  .ob-next-done .ob-next-title{color:var(--good);}
+
+  .ob-trail{display:flex; align-items:center; gap:0; overflow-x:auto; padding:4px 2px 12px; margin:-4px 0 4px;}
+  .ob-trail-item{display:flex; align-items:center; gap:7px; flex-shrink:0; cursor:pointer; padding:6px 10px; border-radius:999px; border:none; background:none; font:inherit;}
+  .ob-trail-item:hover{background:var(--desk);}
+  .ob-trail-dot{width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10.5px; font-weight:700; flex-shrink:0;}
+  .ob-trail-name{font-size:12px; font-weight:600; white-space:nowrap;}
+  .ob-trail-line{width:20px; height:2px; background:var(--border); flex-shrink:0;}
+  .ob-trail-item.status-done .ob-trail-dot{background:var(--good); color:#fff;}
+  .ob-trail-item.status-done .ob-trail-name{color:var(--muted);}
+  .ob-trail-item.status-current .ob-trail-dot{background:var(--accent); color:#fff; box-shadow:0 0 0 4px var(--accent-soft);}
+  .ob-trail-item.status-current .ob-trail-name{color:var(--ink);}
+  .ob-trail-item.status-upcoming .ob-trail-dot{background:var(--desk); color:var(--muted); border:1px solid var(--border);}
+  .ob-trail-item.status-upcoming .ob-trail-name{color:var(--muted);}
+
+  .ob-phase{border:none; margin:0 0 4px;}
+  .ob-phase-summary{list-style:none; cursor:pointer; display:flex; align-items:center; gap:10px; padding:11px 8px; border-radius:var(--radius-md); user-select:none;}
+  .ob-phase-summary::-webkit-details-marker{display:none;}
+  .ob-phase-summary::marker{content:'';}
+  .ob-phase-summary:hover{background:var(--desk);}
+  .ob-phase-badge{width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0;}
+  .ob-phase.status-done .ob-phase-badge{background:var(--good-soft); color:var(--good);}
+  .ob-phase.status-current .ob-phase-badge{background:var(--accent); color:#fff;}
+  .ob-phase.status-upcoming .ob-phase-badge{background:var(--desk); color:var(--muted); border:1px solid var(--border);}
+  .ob-phase-name{flex:1; font-size:13px; font-weight:700; color:var(--ink); text-transform:uppercase; letter-spacing:.03em;}
+  .ob-phase-count{font-size:12px; color:var(--muted); font-weight:600; flex-shrink:0;}
+  .ob-phase.status-upcoming .ob-phase-summary{opacity:.72;}
+  .ob-phase-body{padding:0 8px 8px 42px;}
+
   .ob-phase-title{font-size:13px; font-weight:700; color:var(--ink); text-transform:uppercase; letter-spacing:.04em; margin:22px 0 10px;}
   .ob-phase-title:first-child{margin-top:0;}
-  .ob-step{display:flex; align-items:flex-start; gap:12px; padding:12px 4px; border-bottom:1px solid var(--border);}
+  .ob-step{display:flex; align-items:flex-start; gap:12px; padding:12px 4px; border-bottom:1px solid var(--border); transition:background .25s ease;}
   .ob-step:last-child{border-bottom:none;}
+  .ob-step.ob-highlight{background:var(--accent-soft); border-radius:var(--radius-md);}
   .ob-step input[type=checkbox]{width:19px; height:19px; margin-top:1px; accent-color:var(--accent); cursor:pointer; flex-shrink:0;}
   .ob-step-body{flex:1; min-width:0;}
   .ob-step-title{font-size:14px; font-weight:600; color:var(--ink);}
@@ -152,12 +229,42 @@ if ($isOwner) {
 <main class="content">
 
   <div class="card ob-progress-card">
-    <div class="ob-progress-num"><?= $doneCount ?>/<?= $totalSteps ?></div>
-    <div style="flex:1;">
-      <div class="ob-progress-bar"><div class="ob-progress-fill" id="obFill" style="width:<?= $pct ?>%;"></div></div>
-      <div style="font-size:12px; color:var(--muted); margin-top:6px;" id="obPctLabel"><?= $pct ?> % dokončené</div>
+    <div class="ob-ring" id="obRing" style="--pct:<?= (int)$pct ?>;">
+      <div class="ob-ring-label">
+        <div class="ob-ring-pct" id="obRingPct"><?= (int)$pct ?>%</div>
+        <div class="ob-ring-sub">hotovo</div>
+      </div>
+    </div>
+    <div class="ob-progress-info">
+      <h4 id="obProgressHeading"><?= $doneCount ?> z <?= $totalSteps ?> krokov dokončených</h4>
+      <p><?php if ($currentPhaseName !== null): ?>Aktuálna fáza: <?= h($currentPhaseName) ?><?php elseif ($totalSteps > 0): ?>Celá osnova je dokončená — skvelá práca!<?php else: ?>Osnova zatiaľ nie je pripravená.<?php endif; ?></p>
     </div>
   </div>
+
+  <?php if ($totalSteps > 0): ?>
+  <div class="card ob-trail">
+    <?php $i = 0; foreach ($phaseList as $phaseName => $st): if ($i > 0): ?><span class="ob-trail-line"></span><?php endif; ?>
+    <button type="button" class="ob-trail-item status-<?= $st['status'] ?>" onclick="obJumpPhase(<?= $st['idx'] ?>)">
+      <span class="ob-trail-dot"><?= $st['status'] === 'done' ? '✓' : ($st['idx'] + 1) ?></span>
+      <span class="ob-trail-name"><?= h($phaseName) ?></span>
+    </button>
+    <?php $i++; endforeach; ?>
+  </div>
+
+  <?php if ($nextStep): $npIdx = $phaseIndexByName[$nextStep['phase']]; ?>
+  <div class="card ob-next-card">
+    <div class="ob-next-body">
+      <div class="ob-next-label">Ďalší krok</div>
+      <div class="ob-next-title"><?= h($nextStep['title']) ?></div>
+    </div>
+    <button type="button" class="pillbtn solid" onclick="obJumpStep(<?= $npIdx ?>, <?= (int)$nextStep['id'] ?>)">Pokračovať →</button>
+  </div>
+  <?php else: ?>
+  <div class="card ob-next-card ob-next-done">
+    <span class="ob-next-title">🎉 Celá cesta nováčika je dokončená — gratulujeme!</span>
+  </div>
+  <?php endif; ?>
+  <?php endif; ?>
 
   <?php if ($isOwner): ?>
   <div class="card">
@@ -203,10 +310,16 @@ if ($isOwner) {
         <span class="es-sub"><?= $isOwner ? 'Pridaj prvý krok osnovy nižšie.' : 'Owner sem zatiaľ nič nepridal.' ?></span>
       </div>
     <?php endif; ?>
-    <?php foreach ($phases as $phaseName => $phaseSteps): ?>
-      <div class="ob-phase-title"><?= h($phaseName) ?></div>
+    <?php foreach ($phases as $phaseName => $phaseSteps): $st = $phaseList[$phaseName]; $phaseOpen = $isOwner || $st['status'] !== 'done'; ?>
+      <details class="ob-phase status-<?= $st['status'] ?>" id="ob-phase-<?= $st['idx'] ?>" <?= $phaseOpen ? 'open' : '' ?>>
+        <summary class="ob-phase-summary">
+          <span class="ob-phase-badge" id="ob-phase-badge-<?= $st['idx'] ?>"><?= $st['status'] === 'done' ? '✓' : ($st['idx'] + 1) ?></span>
+          <span class="ob-phase-name"><?= h($phaseName) ?></span>
+          <span class="ob-phase-count" id="ob-phase-count-<?= $st['idx'] ?>"><?= $st['done'] ?>/<?= $st['total'] ?></span>
+        </summary>
+        <div class="ob-phase-body">
       <?php foreach ($phaseSteps as $s): $isDone = in_array((int)$s['id'], $doneStepIds, true); ?>
-      <div class="ob-step<?= $isDone ? ' done' : '' ?>" id="ob-step-<?= (int)$s['id'] ?>" data-step-id="<?= (int)$s['id'] ?>">
+      <div class="ob-step<?= $isDone ? ' done' : '' ?>" id="ob-step-<?= (int)$s['id'] ?>" data-step-id="<?= (int)$s['id'] ?>" data-phase-idx="<?= $st['idx'] ?>">
         <input type="checkbox" <?= $isDone ? 'checked' : '' ?> data-toggle-step="<?= (int)$s['id'] ?>">
         <div class="ob-step-body">
           <div class="ob-step-title"><?= h($s['title']) ?></div>
@@ -237,6 +350,8 @@ if ($isOwner) {
       </form>
       <?php endif; ?>
       <?php endforeach; ?>
+        </div>
+      </details>
     <?php endforeach; ?>
   </div>
 
@@ -268,6 +383,21 @@ function obCancel(id) {
   document.getElementById('ob-step-' + id).style.display = 'flex';
   document.getElementById('ob-edit-' + id).style.display = 'none';
 }
+function obJumpPhase(idx) {
+  var el = document.getElementById('ob-phase-' + idx);
+  if (!el) return;
+  el.open = true;
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function obJumpStep(phaseIdx, stepId) {
+  var phase = document.getElementById('ob-phase-' + phaseIdx);
+  if (phase) phase.open = true;
+  var row = document.getElementById('ob-step-' + stepId);
+  if (!row) return;
+  row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  row.classList.add('ob-highlight');
+  setTimeout(function () { row.classList.remove('ob-highlight'); }, 1600);
+}
 
 var OB_TOTAL = <?= $totalSteps ?>;
 document.addEventListener('change', function(e){
@@ -285,9 +415,27 @@ document.addEventListener('change', function(e){
 
   var doneNow = document.querySelectorAll('input[data-toggle-step]:checked').length;
   var pct = OB_TOTAL > 0 ? Math.round(doneNow / OB_TOTAL * 100) : 0;
-  document.getElementById('obFill').style.width = pct + '%';
-  document.getElementById('obPctLabel').textContent = pct + ' % dokončené';
-  document.querySelector('.ob-progress-num').textContent = doneNow + '/' + OB_TOTAL;
+  var ring = document.getElementById('obRing');
+  if (ring) ring.style.setProperty('--pct', pct);
+  var ringPct = document.getElementById('obRingPct');
+  if (ringPct) ringPct.textContent = pct + '%';
+  var heading = document.getElementById('obProgressHeading');
+  if (heading) heading.textContent = doneNow + ' z ' + OB_TOTAL + ' krokov dokončených';
+
+  var phaseIdx = row.dataset.phaseIdx;
+  if (phaseIdx !== undefined) {
+    var phaseSteps = document.querySelectorAll('.ob-step[data-phase-idx="' + phaseIdx + '"] input[type=checkbox]');
+    var phaseDone = 0;
+    phaseSteps.forEach(function (cb) { if (cb.checked) phaseDone++; });
+    var countEl = document.getElementById('ob-phase-count-' + phaseIdx);
+    if (countEl) countEl.textContent = phaseDone + '/' + phaseSteps.length;
+    if (phaseDone === phaseSteps.length) {
+      var badgeEl = document.getElementById('ob-phase-badge-' + phaseIdx);
+      if (badgeEl) badgeEl.textContent = '✓';
+      var phaseEl = document.getElementById('ob-phase-' + phaseIdx);
+      if (phaseEl) phaseEl.classList.add('status-done');
+    }
+  }
 });
 </script>
 <script src="/assets/shell.js?v=19"></script>
