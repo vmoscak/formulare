@@ -87,6 +87,8 @@ $TOOL_CATEGORIES = [
          'desc' => 'Porovnanie celkových nákladov bankového poistenia úveru oproti samostatnej poistke UNIQA – aj zoznam výhod mimo ceny.'],
         ['href' => 'obchadzac-notara/', 'name' => 'Obchádzač notára', 'ico' => 'shield', 'color' => 'violet',
          'desc' => 'Koľko hotovosti rodina potrebuje počas dedičského konania, kým sú účty zmrazené – porovnanie s rýchlym poistným plnením mimo dedičstva.'],
+        ['href' => 'financny-rontgen/', 'name' => 'Finančný röntgen (Pred/Po)', 'ico' => 'spectrum', 'color' => 'rose',
+         'desc' => 'Rovnaká metodika ako Poistný semafor, iný vizuál – potiahnutím posuvníka porovnáš nechránenú a plne chránenú domácnosť.'],
     ]],
     ['title' => 'Zmluvy a dokumentácia', 'group' => 'formulare', 'tools' => [
         ['href' => 'splnomocnenie/', 'name' => 'Všeobecné splnomocnenie', 'ico' => 'user-plus', 'color' => 'indigo',
