@@ -82,7 +82,7 @@ $TOOL_CATEGORIES = [
         ['href' => 'poistenie-uveru-banka-vs-uniqa/', 'name' => 'Poistenie úveru: banka vs. UNIQA', 'ico' => 'swap', 'color' => 'indigo',
          'desc' => 'Porovnanie celkových nákladov bankového poistenia úveru oproti samostatnej poistke UNIQA – aj zoznam výhod mimo ceny.'],
     ]],
-    ['title' => 'Podpora poradcu', 'group' => 'nastroje', 'tools' => [
+    ['title' => 'Podpora poradcu', 'group' => 'pomocky', 'tools' => [
         ['href' => 'tahak-co-pytat-od-klienta/', 'name' => 'Ťahák „Čo pýtať od klienta“', 'ico' => 'check', 'color' => 'amber',
          'desc' => 'Upisovacie otázky ku konkrétnej ponuke (majetok, zodpovednosť, auto...) so zápisom odpovedí počas stretnutia.'],
         ['href' => 'argument-builder/', 'name' => 'Argument Builder', 'ico' => 'megaphone', 'color' => 'orange',
@@ -90,7 +90,7 @@ $TOOL_CATEGORIES = [
         ['href' => 'vybavovac-namietok/', 'name' => 'Vybavovač námietok', 'ico' => 'help', 'color' => 'violet',
          'desc' => 'Vyber typickú námietku klienta („je to drahé“, „musím si to premyslieť“...) — appka ukáže odporúčané reakcie. Interný nástroj, čo povedať, keď klient zaváha.'],
     ]],
-    ['title' => 'Po podpise', 'group' => 'nastroje', 'tools' => [
+    ['title' => 'Po podpise', 'group' => 'pomocky', 'tools' => [
         ['href' => 'prvych-30-dni/', 'name' => 'Prvých 30 dní', 'ico' => 'calendar', 'color' => 'emerald',
          'desc' => 'Kartička pre klienta hneď po podpise — čo teraz nasleduje, kedy začína platiť krytie, ako postupovať pri poistnej udalosti. PDF aj text na SMS/WhatsApp.'],
     ]],
