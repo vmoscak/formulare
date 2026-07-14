@@ -157,24 +157,45 @@ $OB_PHASE_SUPPORT = [
     'Pred nástupom' => 'Papierovanie a školenia na začiatku vyzerajú ako veľa — a aj je to veľa. Netreba to zvládnuť dokonale na prvýkrát. Ak si niečím neistý, opýtaj sa — presne na to sú tu kolegovia aj tvoj manažér.',
     '0. mesiac' => 'Prvý mesiac je o učení sa veľa nového naraz. Je úplne normálne, že si na začiatku neistý — nikto od teba nečaká, že to vieš hneď. Manažér aj skúsenejší kolegovia ti radi pomôžu, stačí sa ozvať.',
     'I. mesiac' => 'Ak máš pocit, že iní to majú jednoduchšie, nemajú — každý si prešiel rovnakou krivkou učenia. Pýtaj sa toľko, koľko potrebuješ, nie je to znak slabosti.',
-    'II. mesiac' => 'Majetkové poistenie je technickejšia oblasť a prvé ponuky bývajú pomalšie — to je v poriadku. Radšej sa spýtaj vopred, než sa s tým trápiť sám.',
+    'II. mesiac' => 'Blok Predaj je o skutočnom rozhovore s klientom — analýza potrieb, argumentácia, zvládanie námietok, uzatváracie techniky. Netreba to zvládnuť dokonale hneď, tieto zručnosti sa budujú praxou. Ak chceš niečo nacvičiť nanečisto, kolegovia aj manažér radi pomôžu.',
     'III. mesiac' => 'Životné poistenie je srdcom tejto práce a najviac otázok je pri ňom úplne prirodzené. Nie si v tom sám — kolegovia aj manažér ťa podržia.',
-    'IV. mesiac' => 'Blížiš sa k maturite — náročné, ale máš za sebou už veľký kus cesty. Ak potrebuješ nacvičiť argumentáciu alebo si niečo prejsť, stačí povedať.',
+    'IV. mesiac' => 'Majetkové poistenie je technickejšia oblasť a prvé ponuky bývajú pomalšie — to je v poriadku. Radšej sa spýtaj vopred, než sa s tým trápiť sám.',
     'V. mesiac' => 'Posledný krok pred maturitou. Ver si — dostal si sa sem vlastnou prácou. A ak sa niečo nepodarí na prvý pokus, nie je to koniec sveta.',
 ];
 
+// Ľudsky čitateľný odstup od poslednej aktivity — pre ownera nižšie, aby vedel
+// bez otvárania profilu, kto je "bez pohybu" a treba sa mu ozvať.
+function obRelativeTime(?string $ts): string {
+    if (!$ts) return 'zatiaľ žiadna aktivita';
+    $diff = time() - strtotime($ts);
+    if ($diff < 3600) return 'pred chvíľou';
+    if ($diff < 86400) return 'dnes';
+    $days = (int)floor($diff / 86400);
+    if ($days === 1) return 'včera';
+    if ($days < 14) return 'pred ' . $days . ' dňami';
+    $weeks = (int)floor($days / 7);
+    return 'pred ' . $weeks . ' ' . ($weeks === 1 ? 'týždňom' : 'týždňami');
+}
+
 // Pre ownera: zoznam ostatných aktívnych poradcov (na priradenie/odobratie)
-// spolu s ich vlastným postupom, ak už majú onboarding spustený.
+// spolu s ich vlastným postupom, ak už majú onboarding spustený — vrátane
+// poslednej aktivity, aby bolo na prvý pohľad vidieť, kto "stojí" a treba sa
+// mu ozvať, bez nutnosti otvárať profil každého jedného zvlášť.
 $teamAdvisors = [];
 if ($isOwner) {
     $teamAdvisors = db()->query(
         "SELECT id, name, color, onboarding_started_at FROM formulare_advisors WHERE is_owner = 0 AND active = 1 ORDER BY name"
     )->fetchAll();
     if ($teamAdvisors && $totalSteps > 0) {
-        $progAll = db()->query('SELECT advisor_id, COUNT(*) AS c FROM formulare_onboarding_progress GROUP BY advisor_id')->fetchAll();
-        $progByAdvisor = array_column($progAll, 'c', 'advisor_id');
+        $progAll = db()->query('SELECT advisor_id, COUNT(*) AS c, MAX(done_at) AS last_done FROM formulare_onboarding_progress GROUP BY advisor_id')->fetchAll();
+        $progByAdvisor = [];
+        foreach ($progAll as $p) { $progByAdvisor[$p['advisor_id']] = $p; }
         foreach ($teamAdvisors as &$ta) {
-            $ta['doneCount'] = (int)($progByAdvisor[$ta['id']] ?? 0);
+            $ta['doneCount'] = (int)($progByAdvisor[$ta['id']]['c'] ?? 0);
+            $ta['lastDone'] = $progByAdvisor[$ta['id']]['last_done'] ?? null;
+            $lastRef = $ta['lastDone'] ?? $ta['onboarding_started_at'];
+            $daysSince = $lastRef ? floor((time() - strtotime($lastRef)) / 86400) : 0;
+            $ta['stalled'] = !empty($ta['onboarding_started_at']) && $ta['doneCount'] < $totalSteps && $daysSince >= 10;
         }
         unset($ta);
     }
@@ -287,6 +308,9 @@ if ($isOwner) {
   .ob-team-body{flex:1; min-width:0;}
   .ob-team-name{font-size:13.5px; font-weight:600; color:var(--ink);}
   .ob-team-status{font-size:12px; color:var(--muted); margin-top:1px;}
+  .ob-team-bar-track{width:100%; height:5px; border-radius:999px; background:var(--desk); overflow:hidden; margin:6px 0 3px;}
+  .ob-team-bar-fill{height:100%; background:var(--accent); border-radius:999px;}
+  .ob-team-stalled{display:inline-flex; align-items:center; gap:4px; font-size:10.5px; font-weight:700; color:var(--amber); background:var(--amber-soft); padding:2px 8px; border-radius:999px; margin-top:5px;}
   @media(max-width:720px){ .ob-add-row{grid-template-columns:1fr;} }
 
   .ob-confetti{position:fixed; inset:0; pointer-events:none; z-index:9999; overflow:hidden;}
@@ -342,6 +366,7 @@ if ($isOwner) {
   <?php else: ?>
   <div class="card ob-next-card ob-next-done">
     <span class="ob-next-title">🎉 Celá cesta nováčika je dokončená — gratulujeme!</span>
+    <button type="button" class="pillbtn solid" id="certBtn" data-advisor-name="<?= h($me['name']) ?>">Stiahnuť certifikát</button>
   </div>
   <?php endif; ?>
   <?php endif; ?>
@@ -359,18 +384,18 @@ if ($isOwner) {
         <span class="es-sub">Pridaj poradcu v Admin sekcii, potom mu sem vieš priradiť onboarding.</span>
       </div>
     <?php endif; ?>
-    <?php foreach ($teamAdvisors as $ta): $assigned = !empty($ta['onboarding_started_at']); ?>
+    <?php foreach ($teamAdvisors as $ta): $assigned = !empty($ta['onboarding_started_at']); $taPct = ($assigned && $totalSteps > 0) ? round((int)($ta['doneCount'] ?? 0) / $totalSteps * 100) : 0; ?>
     <div class="ob-team-row">
       <span class="ob-team-ini" style="background:<?= h($ta['color']) ?>;"><?= h(advisorInitials($ta['name'])) ?></span>
       <div class="ob-team-body">
         <div class="ob-team-name"><?= h($ta['name']) ?></div>
-        <div class="ob-team-status">
-          <?php if ($assigned): ?>
-            Priradené · <?= (int)($ta['doneCount'] ?? 0) ?>/<?= $totalSteps ?> dokončené
-          <?php else: ?>
-            Zatiaľ nepriradené
-          <?php endif; ?>
-        </div>
+        <?php if ($assigned): ?>
+          <div class="ob-team-bar-track"><div class="ob-team-bar-fill" style="width:<?= $taPct ?>%;"></div></div>
+          <div class="ob-team-status"><?= (int)($ta['doneCount'] ?? 0) ?>/<?= $totalSteps ?> · <?= $taPct ?> % · posledná aktivita: <?= h(obRelativeTime($ta['lastDone'] ?? null)) ?></div>
+          <?php if (!empty($ta['stalled'])): ?><span class="ob-team-stalled">⚠️ Bez pohybu</span><?php endif; ?>
+        <?php else: ?>
+          <div class="ob-team-status">Zatiaľ nepriradené</div>
+        <?php endif; ?>
       </div>
       <form method="post" style="margin:0;">
         <input type="hidden" name="<?= $assigned ? 'unassign_advisor_id' : 'assign_advisor_id' ?>" value="<?= (int)$ta['id'] ?>">
@@ -503,6 +528,68 @@ function obConfetti() {
   document.body.appendChild(wrap);
   setTimeout(function () { wrap.remove(); }, 4000);
 }
+
+function obEscapeHtml(x) { return String(x == null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+function obBuildCertificateHtml(name) {
+  var dateStr = new Date().toLocaleDateString('sk-SK', { day: 'numeric', month: 'long', year: 'numeric' });
+  var css = "\n"
+    + "@font-face { font-family:'DejaVu Sans'; src:url('vendor/dompdf/lib/fonts/DejaVuSans.ttf'); }\n"
+    + "@font-face { font-family:'DejaVu Sans'; font-weight:bold; src:url('vendor/dompdf/lib/fonts/DejaVuSans-Bold.ttf'); }\n"
+    + "* { box-sizing:border-box; }\n"
+    + "body { margin:0; padding:0; font-family:'DejaVu Sans',sans-serif; color:#20242b; background:#fff; }\n"
+    + ".cert-border { border:2pt solid #4f46e5; border-radius:4mm; padding:20mm 16mm; text-align:center; margin-top:10mm; }\n"
+    + ".cert-kicker { font-size:10.5pt; letter-spacing:2pt; text-transform:uppercase; color:#4f46e5; font-weight:bold; margin-bottom:8mm; }\n"
+    + ".cert-title { font-size:22pt; font-weight:bold; margin-bottom:10mm; }\n"
+    + ".cert-sub { font-size:11pt; color:#555; margin-bottom:12mm; }\n"
+    + ".cert-name { font-size:20pt; font-weight:bold; color:#4f46e5; margin-bottom:12mm; padding-bottom:6mm; border-bottom:1pt solid #e5e5e5; display:inline-block; }\n"
+    + ".cert-body { font-size:11pt; line-height:1.7; color:#333; margin-bottom:16mm; padding:0 6mm; }\n"
+    + ".cert-date { font-size:10pt; color:#888; }\n"
+    + "@page{ margin:20mm; }\n";
+  return '<!DOCTYPE html><html lang="sk"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
+    + '<title>Certifikát — Cesta nováčika</title><style>' + css + '</style></head><body>'
+    + '<div class="cert-border">'
+    + '<div class="cert-kicker">Certifikát o dokončení</div>'
+    + '<div class="cert-title">Cesta nováčika</div>'
+    + '<div class="cert-sub">Tento certifikát potvrdzuje, že</div>'
+    + '<div class="cert-name">' + obEscapeHtml(name) + '</div>'
+    + '<div class="cert-body">úspešne absolvoval(a) celý adaptačný program v UNIQA — od podpisu zmluvy, cez všetky vzdelávacie bloky, až po maturitnú skúšku.</div>'
+    + '<div class="cert-date">' + dateStr + '</div>'
+    + '</div></body></html>';
+}
+
+function obDoCertificate() {
+  var btn = document.getElementById('certBtn');
+  if (!btn) return;
+  var name = btn.dataset.advisorName;
+  var orig = btn.textContent;
+  btn.textContent = 'Generujem…'; btn.disabled = true;
+  var html = obBuildCertificateHtml(name);
+  fetch('/pdf.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ html: html, filename: 'Certifikat_Cesta_novacika' })
+  })
+  .then(function (r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.blob();
+  })
+  .then(function (blob) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = 'Certifikat_Cesta_novacika.pdf';
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    btn.textContent = orig; btn.disabled = false;
+  })
+  .catch(function (e) {
+    console.error(e);
+    btn.textContent = orig; btn.disabled = false;
+    alert('Chyba pri generovaní PDF: ' + e.message);
+  });
+}
+var certBtnEl = document.getElementById('certBtn');
+if (certBtnEl) certBtnEl.addEventListener('click', obDoCertificate);
 
 var OB_TOTAL = <?= $totalSteps ?>;
 document.addEventListener('change', function(e){
