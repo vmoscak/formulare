@@ -586,6 +586,7 @@ function dbInitSqlite(PDO $pdo): void {
     try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN disabled_tools TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
     try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN is_owner INTEGER NOT NULL DEFAULT 0"); } catch (Throwable $e) { /* stĺpec už existuje */ }
     try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN onboarding_started_at TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
+    try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN onboarding_completed_at TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
     try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN sfa_acquisition_no TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
     try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN sfa_personal_no TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
     try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN nbs_registration_no TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }

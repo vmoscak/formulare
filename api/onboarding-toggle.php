@@ -24,6 +24,18 @@ if ($done) {
         db()->prepare('INSERT INTO formulare_onboarding_progress (advisor_id, step_id) VALUES (?, ?)')
             ->execute([$advisorId, $stepId]);
     } catch (Throwable $e) { /* už označené - UNIQUE constraint, v poriadku */ }
+
+    // Prvý moment, keď poradca odškrtne úplne poslednú chýbajúcu položku osnovy,
+    // sa natrvalo uloží ako dátum dokončenia — zostáva v "Histórii absolventov"
+    // aj keď ho owner neskôr odoberie z priradenia alebo sa osnova zväčší.
+    $totalSteps = (int)db()->query('SELECT COUNT(*) FROM formulare_onboarding_steps')->fetchColumn();
+    $doneStmt = db()->prepare('SELECT COUNT(*) FROM formulare_onboarding_progress WHERE advisor_id = ?');
+    $doneStmt->execute([$advisorId]);
+    $doneCount = (int)$doneStmt->fetchColumn();
+    if ($totalSteps > 0 && $doneCount >= $totalSteps) {
+        db()->prepare('UPDATE formulare_advisors SET onboarding_completed_at = COALESCE(onboarding_completed_at, ?) WHERE id = ?')
+            ->execute([date('Y-m-d H:i:s'), $advisorId]);
+    }
 } else {
     db()->prepare('DELETE FROM formulare_onboarding_progress WHERE advisor_id = ? AND step_id = ?')
         ->execute([$advisorId, $stepId]);

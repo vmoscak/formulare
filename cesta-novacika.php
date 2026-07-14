@@ -56,12 +56,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($isOwner && isset($_POST['assign_advisor_id'])) {
         $id = (int)$_POST['assign_advisor_id'];
         if ($id) {
-            db()->prepare('UPDATE formulare_advisors SET onboarding_started_at = ? WHERE id = ? AND is_owner = 0')
+            // Nový cyklus onboardingu — prípadný predošlý dátum dokončenia (z minulého
+            // priradenia) sa vynuluje, nech "História absolventov" odráža aktuálny beh.
+            db()->prepare('UPDATE formulare_advisors SET onboarding_started_at = ?, onboarding_completed_at = NULL WHERE id = ? AND is_owner = 0')
                 ->execute([date('Y-m-d H:i:s'), $id]);
         }
     } elseif ($isOwner && isset($_POST['unassign_advisor_id'])) {
         $id = (int)$_POST['unassign_advisor_id'];
         if ($id) {
+            // onboarding_completed_at sa zámerne NEmaže — je to trvalý záznam v Histórii
+            // absolventov, aj keď onboarding_started_at a rozpracovaný postup zmiznú.
             db()->prepare('UPDATE formulare_advisors SET onboarding_started_at = NULL WHERE id = ?')->execute([$id]);
             db()->prepare('DELETE FROM formulare_onboarding_progress WHERE advisor_id = ?')->execute([$id]);
         }
@@ -200,6 +204,15 @@ if ($isOwner) {
         unset($ta);
     }
 }
+
+// História absolventov — trvalý zoznam (dátum dokončenia sa nemaže ani po
+// odobratí priradenia), aby zostala stopa o tom, kto onboarding už zvládol.
+$graduates = [];
+if ($isOwner) {
+    $graduates = db()->query(
+        "SELECT name, color, onboarding_completed_at FROM formulare_advisors WHERE is_owner = 0 AND active = 1 AND onboarding_completed_at IS NOT NULL ORDER BY onboarding_completed_at DESC"
+    )->fetchAll();
+}
 ?>
 <!DOCTYPE html><html lang="sk"><head>
 <meta charset="UTF-8">
@@ -311,6 +324,7 @@ if ($isOwner) {
   .ob-team-bar-track{width:100%; height:5px; border-radius:999px; background:var(--desk); overflow:hidden; margin:6px 0 3px;}
   .ob-team-bar-fill{height:100%; background:var(--accent); border-radius:999px;}
   .ob-team-stalled{display:inline-flex; align-items:center; gap:4px; font-size:10.5px; font-weight:700; color:var(--amber); background:var(--amber-soft); padding:2px 8px; border-radius:999px; margin-top:5px;}
+  .ob-grad-badge{font-size:18px; flex-shrink:0;}
   @media(max-width:720px){ .ob-add-row{grid-template-columns:1fr;} }
 
   .ob-confetti{position:fixed; inset:0; pointer-events:none; z-index:9999; overflow:hidden;}
@@ -401,6 +415,25 @@ if ($isOwner) {
         <input type="hidden" name="<?= $assigned ? 'unassign_advisor_id' : 'assign_advisor_id' ?>" value="<?= (int)$ta['id'] ?>">
         <button type="submit" class="toggle-btn"><?= $assigned ? 'Odobrať' : 'Priradiť' ?></button>
       </form>
+    </div>
+    <?php endforeach; ?>
+  </div>
+  <?php endif; ?>
+
+  <?php if ($isOwner && $graduates): ?>
+  <div class="card">
+    <h3>História absolventov</h3>
+    <p style="margin:-6px 0 16px; font-size:12.5px; color:var(--muted);">
+      Kto už onboarding dokončil — záznam zostáva aj po odobratí priradenia.
+    </p>
+    <?php foreach ($graduates as $g): ?>
+    <div class="ob-team-row">
+      <span class="ob-team-ini" style="background:<?= h($g['color']) ?>;"><?= h(advisorInitials($g['name'])) ?></span>
+      <div class="ob-team-body">
+        <div class="ob-team-name"><?= h($g['name']) ?></div>
+        <div class="ob-team-status">Dokončil(a) <?= h((new DateTime($g['onboarding_completed_at']))->format('j.n.Y')) ?></div>
+      </div>
+      <span class="ob-grad-badge">🎓</span>
     </div>
     <?php endforeach; ?>
   </div>
