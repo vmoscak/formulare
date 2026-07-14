@@ -2,6 +2,12 @@
 tmp/fonts/*
 !tmp/fonts/.gitkeep
 
+# Runtime cache metrík fontov tFPDF (zmena-spravcu-zmluvy) — generuje sa
+# automaticky pri prvom PDF, ak je priečinok zapisovateľný.
+vendor/setasign/tfpdf/font/unifont/*.mtx.php
+vendor/setasign/tfpdf/font/unifont/*.cw.dat
+vendor/setasign/tfpdf/font/unifont/*.cw127.php
+
 # Lokálna konfigurácia (DB prístupové údaje, brána) — nikdy necommitovať
 config.local.php
 tmp/local.sqlite

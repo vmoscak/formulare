@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="sk"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zmena správcu zmluvy</title>
+
+<!-- =========================================================================
+     ZMENA SPRÁVCU ZMLUVY (Príloha 3, UNIQA) — presný pretlač na predlohu
+     -------------------------------------------------------------------------
+     Na rozdiel od ostatných formulárov v appke sa PDF negeneruje z HTML cez
+     Dompdf (../pdf.php), ale server (fill.php) pretlačí zadané údaje presne
+     na súradnice polí originálneho PDF formulára UNIQA (template.pdf) cez
+     FPDI + tFPDF. Preto tu nie je živý HTML náhľad listu — vpravo je len
+     štruktúrovaný súhrn toho, čo pôjde do PDF.
+
+     KDE ČO UPRAVIŤ:
+       • Súradnice polí na predlohe ... fill.php (server)
+       • Farby / vzhľad ................ zdieľaný dizajnový systém ../assets/ui.css
+========================================================================== -->
+
+<script src="../assets/theme-init.js"></script>
+<script src="../assets/toast.js?v=1"></script>
+<link rel="stylesheet" href="../assets/ui.css?v=10">
+<style>
+  .zsz-row{border:1px solid var(--border); border-radius:var(--radius-md); padding:12px 14px; margin-bottom:10px; background:var(--desk);}
+  .zsz-row-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
+  .zsz-row-title{font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em;}
+  .zsz-row-remove{background:none; border:none; color:var(--err); font-size:13px; font-weight:600; cursor:pointer; padding:2px 6px;}
+  .zsz-checks{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;}
+  .zsz-check{display:flex; align-items:center; gap:5px; font-size:12.5px; padding:5px 9px; border:1px solid var(--border); border-radius:8px; background:var(--paper); cursor:pointer; user-select:none;}
+  .zsz-check input{width:14px; height:14px; accent-color:var(--accent); cursor:pointer;}
+  .zsz-add{width:100%; padding:9px; border:1.5px dashed var(--border); border-radius:var(--radius-md); background:none; color:var(--accent); font-weight:600; font-size:13px; cursor:pointer; margin-top:2px;}
+  .zsz-add:disabled{opacity:.4; cursor:default;}
+
+  .zsz-summary{display:flex; flex-direction:column; gap:10px;}
+  .zsz-sum-card{border:1px solid var(--border); border-radius:var(--radius-md); padding:12px 14px; background:var(--desk);}
+  .zsz-sum-label{font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px;}
+  .zsz-sum-val{font-size:13.5px; color:var(--ink); line-height:1.5;}
+  .zsz-sum-val.empty{color:var(--muted); font-style:italic;}
+  .zsz-sum-chips{display:flex; flex-wrap:wrap; gap:5px; margin-top:6px;}
+  .zsz-chip{font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:6px; background:var(--accent-soft); color:var(--accent);}
+  .zsz-empty{text-align:center; padding:24px 10px; color:var(--muted); font-size:13px;}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="head">
+    <div class="head-left">
+      <a href="../formulare.php" class="back-btn" title="Späť na formuláre">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <div class="brand">
+        <div class="logo">Z</div>
+        <div>
+          <b>Zmena správcu zmluvy</b><br>
+          <small>Príloha 3 (UNIQA) — presný pretlač na predlohu</small>
+        </div>
+      </div>
+    </div>
+    <div class="head-actions">
+      <div class="avatar" id="avatar">?</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- ============ FORMULÁR ============ -->
+    <div class="form">
+
+      <!-- 1. klient -->
+      <div>
+        <div class="step-head"><div class="step-num">1</div><div class="step-title">Žiadateľ — klient</div></div>
+        <div class="fields">
+          <div class="field col-full" data-k="clientName">
+            <label>MENO, PRIEZVISKO, TITUL / NÁZOV SPOLOČNOSTI</label>
+            <input id="clientName" placeholder="napr. Ján Novák">
+            <span class="err">Zadaj meno klienta / názov spoločnosti</span>
+          </div>
+          <div class="field col-full" data-k="clientRepresentedBy">
+            <label>V ZASTÚPENÍ (ŠTATUTÁRNY ZÁSTUPCA) <span style="font-weight:500;text-transform:none;">(nepovinné)</span></label>
+            <input id="clientRepresentedBy" placeholder="napr. Ing. Peter Vzorný, konateľ">
+            <span class="err"></span>
+          </div>
+          <div class="field col-full" data-k="clientAddress">
+            <label>ADRESA TRVALÉHO POBYTU / SÍDLO</label>
+            <input id="clientAddress" placeholder="Ulica a číslo, PSČ mesto">
+            <span class="err"></span>
+          </div>
+          <div class="field" data-k="clientRcIco">
+            <label>RČ / IČO</label>
+            <input id="clientRcIco" placeholder="napr. 800101/1234">
+            <span class="err"></span>
+          </div>
+          <div class="field" data-k="clientPhone">
+            <label>TELEFÓN</label>
+            <input id="clientPhone" placeholder="+421 900 000 000">
+            <span class="err"></span>
+          </div>
+          <div class="field col-full" data-k="clientEmail">
+            <label>E-MAIL</label>
+            <input id="clientEmail" placeholder="klient@example.sk">
+            <span class="err"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. nový správca -->
+      <div>
+        <div class="step-head"><div class="step-num">2</div><div class="step-title">Nový správca (zvyčajne ty)</div></div>
+        <div class="fields">
+          <div class="field col-full" data-k="newAdminName">
+            <label>MENO, PRIEZVISKO / NÁZOV SPOLOČNOSTI NOVÉHO SPRÁVCU</label>
+            <input id="newAdminName" placeholder="napr. Vladimír Moščák">
+            <span class="err">Zadaj meno nového správcu</span>
+          </div>
+          <div class="field" data-k="newAdminAcquisitionNo">
+            <label>ZÍSKATEĽSKÉ ČÍSLO (SFA/VFA)</label>
+            <input id="newAdminAcquisitionNo" placeholder="napr. SFA123456">
+            <span class="err">Zadaj získateľské číslo</span>
+          </div>
+          <div class="field" data-k="newAdminPersonalNo">
+            <label>OSOBNÉ ČÍSLO (SFA/VFA) <span style="font-weight:500;text-transform:none;">(nepovinné)</span></label>
+            <input id="newAdminPersonalNo" placeholder="napr. P987654">
+            <span class="err"></span>
+          </div>
+          <div class="field col-full" data-k="newAdminNbsNo">
+            <label>REGISTRAČNÉ ČÍSLO V NBS</label>
+            <input id="newAdminNbsNo" placeholder="napr. NBS0011223">
+            <span class="err">Zadaj registračné číslo v NBS</span>
+          </div>
+        </div>
+        <p style="font-size:11.5px; color:var(--muted); margin-top:8px;">Tieto údaje si appka zapamätá v tomto prehliadači, nabudúce ich nebudeš prepisovať.</p>
+      </div>
+
+      <!-- 3. zmluvy -->
+      <div>
+        <div class="step-head"><div class="step-num">3</div><div class="step-title">Zmluvy na prevod</div></div>
+        <div id="rowsWrap"></div>
+        <button class="zsz-add" id="addRowBtn" type="button">+ Pridať ďalšiu zmluvu</button>
+      </div>
+
+      <!-- 4. dôvod -->
+      <div>
+        <div class="step-head"><div class="step-num">4</div><div class="step-title">Dôvod zmeny</div></div>
+        <div class="field col-full" data-k="reason">
+          <label>PRIESTOR PRE VYJADRENIE KLIENTA <span style="font-weight:500;text-transform:none;">(nepovinné)</span></label>
+          <textarea id="reason" maxlength="260" placeholder="napr. Klient prechádza k novému sprostredkovateľovi…"></textarea>
+          <span class="err"></span>
+        </div>
+      </div>
+
+      <!-- 5. podpisy -->
+      <div>
+        <div class="step-head"><div class="step-num">5</div><div class="step-title">Podpisy</div></div>
+        <div class="grid2">
+          <div class="field" data-k="signDate">
+            <label>DÁTUM PODPISU</label>
+            <input type="date" id="signDate">
+            <span class="err">Zadaj dátum podpisu</span>
+          </div>
+          <div class="field" data-k="signPlace">
+            <label>MIESTO PODPISU</label>
+            <input id="signPlace" placeholder="napr. Košice">
+            <span class="err">Zadaj miesto podpisu</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. žiadosť prevzal -->
+      <div>
+        <div class="step-head"><div class="step-num">6</div><div class="step-title">Žiadosť klienta prevzal</div></div>
+        <div class="fields">
+          <div class="field col-full" data-k="advisorName">
+            <label>MENO, PRIEZVISKO</label>
+            <input id="advisorName">
+            <span class="err"></span>
+          </div>
+          <div class="field" data-k="advisorEmail">
+            <label>E-MAIL</label>
+            <input id="advisorEmail">
+            <span class="err"></span>
+          </div>
+          <div class="field" data-k="advisorCompany">
+            <label>SPOLOČNOSŤ</label>
+            <input id="advisorCompany">
+            <span class="err"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert" id="summary" style="display:none;">
+        <span class="bang">!</span>
+        <span class="msg" id="summaryMsg"></span>
+      </div>
+
+      <div class="actions">
+        <button class="btn-primary" id="genBtn">Vygenerovať a stiahnuť PDF</button>
+        <button class="btn-ghost" id="resetBtn">Vyčistiť</button>
+      </div>
+    </div>
+
+    <!-- ============ SÚHRN ============ -->
+    <div class="preview">
+      <div class="preview-head">
+        <span class="t">Súhrn pred stiahnutím</span>
+        <span class="live"><i></i>Presný formulár uvidíš v stiahnutom PDF</span>
+      </div>
+      <div class="zsz-summary" id="summaryPanel"></div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/advisor-panel.js"></script>
+<script>
+/* ===========================================================================
+   IDENTITA PORADCU (whoami)
+=========================================================================== */
+const ADVISOR = { name:'', email:'', org:'' };
+async function loadAdvisor(){
+  try{
+    const r = await fetch('../api/whoami.php', { credentials:'same-origin' });
+    if(r.ok){ const d = await r.json(); if(d && d.name) Object.assign(ADVISOR, d); }
+  }catch(e){ /* ponechá fallback */ }
+}
+
+const TODAY = new Date();
+function toISO(d){ const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+function fmtDate(iso){
+  const p=(iso||'').split('-').map(Number); if(p.length!==3||!p[0]) return '';
+  return String(p[2]).padStart(2,'0')+'.'+String(p[1]).padStart(2,'0')+'.'+p[0];
+}
+
+/* ===========================================================================
+   STAV
+=========================================================================== */
+const LS_KEYS = ['newAdminName','newAdminAcquisitionNo','newAdminPersonalNo','newAdminNbsNo','signPlace'];
+function lsGet(k){ try{ return localStorage.getItem('zsz_'+k) || ''; }catch(e){ return ''; } }
+function lsSet(k,v){ try{ localStorage.setItem('zsz_'+k, v||''); }catch(e){} }
+
+function blankRow(){ return { contractNo:'', zp:false, nzp:false, pof:false, sds:false, dds:false }; }
+
+const state = {
+  clientName:'', clientRepresentedBy:'', clientAddress:'', clientRcIco:'', clientPhone:'', clientEmail:'',
+  newAdminName: lsGet('newAdminName'), newAdminAcquisitionNo: lsGet('newAdminAcquisitionNo'),
+  newAdminPersonalNo: lsGet('newAdminPersonalNo'), newAdminNbsNo: lsGet('newAdminNbsNo'),
+  rows: [blankRow()],
+  reason:'',
+  signDate: toISO(TODAY), signPlace: lsGet('signPlace'),
+  advisorName:'', advisorEmail:'', advisorCompany:'',
+  touched:false,
+};
+
+const PRODUCT_LINES = [
+  {key:'zp', label:'ŽP'}, {key:'nzp', label:'NŽP'}, {key:'pof', label:'POF'},
+  {key:'sds', label:'SDS'}, {key:'dds', label:'DDS'},
+];
+
+/* ===========================================================================
+   VALIDÁCIA
+=========================================================================== */
+function validate(){
+  const e = {};
+  if(!state.clientName.trim()) e.clientName='Zadaj meno klienta / názov spoločnosti';
+  if(!state.newAdminName.trim()) e.newAdminName='Zadaj meno nového správcu';
+  if(!state.newAdminAcquisitionNo.trim()) e.newAdminAcquisitionNo='Zadaj získateľské číslo';
+  if(!state.newAdminNbsNo.trim()) e.newAdminNbsNo='Zadaj registračné číslo v NBS';
+  if(!state.signDate) e.signDate='Zadaj dátum podpisu';
+  if(!state.signPlace.trim()) e.signPlace='Zadaj miesto podpisu';
+  const hasRow = state.rows.some(r=>r.contractNo.trim());
+  if(!hasRow) e.rows='Zadaj aspoň jedno číslo zmluvy na prevod';
+  return e;
+}
+
+/* ===========================================================================
+   VYKRESLENIE
+=========================================================================== */
+const $ = id => document.getElementById(id);
+function escapeHtml(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderRows(){
+  $('rowsWrap').innerHTML = state.rows.map(function(row, i){
+    const checksHtml = PRODUCT_LINES.map(function(pl){
+      return '<label class="zsz-check"><input type="checkbox" data-row="'+i+'" data-check="'+pl.key+'"'+(row[pl.key]?' checked':'')+'>'+pl.label+'</label>';
+    }).join('');
+    return '<div class="zsz-row">'
+      + '<div class="zsz-row-head"><span class="zsz-row-title">Zmluva '+(i+1)+'</span>'
+      + (state.rows.length>1 ? '<button type="button" class="zsz-row-remove" data-remove-row="'+i+'">Odstrániť ×</button>' : '')
+      + '</div>'
+      + '<div class="field" data-k="row'+i+'"><label>ČÍSLO ZMLUVY</label>'
+      + '<input data-row="'+i+'" data-field="contractNo" value="'+escapeHtml(row.contractNo)+'" placeholder="napr. 1234567890"></div>'
+      + '<div class="zsz-checks">'+checksHtml+'</div>'
+      + '</div>';
+  }).join('');
+  $('addRowBtn').disabled = state.rows.length >= 5;
+}
+
+function syncInputs(){
+  ['clientName','clientRepresentedBy','clientAddress','clientRcIco','clientPhone','clientEmail',
+   'newAdminName','newAdminAcquisitionNo','newAdminPersonalNo','newAdminNbsNo',
+   'reason','signDate','signPlace','advisorName','advisorEmail','advisorCompany'].forEach(function(k){
+    if($(k)) $(k).value = state[k];
+  });
+}
+
+function renderSummary(){
+  const filledRows = state.rows.filter(r=>r.contractNo.trim());
+  let html = '';
+
+  html += '<div class="zsz-sum-card"><div class="zsz-sum-label">Klient</div>'
+    + '<div class="zsz-sum-val'+(state.clientName.trim()?'':' empty')+'">'+escapeHtml(state.clientName.trim()||'Zatiaľ nezadané')+'</div></div>';
+
+  html += '<div class="zsz-sum-card"><div class="zsz-sum-label">Nový správca</div>'
+    + '<div class="zsz-sum-val'+(state.newAdminName.trim()?'':' empty')+'">'+escapeHtml(state.newAdminName.trim()||'Zatiaľ nezadané')+'</div>'
+    + (state.newAdminAcquisitionNo.trim() ? '<div class="zsz-sum-val" style="margin-top:4px;font-size:12px;color:var(--muted);">SFA/VFA '+escapeHtml(state.newAdminAcquisitionNo.trim())+'</div>' : '')
+    + '</div>';
+
+  if(!filledRows.length){
+    html += '<div class="zsz-empty">Zadaj aspoň jedno číslo zmluvy vľavo.</div>';
+  } else {
+    filledRows.forEach(function(row){
+      const chips = PRODUCT_LINES.filter(pl=>row[pl.key]).map(pl=>'<span class="zsz-chip">'+pl.label+'</span>').join('');
+      html += '<div class="zsz-sum-card"><div class="zsz-sum-label">Zmluva č. '+escapeHtml(row.contractNo.trim())+'</div>'
+        + (chips ? '<div class="zsz-sum-chips">'+chips+'</div>' : '<div class="zsz-sum-val empty">Bez označenej produktovej línie</div>')
+        + '</div>';
+    });
+  }
+
+  if(state.reason.trim()){
+    html += '<div class="zsz-sum-card"><div class="zsz-sum-label">Dôvod zmeny</div><div class="zsz-sum-val">'+escapeHtml(state.reason.trim())+'</div></div>';
+  }
+
+  html += '<div class="zsz-sum-card"><div class="zsz-sum-label">Podpis</div>'
+    + '<div class="zsz-sum-val">'+escapeHtml((state.signPlace.trim()||'…')+', '+(fmtDate(state.signDate)||'…'))+'</div></div>';
+
+  $('summaryPanel').innerHTML = html;
+}
+
+function render(){
+  const errors = validate();
+  document.querySelectorAll('.field[data-k]').forEach(function(f){
+    const k = f.dataset.k;
+    const bad = state.touched && errors[k];
+    f.classList.toggle('invalid', !!bad);
+    const err = f.querySelector('.err'); if(err && errors[k]) err.textContent = errors[k];
+  });
+  const errCount = Object.keys(errors).length;
+  $('summary').style.display = (state.touched && errCount>0) ? 'flex' : 'none';
+  $('summaryMsg').textContent = 'Skontroluj zvýraznené polia a skús to znova.' + (errors.rows ? ' ' + errors.rows + '.' : '');
+
+  const p = (state.clientName||'').trim().split(/\s+/);
+  const av = p.length>=2 ? p[0][0]+p[p.length-1][0] : (p[0] ? p[0][0] : '?');
+  $('avatar').textContent = av.toUpperCase();
+
+  renderSummary();
+}
+
+/* ===========================================================================
+   AKCIE
+=========================================================================== */
+function doPDF(){
+  state.touched = true; render();
+  const errors = validate();
+  if(Object.keys(errors).length>0) return;
+
+  lsSet('newAdminName', state.newAdminName);
+  lsSet('newAdminAcquisitionNo', state.newAdminAcquisitionNo);
+  lsSet('newAdminPersonalNo', state.newAdminPersonalNo);
+  lsSet('newAdminNbsNo', state.newAdminNbsNo);
+  lsSet('signPlace', state.signPlace);
+
+  const btn = $('genBtn'); const orig = btn.textContent;
+  btn.textContent = 'Generujem…'; btn.disabled = true;
+
+  const payload = {
+    client: { name: state.clientName.trim(), representedBy: state.clientRepresentedBy.trim(), address: state.clientAddress.trim(),
+      rcIco: state.clientRcIco.trim(), phone: state.clientPhone.trim(), email: state.clientEmail.trim() },
+    newAdmin: { name: state.newAdminName.trim(), acquisitionNo: state.newAdminAcquisitionNo.trim(),
+      personalNo: state.newAdminPersonalNo.trim(), nbsNo: state.newAdminNbsNo.trim() },
+    rows: state.rows.filter(r=>r.contractNo.trim()),
+    reason: state.reason.trim(),
+    signDate: state.signDate,
+    signPlace: state.signPlace.trim(),
+    advisor: { name: state.advisorName.trim(), email: state.advisorEmail.trim(), company: state.advisorCompany.trim() },
+  };
+
+  fetch('fill.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(function(r){
+    const ct = r.headers.get('Content-Type') || '';
+    if (ct.includes('application/json') || ct.includes('text/')) {
+      return r.text().then(function(t){ throw new Error('Server: ' + t); });
+    }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.blob();
+  })
+  .then(function(blob){
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'Zmena_spravcu_zmluvy_' + (state.clientName.trim()||'klient').replace(/\s+/g,'_') + '.pdf';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    btn.textContent = orig; btn.disabled = false;
+    logDocument('zmena-spravcu-zmluvy', state.clientName.trim() || 'Klient', state, undefined);
+  })
+  .catch(function(e){
+    console.error(e);
+    btn.textContent = orig; btn.disabled = false;
+    showToast('Chyba PDF: ' + e.message, 'error');
+  });
+}
+
+function doReset(){
+  Object.assign(state, {
+    clientName:'', clientRepresentedBy:'', clientAddress:'', clientRcIco:'', clientPhone:'', clientEmail:'',
+    rows: [blankRow()], reason:'', signDate: toISO(TODAY),
+    touched:false,
+  });
+  renderRows(); syncInputs(); render();
+}
+
+/* ===========================================================================
+   UDALOSTI
+=========================================================================== */
+function bind(){
+  ['clientName','clientRepresentedBy','clientAddress','clientRcIco','clientPhone','clientEmail',
+   'newAdminName','newAdminAcquisitionNo','newAdminPersonalNo','newAdminNbsNo',
+   'reason','signDate','signPlace','advisorName','advisorEmail','advisorCompany'].forEach(function(k){
+    $(k).addEventListener('input', function(e){ state[k]=e.target.value; render(); });
+  });
+
+  $('rowsWrap').addEventListener('input', function(e){
+    const t = e.target;
+    if(t.dataset.row !== undefined && t.dataset.field === 'contractNo'){
+      state.rows[+t.dataset.row].contractNo = t.value; render();
+    }
+  });
+  $('rowsWrap').addEventListener('change', function(e){
+    const t = e.target;
+    if(t.dataset.row !== undefined && t.dataset.check){
+      state.rows[+t.dataset.row][t.dataset.check] = t.checked; render();
+    }
+  });
+  $('rowsWrap').addEventListener('click', function(e){
+    const btn = e.target.closest('[data-remove-row]');
+    if(!btn) return;
+    state.rows.splice(+btn.dataset.removeRow, 1);
+    renderRows(); render();
+  });
+  $('addRowBtn').addEventListener('click', function(){
+    if(state.rows.length >= 5) return;
+    state.rows.push(blankRow());
+    renderRows(); render();
+  });
+
+  $('genBtn').addEventListener('click', doPDF);
+  $('resetBtn').addEventListener('click', doReset);
+}
+
+/* ===========================================================================
+   ŠTART
+=========================================================================== */
+(async function init(){
+  await loadAdvisor();
+  if(ADVISOR.name){
+    state.advisorName = ADVISOR.name;
+    state.advisorEmail = ADVISOR.email || '';
+    state.advisorCompany = ADVISOR.org || '';
+    if(!state.newAdminName) state.newAdminName = ADVISOR.name;
+  }
+  renderRows(); syncInputs(); bind(); render();
+})();
+</script>
+
+<script src="/assets/shell.js?v=18"></script>
+</body></html>

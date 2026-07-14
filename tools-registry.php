@@ -101,6 +101,8 @@ $TOOL_CATEGORIES = [
          'desc' => 'Zmena osobných údajov, adresy alebo oprávnenej osoby v existujúcej zmluve – jeden formulár na všetko.'],
         ['href' => 'ziadost-krycie-list/', 'name' => 'Žiadosť o vystavenie krycieho listu', 'ico' => 'shield', 'color' => 'sky',
          'desc' => 'Vozidlo, typ poistenia, platnosť od a dôvod žiadosti (nová zmluva, prevod, evidencia vozidiel) – text sa doplní automaticky.'],
+        ['href' => 'zmena-spravcu-zmluvy/', 'name' => 'Zmena správcu zmluvy', 'ico' => 'swap', 'color' => 'emerald',
+         'desc' => 'Príloha 3 (UNIQA) – presný pretlač zadaných údajov na oficiálnu predlohu, až 5 zmlúv na jednu žiadosť.'],
     ]],
     ['title' => 'Poistné udalosti a škody', 'group' => 'formulare', 'tools' => [
         ['href' => 'nahrada-skody-zodpovednost/', 'name' => 'Žiadosť o náhradu škody', 'ico' => 'alert', 'color' => 'orange',

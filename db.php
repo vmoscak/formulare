@@ -69,6 +69,7 @@ function toolLabel(string $slug): string {
         'poistenie-uveru-banka-vs-uniqa' => 'Poistenie úveru: banka vs. UNIQA',
         'obchadzac-notara' => 'Obchádzač notára',
         'financny-rontgen' => 'Finančný röntgen (Pred/Po)',
+        'zmena-spravcu-zmluvy' => 'Zmena správcu zmluvy',
     ];
     return $labels[$slug] ?? $slug;
 }
