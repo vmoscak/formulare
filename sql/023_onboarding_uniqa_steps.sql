@@ -1,6 +1,8 @@
 -- Nahradenie osnovy "Cesta nováčika" (pôvodne Deň 1 / Týždeň 1 / Mesiac 1)
 -- curovaným výberom z oficiálnej "Karty výkonnosti a rozvoja VFA 2025"
--- (UNIQA onboarding). Spustiť RUČNE v phpMyAdmin.
+-- (UNIQA onboarding), s poradím Blokov podľa aktuálneho plánu (Predaj →
+-- Životné poistenie → Majetkové poistenie — samotný PDF má ešte staré
+-- poradie). Spustiť RUČNE v phpMyAdmin.
 --
 -- POZOR: zmaže existujúce kroky aj rozpracovaný postup (odškrtnuté kroky)
 -- všetkých poradcov, ktorí majú onboarding spustený — po tejto migrácii
@@ -28,13 +30,13 @@ INSERT INTO formulare_onboarding_steps (phase, title, description, link_url, sor
 ('I. mesiac', 'Štart IV. On-line majetok — samoštúdium, účasť a samoštúdium po štarte', 'Online, 1 deň. Domov a bezpečie — technické parametre, terminológia, kalkulácia ponuky.', NULL, 15),
 ('I. mesiac', 'Štart V. Poistenie osôb — samoštúdium, účasť a samoštúdium po štarte', 'Prezenčne/online, 1 deň. Cestovné poistenie, pohrebné náklady, Uniqáčik.', NULL, 16),
 ('I. mesiac', 'Štart VI. Dôchodky — samoštúdium, účasť a samoštúdium po štarte', 'Prezenčne, 1 deň. Starobné dôchodkové sporenie — SDS, DDS.', NULL, 17),
-('II. mesiac', 'UNIPOINT — povinné štúdium pred Blokom Majetkové poistenie', 'Domov a bezpečie.', NULL, 18),
-('II. mesiac', 'Blok I. Majetkové poistenie — splniť podmienky pred blokom', 'Účasť na Štarte IV, produkcia 1500 Pb, min. 600 bodov za školenia.', NULL, 19),
-('II. mesiac', 'Blok I. Majetkové poistenie — aktívna účasť a samoštúdium po bloku', 'Prezenčne, 3 dni. Filozofia majetkového poistenia, technické parametre D&B, návrh správnych poistných súm, práca v UNIPOINT a CRM.', NULL, 20),
-('III. mesiac', 'UNIPOINT — príprava pred Blokom II', 'Životné poistenie, SDS, Tempo — opakovanie produktov a základné informácie.', NULL, 21),
-('III. mesiac', 'Blok II. Životné poistenie, SDS, PF — splniť podmienky pred blokom', 'Absolvovanie všetkých školení z 0.-2. mesiaca, zopakovanie nastavenia poistných súm v ŽP, produkcia 3000 Pb.', NULL, 22),
-('III. mesiac', 'Blok II. Životné poistenie — aktívna účasť a samoštúdium po bloku', 'Prezenčne, 3 dni. Filozofia a zmysel životného poistenia, finančná matematika, nastavenie poistných súm v UNIPOINT, SDS, Tempo, investovanie.', NULL, 23),
-('IV. mesiac', 'Blok III. Predaj — splniť podmienky pred blokom', 'Absolvovanie všetkých školení z 0.-3. mesiaca, zopakovanie produktov životného a neživotného poistenia, produkcia 4000 Pb.', NULL, 24),
-('IV. mesiac', 'Blok III. Predaj — aktívna účasť a samoštúdium', 'Prezenčne, 3 dni. Vstup do sveta klienta, analýza potrieb, efektívna argumentácia, riešenie námietok, uzatváracie techniky, príprava na maturitu.', NULL, 25),
+('II. mesiac', 'Blok I. Predaj — splniť podmienky pred blokom', 'Absolvovanie všetkých školení z 0.-3. mesiaca, zopakovanie produktov životného a neživotného poistenia, produkcia 4000 Pb.', NULL, 18),
+('II. mesiac', 'Blok I. Predaj — aktívna účasť a samoštúdium', 'Prezenčne, 3 dni. Vstup do sveta klienta, analýza potrieb, efektívna argumentácia, riešenie námietok, uzatváracie techniky, príprava na maturitu.', NULL, 19),
+('III. mesiac', 'UNIPOINT — príprava pred Blokom II', 'Životné poistenie, SDS, Tempo — opakovanie produktov a základné informácie.', NULL, 20),
+('III. mesiac', 'Blok II. Životné poistenie, SDS, PF — splniť podmienky pred blokom', 'Absolvovanie všetkých školení z 0.-2. mesiaca, zopakovanie nastavenia poistných súm v ŽP, produkcia 3000 Pb.', NULL, 21),
+('III. mesiac', 'Blok II. Životné poistenie — aktívna účasť a samoštúdium po bloku', 'Prezenčne, 3 dni. Filozofia a zmysel životného poistenia, finančná matematika, nastavenie poistných súm v UNIPOINT, SDS, Tempo, investovanie.', NULL, 22),
+('IV. mesiac', 'UNIPOINT — povinné štúdium pred Blokom Majetkové poistenie', 'Domov a bezpečie.', NULL, 23),
+('IV. mesiac', 'Blok III. Majetkové poistenie — splniť podmienky pred blokom', 'Účasť na Štarte IV, produkcia 1500 Pb, min. 600 bodov za školenia.', NULL, 24),
+('IV. mesiac', 'Blok III. Majetkové poistenie — aktívna účasť a samoštúdium po bloku', 'Prezenčne, 3 dni. Filozofia majetkového poistenia, technické parametre D&B, návrh správnych poistných súm, práca v UNIPOINT a CRM.', NULL, 25),
 ('V. mesiac', 'Príprava na maturitu', 'Štúdium produktovej časti maturity vrátane skúšobných testov.', NULL, 26),
 ('V. mesiac', 'Maturita', 'Podmienka: absolvovanie všetkých školení z 0.-4. mesiaca. Overenie produktových znalostí a predajných zručností.', NULL, 27);

@@ -796,16 +796,16 @@ function dbOnboardingSeedSteps(): array {
         ['phase' => 'I. mesiac', 'title' => 'Štart V. Poistenie osôb — samoštúdium, účasť a samoštúdium po štarte', 'description' => 'Prezenčne/online, 1 deň. Cestovné poistenie, pohrebné náklady, Uniqáčik.', 'link_url' => null],
         ['phase' => 'I. mesiac', 'title' => 'Štart VI. Dôchodky — samoštúdium, účasť a samoštúdium po štarte', 'description' => 'Prezenčne, 1 deň. Starobné dôchodkové sporenie — SDS, DDS.', 'link_url' => null],
 
-        ['phase' => 'II. mesiac', 'title' => 'UNIPOINT — povinné štúdium pred Blokom Majetkové poistenie', 'description' => 'Domov a bezpečie.', 'link_url' => null],
-        ['phase' => 'II. mesiac', 'title' => 'Blok I. Majetkové poistenie — splniť podmienky pred blokom', 'description' => 'Účasť na Štarte IV, produkcia 1500 Pb, min. 600 bodov za školenia.', 'link_url' => null],
-        ['phase' => 'II. mesiac', 'title' => 'Blok I. Majetkové poistenie — aktívna účasť a samoštúdium po bloku', 'description' => 'Prezenčne, 3 dni. Filozofia majetkového poistenia, technické parametre D&B, návrh správnych poistných súm, práca v UNIPOINT a CRM.', 'link_url' => null],
+        ['phase' => 'II. mesiac', 'title' => 'Blok I. Predaj — splniť podmienky pred blokom', 'description' => 'Absolvovanie všetkých školení z 0.-3. mesiaca, zopakovanie produktov životného a neživotného poistenia, produkcia 4000 Pb.', 'link_url' => null],
+        ['phase' => 'II. mesiac', 'title' => 'Blok I. Predaj — aktívna účasť a samoštúdium', 'description' => 'Prezenčne, 3 dni. Vstup do sveta klienta, analýza potrieb, efektívna argumentácia, riešenie námietok, uzatváracie techniky, príprava na maturitu.', 'link_url' => null],
 
         ['phase' => 'III. mesiac', 'title' => 'UNIPOINT — príprava pred Blokom II', 'description' => 'Životné poistenie, SDS, Tempo — opakovanie produktov a základné informácie.', 'link_url' => null],
         ['phase' => 'III. mesiac', 'title' => 'Blok II. Životné poistenie, SDS, PF — splniť podmienky pred blokom', 'description' => 'Absolvovanie všetkých školení z 0.-2. mesiaca, zopakovanie nastavenia poistných súm v ŽP, produkcia 3000 Pb.', 'link_url' => null],
         ['phase' => 'III. mesiac', 'title' => 'Blok II. Životné poistenie — aktívna účasť a samoštúdium po bloku', 'description' => 'Prezenčne, 3 dni. Filozofia a zmysel životného poistenia, finančná matematika, nastavenie poistných súm v UNIPOINT, SDS, Tempo, investovanie.', 'link_url' => null],
 
-        ['phase' => 'IV. mesiac', 'title' => 'Blok III. Predaj — splniť podmienky pred blokom', 'description' => 'Absolvovanie všetkých školení z 0.-3. mesiaca, zopakovanie produktov životného a neživotného poistenia, produkcia 4000 Pb.', 'link_url' => null],
-        ['phase' => 'IV. mesiac', 'title' => 'Blok III. Predaj — aktívna účasť a samoštúdium', 'description' => 'Prezenčne, 3 dni. Vstup do sveta klienta, analýza potrieb, efektívna argumentácia, riešenie námietok, uzatváracie techniky, príprava na maturitu.', 'link_url' => null],
+        ['phase' => 'IV. mesiac', 'title' => 'UNIPOINT — povinné štúdium pred Blokom Majetkové poistenie', 'description' => 'Domov a bezpečie.', 'link_url' => null],
+        ['phase' => 'IV. mesiac', 'title' => 'Blok III. Majetkové poistenie — splniť podmienky pred blokom', 'description' => 'Účasť na Štarte IV, produkcia 1500 Pb, min. 600 bodov za školenia.', 'link_url' => null],
+        ['phase' => 'IV. mesiac', 'title' => 'Blok III. Majetkové poistenie — aktívna účasť a samoštúdium po bloku', 'description' => 'Prezenčne, 3 dni. Filozofia majetkového poistenia, technické parametre D&B, návrh správnych poistných súm, práca v UNIPOINT a CRM.', 'link_url' => null],
 
         ['phase' => 'V. mesiac', 'title' => 'Príprava na maturitu', 'description' => 'Štúdium produktovej časti maturity vrátane skúšobných testov.', 'link_url' => null],
         ['phase' => 'V. mesiac', 'title' => 'Maturita', 'description' => 'Podmienka: absolvovanie všetkých školení z 0.-4. mesiaca. Overenie produktových znalostí a predajných zručností.', 'link_url' => null],

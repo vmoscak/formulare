@@ -145,9 +145,9 @@ $OB_TOOLTIPS = [
     'Štart IV. On-line majetok — samoštúdium, účasť a samoštúdium po štarte' => 'Technické parametre produktu Domov a bezpečie • Terminológia • Kalkulácia ponuky.',
     'Štart V. Poistenie osôb — samoštúdium, účasť a samoštúdium po štarte' => 'UNIQÁČIK — technické parametre, výhody a úžitok pre klienta, príprava ponuky. Cestovné poistenie a pohrebné náklady — technické parametre, príprava ponuky, výhody a úžitok pre klienta.',
     'Štart VI. Dôchodky — samoštúdium, účasť a samoštúdium po štarte' => 'Starobné dôchodkové sporenie: SDS, DDS — technické parametre, spôsob dojednania.',
-    'Blok I. Majetkové poistenie — aktívna účasť a samoštúdium po bloku' => 'Filozofia majetkového poistenia • Technické parametre D&B + asistenčné služby — výhody a úžitok pre klienta • Návrh správnych poistných súm a kalkulácia pre klienta, práca v UNIPOINT a CRM.',
+    'Blok III. Majetkové poistenie — aktívna účasť a samoštúdium po bloku' => 'Filozofia majetkového poistenia • Technické parametre D&B + asistenčné služby — výhody a úžitok pre klienta • Návrh správnych poistných súm a kalkulácia pre klienta, práca v UNIPOINT a CRM.',
     'Blok II. Životné poistenie — aktívna účasť a samoštúdium po bloku' => 'Filozofia a zmysel životného poistenia — prípadové štúdie • Pravidlá poistenia + finančná matematika • Hra UNIQATNY život • Nastavenie poistných súm ŽP v UNIPOINT a práca v CRM • SDS, Tempo, investovanie, príprava ponúk.',
-    'Blok III. Predaj — aktívna účasť a samoštúdium' => 'Vstup do sveta klienta • Analýza potrieb klienta • Efektívna argumentácia pri prezentácii, gradácia argumentácie • Námietky a ich riešenie • Uzatváracie techniky, získavanie odporúčaní, premostenie na servis • Príprava na maturitnú skúšku.',
+    'Blok I. Predaj — aktívna účasť a samoštúdium' => 'Vstup do sveta klienta • Analýza potrieb klienta • Efektívna argumentácia pri prezentácii, gradácia argumentácie • Námietky a ich riešenie • Uzatváracie techniky, získavanie odporúčaní, premostenie na servis • Príprava na maturitnú skúšku.',
     'Maturita' => 'Overenie produktových znalostí a predajných zručností.',
 ];
 
