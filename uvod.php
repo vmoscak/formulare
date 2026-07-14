@@ -46,6 +46,7 @@ $hubMeta = [
     'nastroje'  => ['ico' => 'chart', 'color' => '#4f46e5', 'href' => '/nastroje.php'],
     'formulare' => ['ico' => 'file-x', 'color' => '#0284c7', 'href' => '/formulare.php'],
     'pomocky'   => ['ico' => 'message', 'color' => '#e11d48', 'href' => '/pomocky.php'],
+    'uniqa'     => ['ico' => 'shield', 'color' => '#0d9488', 'href' => '/uniqa-tlaciva.php'],
 ];
 
 // Skratky na zvyšné časti appky (mimo troch hlavných záložiek) — najmä pre
