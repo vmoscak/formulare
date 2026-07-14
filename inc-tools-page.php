@@ -35,22 +35,11 @@ if (!empty($me['disabled_tools'])) {
     if (is_array($decoded)) $disabledSlugs = $decoded;
 }
 
-// Kategórie prefiltrované na aktuálnu záložku a na to, čo tento poradca reálne
-// smie vidieť — prázdne kategórie sa v prehľade vôbec nezobrazia.
-$categories = [];
-foreach ($TOOL_CATEGORIES as $cat) {
-    if (($cat['group'] ?? 'nastroje') !== $GROUP) continue;
-    $visibleTools = array_values(array_filter($cat['tools'], function ($t) use ($disabledSlugs) {
-        return !in_array(toolSlug($t['href']), $disabledSlugs, true);
-    }));
-    if ($visibleTools) $categories[] = ['title' => $cat['title'], 'tools' => $visibleTools];
-}
-$groupMeta = $TOOL_GROUPS[$GROUP];
-$arrow = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
-
 // "Flow" banner — 3-krokový reťazec poistnej analýzy klienta (len na záložke
 // Nástroje), prepojený odovzdávaním odpovedí cez URL seed medzi krokmi
 // (viď wizard-poistenie gapCalcUrl() a financna-medzera doCreateChecklist()).
+// Nástroje, ktoré sú v banneri, sa nižšie v bežnej mriežke vynechajú, aby sa
+// nezobrazovali dvakrát na tej istej stránke.
 $FLOW_STEPS = [
     'wizard-poistenie'  => ['n' => 1, 'blurb' => 'Krátky dotazník – zistí, čo klient potrebuje'],
     'financna-medzera'  => ['n' => 2, 'blurb' => 'Dopočíta presné sumy krytia'],
@@ -67,6 +56,23 @@ if ($GROUP === 'nastroje') {
     }
     ksort($flowTools);
 }
+
+// Kategórie prefiltrované na aktuálnu záložku a na to, čo tento poradca reálne
+// smie vidieť — prázdne kategórie sa v prehľade vôbec nezobrazia. Nástroje už
+// zobrazené vo flow banneri sa tu vynechajú (viď vyššie).
+$categories = [];
+foreach ($TOOL_CATEGORIES as $cat) {
+    if (($cat['group'] ?? 'nastroje') !== $GROUP) continue;
+    $visibleTools = array_values(array_filter($cat['tools'], function ($t) use ($disabledSlugs, $FLOW_STEPS, $flowTools) {
+        $slug = toolSlug($t['href']);
+        if (in_array($slug, $disabledSlugs, true)) return false;
+        if ($flowTools && isset($FLOW_STEPS[$slug])) return false;
+        return true;
+    }));
+    if ($visibleTools) $categories[] = ['title' => $cat['title'], 'tools' => $visibleTools];
+}
+$groupMeta = $TOOL_GROUPS[$GROUP];
+$arrow = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
 ?>
 <!DOCTYPE html>
 <html lang="sk">
