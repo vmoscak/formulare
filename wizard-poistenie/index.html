@@ -9,7 +9,7 @@
 <!-- =========================================================================
      WIZARD "AKÉ POISTENIE POTREBUJEM"
      -------------------------------------------------------------------------
-     Krátky dotazník (7 otázok), na konci odporúčanie TYPOV poistenia
+     Krátky dotazník (8 otázok), na konci odporúčanie TYPOV poistenia
      (nie konkrétnych produktov) s krátkym vysvetlením "prečo".
 
      KDE ČO UPRAVIŤ:
@@ -58,7 +58,7 @@
   </div>
 
   <div class="progress-wrap" id="progressWrap">
-    <div class="progress-label"><span id="progressLabel">Otázka 1 z 7</span><span id="progressPct">0 %</span></div>
+    <div class="progress-label"><span id="progressLabel">Otázka 1 z 8</span><span id="progressPct">0 %</span></div>
     <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%;"></div></div>
   </div>
 
@@ -114,6 +114,13 @@ const QUESTIONS = [
       { v:'majetkove', label:'Majetkové poistenie' },
       { v:'ziadne', label:'Zatiaľ žiadne', exclusive:true },
     ] },
+  { key:'carIns', type:'single', title:'Aké máte poistenie auta?', sub:'',
+    options:[
+      { v:'pzp', label:'Len PZP (povinné zmluvné poistenie)' },
+      { v:'pzp_plus', label:'PZP + živel a sklo' },
+      { v:'havarijne', label:'Havarijné (kompletné) poistenie' },
+      { v:'ziadne', label:'Nemám auto' },
+    ] },
   { key:'travel', type:'single', title:'Cestujete do zahraničia alebo na hory na Slovensku?', sub:'',
     options:[ { v:'ano', label:'Áno' }, { v:'nie', label:'Nie' } ] },
   { key:'concern', type:'single', title:'Čo vás momentálne najviac zaujíma?', sub:'',
@@ -130,7 +137,7 @@ const QUESTIONS = [
 =========================================================================== */
 const state = {
   step: 0, // 0..QUESTIONS.length-1 = otázky, QUESTIONS.length = výsledky
-  answers: { status:'', hasDependents:'', hasLoan:'', property:'', existingIns:[], travel:'', concern:'' },
+  answers: { status:'', hasDependents:'', hasLoan:'', property:'', existingIns:[], carIns:'', travel:'', concern:'' },
   contactName:'', touched:false,
 };
 
@@ -167,6 +174,16 @@ function computeRecommendations(){
   if(a.status==='majitel'){
     recs.push({ key:'zodpovednost', title:'Poistenie zodpovednosti podnikateľa/firmy',
       why:'Ako majiteľ/-ka firmy nesieš podnikateľské riziká a zodpovednosť za škody spôsobené pri činnosti firmy.' });
+  }
+
+  if(a.status==='zamestnanec'){
+    recs.push({ key:'zodpovednostZamestnanca', title:'Zodpovednosť zamestnanca voči zamestnávateľovi',
+      why:'Podľa povahy tvojej práce (napr. práca s vozidlom, hotovosťou, drahým vybavením alebo citlivými dokumentmi) zváž poistenie zodpovednosti za škodu, ktorú by si mohol/-la spôsobiť zamestnávateľovi.' });
+  }
+
+  if(a.carIns==='pzp'){
+    recs.push({ key:'auto', title:'Doplnkové poistenie auta',
+      why:'Samotné PZP kryje len škodu, ktorú spôsobíš inému vodičovi — vlastné auto pri požiari, krupobití, rozbitom skle alebo krádeži zostáva nepoistené. Zváž aspoň doplnenie o živel a sklo, pri novšom alebo úverovanom aute aj havarijné poistenie.' });
   }
 
   if(a.travel==='ano'){
@@ -367,6 +384,8 @@ const REC_BADGES = {
   prenajom:{ cls:'warm' },
   pn:{ cls:'warm' },
   zodpovednost:{ cls:'teal' },
+  zodpovednostZamestnanca:{ cls:'teal' },
+  auto:{ cls:'warm' },
   cestovne:{ cls:'teal' },
   zaklad:{ cls:'warm' },
 };
@@ -510,7 +529,7 @@ function doGeneratePdf(){
 
 function doRestart(){
   state.step=0;
-  state.answers={ status:'', hasDependents:'', hasLoan:'', property:'', existingIns:[], travel:'', concern:'' };
+  state.answers={ status:'', hasDependents:'', hasLoan:'', property:'', existingIns:[], carIns:'', travel:'', concern:'' };
   state.contactName=''; state.touched=false;
   render();
 }

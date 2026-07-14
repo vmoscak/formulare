@@ -59,7 +59,7 @@ $TOOL_GROUPS = [
 $TOOL_CATEGORIES = [
     ['title' => 'Hlavné nástroje', 'group' => 'nastroje', 'tools' => [
         ['href' => 'wizard-poistenie/', 'name' => 'Aké poistenie potrebujem', 'ico' => 'help', 'color' => 'violet',
-         'desc' => 'Krátky dotazník na 7 otázok – odporúčanie typov poistenia, s prekliknutím do Kalkulačky finančnej medzery.'],
+         'desc' => 'Krátky dotazník na 8 otázok – odporúčanie typov poistenia, s prekliknutím do Kalkulačky finančnej medzery.'],
         ['href' => 'financna-medzera/', 'name' => 'Kalkulačka finančnej medzery', 'ico' => 'chart', 'color' => 'indigo',
          'desc' => 'Koľko by rodine chýbalo pri úmrtí, invalidite alebo dlhodobej PN – odporúčané krytie vs. existujúce poistenie.'],
         ['href' => 'checklist-analyza/', 'name' => 'Checklist – výstup z analýzy', 'ico' => 'check', 'color' => 'emerald',
