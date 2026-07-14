@@ -91,31 +91,6 @@ try {
 
 $newsPalette = ['#4f46e5', '#059669', '#0d9488', '#7c3aed', '#0284c7', '#d97706'];
 
-// Osobné míľniky — súkromný pokrok podľa počtu vygenerovaných dokumentov,
-// ZÁMERNE bez porovnávania s kolegami (žiadny rebríček, len vlastný pokrok
-// oproti sebe samému). Pozri NAPADY.md "Odložené" — pôvodná "Sieň slávy" bola
-// zámerne odložená kvôli súťaživosti, toto je jej nekonkurenčná náhrada.
-$DOC_MILESTONES = [
-    1 => 'Prvý krok', 5 => 'Rozbieha sa to', 10 => 'Slušný štart',
-    25 => 'Sebaistota rastie', 50 => 'Skúsený pár rúk', 100 => 'Stovka!', 250 => 'Majster remesla',
-];
-$myDocCount = 0;
-try {
-    $c = db()->prepare('SELECT COUNT(*) FROM formulare_generated_documents WHERE advisor_id = ?');
-    $c->execute([$curAdvisorId]);
-    $myDocCount = (int)$c->fetchColumn();
-} catch (Throwable $e) { /* tabuľka ešte nemusí existovať */ }
-
-$reachedMilestone = null;
-$nextMilestone = null;
-foreach ($DOC_MILESTONES as $threshold => $label) {
-    if ($myDocCount >= $threshold) { $reachedMilestone = ['threshold' => $threshold, 'label' => $label]; }
-    elseif ($nextMilestone === null) { $nextMilestone = ['threshold' => $threshold, 'label' => $label]; }
-}
-$milestonePct = $nextMilestone
-    ? round($myDocCount / $nextMilestone['threshold'] * 100)
-    : 100;
-
 // Ak ti owner priradil onboarding, ukáž nápadnú pripomienku hore na Domov,
 // nech vieš, že máš s Cestou nováčika pracovať — s vlastným postupom.
 $onboarding = null;
@@ -165,7 +140,7 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=26">
+<link rel="stylesheet" href="/assets/panel.css?v=27">
 </head><body class="home-page">
 <div class="home-bg" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
 <header class="topbar">
@@ -197,23 +172,6 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </span>
     </a>
-  </div>
-  <?php endif; ?>
-
-  <?php if ($myDocCount > 0): ?>
-  <div class="section">
-    <div class="milestone-card">
-      <div class="ms-num"><?= $myDocCount ?></div>
-      <div class="ms-body">
-        <div class="ms-label"><?= h($reachedMilestone['label'] ?? 'Tvoj pokrok') ?> · <?= $myDocCount ?> vygenerovaných dokumentov</div>
-        <?php if ($nextMilestone): ?>
-        <div class="ms-bar-track"><div class="ms-bar-fill" style="width:<?= min(100, $milestonePct) ?>%;"></div></div>
-        <div class="ms-sub">Ešte <?= $nextMilestone['threshold'] - $myDocCount ?> do ďalšieho míľnika („<?= h($nextMilestone['label']) ?>“)</div>
-        <?php else: ?>
-        <div class="ms-sub">Dosiahol/-la si najvyšší míľnik — pekná práca!</div>
-        <?php endif; ?>
-      </div>
-    </div>
   </div>
   <?php endif; ?>
 

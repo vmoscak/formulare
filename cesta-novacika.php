@@ -112,7 +112,7 @@ if ($isOwner) {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=26">
+<link rel="stylesheet" href="/assets/panel.css?v=27">
 <style>
   .ob-progress-card{display:flex; align-items:center; gap:18px;}
   .ob-progress-num{font-size:26px; font-weight:800; color:var(--accent); flex-shrink:0;}
