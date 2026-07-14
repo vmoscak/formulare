@@ -348,7 +348,7 @@ function summaryText(r){
   return 'Finančný röntgen (Pred/Po)' + (state.clientName.trim() ? ' — ' + state.clientName.trim() : '')
     + '\n\nPRED (dnešný stav):\n' + beforeLines.join('\n')
     + '\n\nPO (s odporúčaným krytím):\n' + afterLines.join('\n')
-    + '\n\nOrientačný rýchly prepočet — pre presné zadanie so záväzkami a deťmi použi Kalkulačku finančnej medzery.';
+    + '\n\nOrientačný rýchly prepočet — pre presné zadanie so záväzkami a deťmi použi Kalkulačku poistného krytia.';
 }
 
 function doCopy(){
@@ -430,7 +430,7 @@ function buildLetterHtml(r){
     + '<div class="card-sub">Nechránená vs. chránená domácnosť</div>'
     + '<div class="meta">' + escapeHtml(clientName) + ' &middot; ' + dateStr + '</div>'
     + '<div class="pf-cols">' + beforePanel + afterPanel + '</div>'
-    + '<div class="concl">Orientačný rýchly prepočet — pre presné zadanie so záväzkami a deťmi sa použije Kalkulačka finančnej medzery.</div>'
+    + '<div class="concl">Orientačný rýchly prepočet — pre presné zadanie so záväzkami a deťmi sa použije Kalkulačka poistného krytia.</div>'
     + '</body></html>';
 }
 

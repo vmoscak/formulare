@@ -130,7 +130,7 @@ toho, čo sa rozhodneme spraviť.
   úmrtie, invalidita, kritické choroby, trvalé následky, dlhodobá PN
   a finančná rezerva ako farebné svetlo (červená/oranžová/zelená)
   podľa pomeru existujúce krytie / odporúčaná suma. Rovnaká základná
-  metodika ako Kalkulačka finančnej medzery, zjednodušená bez
+  metodika ako Kalkulačka poistného krytia, zjednodušená bez
   záväzkov a detí. PDF aj kopírovanie zhrnutia.
 - [x] **Simulátor krátenia plnenia** — princíp pomerného plnenia pri
   podpoistení majetku (Plnenie = Škoda × Poistná suma / Skutočná
@@ -213,7 +213,7 @@ toho, čo sa rozhodneme spraviť.
 - [ ] **Rýchle linky a QR kódy** (zbierka)
 - [ ] **Generátor „Rodinného Trezoru“** (núdzový manuál pre pozostalých)
 - [ ] **Generátor bezpečného linku na zber dát** — appka už má tokénový
-  klientsky odkaz, ale len pre 2 nástroje (Kalkulačka finančnej medzery,
+  klientsky odkaz, ale len pre 2 nástroje (Kalkulačka poistného krytia,
   Aké poistenie potrebujem); premyslieť, či rozšíriť alebo urobiť
   samostatný všeobecný formulár *(odložené, dorozmyslieť)*
 

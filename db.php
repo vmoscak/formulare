@@ -32,7 +32,7 @@ function curAdvisorId(): int {
 function toolLabel(string $slug): string {
     static $labels = [
         'wizard-poistenie' => 'Aké poistenie potrebujem',
-        'financna-medzera' => 'Kalkulačka finančnej medzery',
+        'financna-medzera' => 'Kalkulačka poistného krytia',
         'financna-analyza' => 'Finančná analýza (staršia verzia)',
         'checklist-analyza' => 'Checklist – výstup z analýzy',
         'splnomocnenie' => 'Všeobecné splnomocnenie',
@@ -773,7 +773,7 @@ function dbOnboardingSeedSteps(): array {
     return [
         ['phase' => 'Deň 1', 'title' => 'Prehľad appky', 'description' => 'Prejdi si tri hlavné záložky (Nástroje / Formuláre / Pomôcky) a pozri sa do ľavej lišty — nemusíš si nič zapamätať, len vedieť, kde čo nájsť.', 'link_url' => '/nastroje.php'],
         ['phase' => 'Deň 1', 'title' => 'Znalostná báza', 'description' => 'Prelistuj si interné FAQ a rýchle texty — nemusíš si nič pamätať naspamäť, appka to má pripravené na kopírovanie.', 'link_url' => '/znalostna-baza.php'],
-        ['phase' => 'Týždeň 1', 'title' => 'Vyskúšaj Kalkulačku finančnej medzery', 'description' => 'Prejdi si nanečisto celý formulár aj s výstupom (checklist, PDF) — na testovacích číslach, nie na reálnom klientovi.', 'link_url' => '/financna-medzera/'],
+        ['phase' => 'Týždeň 1', 'title' => 'Vyskúšaj Kalkulačku poistného krytia', 'description' => 'Prejdi si nanečisto celý formulár aj s výstupom (checklist, PDF) — na testovacích číslach, nie na reálnom klientovi.', 'link_url' => '/financna-medzera/'],
         ['phase' => 'Týždeň 1', 'title' => 'Precvič si Vybavovača námietok', 'description' => 'Prejdi si typické námietky klientov („je to drahé“, „musím si to premyslieť“...) a odporúčané reakcie.', 'link_url' => '/vybavovac-namietok/'],
         ['phase' => 'Týždeň 1', 'title' => 'Argument Builder', 'description' => 'Vyskúšaj si poskladať argumentáciu pre 2-3 rôzne typy klientov, nech vidíš, ako appka odporúča postupovať.', 'link_url' => '/argument-builder/'],
         ['phase' => 'Týždeň 1', 'title' => 'Prejdi si Pyramídu istoty', 'description' => 'Pochop poradie, v akom sa buduje finančná istota klienta — ochrana, rezerva, ciele, zhodnocovanie.', 'link_url' => '/pyramida-istoty/'],

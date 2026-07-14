@@ -11,7 +11,7 @@
      kritické choroby, trvalé následky, dlhodobá PN, finančná rezerva),
      každá ako farebné svetlo (červená/oranžová/zelená) podľa pomeru
      existujúce krytie / odporúčaná suma. Rovnaká základná metodika ako
-     Kalkulačka finančnej medzery (financna-medzera/), zjednodušená o
+     Kalkulačka poistného krytia (financna-medzera/), zjednodušená o
      záväzky a deti — na to slúži plná kalkulačka. Voliteľné meno klienta
      + PDF cez zdieľaný ../pdf.php (Dompdf).
 
@@ -125,7 +125,7 @@
 
       <p style="font-size:12px; color:var(--muted); line-height:1.6;">
         Zjednodušená rýchla verzia (bez záväzkov a detí) — rovnaká základná metodika ako
-        <a href="../financna-medzera/" style="color:var(--accent); font-weight:600;">Kalkulačka finančnej medzery</a>,
+        <a href="../financna-medzera/" style="color:var(--accent); font-weight:600;">Kalkulačka poistného krytia</a>,
         ktorá vie počítať aj s presnejším zadaním.
       </p>
 
@@ -173,7 +173,7 @@ const FUNERAL_COST = 3000;
    potreboval náhradu jeho príjmu — rieši sa len krátky preklenovací bridge
    (dedičské konanie). Pár naopak potrebuje dlhodobé zabezpečenie pozostalého
    partnera, preto oveľa vyšší násobok. Tento nástroj nezbiera záväzky/deti
-   (na to slúži plná Kalkulačka finančnej medzery), preto sa pri jednotlivcovi
+   (na to slúži plná Kalkulačka poistného krytia), preto sa pri jednotlivcovi
    ako orientačná náhrada za splátku záväzkov použijú mesačné výdavky. */
 const DEATH_MONTHS_SINGLE = 12;
 const DEATH_MONTHS_COUPLE = 60;
@@ -300,7 +300,7 @@ function summaryText(r){
     return lightLabel + ' ' + c.label + ': ' + (d.need>0 ? fmt(d.covered) + ' / ' + fmt(d.need) : 'doplň vstupy');
   });
   return 'Poistný semafor' + (state.clientName.trim() ? ' — ' + state.clientName.trim() : '') + '\n\n' + lines.join('\n')
-    + '\n\nOrientačný rýchly prepočet — pre presné zadanie so záväzkami a deťmi použi Kalkulačku finančnej medzery.';
+    + '\n\nOrientačný rýchly prepočet — pre presné zadanie so záväzkami a deťmi použi Kalkulačku poistného krytia.';
 }
 
 function doCopy(){
@@ -372,7 +372,7 @@ function buildLetterHtml(r){
     + '<div class="card-sub">Vizuálny audit krytia na 1 klik</div>'
     + '<div class="meta">' + escapeHtml(clientName) + ' &middot; ' + dateStr + '</div>'
     + tiles
-    + '<div class="concl">Orientačný rýchly prepočet — pre presné zadanie so záväzkami a deťmi sa použije Kalkulačka finančnej medzery.</div>'
+    + '<div class="concl">Orientačný rýchly prepočet — pre presné zadanie so záväzkami a deťmi sa použije Kalkulačka poistného krytia.</div>'
     + '</body></html>';
 }
 
