@@ -9,8 +9,11 @@
      -------------------------------------------------------------------------
      Vizuálny nástroj na vysvetlenie klientovi, v akom poradí budovať finančnú
      istotu (ochrana -> rezerva -> ciele -> zhodnocovanie). Klikni na vrstvu,
-     rozbalí sa vysvetlenie a krátky kontrolný zoznam na odškrtávanie počas
-     rozhovoru. Voliteľné meno klienta + PDF cez zdieľaný ../pdf.php (Dompdf).
+     rozbalí sa vysvetlenie a krátky kontrolný zoznam, ktorý poradca odškrtáva
+     spolu s klientom naživo počas rozhovoru. Prepínač "Poradca/Klientovi" v
+     hlavičke schová poradcovské ovládacie prvky pre čistý pohľad na obrazovke
+     (žiadny odkaz, žiadne odosielanie — len lokálne prepnutie zobrazenia).
+     Voliteľné meno klienta + PDF cez zdieľaný ../pdf.php (Dompdf).
 
      KDE ČO UPRAVIŤ:
        • Vrstvy, popisy a otázky ... JS, objekt LAYERS
@@ -66,7 +69,11 @@
         </div>
       </div>
     </div>
-    <div class="head-actions">
+    <div class="head-actions" id="modeToggleWrap">
+      <div class="mode-toggle" title="Prepnúť na čistý pohľad pre klienta počas stretnutia">
+        <span id="modeLabel">Poradca</span>
+        <div class="mode-switch" id="modeSwitch"><i></i></div>
+      </div>
       <div class="avatar" id="avatar">P</div>
     </div>
   </div>
@@ -90,14 +97,16 @@
         <span class="t" id="layerTitle">Vrstva</span>
         <span class="live"><i></i>Odškrtávaj počas rozhovoru</span>
       </div>
-      <div class="field" data-k="contactName" style="margin-bottom:12px;">
-        <label>MENO KLIENTA <span style="font-weight:500;text-transform:none;">(nepovinné, pre PDF)</span></label>
-        <input id="contactName" placeholder="napr. Ján Novák">
-      </div>
-      <div class="preview-tools">
-        <button class="tool" id="copyBtn">Kopírovať zhrnutie (všetky vrstvy)</button>
-        <button class="tool" id="pdfBtn">Stiahnuť PDF</button>
-        <button class="tool" id="resetBtn">Vynulovať všetko</button>
+      <div id="poradcaControls">
+        <div class="field" data-k="contactName" style="margin-bottom:12px;">
+          <label>MENO KLIENTA <span style="font-weight:500;text-transform:none;">(nepovinné, pre PDF)</span></label>
+          <input id="contactName" placeholder="napr. Ján Novák">
+        </div>
+        <div class="preview-tools">
+          <button class="tool" id="copyBtn">Kopírovať zhrnutie (všetky vrstvy)</button>
+          <button class="tool" id="pdfBtn">Stiahnuť PDF</button>
+          <button class="tool" id="resetBtn">Vynulovať všetko</button>
+        </div>
       </div>
       <div class="letter-wrap">
         <div id="layerBody" style="background:#fff; border-radius:8px; padding:24px;"></div>
@@ -155,7 +164,7 @@ const LAYERS = [
   },
 ];
 
-const state = { layer: 'ochrana', checked: {}, clientName: '' };
+const state = { mode:'poradca', layer: 'ochrana', checked: {}, clientName: '' };
 
 /* ===========================================================================
    VYKRESLENIE
@@ -234,6 +243,16 @@ function doCopy(){
 function doReset(){
   state.checked = {};
   render();
+}
+
+/* Prezentačný prepínač pre živé stretnutie — žiadny odkaz, žiadne odosielanie,
+   len lokálne schová poradcovské ovládacie prvky (meno klienta, kopírovanie,
+   PDF, reset), aby ostala vidno len samotná pyramída a vysvetlenie vrstvy. */
+function setMode(mode){
+  state.mode = mode;
+  $('modeLabel').textContent = mode==='poradca' ? 'Poradca' : 'Klientovi';
+  $('modeSwitch').classList.toggle('on', mode==='klient');
+  $('poradcaControls').style.display = mode==='klient' ? 'none' : 'block';
 }
 
 /* ===========================================================================
@@ -345,13 +364,14 @@ function bind(){
   $('copyBtn').addEventListener('click', doCopy);
   $('pdfBtn').addEventListener('click', doPDF);
   $('resetBtn').addEventListener('click', doReset);
+  $('modeSwitch').addEventListener('click', function(){ setMode(state.mode==='poradca' ? 'klient' : 'poradca'); });
 }
 
 /* ===========================================================================
    ŠTART
 =========================================================================== */
 (function init(){
-  bind(); render();
+  bind(); render(); setMode(state.mode);
 })();
 </script>
 
