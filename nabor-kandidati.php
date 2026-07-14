@@ -92,7 +92,7 @@ $joinedCount = $statusCounts['pripojil'] ?? 0;
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=24">
+<link rel="stylesheet" href="/assets/panel.css?v=25">
 <style>
   .rk-status{display:inline-flex; align-items:center; font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px;}
   .rk-status.neutral{background:var(--desk); color:var(--muted);}

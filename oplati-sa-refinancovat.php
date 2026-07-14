@@ -33,7 +33,7 @@ try {
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
 <script src="/assets/toast.js?v=1"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=24">
+<link rel="stylesheet" href="/assets/panel.css?v=25">
 <style>
   .rf-verdict{margin-top:16px; padding:16px 18px; border-radius:var(--radius-lg); font-weight:700; font-size:14.5px;}
   .rf-verdict.good{background:var(--good-soft,#ecfdf5); color:var(--good,#059669);}
