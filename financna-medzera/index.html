@@ -700,7 +700,7 @@ function reserveBandHtml(g, hideNums){
    ich s klientom individuálne prebrať a dojednať podľa jeho preferencií. */
 function supplementaryInfoHtml(){
   return '<div class="supp-info"><div class="si-title">Doplnkové krytie na zváženie</div>'
-    + '<div class="si-text">Denné odškodné, hospitalizácia a chirurgický zákrok nie sú nutné na zabezpečenie rozpočtu domácnosti — do medzery vyššie sa preto nepočítajú. Oplatí sa ich ale individuálne dojednať a posúdiť priamo s klientom.</div></div>';
+    + '<div class="si-text">Denné odškodné, hospitalizácia a chirurgický zákrok nie sú nutné na zabezpečenie rozpočtu domácnosti — do medzery vyššie sa preto nepočítajú. Rozsah a poistná suma pre tieto riziká sa nastavujú individuálne, podľa potrieb klienta.</div></div>';
 }
 
 function render(){
@@ -987,7 +987,7 @@ function buildReportHtml(mode){
     + '</tr></table>';
 
   const suppNoteHtml = '<div class="supp-note"><div class="sn-title">Doplnkové krytie na zváženie</div>'
-    + '<div class="sn-text">Denné odškodné, hospitalizácia a chirurgický zákrok nie sú nutné na zabezpečenie rozpočtu domácnosti, preto nie sú súčasťou medzery vyššie. Oplatí sa ich ale individuálne prebrať a dojednať s poradcom.</div></div>';
+    + '<div class="sn-text">Denné odškodné, hospitalizácia a chirurgický zákrok nie sú nutné na zabezpečenie rozpočtu domácnosti, preto nie sú súčasťou medzery vyššie. Rozsah a poistná suma pre tieto riziká sa nastavujú individuálne, podľa potrieb klienta.</div></div>';
 
   const css = `
     @font-face { font-family:'DejaVu Sans'; src:url('`+fontBase+`DejaVuSans.ttf'); }
