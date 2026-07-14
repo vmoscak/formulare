@@ -543,8 +543,8 @@ function obBuildCertificateHtml(name, totalSteps, phaseCount) {
     + "body { margin:0; padding:0; font-family:'DejaVu Sans',sans-serif; color:#20242b; background:#fff; }\n"
     + ".cert-outer { border:0.75pt solid #c7d2fe; border-radius:3mm; padding:3mm; margin-top:8mm; }\n"
     + ".cert-border { border:1.5pt solid #4f46e5; border-radius:2mm; padding:16mm 14mm 14mm; text-align:center; }\n"
-    + ".cert-badge { width:20mm; height:20mm; line-height:20mm; border-radius:50%; background:#4f46e5; border:2pt solid #c7d2fe; margin:0 auto 6mm; text-align:center; }\n"
-    + ".cert-badge span { color:#fff; font-size:15pt; font-weight:bold; }\n"
+    + ".cert-badge { width:20mm; height:20mm; border-radius:50%; background:#4f46e5; border:2pt solid #c7d2fe; margin:0 auto 6mm; position:relative; }\n"
+    + ".cert-badge-check { position:absolute; left:7mm; top:6mm; width:5mm; height:9mm; border-right:1.4pt solid #fff; border-bottom:1.4pt solid #fff; transform:rotate(40deg); }\n"
     + ".cert-kicker { font-size:9.5pt; letter-spacing:2.5pt; text-transform:uppercase; color:#4f46e5; font-weight:bold; margin-bottom:5mm; }\n"
     + ".cert-title { font-family:'DejaVu Serif',serif; font-size:26pt; font-weight:bold; color:#1f2333; margin-bottom:6mm; }\n"
     + ".cert-ornament { width:50mm; margin:0 auto 8mm; border-collapse:collapse; }\n"
@@ -565,7 +565,7 @@ function obBuildCertificateHtml(name, totalSteps, phaseCount) {
   return '<!DOCTYPE html><html lang="sk"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
     + '<title>Certifikát — Cesta nováčika</title><style>' + css + '</style></head><body>'
     + '<div class="cert-outer"><div class="cert-border">'
-    + '<div class="cert-badge"><span>&#10003;</span></div>'
+    + '<div class="cert-badge"><div class="cert-badge-check"></div></div>'
     + '<div class="cert-kicker">Certifikát o dokončení</div>'
     + '<div class="cert-title">Cesta nováčika</div>'
     + '<table class="cert-ornament"><tr><td class="cert-line"></td><td class="cert-dot"><span></span></td><td class="cert-line"></td></tr></table>'
