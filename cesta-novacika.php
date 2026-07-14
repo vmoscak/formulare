@@ -255,9 +255,9 @@ if ($isOwner) {
   .ob-phase-support .ob-support-emoji{flex-shrink:0;}
 
   .ob-info{position:relative; display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px;
-    border-radius:50%; background:var(--desk); color:var(--muted); font-size:10px; font-weight:700; cursor:help;
-    margin-left:6px; flex-shrink:0; border:1px solid var(--border); vertical-align:middle;}
-  .ob-info:hover, .ob-info:focus{background:var(--accent-soft); color:var(--accent-ink); border-color:var(--accent-line); outline:none;}
+    border-radius:50%; background:var(--accent-soft); color:var(--accent-ink); font-size:10px; font-weight:700; cursor:help;
+    margin-left:6px; flex-shrink:0; border:1px solid var(--accent-line); vertical-align:middle;}
+  .ob-info:hover, .ob-info:focus{background:var(--accent); color:#fff; border-color:var(--accent); outline:none;}
   .ob-info-bubble{position:absolute; left:50%; bottom:calc(100% + 8px); transform:translateX(-50%) translateY(4px);
     width:240px; max-width:min(240px, 78vw); background:var(--ink); color:#fff; font-size:11.5px; font-weight:400; line-height:1.5;
     padding:8px 10px; border-radius:8px; text-align:left; opacity:0; pointer-events:none; transition:opacity .15s ease, transform .15s ease; z-index:20; box-shadow:var(--shadow-md);}
