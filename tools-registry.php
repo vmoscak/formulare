@@ -57,39 +57,48 @@ $TOOL_GROUPS = [
 
 // Register nástrojov. `hero` = veľká indigo karta, `color` = farba ikonového čipu.
 $TOOL_CATEGORIES = [
-    ['title' => 'Hlavné nástroje', 'group' => 'nastroje', 'tools' => [
+    // Wizard/kalkulačka/checklist ostávajú tu len formálne (kvôli poradiu) —
+    // v mriežke sa nezobrazia, keďže sú zvýraznené vo flow banneri vyššie
+    // (viď inc-tools-page.php, $FLOW_STEPS).
+    ['title' => 'Pred stretnutím / motivácia', 'group' => 'nastroje', 'tools' => [
         ['href' => 'wizard-poistenie/', 'name' => 'Aké poistenie potrebujem', 'ico' => 'help', 'color' => 'violet',
          'desc' => 'Krátky dotazník na 8 otázok – odporúčanie typov poistenia, s prekliknutím do Kalkulačky poistného krytia.'],
         ['href' => 'financna-medzera/', 'name' => 'Kalkulačka poistného krytia', 'ico' => 'chart', 'color' => 'indigo',
          'desc' => 'Koľko by rodine chýbalo pri úmrtí, invalidite alebo dlhodobej PN – odporúčané krytie vs. existujúce poistenie.'],
         ['href' => 'checklist-analyza/', 'name' => 'Checklist – výstup z analýzy', 'ico' => 'check', 'color' => 'emerald',
          'desc' => 'Kontrolný zoznam krokov a odporúčaní, s termínmi a zodpovednosťou. Dá sa predvyplniť z Kalkulačky.'],
-        ['href' => 'tahak-co-pytat-od-klienta/', 'name' => 'Ťahák „Čo pýtať od klienta“', 'ico' => 'check', 'color' => 'amber',
-         'desc' => 'Upisovacie otázky ku konkrétnej ponuke (majetok, zodpovednosť, auto...) so zápisom odpovedí počas stretnutia.'],
-        ['href' => 'pyramida-istoty/', 'name' => 'Interaktívna Pyramída istoty', 'ico' => 'pyramid', 'color' => 'sky',
-         'desc' => 'V akom poradí budovať finančnú istotu — ochrana, rezerva, ciele, zhodnocovanie. Klikacia pyramída s kontrolným zoznamom pre každú vrstvu.'],
-        ['href' => 'latte-faktor/', 'name' => 'Latte Faktor', 'ico' => 'coffee', 'color' => 'rose',
-         'desc' => 'Koľko narastie malý pravidelný výdavok (káva, predplatné…), keby sa namiesto minutia investoval. Naživo prepočítava pri zmene súm, rokov aj zhodnotenia.'],
         ['href' => 'simulator-dvoch-extremov/', 'name' => 'Simulátor dvoch extrémov', 'ico' => 'spectrum', 'color' => 'teal',
-         'desc' => 'Dva krajné scenáre vedľa seba — dlhý život vs. náhla strata príjmu zajtra. Kontrolný zoznam pre oba, na presvedčenie priamo pri stretnutí.'],
-        ['href' => 'argument-builder/', 'name' => 'Argument Builder', 'ico' => 'megaphone', 'color' => 'orange',
-         'desc' => 'Vyber produkt a typ klienta — poskladá sa zoznam odporúčaných argumentov na jeho predstavenie. Opak Ťaháku „čo pýtať“ — toto je čo povedať.'],
-        ['href' => 'vybavovac-namietok/', 'name' => 'Vybavovač námietok', 'ico' => 'help', 'color' => 'violet',
-         'desc' => 'Vyber typickú námietku klienta („je to drahé“, „musím si to premyslieť“...) — appka ukáže odporúčané reakcie. Interný nástroj, čo povedať, keď klient zaváha.'],
-        ['href' => 'prvych-30-dni/', 'name' => 'Prvých 30 dní', 'ico' => 'calendar', 'color' => 'emerald',
-         'desc' => 'Kartička pre klienta hneď po podpise — čo teraz nasleduje, kedy začína platiť krytie, ako postupovať pri poistnej udalosti. PDF aj text na SMS/WhatsApp.'],
+         'desc' => 'Dva krajné scenáre vedľa seba — dlhý život vs. náhla strata príjmu zajtra, s príbehom pre každý z nich. Na presvedčenie o zmysle riešiť poistenie, ešte pred dotazníkom.'],
         ['href' => 'sprievodca-udalosti/', 'name' => 'Sprievodca podľa životnej udalosti', 'ico' => 'route', 'color' => 'indigo',
          'desc' => 'Svadba, dieťa, kúpa bytu, zmena zamestnania, koniec fixácie hypotéky — odporúčané poradie existujúcich nástrojov, nič nové sa nestavia.'],
         ['href' => 'poistny-semafor/', 'name' => 'Poistný semafor', 'ico' => 'semafor', 'color' => 'sky',
          'desc' => 'Rýchly vizuálny audit krytia na 1 klik – červená/oranžová/zelená pre úmrtie, invaliditu, kritické choroby, trvalé následky, PN a rezervu.'],
+        ['href' => 'financny-rontgen/', 'name' => 'Finančný röntgen (Pred/Po)', 'ico' => 'spectrum', 'color' => 'rose',
+         'desc' => 'Rovnaká metodika ako Poistný semafor, iný vizuál – potiahnutím posuvníka porovnáš nechránenú a plne chránenú domácnosť.'],
+    ]],
+    ['title' => 'Vysvetľovanie klientovi', 'group' => 'nastroje', 'tools' => [
+        ['href' => 'pyramida-istoty/', 'name' => 'Interaktívna Pyramída istoty', 'ico' => 'pyramid', 'color' => 'sky',
+         'desc' => 'V akom poradí budovať finančnú istotu — ochrana, rezerva, ciele, zhodnocovanie. Klikacia pyramída s kontrolným zoznamom pre každú vrstvu.'],
+        ['href' => 'latte-faktor/', 'name' => 'Latte Faktor', 'ico' => 'coffee', 'color' => 'rose',
+         'desc' => 'Koľko narastie malý pravidelný výdavok (káva, predplatné…), keby sa namiesto minutia investoval. Naživo prepočítava pri zmene súm, rokov aj zhodnotenia.'],
         ['href' => 'simulator-kratenia-plnenia/', 'name' => 'Simulátor krátenia plnenia', 'ico' => 'percent', 'color' => 'rose',
          'desc' => 'Koľko reálne dostane klient pri škode, ak je majetok podpoistený – princíp pomerného plnenia, so správnou sumou vedľa seba na porovnanie.'],
         ['href' => 'poistenie-uveru-banka-vs-uniqa/', 'name' => 'Poistenie úveru: banka vs. UNIQA', 'ico' => 'swap', 'color' => 'indigo',
          'desc' => 'Porovnanie celkových nákladov bankového poistenia úveru oproti samostatnej poistke UNIQA – aj zoznam výhod mimo ceny.'],
         ['href' => 'obchadzac-notara/', 'name' => 'Obchádzač notára', 'ico' => 'shield', 'color' => 'violet',
          'desc' => 'Koľko hotovosti rodina potrebuje počas dedičského konania, kým sú účty zmrazené – porovnanie s rýchlym poistným plnením mimo dedičstva.'],
-        ['href' => 'financny-rontgen/', 'name' => 'Finančný röntgen (Pred/Po)', 'ico' => 'spectrum', 'color' => 'rose',
-         'desc' => 'Rovnaká metodika ako Poistný semafor, iný vizuál – potiahnutím posuvníka porovnáš nechránenú a plne chránenú domácnosť.'],
+    ]],
+    ['title' => 'Podpora poradcu', 'group' => 'nastroje', 'tools' => [
+        ['href' => 'tahak-co-pytat-od-klienta/', 'name' => 'Ťahák „Čo pýtať od klienta“', 'ico' => 'check', 'color' => 'amber',
+         'desc' => 'Upisovacie otázky ku konkrétnej ponuke (majetok, zodpovednosť, auto...) so zápisom odpovedí počas stretnutia.'],
+        ['href' => 'argument-builder/', 'name' => 'Argument Builder', 'ico' => 'megaphone', 'color' => 'orange',
+         'desc' => 'Vyber produkt a typ klienta — poskladá sa zoznam odporúčaných argumentov na jeho predstavenie. Opak Ťaháku „čo pýtať“ — toto je čo povedať.'],
+        ['href' => 'vybavovac-namietok/', 'name' => 'Vybavovač námietok', 'ico' => 'help', 'color' => 'violet',
+         'desc' => 'Vyber typickú námietku klienta („je to drahé“, „musím si to premyslieť“...) — appka ukáže odporúčané reakcie. Interný nástroj, čo povedať, keď klient zaváha.'],
+    ]],
+    ['title' => 'Po podpise', 'group' => 'nastroje', 'tools' => [
+        ['href' => 'prvych-30-dni/', 'name' => 'Prvých 30 dní', 'ico' => 'calendar', 'color' => 'emerald',
+         'desc' => 'Kartička pre klienta hneď po podpise — čo teraz nasleduje, kedy začína platiť krytie, ako postupovať pri poistnej udalosti. PDF aj text na SMS/WhatsApp.'],
     ]],
     ['title' => 'Zmluvy a dokumentácia', 'group' => 'formulare', 'tools' => [
         ['href' => 'splnomocnenie/', 'name' => 'Všeobecné splnomocnenie', 'ico' => 'user-plus', 'color' => 'indigo',
