@@ -9,7 +9,7 @@
 <!-- =========================================================================
      WIZARD "AKÉ POISTENIE POTREBUJEM"
      -------------------------------------------------------------------------
-     Krátky dotazník (6 otázok), na konci odporúčanie TYPOV poistenia
+     Krátky dotazník (7 otázok), na konci odporúčanie TYPOV poistenia
      (nie konkrétnych produktov) s krátkym vysvetlením "prečo".
 
      KDE ČO UPRAVIŤ:
@@ -58,8 +58,8 @@
   </div>
 
   <div class="progress-wrap" id="progressWrap">
-    <div class="progress-label"><span id="progressLabel">Otázka 1 z 6</span><span id="progressPct">17 %</span></div>
-    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:17%;"></div></div>
+    <div class="progress-label"><span id="progressLabel">Otázka 1 z 7</span><span id="progressPct">0 %</span></div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%;"></div></div>
   </div>
 
   <div class="panel" id="panel"></div>
@@ -114,6 +114,8 @@ const QUESTIONS = [
       { v:'majetkove', label:'Majetkové poistenie' },
       { v:'ziadne', label:'Zatiaľ žiadne', exclusive:true },
     ] },
+  { key:'travel', type:'single', title:'Cestujete do zahraničia alebo na hory na Slovensku?', sub:'',
+    options:[ { v:'ano', label:'Áno' }, { v:'nie', label:'Nie' } ] },
   { key:'concern', type:'single', title:'Čo vás momentálne najviac zaujíma?', sub:'',
     options:[
       { v:'rodina', label:'Zabezpečenie rodiny' },
@@ -128,7 +130,7 @@ const QUESTIONS = [
 =========================================================================== */
 const state = {
   step: 0, // 0..QUESTIONS.length-1 = otázky, QUESTIONS.length = výsledky
-  answers: { status:'', hasDependents:'', hasLoan:'', property:'', existingIns:[], concern:'' },
+  answers: { status:'', hasDependents:'', hasLoan:'', property:'', existingIns:[], travel:'', concern:'' },
   contactName:'', touched:false,
 };
 
@@ -142,15 +144,8 @@ function computeRecommendations(){
 
   if(a.hasDependents==='ano'){
     recs.push({ key:'zivotne', title:'Životné poistenie', why: has('zivotne')
-      ? 'Životné poistenie už máš — odporúčame skontrolovať, či poistná suma zodpovedá aktuálnym záväzkom a počtu detí.'
-      : 'Máš osoby závislé od tvojho príjmu — v prípade úmrtia by poistenie nahradilo výpadok príjmu pre rodinu.' });
-    recs.push({ key:'invalidita', title:'Poistenie invalidity',
-      why:'Dlhodobá invalidita by ohrozila príjem rodiny podobne ako úmrtie — štátny invalidný dôchodok pokryje spravidla len časť výpadku.' });
-  }
-
-  if(a.hasLoan==='ano'){
-    recs.push({ key:'uver', title:'Poistenie schopnosti splácať úver',
-      why:'Pri výpadku príjmu (PN, invalidita, úmrtie) by mohol nastať problém so splácaním hypotéky alebo úveru.' });
+      ? 'Životné poistenie už máš — odporúčame skontrolovať, či poistná suma a rozsah (invalidita, trvalé následky úrazu, kritické choroby, dlhodobá PN) zodpovedajú aktuálnym záväzkom a počtu detí.'
+      : 'Máš osoby závislé od tvojho príjmu — životné poistenie dnes bežne nekryje len riziko úmrtia, ale aj invaliditu, trvalé následky úrazu, kritické choroby a dlhodobú PN, takže ochráni rodinu pri väčšine vážnych životných situácií, nielen pri tej najhoršej.' });
   }
 
   if(a.property==='obyvam'){
@@ -174,15 +169,20 @@ function computeRecommendations(){
       why:'Ako majiteľ/-ka firmy nesieš podnikateľské riziká a zodpovednosť za škody spôsobené pri činnosti firmy.' });
   }
 
+  if(a.travel==='ano'){
+    recs.push({ key:'cestovne', title:'Cestovné poistenie',
+      why:'Cestovné poistenie kryje liečebné náklady v zahraničí (verejné zdravotné poistenie ich mimo SR/EÚ nepokryje alebo len čiastočne) aj náklady horskej záchrannej služby na Slovensku, ktoré si bez poistenia hradíš sám/-a a môžu dosiahnuť tisíce eur.' });
+  }
+
   const seen = new Set();
   let uniq = recs.filter(r => seen.has(r.key) ? false : (seen.add(r.key), true));
 
   if(!uniq.length){
-    uniq.push({ key:'zaklad', title:'Základné životné a úrazové poistenie',
-      why:'Zatiaľ nemáš výraznejšie záväzky ani závislé osoby — odporúčame začať základným životným a úrazovým krytím ako štartovacím bodom.' });
+    uniq.push({ key:'zaklad', title:'Základné poistenie',
+      why:'Zatiaľ nemáš výraznejšie záväzky ani závislé osoby — odporúčame začať základným krytím pre prípad smrti, invalidity, trvalých následkov úrazu, kritických chorôb a dlhodobej PN ako štartovacím bodom.' });
   }
 
-  const priority = { rodina:['zivotne','invalidita'], majetok:['domacnost','prenajom'], vypadok:['pn'] };
+  const priority = { rodina:['zivotne'], majetok:['domacnost','prenajom'], vypadok:['pn'] };
   const boost = priority[a.concern] || [];
   uniq = uniq.map((r,i)=>({...r, _i:i})).sort((x,y)=>
     (boost.includes(y.key)?1:0) - (boost.includes(x.key)?1:0) || x._i-y._i);
@@ -363,12 +363,11 @@ function fmtDateSk(d){ return d.getDate()+'. '+SK_MONTHS[d.getMonth()]+' '+d.get
 
 const REC_BADGES = {
   zivotne:{ cls:'warm' },
-  invalidita:{ cls:'teal' },
-  uver:{ cls:'teal' },
   domacnost:{ cls:'warm' },
   prenajom:{ cls:'warm' },
   pn:{ cls:'warm' },
   zodpovednost:{ cls:'teal' },
+  cestovne:{ cls:'teal' },
   zaklad:{ cls:'warm' },
 };
 
@@ -511,7 +510,7 @@ function doGeneratePdf(){
 
 function doRestart(){
   state.step=0;
-  state.answers={ status:'', hasDependents:'', hasLoan:'', property:'', existingIns:[], concern:'' };
+  state.answers={ status:'', hasDependents:'', hasLoan:'', property:'', existingIns:[], travel:'', concern:'' };
   state.contactName=''; state.touched=false;
   render();
 }
