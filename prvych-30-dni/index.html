@@ -11,7 +11,8 @@
      platiť krytie, ako postupovať pri poistnej udalosti. Znižuje popodpisovú
      neistotu. Vyber produkt, voliteľné meno klienta, PDF cez zdieľaný
      ../pdf.php (Dompdf) aj text na SMS/WhatsApp. Kontakt poradcu sa
-     predvyplní z prihláseného účtu (whoami).
+     predvyplní z prihláseného účtu (whoami). Zoznam krokov na prehľad, nie na
+     odškrtávanie — je to pre klienta, nie kontrolný zoznam pre poradcu.
 
      KDE ČO UPRAVIŤ:
        • Produkty a kroky ...... JS, objekt PRODUCTS
@@ -22,6 +23,20 @@
 <script src="../assets/theme-init.js"></script>
 <script src="../assets/toast.js?v=1"></script>
 <link rel="stylesheet" href="../assets/ui.css?v=11">
+<style>
+  /* odchýlky tejto stránky od zdieľaného dizajnu (assets/ui.css) — zelená
+     časová os namiesto odškrtávacieho zoznamu */
+  .ps30-timeline{position:relative; padding-left:26px;}
+  .ps30-timeline::before{content:''; position:absolute; left:8px; top:4px; bottom:4px; width:2px; background:#a7f3d0;}
+  .ps30-step{position:relative; padding-bottom:18px;}
+  .ps30-step:last-child{padding-bottom:0;}
+  .ps30-step::before{
+    content:''; position:absolute; left:-26px; top:2px; width:12px; height:12px; border-radius:50%;
+    background:#059669; border:2px solid #fff; box-shadow:0 0 0 2px #a7f3d0;
+  }
+  .ps30-when{font-size:11px; font-weight:800; letter-spacing:.03em; text-transform:uppercase; color:#059669; margin-bottom:3px;}
+  .ps30-text{font-size:13.5px; line-height:1.6; color:#20242b;}
+</style>
 </head>
 <body>
 
@@ -67,12 +82,11 @@
     <div class="preview">
       <div class="preview-head">
         <span class="t">Čo teraz nasleduje</span>
-        <span class="live"><i></i>Odškrtávaj, čo si klientovi vysvetlil/-a</span>
+        <span class="live"><i></i>Náhľad kartičky pre klienta</span>
       </div>
       <div class="preview-tools">
         <button class="tool" id="copyBtn">Kopírovať text (SMS/WhatsApp)</button>
         <button class="tool" id="pdfBtn">Stiahnuť PDF</button>
-        <button class="tool" id="resetBtn">Vynulovať odškrtnuté</button>
       </div>
       <div class="letter-wrap">
         <div id="stepsBody" style="background:#fff; border-radius:8px; padding:24px;"></div>
@@ -139,7 +153,7 @@ const PRODUCTS = {
   },
 };
 
-const state = { product: 'zivotne', checked: {}, clientName: '' };
+const state = { product: 'zivotne', clientName: '' };
 
 const $ = id => document.getElementById(id);
 function escapeHtml(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -158,18 +172,17 @@ function renderProducts(){
 
 function renderSteps(){
   const prod = PRODUCTS[state.product];
-  const checkedSet = state.checked[state.product] || {};
   $('avatar').textContent = prod.tile;
   $('stepsBody').innerHTML = '<div style="font-weight:700; font-size:15px; color:#20242b; margin-bottom:4px;">' + escapeHtml(prod.label) + '</div>'
-    + '<p style="font-size:12.5px; color:#8a8f99; margin-bottom:14px;">Prehľad pre ' + (state.clientName.trim() ? escapeHtml(state.clientName.trim()) : 'klienta') + '</p>'
-    + prod.steps.map(function(s, i){
-        const isChecked = !!checkedSet[i];
-        return '<label style="display:flex; align-items:flex-start; gap:10px; padding:9px 0; border-bottom:1px solid #eef0f3; cursor:pointer;">'
-          + '<input type="checkbox" data-q="' + i + '" ' + (isChecked ? 'checked' : '') + ' style="margin-top:3px; flex-shrink:0; width:16px; height:16px;">'
-          + '<span style="font-size:13.5px; line-height:1.6; color:' + (isChecked ? '#9aa1ad' : '#20242b') + '; text-decoration:' + (isChecked ? 'line-through' : 'none') + ';">'
-            + '<b style="font-weight:700;">' + escapeHtml(s.when) + ':</b> ' + escapeHtml(s.text)
-          + '</span></label>';
-      }).join('');
+    + '<p style="font-size:12.5px; color:#8a8f99; margin-bottom:16px;">Prehľad pre ' + (state.clientName.trim() ? escapeHtml(state.clientName.trim()) : 'klienta') + '</p>'
+    + '<div class="ps30-timeline">'
+    + prod.steps.map(function(s){
+        return '<div class="ps30-step">'
+          + '<div class="ps30-when">' + escapeHtml(s.when) + '</div>'
+          + '<div class="ps30-text">' + escapeHtml(s.text) + '</div>'
+          + '</div>';
+      }).join('')
+    + '</div>';
 }
 
 function render(){ renderProducts(); renderSteps(); }
@@ -188,11 +201,6 @@ function doCopy(){
   b.textContent = 'Skopírované ✓'; setTimeout(function(){ b.textContent = orig; }, 1600);
 }
 
-function doReset(){
-  state.checked[state.product] = {};
-  renderSteps();
-}
-
 /* ===========================================================================
    PDF PRE KLIENTA (server-side Dompdf cez zdieľaný ../pdf.php, presné A4)
 =========================================================================== */
@@ -203,8 +211,11 @@ function buildLetterHtml(){
   const SK_MONTHS = ['január','február','marec','apríl','máj','jún','júl','august','september','október','november','december'];
   const dateStr = today.getDate() + '. ' + SK_MONTHS[today.getMonth()] + ' ' + today.getFullYear();
 
-  const rows = prod.steps.map(function(s){
-    return '<div class="ps-item"><div class="ps-when">' + escapeHtml(s.when) + '</div><div class="ps-text">' + escapeHtml(s.text) + '</div></div>';
+  const rows = prod.steps.map(function(s, idx){
+    return '<table class="ps-item"><tr>'
+      + '<td class="ps-num-cell"><span class="ps-num">' + (idx + 1) + '</span></td>'
+      + '<td class="ps-body-cell"><div class="ps-when">' + escapeHtml(s.when) + '</div><div class="ps-text">' + escapeHtml(s.text) + '</div></td>'
+      + '</tr></table>';
   }).join('');
 
   const css = `
@@ -213,14 +224,22 @@ function buildLetterHtml(){
     * { box-sizing:border-box; }
     div,p,span { margin:0; padding:0; }
     body { margin:0; padding:0; font-family:'DejaVu Sans',sans-serif; font-size:10.5pt; line-height:1.5; color:#20242b; background:#fff; }
-    .pdf-topbar { height:3mm; background:#059669; border-radius:0.8mm; margin-bottom:6mm; } .doctitle { text-align:center; font-size:16pt; letter-spacing:.5pt; font-weight:bold; padding:7pt 0 2pt; }
+    .pdf-topbar { height:4mm; background:linear-gradient(90deg,#059669,#10b981); border-radius:1mm; margin-bottom:7mm; }
+    .doctitle { text-align:center; font-size:19pt; letter-spacing:.3pt; font-weight:bold; padding:2pt 0 3pt; color:#065f46; }
     .card-sub { text-align:center; font-size:10.5pt; color:#666; margin-bottom:5mm; }
-    .meta { text-align:center; font-size:9pt; color:#8a8a8a; margin-bottom:9mm; padding-bottom:5mm; border-bottom:1pt solid #e5e5e5; }
-    .ps-hd { color:#fff; background:#059669; font-weight:bold; font-size:12pt; padding:3mm 4mm; border-radius:2mm; margin-bottom:5mm; }
-    .ps-item { display:flex; gap:5mm; padding:3mm 0; border-bottom:0.5pt solid #eef0f3; }
-    .ps-when { flex-shrink:0; width:34mm; font-weight:bold; font-size:9.5pt; color:#059669; }
-    .ps-text { font-size:10pt; }
-    .contact { margin-top:7mm; padding:4mm 5mm; background:#ecfdf5; border-radius:2mm; font-size:9.5pt; }
+    .meta { text-align:center; font-size:9pt; color:#8a8a8a; margin-bottom:8mm; padding-bottom:5mm; border-bottom:1pt solid #e5e5e5; }
+    .ps-hd { color:#fff; background:#059669; font-weight:bold; font-size:12.5pt; padding:3.5mm 5mm; border-radius:2.5mm; margin-bottom:6mm; }
+    .ps-item { width:100%; border-collapse:collapse; margin-bottom:3.5mm; background:#f0fdf7; border-left:3pt solid #059669; border-radius:0 2.5mm 2.5mm 0; }
+    .ps-item td { padding:4mm 4.5mm; vertical-align:top; }
+    .ps-num-cell { width:22pt; padding-right:0; }
+    .ps-num {
+      display:inline-block; width:16pt; height:16pt; border-radius:50%; background:#059669; color:#fff;
+      text-align:center; font-size:9pt; font-weight:bold; line-height:16pt;
+    }
+    .ps-when { font-size:8pt; font-weight:bold; letter-spacing:0.6pt; text-transform:uppercase; color:#059669; margin-bottom:1.5mm; }
+    .ps-text { font-size:10.5pt; line-height:1.5; }
+    .contact { margin-top:7mm; padding:4.5mm 5mm; background:#ecfdf5; border-radius:2.5mm; font-size:9.5pt; text-align:center; }
+    .contact b { color:#065f46; }
     @page{ margin:20mm 20mm 20mm 20mm; }
   `;
 
@@ -281,20 +300,11 @@ function bind(){
   document.addEventListener('click', function(e){
     const p = e.target.closest('[data-product]'); if(p){ state.product = p.dataset.product; render(); return; }
   });
-  document.addEventListener('change', function(e){
-    if(e.target.matches('input[type="checkbox"][data-q]')){
-      const i = +e.target.dataset.q;
-      if(!state.checked[state.product]) state.checked[state.product] = {};
-      state.checked[state.product][i] = e.target.checked;
-      renderSteps();
-    }
-  });
   document.addEventListener('input', function(e){
     if(e.target.id === 'clientName'){ state.clientName = e.target.value; renderSteps(); }
   });
   $('copyBtn').addEventListener('click', doCopy);
   $('pdfBtn').addEventListener('click', doPDF);
-  $('resetBtn').addEventListener('click', doReset);
 }
 
 /* ===========================================================================
