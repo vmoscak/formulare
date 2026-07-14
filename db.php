@@ -779,7 +779,7 @@ function dbOnboardingSeedSteps(): array {
         ['phase' => 'Týždeň 1', 'title' => 'Prejdi si Pyramídu istoty', 'description' => 'Pochop poradie, v akom sa buduje finančná istota klienta — ochrana, rezerva, ciele, zhodnocovanie.', 'link_url' => '/pyramida-istoty/'],
         ['phase' => 'Mesiac 1', 'title' => 'Prvé skutočné stretnutie s klientom', 'description' => 'Ideálne so skúsenejším kolegom vedľa seba (shadowing) alebo aspoň s jeho spätnou väzbou hneď po stretnutí.', 'link_url' => null],
         ['phase' => 'Mesiac 1', 'title' => 'Prvých 30 dní po podpise', 'description' => 'Over si, ako appka pripraví kartičku pre klienta hneď po podpise zmluvy — čo nasleduje, kedy začína platiť krytie.', 'link_url' => '/prvych-30-dni/'],
-        ['phase' => 'Mesiac 1', 'title' => 'Skús Poistný semafor a Simulátor krátenia plnenia', 'description' => 'Dva argumentačné nástroje, ktoré sa oplatí mať poruke pri rozhovore o výške krytia.', 'link_url' => '/poistny-semafor/'],
+        ['phase' => 'Mesiac 1', 'title' => 'Skús Simulátor krátenia plnenia', 'description' => 'Argumentačný nástroj, ktorý sa oplatí mať poruke pri rozhovore o výške krytia majetku.', 'link_url' => '/simulator-kratenia-plnenia/'],
         ['phase' => 'Mesiac 1', 'title' => 'Skontroluj si Moje dokumenty', 'description' => 'Pozri sa, čo všetko si za prvý mesiac vygeneroval — dobrý spôsob, ako vidieť vlastný pokrok.', 'link_url' => '/moje-dokumenty.php'],
     ];
 }

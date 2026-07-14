@@ -7,10 +7,9 @@
 <!-- =========================================================================
      FINANČNÝ RÖNTGEN — "Before/After" slider — samostatný editovateľný súbor
      -------------------------------------------------------------------------
-     Rovnaká metodika a vstupy ako Poistný semafor (../poistny-semafor/) —
-     6 oblastí krytia, rovnaké násobky príjmu/výdavkov — len iný vizuál:
-     namiesto mriežky farebných dlaždíc ťahá poradca/klient posuvník medzi
-     dvomi panelmi "PRED" (nechránená domácnosť, skutočný stav) a "PO"
+     6 oblastí krytia (rovnaká zjednodušená metodika ako Kalkulačka poistného
+     krytia, bez záväzkov a detí) — poradca/klient ťahá posuvník medzi dvomi
+     panelmi "PRED" (nechránená domácnosť, skutočný stav) a "PO"
      (plne chránená domácnosť). Emocionálny/predajný nástroj na stretnutí,
      nie presná kalkulačka. Voliteľné meno klienta + PDF (obe strany vedľa
      seba staticky) cez zdieľaný ../pdf.php (Dompdf).
@@ -138,10 +137,10 @@
       </div>
 
       <p style="font-size:12px; color:var(--muted); line-height:1.6;">
-        Rovnaká rýchla metodika ako
-        <a href="../poistny-semafor/" style="color:var(--accent); font-weight:600;">Poistný semafor</a>
-        (bez záväzkov a detí) — tu len iný vizuál pre stretnutie s klientom: potiahnutím posuvníka
-        vidno rozdiel medzi dneškom a stavom s odporúčaným krytím.
+        Rýchla zjednodušená metodika (bez záväzkov a detí) — na presné zadanie použi
+        <a href="../financna-medzera/" style="color:var(--accent); font-weight:600;">Kalkulačku poistného krytia</a>.
+        Tu ide o vizuál pre stretnutie s klientom: potiahnutím posuvníka vidno rozdiel medzi
+        dneškom a stavom s odporúčaným krytím.
       </p>
 
       <div class="actions">
@@ -193,8 +192,8 @@
 <script src="../assets/advisor-panel.js"></script>
 <script>
 /* ===========================================================================
-   METODIKA — zhodná s Poistný semafor (../poistny-semafor/), len iné
-   vykreslenie výsledku.
+   METODIKA — zjednodušená verzia Kalkulačky poistného krytia (bez záväzkov
+   a detí), s "PRED/PO" vizuálom namiesto presných súm.
 =========================================================================== */
 const FUNERAL_COST = 3000;
 const DEATH_MONTHS_SINGLE = 12;

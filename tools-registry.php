@@ -71,10 +71,6 @@ $TOOL_CATEGORIES = [
          'desc' => 'Dva krajné scenáre vedľa seba — dlhý život vs. náhla strata príjmu zajtra, s príbehom pre každý z nich. Na presvedčenie o zmysle riešiť poistenie, ešte pred dotazníkom.'],
         ['href' => 'sprievodca-udalosti/', 'name' => 'Sprievodca podľa životnej udalosti', 'ico' => 'route', 'color' => 'indigo',
          'desc' => 'Svadba, dieťa, kúpa bytu, zmena zamestnania, koniec fixácie hypotéky — odporúčané poradie existujúcich nástrojov, nič nové sa nestavia.'],
-        ['href' => 'poistny-semafor/', 'name' => 'Poistný semafor', 'ico' => 'semafor', 'color' => 'sky',
-         'desc' => 'Rýchly vizuálny audit krytia na 1 klik – červená/oranžová/zelená pre úmrtie, invaliditu, kritické choroby, trvalé následky, PN a rezervu.'],
-        ['href' => 'financny-rontgen/', 'name' => 'Finančný röntgen (Pred/Po)', 'ico' => 'spectrum', 'color' => 'rose',
-         'desc' => 'Rovnaká metodika ako Poistný semafor, iný vizuál – potiahnutím posuvníka porovnáš nechránenú a plne chránenú domácnosť.'],
     ]],
     ['title' => 'Vysvetľovanie klientovi', 'group' => 'nastroje', 'tools' => [
         ['href' => 'pyramida-istoty/', 'name' => 'Interaktívna Pyramída istoty', 'ico' => 'pyramid', 'color' => 'sky',
