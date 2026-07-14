@@ -20,9 +20,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $org = trim((string)($_POST['add_org'] ?? ''));
         $email = trim((string)($_POST['add_email'] ?? ''));
         $phone = trim((string)($_POST['add_phone'] ?? ''));
+        $sfaAcq = trim((string)($_POST['add_sfa_acquisition_no'] ?? ''));
+        $sfaPer = trim((string)($_POST['add_sfa_personal_no'] ?? ''));
+        $nbsNo = trim((string)($_POST['add_nbs_registration_no'] ?? ''));
         if ($name !== '' && $email !== '') {
-            $stmt = db()->prepare('INSERT INTO formulare_advisors (name, org, email, phone) VALUES (?, ?, ?, ?)');
-            $stmt->execute([$name, $org, $email, $phone]);
+            $stmt = db()->prepare('INSERT INTO formulare_advisors (name, org, email, phone, sfa_acquisition_no, sfa_personal_no, nbs_registration_no) VALUES (?, ?, ?, ?, ?, ?, ?)');
+            $stmt->execute([$name, $org, $email, $phone, $sfaAcq, $sfaPer, $nbsNo]);
         }
     } elseif (isset($_POST['toggle_id'])) {
         $id = (int)$_POST['toggle_id'];
@@ -39,9 +42,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $org = trim((string)($_POST['edit_org'] ?? ''));
         $email = trim((string)($_POST['edit_email'] ?? ''));
         $phone = trim((string)($_POST['edit_phone'] ?? ''));
+        $sfaAcq = trim((string)($_POST['edit_sfa_acquisition_no'] ?? ''));
+        $sfaPer = trim((string)($_POST['edit_sfa_personal_no'] ?? ''));
+        $nbsNo = trim((string)($_POST['edit_nbs_registration_no'] ?? ''));
         if ($name !== '' && $email !== '') {
-            $stmt = db()->prepare('UPDATE formulare_advisors SET name = ?, org = ?, email = ?, phone = ? WHERE id = ?');
-            $stmt->execute([$name, $org, $email, $phone, $id]);
+            $stmt = db()->prepare('UPDATE formulare_advisors SET name = ?, org = ?, email = ?, phone = ?, sfa_acquisition_no = ?, sfa_personal_no = ?, nbs_registration_no = ? WHERE id = ?');
+            $stmt->execute([$name, $org, $email, $phone, $sfaAcq, $sfaPer, $nbsNo, $id]);
         }
     } elseif (isset($_POST['delete_doc_id'])) {
         $id = (int)$_POST['delete_doc_id'];
@@ -114,7 +120,7 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
 
   <div class="card">
     <h3>Poradcovia</h3>
-    <p style="margin:-6px 0 16px; font-size:12.5px; color:var(--muted);">Bez nastaveného PIN-u sa poradca nevie prihlásiť do svojej zóny — po pridaní nezabudni nastaviť PIN.</p>
+    <p style="margin:-6px 0 16px; font-size:12.5px; color:var(--muted);">Bez nastaveného PIN-u sa poradca nevie prihlásiť do svojej zóny — po pridaní nezabudni nastaviť PIN. Získateľské/osobné číslo SFA/VFA a registračné číslo v NBS (nastavíš cez „Upraviť") sa automaticky predvyplnia v nástroji Zmena správcu zmluvy.</p>
     <table>
       <tr><th>Farba</th><th>Meno</th><th>Organizácia</th><th>E-mail</th><th>Telefón</th><th>PIN</th><th>Nástroje</th><th>Stav</th><th></th></tr>
       <?php foreach ($advisors as $a):
@@ -153,6 +159,9 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
             <input name="edit_org" value="<?= h($a['org']) ?>" placeholder="Organizácia">
             <input name="edit_email" type="email" value="<?= h($a['email']) ?>" placeholder="E-mail" required>
             <input name="edit_phone" value="<?= h($a['phone']) ?>" placeholder="Telefón">
+            <input name="edit_sfa_acquisition_no" value="<?= h($a['sfa_acquisition_no'] ?? '') ?>" placeholder="Získateľské číslo SFA/VFA" style="min-width:190px;">
+            <input name="edit_sfa_personal_no" value="<?= h($a['sfa_personal_no'] ?? '') ?>" placeholder="Osobné číslo SFA/VFA" style="min-width:170px;">
+            <input name="edit_nbs_registration_no" value="<?= h($a['nbs_registration_no'] ?? '') ?>" placeholder="Registračné číslo v NBS" style="min-width:190px;">
             <button type="submit">Uložiť</button>
             <button type="button" class="toggle-btn" onclick="cancelEdit(<?= (int)$a['id'] ?>)">Zrušiť</button>
           </form>
@@ -204,6 +213,9 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
       <input name="add_org" placeholder="Organizácia">
       <input name="add_email" type="email" placeholder="E-mail" required>
       <input name="add_phone" placeholder="Telefón">
+      <input name="add_sfa_acquisition_no" placeholder="Získateľské číslo SFA/VFA" style="min-width:190px;">
+      <input name="add_sfa_personal_no" placeholder="Osobné číslo SFA/VFA" style="min-width:170px;">
+      <input name="add_nbs_registration_no" placeholder="Registračné číslo v NBS" style="min-width:190px;">
       <button type="submit">Pridať poradcu</button>
     </form>
   </div>
@@ -249,7 +261,7 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
     </table>
   </div>
 </main>
-<script src="/assets/shell.js?v=18"></script>
+<script src="/assets/shell.js?v=19"></script>
 <script>
 function editAdvisor(id){
   document.getElementById('view-'+id).style.display = 'none';

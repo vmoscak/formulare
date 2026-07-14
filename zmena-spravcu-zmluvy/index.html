@@ -47,7 +47,7 @@
 <div class="app">
   <div class="head">
     <div class="head-left">
-      <a href="../formulare.php" class="back-btn" title="Späť na formuláre">
+      <a href="../uniqa-tlaciva.php" class="back-btn" title="Späť na tlačivá UNIQA">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
       </a>
       <div class="brand">
@@ -129,7 +129,7 @@
             <span class="err">Zadaj registračné číslo v NBS</span>
           </div>
         </div>
-        <p style="font-size:11.5px; color:var(--muted); margin-top:8px;">Tieto údaje si appka zapamätá v tomto prehliadači, nabudúce ich nebudeš prepisovať.</p>
+        <p style="font-size:11.5px; color:var(--muted); margin-top:8px;">Ak máš tieto čísla nastavené v Administrácii (u majiteľa portálu), predvyplnia sa automaticky. Inak si ich appka aspoň zapamätá v tomto prehliadači.</p>
       </div>
 
       <!-- 3. zmluvy -->
@@ -469,10 +469,15 @@ function bind(){
     state.advisorEmail = ADVISOR.email || '';
     state.advisorCompany = ADVISOR.org || '';
     if(!state.newAdminName) state.newAdminName = ADVISOR.name;
+    // Profesijné čísla nastavené majiteľom v Administrácii majú prednosť
+    // pred hodnotou zapamätanou v tomto prehliadači.
+    if(ADVISOR.sfa_acquisition_no) state.newAdminAcquisitionNo = ADVISOR.sfa_acquisition_no;
+    if(ADVISOR.sfa_personal_no) state.newAdminPersonalNo = ADVISOR.sfa_personal_no;
+    if(ADVISOR.nbs_registration_no) state.newAdminNbsNo = ADVISOR.nbs_registration_no;
   }
   renderRows(); syncInputs(); bind(); render();
 })();
 </script>
 
-<script src="/assets/shell.js?v=18"></script>
+<script src="/assets/shell.js?v=19"></script>
 </body></html>

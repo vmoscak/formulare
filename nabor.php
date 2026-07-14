@@ -355,5 +355,5 @@ function qs(array $overrides): string {
     .catch(function () { countEl.textContent = '· chyba načítania'; });
 })();
 </script>
-<script src="/assets/shell.js?v=18"></script>
+<script src="/assets/shell.js?v=19"></script>
 </body></html>

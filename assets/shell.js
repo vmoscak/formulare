@@ -31,6 +31,7 @@
     tools: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
     formulare: '<path d="M8 7V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-2"/><rect x="4" y="7" width="12" height="14" rx="2"/>',
     pomocky: '<rect x="2" y="5" width="20" height="14" rx="2.5"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/>',
+    uniqa: '<circle cx="7" cy="12" r="3.2"/><circle cx="17" cy="12" r="3.2"/><path d="M10 12h4"/>',
     docs: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="14" y2="17"/>',
     admin: '<path d="M12 2l7 4v6c0 5-3.5 8-7 10-3.5-2-7-5-7-10V6z"/>',
     nabor: '<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
@@ -102,6 +103,7 @@
     if (/\/nastroje\.php/.test(path)) currentGroup = 'nastroje';
     else if (/\/formulare\.php/.test(path)) currentGroup = 'formulare';
     else if (/\/pomocky\.php/.test(path)) currentGroup = 'pomocky';
+    else if (/\/uniqa-tlaciva\.php/.test(path)) currentGroup = 'uniqa';
     else if (!isDocs && !isAdmin && !isNabor && !isKb && !isNews && !isHome && !isRefi && !isCopy && !isRefiCalc && !isCesta && !isTimPrehlad && !isTimKalendar) {
       var slug = (path.split('/').filter(Boolean)[0]) || '';
       currentGroup = (toolGroups && toolGroups[slug]) || 'nastroje';
@@ -113,6 +115,7 @@
       { key: 'nastroje', icon: ICONS.tools, href: '/nastroje.php', label: 'Nástroje', active: currentGroup === 'nastroje' },
       { key: 'formulare', icon: ICONS.formulare, href: '/formulare.php', label: 'Formuláre', active: currentGroup === 'formulare' },
       { key: 'pomocky', icon: ICONS.pomocky, href: '/pomocky.php', label: 'Pomôcky', active: currentGroup === 'pomocky' },
+      { key: 'uniqa', icon: ICONS.uniqa, href: '/uniqa-tlaciva.php', label: 'Tlačivá UNIQA', active: currentGroup === 'uniqa' },
       { key: 'docs', icon: ICONS.docs, href: '/moje-dokumenty.php', label: 'Moje dokumenty', active: isDocs },
       { key: 'timKalendar', icon: ICONS.calendar, href: '/tim-kalendar.php', label: 'Tímový kalendár', active: isTimKalendar }
     ];

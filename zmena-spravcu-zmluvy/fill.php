@@ -159,11 +159,16 @@ $pdf->SetTextColor(15, 15, 15);
 function writeCell(Fpdi $pdf, array $rect, string $text, float $size = 9, bool $bold = false): void {
     if ($text === '') return;
     $x0 = pt2mm($rect[0]); $y0 = pt2mm($rect[1]);
-    $x1 = pt2mm($rect[2]); $y1 = pt2mm($rect[3]);
+    $x1 = pt2mm($rect[2]);
     $pdf->SetFont('DejaVu', $bold ? 'B' : '', $size);
-    // jemné zvislé odsadenie od hornej hrany bunky
-    $pdf->SetXY($x0 + 0.5, $y0 + 0.6);
-    $pdf->Cell($x1 - $x0 - 1, $y1 - $y0, $text, 0, 0, 'L');
+    // Výška bunky pre Cell() je zámerne malá (podľa veľkosti písma, nie podľa
+    // celej výšky poľa na predlohe) — FPDF centruje text na baseline vo
+    // vzdialenosti 0.5*h + 0.3*fontSize od hornej hrany. Pri plnej výške poľa
+    // by baseline padol na vodiace deliace značky pod číselnými poľami
+    // (Číslo zmluvy a pod.) a text by sa s nimi vizuálne zlial.
+    $lineH = ($size / 72 * 25.4) * 1.3;
+    $pdf->SetXY($x0 + 0.5, $y0 + 0.4);
+    $pdf->Cell($x1 - $x0 - 1, $lineH, $text, 0, 0, 'L');
 }
 
 // Počet riadkov, na ktoré by sa text zalomil pri danej šírke bunky a fonte

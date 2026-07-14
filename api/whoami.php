@@ -12,7 +12,7 @@ $advisorId = curAdvisorId();
 if (!$advisorId) { echo '{}'; exit; }
 
 try {
-    $stmt = db()->prepare('SELECT id, name, org, email, phone, color, is_admin, is_owner, onboarding_started_at FROM formulare_advisors WHERE id = ? AND active = 1');
+    $stmt = db()->prepare('SELECT id, name, org, email, phone, color, is_admin, is_owner, onboarding_started_at, sfa_acquisition_no, sfa_personal_no, nbs_registration_no FROM formulare_advisors WHERE id = ? AND active = 1');
     $stmt->execute([$advisorId]);
     $advisor = $stmt->fetch();
     if ($advisor) {

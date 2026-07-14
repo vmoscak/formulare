@@ -254,5 +254,5 @@ function rkCancel(id) {
   document.getElementById('rk-edit-' + id).style.display = 'none';
 }
 </script>
-<script src="/assets/shell.js?v=18"></script>
+<script src="/assets/shell.js?v=19"></script>
 </body></html>
