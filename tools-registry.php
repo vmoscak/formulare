@@ -81,8 +81,6 @@ $TOOL_CATEGORIES = [
          'desc' => 'Koľko reálne dostane klient pri škode, ak je majetok podpoistený – princíp pomerného plnenia, so správnou sumou vedľa seba na porovnanie.'],
         ['href' => 'poistenie-uveru-banka-vs-uniqa/', 'name' => 'Poistenie úveru: banka vs. UNIQA', 'ico' => 'swap', 'color' => 'indigo',
          'desc' => 'Porovnanie celkových nákladov bankového poistenia úveru oproti samostatnej poistke UNIQA – aj zoznam výhod mimo ceny.'],
-        ['href' => 'obchadzac-notara/', 'name' => 'Obchádzač notára', 'ico' => 'shield', 'color' => 'violet',
-         'desc' => 'Koľko hotovosti rodina potrebuje počas dedičského konania, kým sú účty zmrazené – porovnanie s rýchlym poistným plnením mimo dedičstva.'],
     ]],
     ['title' => 'Podpora poradcu', 'group' => 'nastroje', 'tools' => [
         ['href' => 'tahak-co-pytat-od-klienta/', 'name' => 'Ťahák „Čo pýtať od klienta“', 'ico' => 'check', 'color' => 'amber',
