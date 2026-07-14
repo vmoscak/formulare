@@ -47,6 +47,26 @@ foreach ($TOOL_CATEGORIES as $cat) {
 }
 $groupMeta = $TOOL_GROUPS[$GROUP];
 $arrow = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+
+// "Flow" banner — 3-krokový reťazec poistnej analýzy klienta (len na záložke
+// Nástroje), prepojený odovzdávaním odpovedí cez URL seed medzi krokmi
+// (viď wizard-poistenie gapCalcUrl() a financna-medzera doCreateChecklist()).
+$FLOW_STEPS = [
+    'wizard-poistenie'  => ['n' => 1, 'blurb' => 'Krátky dotazník – zistí, čo klient potrebuje'],
+    'financna-medzera'  => ['n' => 2, 'blurb' => 'Dopočíta presné sumy krytia'],
+    'checklist-analyza' => ['n' => 3, 'blurb' => 'Automaticky sa vyplní z krokov 1 a 2'],
+];
+$flowTools = [];
+if ($GROUP === 'nastroje') {
+    foreach ($TOOL_CATEGORIES as $cat) {
+        foreach ($cat['tools'] as $t) {
+            $slug = toolSlug($t['href']);
+            if (!isset($FLOW_STEPS[$slug]) || in_array($slug, $disabledSlugs, true)) continue;
+            $flowTools[$FLOW_STEPS[$slug]['n']] = $t + ['blurb' => $FLOW_STEPS[$slug]['blurb']];
+        }
+    }
+    ksort($flowTools);
+}
 ?>
 <!DOCTYPE html>
 <html lang="sk">
@@ -58,7 +78,7 @@ $arrow = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="cu
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=25">
+<link rel="stylesheet" href="/assets/panel.css?v=26">
 </head>
 <body>
 
@@ -83,6 +103,28 @@ $arrow = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="cu
     <h2>Dobrý deň, <?= htmlspecialchars(explode(' ', $me['name'])[0]) ?></h2>
     <p>Máš pripravených <?= array_sum(array_map(fn($c) => count($c['tools']), $categories)) ?> nástrojov v <?= count($categories) ?> kategóriách.</p>
   </div>
+
+  <?php if ($flowTools): ?>
+  <div class="flow-banner">
+    <div class="flow-banner-head">
+      <span class="flow-kicker">Odporúčaný postup</span>
+      <h3>Poistná analýza klienta — 3 kroky, jeden celok</h3>
+      <p>Dotazník zistí, čo klient potrebuje. Kalkulačka dopočíta presné sumy. Checklist sa vyplní automaticky z prvých dvoch krokov — tu je jasné, kde s klientom začať.</p>
+    </div>
+    <div class="flow-steps">
+      <?php $i = 0; foreach ($flowTools as $n => $t): $i++; ?>
+      <?php if ($i > 1): ?><span class="flow-arrow"><?= $arrow ?></span><?php endif; ?>
+      <a class="tool-card c-<?= htmlspecialchars($t['color']) ?> flow-step" href="<?= htmlspecialchars($t['href']) ?>">
+        <span class="flow-num"><?= (int)$n ?></span>
+        <span class="ic"><?= toolIco($t['ico']) ?></span>
+        <h4><?= htmlspecialchars($t['name']) ?></h4>
+        <p><?= htmlspecialchars($t['blurb']) ?></p>
+        <span class="go">Otvoriť <?= $arrow ?></span>
+      </a>
+      <?php endforeach; ?>
+    </div>
+  </div>
+  <?php endif; ?>
 
   <?php foreach ($categories as $cat): ?>
   <div class="section">

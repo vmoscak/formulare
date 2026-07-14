@@ -138,7 +138,7 @@ $editAssigneeIds = $editEventId ? ($assigneesByEvent[$editEventId] ?? []) : [];
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=25">
+<link rel="stylesheet" href="/assets/panel.css?v=26">
 <style>
   .cal-nav{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
   .cal-nav h3{margin:0; font-size:16px; text-transform:capitalize;}

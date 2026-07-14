@@ -27,6 +27,12 @@
 <style>
   /* odchýlky tejto stránky od zdieľaného dizajnu (assets/ui.css) */
   .app{max-width:1280px;}
+  .flow-step-badge{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:10.5px; font-weight:700; letter-spacing:.03em; text-transform:uppercase;
+    color:var(--accent); background:var(--accent-soft); border-radius:999px; padding:5px 12px;
+    white-space:nowrap;
+  }
 </style>
 </head>
 <body>
@@ -44,6 +50,7 @@
           <small>Koľko by rodine chýbalo pri strate príjmu</small>
         </div>
       </div>
+      <span class="flow-step-badge">Krok 2 z 3 · Poistná analýza</span>
     </div>
     <div class="head-actions" id="modeToggleWrap">
       <div class="mode-toggle" title="Prepnúť medzi poradcovským a klientským zobrazením">
@@ -230,7 +237,7 @@
 
       <div class="contact-card" id="checklistCard">
         <h3>Vytvoriť checklist</h3>
-        <p>Úlohy sa predvyplnia podľa zistených medzier v krytí — pred odoslaním klientovi si ich môžeš upraviť.</p>
+        <p id="checklistHint">Úlohy sa predvyplnia podľa zistených medzier v krytí — pred odoslaním klientovi si ich môžeš upraviť.</p>
         <button class="btn-ghost" id="checklistBtn" style="width:100%;">Vytvoriť checklist z odporúčaní</button>
       </div>
 
@@ -313,6 +320,7 @@ const state = {
   existingLifePartner:'', existingDisabilityPartner:'', existingCriticalIllnessPartner:'', existingPermanentInjuryPartner:'', existingPnPartner:'',
   savings:'',
   contactName:'',
+  carryChecklist:[],
   touched:false,
 };
 
@@ -770,6 +778,10 @@ function doCreateChecklist(){
   });
   if(g.reserve.gap>0) items.push({ text:'Vybudovať krátkodobú finančnú rezervu – chýba cca '+eur(g.reserve.gap), owner:'klient' });
 
+  state.carryChecklist.forEach(function(c){
+    items.push({ text:'Zvážiť: '+c.title, owner:'klient' });
+  });
+
   const seed = {
     clientName: state.contactName.trim(),
     advisorName: ADVISOR.name || '',
@@ -823,6 +835,7 @@ function openHistoryRow(row){
   syncInputs();
   updatePartnerVisibility();
   renderCoverageChips();
+  renderChecklistHint();
   render();
   window.scrollTo({top:0, behavior:'smooth'});
 }
@@ -1113,9 +1126,10 @@ function doReset(){
     existingLife:'', existingDisability:'', existingCriticalIllness:'', existingPermanentInjury:'', existingPn:'',
     existingLifePartner:'', existingDisabilityPartner:'', existingCriticalIllnessPartner:'', existingPermanentInjuryPartner:'', existingPnPartner:'',
     savings:'', contactName:'',
+    carryChecklist:[],
     touched:false,
   });
-  syncInputs(); updatePartnerVisibility(); renderCoverageChips(); render();
+  syncInputs(); updatePartnerVisibility(); renderCoverageChips(); renderChecklistHint(); render();
 }
 
 function renderCoverageChips(){
@@ -1123,6 +1137,17 @@ function renderCoverageChips(){
   box.querySelectorAll('.chip').forEach(c=>{
     c.classList.toggle('sel', Number(c.dataset.months)===Number(state.coverageMonths));
   });
+}
+
+/* Ak klient prišiel cez odkaz z dotazníka "Aké poistenie potrebujem", dá to
+   vedieť pri tlačidle na vytvorenie checklistu — položky odtiaľ sa doň
+   pridajú spolu so zistenými medzerami v krytí (viď doCreateChecklist()). */
+function renderChecklistHint(){
+  const el = $('checklistHint'); if(!el) return;
+  const n = state.carryChecklist.length;
+  el.textContent = n
+    ? 'Úlohy sa predvyplnia podľa zistených medzier v krytí a doplnia o '+n+' '+(n===1?'odporúčanie':(n<5?'odporúčania':'odporúčaní'))+' z dotazníka „Aké poistenie potrebujem“ — pred odoslaním klientovi si ich môžeš upraviť.'
+    : 'Úlohy sa predvyplnia podľa zistených medzier v krytí — pred odoslaním klientovi si ich môžeš upraviť.';
 }
 
 function syncInputs(){
@@ -1230,10 +1255,11 @@ function bind(){
       const seed = JSON.parse(seedParam);
       if(seed.contactName) state.contactName = seed.contactName;
       if(seed.hasDependents) state.children.push(withId({ age:'', existingCriticalIllness:'', existingPermanentInjury:'', existingInvalidity:'' }));
+      if(Array.isArray(seed.carryChecklist)) state.carryChecklist = seed.carryChecklist.filter(c=>c && c.title);
     }catch(e){ /* ticho ignoruj, formulár ostane prázdny */ }
   }
 
-  syncInputs(); updatePartnerVisibility(); renderCoverageChips(); bind();
+  syncInputs(); updatePartnerVisibility(); renderCoverageChips(); renderChecklistHint(); bind();
 
   if(CLIENT_TOKEN){
     const toggle = $('modeToggleWrap'); if(toggle) toggle.remove();

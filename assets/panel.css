@@ -253,6 +253,30 @@ body.rail-scrolled .topbar{box-shadow:var(--shadow-md);}
 .tool-card.c-indigo .go,.tool-card.c-emerald .go,.tool-card.c-rose .go,.tool-card.c-teal .go,.tool-card.c-amber .go,
 .tool-card.c-violet .go,.tool-card.c-sky .go,.tool-card.c-orange .go{color:#fff;}
 
+/* ── "Flow" banner (nastroje.php) — 3-krokový reťazec Aké poistenie
+   potrebujem → Kalkulačka poistného krytia → Checklist, zvýraznený nad
+   bežnou mriežkou nástrojov, aby bolo jasné, kde s klientom začať. ── */
+.flow-banner{
+  background:var(--paper); border:1px solid var(--border); border-radius:var(--radius-2xl);
+  padding:24px; margin-bottom:34px; box-shadow:var(--shadow-sm);
+}
+.flow-banner-head{margin-bottom:18px;}
+.flow-kicker{font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--accent);}
+.flow-banner-head h3{margin:6px 0 6px; font-size:17px; font-weight:700; color:var(--ink); letter-spacing:-.01em;}
+.flow-banner-head p{margin:0; font-size:13px; color:var(--muted); line-height:1.55; max-width:640px;}
+.flow-steps{display:flex; align-items:stretch; gap:14px;}
+.flow-step{flex:1; min-width:0; min-height:150px;}
+.flow-step .flow-num{
+  position:absolute; top:16px; right:18px; width:26px; height:26px; border-radius:50%;
+  background:rgba(255,255,255,.22); color:#fff; font-size:13px; font-weight:800;
+  display:flex; align-items:center; justify-content:center;
+}
+.flow-arrow{display:flex; align-items:center; justify-content:center; color:var(--muted); flex-shrink:0;}
+@media(max-width:860px){
+  .flow-steps{flex-direction:column;}
+  .flow-arrow{transform:rotate(90deg); margin:-6px 0;}
+}
+
 /* ── Osobné míľniky (uvod.php) — súkromný pokrok, žiadne porovnávanie s tímom ── */
 .milestone-card{
   display:flex; align-items:center; gap:18px; background:var(--paper); border:1px solid var(--border);
