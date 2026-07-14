@@ -132,6 +132,37 @@ function obMotivation(int $pct): string {
     return 'Poďme na to! 🚀';
 }
 
+// Doplňujúce info k vybraným krokom (bublinové okno na hover) — skrátená
+// "Obsahová náplň kurzu" z Karty výkonnosti a rozvoja VFA 2025. Naviazané na
+// presný názov kroku (nie na ID), lebo ide o statický referenčný text mimo DB —
+// ak owner názov kroku premenuje, bublina pri ňom jednoducho zmizne.
+$OB_TOOLTIPS = [
+    'Prvé kroky v UNIQA — úvodné školenie' => 'Poisťovacia abeceda • UNIQA — informácie o spoločnosti • Firemná kultúra UNIQA • Systém vzdelávania v UNIQA • Moja vízia v UNIQA.',
+    'Štart I. Životné poistenie — aktívna účasť a samoštúdium po štarte' => 'Život & Radosť — technické parametre, výhody a úžitok pre klienta, práca v UNIHUB. Pripoistenia — parametre, výhody a úžitok pre klienta, práca v UNIHUB.',
+    'IT systémy — školenie a nastavenie' => 'Overenie prihlásenia do IT systémov • Práca v prostredí UNIPOINT, Albert, CRM • Tréning kalkulácie ponúk.',
+    'Štart II. Autá — aktívna účasť a samoštúdium po štarte' => 'KASKO — technické parametre, výhody a úžitok pre klienta, spôsob dojednania + obhliadka. PZP — technické parametre, výhody pre klienta, spôsob dojednania.',
+    'Štart III. Úvod do predaja — aktívna účasť a samoštúdium' => 'Prehľad produktov UNIQA • Filozofia životného poistenia • Telefonovanie a zvládanie námietok • Analýza potrieb klienta — úvod, ukážka, tréning.',
+    'Štart IV. On-line majetok — samoštúdium, účasť a samoštúdium po štarte' => 'Technické parametre produktu Domov a bezpečie • Terminológia • Kalkulácia ponuky.',
+    'Štart V. Poistenie osôb — samoštúdium, účasť a samoštúdium po štarte' => 'UNIQÁČIK — technické parametre, výhody a úžitok pre klienta, príprava ponuky. Cestovné poistenie a pohrebné náklady — technické parametre, príprava ponuky, výhody a úžitok pre klienta.',
+    'Štart VI. Dôchodky — samoštúdium, účasť a samoštúdium po štarte' => 'Starobné dôchodkové sporenie: SDS, DDS — technické parametre, spôsob dojednania.',
+    'Blok I. Majetkové poistenie — aktívna účasť a samoštúdium po bloku' => 'Filozofia majetkového poistenia • Technické parametre D&B + asistenčné služby — výhody a úžitok pre klienta • Návrh správnych poistných súm a kalkulácia pre klienta, práca v UNIPOINT a CRM.',
+    'Blok II. Životné poistenie — aktívna účasť a samoštúdium po bloku' => 'Filozofia a zmysel životného poistenia — prípadové štúdie • Pravidlá poistenia + finančná matematika • Hra UNIQATNY život • Nastavenie poistných súm ŽP v UNIPOINT a práca v CRM • SDS, Tempo, investovanie, príprava ponúk.',
+    'Blok III. Predaj — aktívna účasť a samoštúdium' => 'Vstup do sveta klienta • Analýza potrieb klienta • Efektívna argumentácia pri prezentácii, gradácia argumentácie • Námietky a ich riešenie • Uzatváracie techniky, získavanie odporúčaní, premostenie na servis • Príprava na maturitnú skúšku.',
+    'Maturita' => 'Overenie produktových znalostí a predajných zručností.',
+];
+
+// Krátky podporný odkaz na začiatku každej fázy — pripomienka, že nováčik
+// v tom nie je sám a má sa na koho obrátiť.
+$OB_PHASE_SUPPORT = [
+    'Pred nástupom' => 'Papierovanie a školenia na začiatku vyzerajú ako veľa — a aj je to veľa. Netreba to zvládnuť dokonale na prvýkrát. Ak si niečím neistý, opýtaj sa — presne na to sú tu kolegovia aj tvoj manažér.',
+    '0. mesiac' => 'Prvý mesiac je o učení sa veľa nového naraz. Je úplne normálne, že si na začiatku neistý — nikto od teba nečaká, že to vieš hneď. Manažér aj skúsenejší kolegovia ti radi pomôžu, stačí sa ozvať.',
+    'I. mesiac' => 'Ak máš pocit, že iní to majú jednoduchšie, nemajú — každý si prešiel rovnakou krivkou učenia. Pýtaj sa toľko, koľko potrebuješ, nie je to znak slabosti.',
+    'II. mesiac' => 'Majetkové poistenie je technickejšia oblasť a prvé ponuky bývajú pomalšie — to je v poriadku. Radšej sa spýtaj vopred, než sa s tým trápiť sám.',
+    'III. mesiac' => 'Životné poistenie je srdcom tejto práce a najviac otázok je pri ňom úplne prirodzené. Nie si v tom sám — kolegovia aj manažér ťa podržia.',
+    'IV. mesiac' => 'Blížiš sa k maturite — náročné, ale máš za sebou už veľký kus cesty. Ak potrebuješ nacvičiť argumentáciu alebo si niečo prejsť, stačí povedať.',
+    'V. mesiac' => 'Posledný krok pred maturitou. Ver si — dostal si sa sem vlastnou prácou. A ak sa niečo nepodarí na prvý pokus, nie je to koniec sveta.',
+];
+
 // Pre ownera: zoznam ostatných aktívnych poradcov (na priradenie/odobratie)
 // spolu s ich vlastným postupom, ak už majú onboarding spustený.
 $teamAdvisors = [];
@@ -218,6 +249,20 @@ if ($isOwner) {
   .ob-phase-count{font-size:12px; color:var(--muted); font-weight:600; flex-shrink:0;}
   .ob-phase.status-upcoming .ob-phase-summary{opacity:.72;}
   .ob-phase-body{padding:0 8px 8px 42px;}
+
+  .ob-phase-support{display:flex; gap:8px; align-items:flex-start; font-size:12.5px; color:var(--ink-2); line-height:1.5;
+    background:var(--desk); border-radius:var(--radius-md); padding:9px 11px; margin:0 0 10px;}
+  .ob-phase-support .ob-support-emoji{flex-shrink:0;}
+
+  .ob-info{position:relative; display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px;
+    border-radius:50%; background:var(--desk); color:var(--muted); font-size:10px; font-weight:700; cursor:help;
+    margin-left:6px; flex-shrink:0; border:1px solid var(--border); vertical-align:middle;}
+  .ob-info:hover, .ob-info:focus{background:var(--accent-soft); color:var(--accent-ink); border-color:var(--accent-line); outline:none;}
+  .ob-info-bubble{position:absolute; left:50%; bottom:calc(100% + 8px); transform:translateX(-50%) translateY(4px);
+    width:240px; max-width:min(240px, 78vw); background:var(--ink); color:#fff; font-size:11.5px; font-weight:400; line-height:1.5;
+    padding:8px 10px; border-radius:8px; text-align:left; opacity:0; pointer-events:none; transition:opacity .15s ease, transform .15s ease; z-index:20; box-shadow:var(--shadow-md);}
+  .ob-info-bubble::after{content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:var(--ink);}
+  .ob-info:hover .ob-info-bubble, .ob-info:focus .ob-info-bubble{opacity:1; transform:translateX(-50%) translateY(0);}
 
   .ob-step{display:flex; align-items:flex-start; gap:12px; padding:12px 4px; border-bottom:1px solid var(--border); transition:background .25s ease;}
   .ob-step:last-child{border-bottom:none;}
@@ -353,11 +398,14 @@ if ($isOwner) {
           <span class="ob-phase-count" id="ob-phase-count-<?= $st['idx'] ?>"><?= $st['done'] ?>/<?= $st['total'] ?></span>
         </summary>
         <div class="ob-phase-body">
-      <?php foreach ($phaseSteps as $s): $isDone = in_array((int)$s['id'], $doneStepIds, true); ?>
+      <?php if (isset($OB_PHASE_SUPPORT[$phaseName])): ?>
+      <div class="ob-phase-support"><span class="ob-support-emoji">🤝</span><span><?= h($OB_PHASE_SUPPORT[$phaseName]) ?></span></div>
+      <?php endif; ?>
+      <?php foreach ($phaseSteps as $s): $isDone = in_array((int)$s['id'], $doneStepIds, true); $tip = $OB_TOOLTIPS[$s['title']] ?? null; ?>
       <div class="ob-step<?= $isDone ? ' done' : '' ?>" id="ob-step-<?= (int)$s['id'] ?>" data-step-id="<?= (int)$s['id'] ?>" data-phase-idx="<?= $st['idx'] ?>">
         <input type="checkbox" <?= $isDone ? 'checked' : '' ?> data-toggle-step="<?= (int)$s['id'] ?>">
         <div class="ob-step-body">
-          <div class="ob-step-title"><?= h($s['title']) ?></div>
+          <div class="ob-step-title"><?= h($s['title']) ?><?php if ($tip): ?><span class="ob-info" tabindex="0">i<span class="ob-info-bubble"><?= h($tip) ?></span></span><?php endif; ?></div>
           <?php if ($s['description']): ?><div class="ob-step-desc"><?= h($s['description']) ?></div><?php endif; ?>
         </div>
         <div class="ob-step-actions">
