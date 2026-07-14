@@ -398,8 +398,8 @@ function buildLetterHtml(r){
   const SK_MONTHS = ['január','február','marec','apríl','máj','jún','júl','august','september','október','november','december'];
   const dateStr = today.getDate() + '. ' + SK_MONTHS[today.getMonth()] + ' ' + today.getFullYear();
 
-  const beforePanel = pdfPanelHtml(r, 'before', 'Pred', 'Ak sa dnes nič nezmení', 'linear-gradient(160deg,#fb7185,#e11d48)');
-  const afterPanel = pdfPanelHtml(r, 'after', 'Po', 'S odporúčaným krytím', 'linear-gradient(160deg,#34d399,#059669)');
+  const beforePanel = pdfPanelHtml(r, 'before', 'Pred', 'Ak sa dnes nič nezmení', '#e11d48');
+  const afterPanel = pdfPanelHtml(r, 'after', 'Po', 'S odporúčaným krytím', '#059669');
 
   const css = `
     @font-face { font-family:'DejaVu Sans'; src:url('../vendor/dompdf/lib/fonts/DejaVuSans.ttf'); }
