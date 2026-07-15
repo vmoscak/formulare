@@ -21,7 +21,7 @@
 
 <script src="../assets/theme-init.js"></script>
 <script src="../assets/toast.js?v=1"></script>
-<link rel="stylesheet" href="../assets/ui.css?v=11">
+<link rel="stylesheet" href="../assets/ui.css?v=12">
 <style>
   #types{grid-template-columns:repeat(2,minmax(0,1fr));}
   .pu-list-head{font-weight:700; font-size:15px; color:var(--ink); margin-bottom:4px;}
@@ -137,12 +137,12 @@ function renderArgs(){
   $('avatar').textContent = t.tile;
   $('argList').innerHTML = '<div class="pu-list-head">' + escapeHtml(t.label) + '</div>'
     + '<p class="pu-list-sub">' + t.arguments.length + ' argumentov, prečo zvážiť samostatnú poistku UNIQA</p>'
-    + t.arguments.map(function(a, idx){
-        return '<div class="rec-card" style="margin-bottom:10px;">'
+    + '<div class="rec-list">' + t.arguments.map(function(a, idx){
+        return '<div class="rec-card">'
           + '<div class="rc-title" style="align-items:flex-start;"><span class="rc-num">' + (idx + 1) + '</span>'
           + '<span style="font-weight:400; font-size:13.5px; color:var(--ink-2); line-height:1.55;">' + escapeHtml(a) + '</span></div>'
           + '</div>';
-      }).join('');
+      }).join('') + '</div>';
 }
 
 function render(){ renderTypes(); renderArgs(); }

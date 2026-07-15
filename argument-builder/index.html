@@ -21,7 +21,7 @@
 
 <script src="../assets/theme-init.js"></script>
 <script src="../assets/toast.js?v=1"></script>
-<link rel="stylesheet" href="../assets/ui.css?v=11">
+<link rel="stylesheet" href="../assets/ui.css?v=12">
 <style>
   .ab-chips{display:flex; flex-wrap:wrap; gap:8px;}
   .ab-chip{
@@ -197,15 +197,15 @@ function renderArgs(){
   const prod = PRODUCTS[state.product];
   const args = argsForCurrent();
   $('avatar').textContent = prod.tile;
-  $('argList').innerHTML = '<div style="font-weight:700; font-size:15px; color:#20242b; margin-bottom:4px;">' + escapeHtml(prod.label) + '</div>'
-    + '<p style="font-size:12.5px; color:#8a8f99; margin-bottom:14px;">' + args.length + ' z ' + prod.arguments.length + ' argumentov'
+  $('argList').innerHTML = '<div style="font-weight:700; font-size:15px; color:var(--ink); margin-bottom:4px;">' + escapeHtml(prod.label) + '</div>'
+    + '<p style="font-size:12.5px; color:var(--muted); margin-bottom:14px;">' + args.length + ' z ' + prod.arguments.length + ' argumentov'
       + (state.clientType ? ' pre „' + escapeHtml(CLIENT_TYPES[state.clientType]) + '“' : '') + '</p>'
-    + args.map(function(a, idx){
-        return '<div class="rec-card" style="margin-bottom:10px;">'
+    + '<div class="rec-list">' + args.map(function(a, idx){
+        return '<div class="rec-card">'
           + '<div class="rc-title" style="align-items:flex-start;"><span class="rc-num">' + (idx + 1) + '</span>'
           + '<span style="font-weight:400; font-size:13.5px; color:var(--ink-2); line-height:1.55;">' + escapeHtml(a.text) + '</span></div>'
           + '</div>';
-      }).join('');
+      }).join('') + '</div>';
 }
 
 function render(){ renderProducts(); renderClientTypes(); renderArgs(); }

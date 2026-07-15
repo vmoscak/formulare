@@ -610,18 +610,28 @@ input:focus,select:focus,textarea:focus{
 .res-head h2{margin:0 0 6px; font-size:21px; font-weight:700; color:var(--ink);}
 .res-head p{margin:0; font-size:13.5px; color:var(--muted);}
 
-.rec-list{display:flex; flex-direction:column; gap:12px; margin-bottom:24px;}
+.rec-list{display:flex; flex-direction:column; gap:14px; margin-bottom:24px;}
 .rec-card{
   border:1px solid var(--border); border-radius:var(--radius-xl);
-  padding:16px 18px; background:var(--paper); box-shadow:var(--shadow-sm);
+  padding:16px 18px 16px 20px; background:var(--rc-soft, var(--accent-soft)); box-shadow:var(--shadow-sm);
+  position:relative; overflow:hidden; transition:transform .15s ease, box-shadow .15s ease;
 }
-.rec-card .rc-title{display:flex; align-items:center; gap:9px; font-size:14.5px; font-weight:700; margin-bottom:6px; color:var(--ink);}
+.rec-card:hover{transform:translateY(-1px); box-shadow:var(--shadow-md,var(--shadow-sm));}
+.rec-card::before{content:''; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--rc-color, var(--accent));}
+/* cyklická farebná paleta — kartičky odporúčaní/argumentov naprieč portálom
+   (Argument Builder, Poistenie úveru vs. banka, wizard-poistenie a pod.) */
+.rec-card:nth-of-type(5n+1){--rc-color:var(--accent); --rc-soft:var(--accent-soft);}
+.rec-card:nth-of-type(5n+2){--rc-color:var(--teal); --rc-soft:var(--teal-soft);}
+.rec-card:nth-of-type(5n+3){--rc-color:var(--amber); --rc-soft:var(--amber-soft);}
+.rec-card:nth-of-type(5n+4){--rc-color:var(--rose); --rc-soft:var(--rose-soft);}
+.rec-card:nth-of-type(5n+5){--rc-color:var(--good); --rc-soft:var(--good-soft);}
+.rec-card .rc-title{display:flex; align-items:center; gap:10px; font-size:14.5px; font-weight:700; margin-bottom:6px; color:var(--ink);}
 .rec-card .rc-num{
-  width:24px; height:24px; border-radius:7px; background:var(--accent); color:#fff;
+  width:27px; height:27px; border-radius:8px; background:var(--rc-color, var(--accent)); color:#fff;
   display:flex; align-items:center; justify-content:center;
-  font-size:12px; font-weight:700; flex-shrink:0;
+  font-size:12.5px; font-weight:800; flex-shrink:0;
 }
-.rec-card .rc-why{font-size:13px; color:var(--ink-2); line-height:1.55; margin-left:33px;}
+.rec-card .rc-why{font-size:13px; color:var(--ink-2); line-height:1.55; margin-left:37px;}
 
 .gap-link{
   display:block; text-align:center; font-size:13.5px; font-weight:600; color:var(--accent);
