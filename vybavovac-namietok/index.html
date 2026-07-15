@@ -62,7 +62,7 @@
         <button class="tool" id="resetBtn">Vynulovať odškrtnuté</button>
       </div>
       <div class="letter-wrap">
-        <div id="responses" style="background:#fff; border-radius:8px; padding:24px;"></div>
+        <div id="responses" style="background:var(--paper); border-radius:8px; padding:24px;"></div>
       </div>
     </div>
   </div>
@@ -146,14 +146,14 @@ function renderResponses(){
   const obj = OBJECTIONS[state.objection];
   const checkedSet = state.checked[state.objection] || {};
   $('avatar').textContent = obj.tile;
-  $('responses').innerHTML = '<div style="font-weight:700; font-size:15px; color:#20242b; margin-bottom:14px;">' + escapeHtml(obj.label) + '</div>'
-    + obj.responses.map(function(r, i){
+  $('responses').innerHTML = '<div style="font-weight:700; font-size:15px; color:var(--ink); margin-bottom:14px;">' + escapeHtml(obj.label) + '</div>'
+    + '<div class="rec-list">' + obj.responses.map(function(r, i){
         const isChecked = !!checkedSet[i];
-        return '<label style="display:flex; align-items:flex-start; gap:10px; padding:9px 0; border-bottom:1px solid #eef0f3; cursor:pointer;">'
-          + '<input type="checkbox" data-q="' + i + '" ' + (isChecked ? 'checked' : '') + ' style="margin-top:3px; flex-shrink:0; width:16px; height:16px;">'
-          + '<span style="font-size:13.5px; line-height:1.6; color:' + (isChecked ? '#9aa1ad' : '#20242b') + '; text-decoration:' + (isChecked ? 'line-through' : 'none') + ';">' + escapeHtml(r) + '</span>'
+        return '<label class="rec-card" style="display:flex; align-items:flex-start; gap:12px; cursor:pointer;">'
+          + '<input type="checkbox" data-q="' + i + '" ' + (isChecked ? 'checked' : '') + ' style="margin-top:2px; flex-shrink:0; width:17px; height:17px; accent-color:var(--rc-color, var(--accent));">'
+          + '<span style="font-size:13.5px; line-height:1.6; color:' + (isChecked ? 'var(--muted)' : 'var(--ink-2)') + '; text-decoration:' + (isChecked ? 'line-through' : 'none') + ';">' + escapeHtml(r) + '</span>'
           + '</label>';
-      }).join('');
+      }).join('') + '</div>';
 }
 
 function render(){ renderObjections(); renderResponses(); }
