@@ -91,7 +91,7 @@
 
       <!-- 3. žiadateľ -->
       <div>
-        <div class="step-head"><div class="step-num">3</div><div class="step-title">Žiadateľ/-ka (poistník/poškodený-á)</div></div>
+        <div class="step-head"><div class="step-num">3</div><div class="step-title">Žiadateľ/-ka (poistník/-čka alebo poškodený/-á)</div></div>
         <div class="fields">
           <div class="field col-full" data-k="name">
             <label>MENO A PRIEZVISKO</label>
@@ -269,7 +269,7 @@ function buildParas(){
   const eventDatePart = parseDate(state.eventDate) ? (' zo dňa ' + fmt(parseDate(state.eventDate))) : '';
 
   const paras = [];
-  paras.push('dolu podpísaný/á ' + (state.name||'…') + ', poistník/poškodený-á v súvislosti s poistnou udalosťou č. '
+  paras.push('dolu podpísaný/á ' + (state.name||'…') + ', poistník/-čka alebo poškodený/-á v súvislosti s poistnou udalosťou č. '
     + (state.claimNo||'…') + eventDatePart + ', evidovanou na poistnej zmluve č. ' + (state.contractNo||'…')
     + ', si Vás týmto dovoľujem požiadať o vyplatenie poistného plnenia.');
 

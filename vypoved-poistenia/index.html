@@ -332,7 +332,7 @@ function buildParas(endDate){
       : 'Žiadam o ukončenie poistnej zmluvy a o vrátenie nespotrebovaného poistného.';
     return [
       'týmto Vám oznamujem zánik predmetu poistenia a podávam výpoveď '+subj+' č. '+c+'.',
-      (state.vehicle?'Predmet poistenia ('+state.vehicle+') som dňa '+endDate+' predal.':'Predmet poistenia som dňa '+endDate+' predal.'),
+      (state.vehicle?'Predmet poistenia ('+state.vehicle+') som dňa '+endDate+' predal/-a.':'Predmet poistenia som dňa '+endDate+' predal/-a.'),
       refund,
     ];
   }
@@ -345,7 +345,7 @@ function buildParas(endDate){
     ];
   } else if(state.reason==='early'){
     paras = [
-      'týmto Vám'+legal.early+' podávam výpoveď '+subj+' č. '+c+', ktorú som uzavrel pred menej ako dvoma mesiacmi.',
+      'týmto Vám'+legal.early+' podávam výpoveď '+subj+' č. '+c+', ktorú som uzavrel/-a pred menej ako dvoma mesiacmi.',
       'Žiadam o ukončenie poistnej zmluvy k '+endDate+' a o písomné potvrdenie jej ukončenia.',
     ];
   } else if(state.reason==='premiumChange'){
