@@ -242,14 +242,14 @@ function obRelativeTime(?string $ts): string {
 
 // Vykreslenie krokov jednej fázy (checkbox, tooltip, owner akcie, inline edit
 // formulár) — zdieľané medzi celkovým prehľadom osnovy a stránkou jednej fázy.
-function obRenderSteps(array $phaseSteps, int $phaseIdx, array $doneStepIds, array $OB_TOOLTIPS, bool $isOwner, array $allPhaseNames): void {
+function obRenderSteps(array $phaseSteps, int $phaseIdx, array $doneStepIds, array $OB_TOOLTIPS, bool $isOwner, array $allPhaseNames, bool $cardMode = false): void {
     foreach ($phaseSteps as $sIdx => $s) {
         $isDone = in_array((int)$s['id'], $doneStepIds, true);
         $tip = $OB_TOOLTIPS[$s['title']] ?? null;
         $isFirstInPhase = $sIdx === 0;
         $isLastInPhase = $sIdx === count($phaseSteps) - 1;
         ?>
-      <div class="ob-step<?= $isDone ? ' done' : '' ?>" id="ob-step-<?= (int)$s['id'] ?>" data-step-id="<?= (int)$s['id'] ?>" data-phase-idx="<?= $phaseIdx ?>">
+      <div class="ob-step<?= $isDone ? ' done' : '' ?><?= $cardMode ? ' ob-step-card' : '' ?>" id="ob-step-<?= (int)$s['id'] ?>" data-step-id="<?= (int)$s['id'] ?>" data-phase-idx="<?= $phaseIdx ?>" style="--i:<?= $sIdx ?>;">
         <input type="checkbox" <?= $isDone ? 'checked' : '' ?> data-toggle-step="<?= (int)$s['id'] ?>">
         <div class="ob-step-body">
           <div class="ob-step-title"><?= h($s['title']) ?><?php if ($tip): ?><span class="ob-info" tabindex="0">i<span class="ob-info-bubble"><?= h($tip) ?></span></span><?php endif; ?></div>
@@ -406,9 +406,28 @@ if ($isOwner) {
   .ob-phase.status-upcoming .ob-phase-summary{opacity:.72;}
   .ob-phase-body{padding:0 8px 8px 42px;}
   .ob-phase-nav{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:14px;}
-  .ob-phase-count-inline{font-size:13px; font-weight:600; color:var(--muted); margin-left:8px;}
   .ob-osnova-head{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px;}
   .ob-preview-banner{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 14px; margin-bottom:16px; border-radius:var(--radius-md); background:var(--accent-soft); color:var(--accent); font-size:13px; font-weight:600;}
+
+  .ob-phase-hero{display:flex; align-items:center; gap:20px; background:linear-gradient(135deg, var(--accent-soft), var(--paper)); border:1px solid var(--accent-line); border-radius:var(--radius-md); padding:20px; margin-bottom:16px; position:relative; overflow:hidden;}
+  .ob-phase-hero::before{content:''; position:absolute; width:180px; height:180px; border-radius:50%; background:var(--accent); opacity:.07; top:-70px; right:-60px; pointer-events:none;}
+  .ob-phase-ring{--pct:0; width:76px; height:76px; border-radius:50%; flex-shrink:0; position:relative; z-index:1;
+    background:conic-gradient(var(--accent) calc(var(--pct) * 3.6deg), var(--accent-line) 0deg); transition:background .5s ease, transform .4s ease;}
+  .ob-phase-ring.pulse{animation:obRingPulse .55s ease;}
+  .ob-phase-ring::after{content:''; position:absolute; inset:6px; border-radius:50%; background:var(--paper);}
+  .ob-phase-ring-label{position:absolute; inset:6px; z-index:1; display:flex; align-items:center; justify-content:center; font-size:19px; font-weight:800; color:var(--accent-ink);}
+  .ob-phase-hero-body{position:relative; z-index:1; min-width:0;}
+  .ob-phase-eyebrow{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--accent-ink); margin:0 0 4px;}
+  .ob-phase-hero-title{font-size:21px; font-weight:800; letter-spacing:-.01em; color:var(--ink); margin:0 0 4px;}
+  .ob-phase-hero-count{font-size:12.5px; color:var(--muted); margin:0;}
+
+  @keyframes obStepIn{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+  .ob-step.ob-step-card{border:1px solid var(--border); border-bottom:1px solid var(--border); border-radius:var(--radius-md); padding:12px 14px; margin-bottom:10px;
+    animation:obStepIn .35s ease both; animation-delay:calc(var(--i, 0) * 60ms);
+    transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;}
+  .ob-step.ob-step-card:last-child{margin-bottom:0; border-bottom:1px solid var(--border);}
+  .ob-step.ob-step-card:hover{transform:translateY(-2px); border-color:var(--accent-line); box-shadow:0 6px 16px rgba(0,0,0,.06);}
+  .ob-step.ob-step-card.done{background:var(--good-soft); border-color:var(--good);}
 
   .ob-phase-support{display:flex; gap:8px; align-items:flex-start; font-size:12.5px; color:var(--ink-2); line-height:1.5;
     background:var(--desk); border-radius:var(--radius-md); padding:9px 11px; margin:0 0 10px;}
@@ -614,11 +633,21 @@ if ($isOwner) {
       <?php if ($isOwner): ?><a class="pillbtn" href="?">Celá osnova</a><?php else: ?><span></span><?php endif; ?>
       <?php if ($selectedPhaseIdx < $maxPhaseIdx): ?><a class="pillbtn" href="?phase=<?= $selectedPhaseIdx + 1 ?><?= $vp ?>">Ďalšia fáza →</a><?php else: ?><span></span><?php endif; ?>
     </div>
-    <h3><?= h($selectedPhaseName) ?> <span class="ob-phase-count-inline" id="ob-phase-count-<?= $st['idx'] ?>"><?= $st['done'] ?>/<?= $st['total'] ?></span></h3>
+    <?php $phasePct = $st['total'] > 0 ? round($st['done'] / $st['total'] * 100) : 0; ?>
+    <div class="ob-phase-hero">
+      <div class="ob-phase-ring" id="ob-phase-ring-<?= $st['idx'] ?>" style="--pct:<?= (int)$phasePct ?>;">
+        <div class="ob-phase-ring-label" id="ob-phase-badge-<?= $st['idx'] ?>"><?= $st['status'] === 'done' ? '✓' : ($st['idx'] + 1) ?></div>
+      </div>
+      <div class="ob-phase-hero-body">
+        <p class="ob-phase-eyebrow">Fáza <?= $st['idx'] + 1 ?> z <?= count($phaseList) ?></p>
+        <h3 class="ob-phase-hero-title"><?= h($selectedPhaseName) ?></h3>
+        <p class="ob-phase-hero-count"><span id="ob-phase-count-<?= $st['idx'] ?>"><?= $st['done'] ?>/<?= $st['total'] ?></span> krokov hotových</p>
+      </div>
+    </div>
     <?php if (isset($OB_PHASE_SUPPORT[$selectedPhaseName])): ?>
     <div class="ob-phase-support"><span class="ob-support-emoji">🤝</span><span><?= h($OB_PHASE_SUPPORT[$selectedPhaseName]) ?></span></div>
     <?php endif; ?>
-    <?php obRenderSteps($phaseSteps, $st['idx'], $doneStepIds, $OB_TOOLTIPS, $isOwner, $allPhaseNames); ?>
+    <?php obRenderSteps($phaseSteps, $st['idx'], $doneStepIds, $OB_TOOLTIPS, $isOwner, $allPhaseNames, true); ?>
     <?php endif; ?>
     <?php endif; ?>
   </div>
@@ -920,6 +949,13 @@ document.addEventListener('change', function(e){
     phaseSteps.forEach(function (cb) { if (cb.checked) phaseDone++; });
     var countEl = document.getElementById('ob-phase-count-' + phaseIdx);
     if (countEl) countEl.textContent = phaseDone + '/' + phaseSteps.length;
+    var phaseRing = document.getElementById('ob-phase-ring-' + phaseIdx);
+    if (phaseRing) {
+      phaseRing.style.setProperty('--pct', phaseSteps.length > 0 ? Math.round(phaseDone / phaseSteps.length * 100) : 0);
+      phaseRing.classList.remove('pulse');
+      void phaseRing.offsetWidth;
+      phaseRing.classList.add('pulse');
+    }
     if (phaseDone === phaseSteps.length) {
       var badgeEl = document.getElementById('ob-phase-badge-' + phaseIdx);
       if (badgeEl) badgeEl.textContent = '✓';
