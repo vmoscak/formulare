@@ -75,12 +75,17 @@
       </div>
 
       <div>
-        <div class="step-head"><div class="step-num">3</div><div class="step-title">Kanál</div></div>
+        <div class="step-head"><div class="step-num">3</div><div class="step-title">Tón</div></div>
+        <div class="grid3" id="tones"></div>
+      </div>
+
+      <div>
+        <div class="step-head"><div class="step-num">4</div><div class="step-title">Kanál</div></div>
         <div class="grid3" id="channels"></div>
       </div>
 
       <div>
-        <div class="step-head"><div class="step-num">4</div><div class="step-title">Odkaz na recenziu</div></div>
+        <div class="step-head"><div class="step-num">5</div><div class="step-title">Odkaz na recenziu</div></div>
         <div class="fields">
           <div class="field col-full" data-k="reviewLink">
             <label>ODKAZ NA GOOGLE RECENZIU <span style="font-weight:500;text-transform:none;">(predvyplnené, dá sa zmeniť napr. na Facebook)</span></label>
@@ -119,11 +124,26 @@
    DÁTA
 =========================================================================== */
 const REASONS = {
-  zmluva:      { label:'Uzatvorenie zmluvy', sub:'Nová poistka/produkt', tile:'ZM', text:'za uzatvorenie novej zmluvy' },
-  skoda:       { label:'Vybavenie škody', sub:'Poistná udalosť', tile:'ŠK', text:'za pomoc s vybavením poistnej udalosti' },
-  konzultacia: { label:'Konzultácia', sub:'Poradenstvo', tile:'KO', text:'za konzultáciu a poradenstvo' },
-  revizia:     { label:'Ročná revízia', sub:'Kontrola poistenia', tile:'RE', text:'za čas venovaný ročnej revízii poistenia' },
-  vyrocie:     { label:'Výročie spolupráce', sub:'Dlhodobý klient', tile:'VY', text:'za dlhoročnú spoluprácu a dôveru' },
+  zmluva:      { label:'Uzatvorenie zmluvy', sub:'Nová poistka/produkt', tile:'ZM',
+    formal:'Ďakujem Vám za dôveru a spoluprácu pri uzatváraní novej zmluvy.',
+    informal:'Ďakujem ti za dôveru a spoluprácu pri uzatváraní novej zmluvy.' },
+  skoda:       { label:'Vybavenie škody', sub:'Poistná udalosť', tile:'ŠK',
+    formal:'Som rád/rada, že sme poistnú udalosť spoločne úspešne vyriešili a poistné plnenie Vám už bolo vyplatené.',
+    informal:'Som rád/rada, že sme poistnú udalosť spoločne úspešne vyriešili a poistné plnenie ti už bolo vyplatené.' },
+  konzultacia: { label:'Konzultácia', sub:'Poradenstvo', tile:'KO',
+    formal:'Ďakujem Vám za čas na našej konzultácii.',
+    informal:'Ďakujem ti za čas na našej konzultácii.' },
+  revizia:     { label:'Ročná revízia', sub:'Kontrola poistenia', tile:'RE',
+    formal:'Ďakujem Vám za čas venovaný ročnej revízii poistenia.',
+    informal:'Ďakujem ti za čas venovaný ročnej revízii poistenia.' },
+  vyrocie:     { label:'Výročie spolupráce', sub:'Dlhodobý klient', tile:'VY',
+    formal:'Ďakujem Vám za dlhoročnú spoluprácu a dôveru.',
+    informal:'Ďakujem ti za dlhoročnú spoluprácu a dôveru.' },
+};
+
+const TONES = {
+  formalne:   { label:'Formálne', sub:'Zdvorilé, vykanie', tile:'FO' },
+  neformalne: { label:'Neformálne', sub:'Priateľské, tykanie', tile:'NE' },
 };
 
 const CHANNELS = {
@@ -136,7 +156,7 @@ const GOOGLE_REVIEW_LINK = 'https://g.page/r/CSgYoZDlbPFzEBM/review';
 
 const state = {
   clientName:'', clientPhone:'', clientEmail:'',
-  reason:'zmluva', channel:'whatsapp',
+  reason:'zmluva', tone:'formalne', channel:'whatsapp',
   reviewLink: GOOGLE_REVIEW_LINK,
   advisorName:'',
   touched:false,
@@ -175,12 +195,21 @@ function renderChannels(){
   }).join('');
 }
 
+function renderTones(){
+  $('tones').innerHTML = Object.keys(TONES).map(function(k){
+    const t=TONES[k], sel=k===state.tone?' sel':'';
+    return '<div class="type'+sel+'" data-tone="'+k+'">'
+      + '<div class="tile">'+t.tile+'</div>'
+      + '<div><div class="t-label">'+t.label+'</div><div class="t-sub">'+t.sub+'</div></div></div>';
+  }).join('');
+}
+
 function syncInputs(){
   ['clientName','clientPhone','clientEmail','reviewLink'].forEach(function(k){ if($(k)) $(k).value = state[k]; });
 }
 
 function buildSubject(){
-  return 'Poprosím Vás o krátku recenziu';
+  return state.tone === 'formalne' ? 'Poprosím Vás o krátku recenziu' : 'Poprosím ťa o krátku recenziu';
 }
 
 function buildMessage(){
@@ -188,19 +217,31 @@ function buildMessage(){
   const name = state.clientName.trim();
   const link = state.reviewLink.trim() || '…';
   const sign = state.advisorName || '';
+  const formal = state.tone === 'formalne';
+  const thanksLine = formal ? r.formal : r.informal;
+  const greeting = formal ? 'Dobrý deň' : 'Ahoj';
 
   if (state.channel === 'email') {
-    return 'Dobrý deň' + (name ? ' ' + name : '') + ',\n\n'
-      + 'ďakujem ' + r.text + '. Bol by som veľmi rád, keby ste si našli chvíľku a nechali krátku recenziu:\n\n'
-      + link
-      + '\n\nVopred ďakujem za váš čas.\n\n' + sign;
+    return greeting + (name ? ' ' + name : '') + ',\n\n'
+      + thanksLine + ' '
+      + (formal
+        ? 'Bol/-a by som veľmi rád/rada, keby ste si našli chvíľku a nechali krátku recenziu:'
+        : 'Veľmi by mi pomohlo, keby si mi venoval/-a chvíľku a nechal/-a krátku recenziu:')
+      + '\n\n' + link
+      + '\n\n' + (formal ? 'Vopred ďakujem za Váš čas.' : 'Vopred veľká vďaka!')
+      + '\n\n' + sign;
   }
   if (state.channel === 'sms') {
-    return 'Ahoj' + (name ? ' ' + name : '') + ', ďakujem ' + r.text + '! Poprosím Ťa o krátku recenziu: ' + link + ' Vopred vďaka! ' + sign;
+    return greeting + (name ? ' ' + name : '') + ', ' + thanksLine + ' '
+      + (formal ? 'Poprosím Vás o krátku recenziu: ' : 'Poprosím ťa o krátku recenziu: ') + link
+      + (formal ? ' Vopred ďakujem! ' : ' Vopred vďaka! ') + sign;
   }
-  return 'Ahoj ' + (name || '') + (name ? ',' : '')
-    + '\n\nĎakujem ' + r.text + '! Veľmi by mi pomohlo, keby si mi venoval/-a chvíľku a nechal/-a krátku recenziu:\n\n'
-    + link
+  return greeting + ' ' + (name || '') + (name ? ',' : '')
+    + '\n\n' + thanksLine + ' '
+    + (formal
+      ? 'Bol/-a by som veľmi rád/rada, keby ste si našli chvíľku a nechali krátku recenziu:'
+      : 'Veľmi by mi pomohlo, keby si mi venoval/-a chvíľku a nechal/-a krátku recenziu:')
+    + '\n\n' + link
     + '\n\nVopred veľká vďaka! ⭐⭐⭐⭐⭐'
     + (sign ? '\n' + sign : '');
 }
@@ -287,6 +328,7 @@ function bind(){
   document.addEventListener('click', function(e){
     const r=e.target.closest('[data-reason]'); if(r){ state.reason=r.dataset.reason; renderReasons(); render(); return; }
     const c=e.target.closest('[data-channel]'); if(c){ state.channel=c.dataset.channel; renderChannels(); render(); return; }
+    const t=e.target.closest('[data-tone]'); if(t){ state.tone=t.dataset.tone; renderTones(); render(); return; }
   });
   document.addEventListener('input', function(e){
     ['clientName','clientPhone','clientEmail','reviewLink'].forEach(function(k){
@@ -301,7 +343,7 @@ function bind(){
    ŠTART
 =========================================================================== */
 (function init(){
-  renderReasons(); renderChannels(); syncInputs(); bind(); render();
+  renderReasons(); renderChannels(); renderTones(); syncInputs(); bind(); render();
   fetch('/api/whoami.php', { credentials:'same-origin' })
     .then(function(r){ return r.ok ? r.json() : {}; })
     .then(function(adv){ if(adv && adv.id){ state.advisorName = adv.name || ''; render(); } })

@@ -59,9 +59,15 @@
         </div>
       </div>
 
-      <!-- 2. poradca -->
+      <!-- 2. tón -->
       <div>
-        <div class="step-head"><div class="step-num">2</div><div class="step-title">Tvoj kontakt (poradca/-kyňa)</div></div>
+        <div class="step-head"><div class="step-num">2</div><div class="step-title">Tón</div></div>
+        <div class="grid3" id="tones"></div>
+      </div>
+
+      <!-- 3. poradca -->
+      <div>
+        <div class="step-head"><div class="step-num">3</div><div class="step-title">Tvoj kontakt (poradca/-kyňa)</div></div>
         <div class="fields">
           <div class="field col-full" data-k="advisorName">
             <label>MENO A PRIEZVISKO</label>
@@ -113,8 +119,13 @@
 /* ===========================================================================
    DÁTA
 =========================================================================== */
+const TONES = {
+  formalne:   { label:'Formálne', sub:'Zdvorilé, vykanie', tile:'FO' },
+  neformalne: { label:'Neformálne', sub:'Priateľské, tykanie', tile:'NE' },
+};
+
 const state = {
-  clientName:'',
+  clientName:'', tone:'formalne',
   advisorName:'', advisorPhone:'', advisorEmail:'',
   touched:false,
 };
@@ -138,6 +149,21 @@ function syncInputs(){
   ['clientName','advisorName','advisorPhone','advisorEmail'].forEach(function(k){
     if($(k)) $(k).value = state[k];
   });
+}
+
+function renderTones(){
+  $('tones').innerHTML = Object.keys(TONES).map(function(k){
+    const t=TONES[k], sel=k===state.tone?' sel':'';
+    return '<div class="type'+sel+'" data-tone="'+k+'">'
+      + '<div class="tile">'+t.tile+'</div>'
+      + '<div><div class="t-label">'+t.label+'</div><div class="t-sub">'+t.sub+'</div></div></div>';
+  }).join('');
+}
+
+function introText(){
+  return state.tone === 'formalne'
+    ? 'Najviac si vážim odporúčania od spokojných klientov. Ak poznáte niekoho — rodinu, priateľa či kolegu — komu by som mohol/-la pomôcť s poistením alebo financiami, odovzdajte mu, prosím, tento kontakt alebo túto kartičku.'
+    : 'Najviac si vážim odporúčania od spokojných klientov. Ak poznáš niekoho — rodinu, priateľa či kolegu — komu by som mohol/-la pomôcť s poistením alebo financiami, odovzdaj mu, prosím, tento kontakt alebo túto kartičku.';
 }
 
 let _previewTimer=null;
@@ -188,9 +214,7 @@ function buildLetterHtml(previewMode){
 
     <div class="section">
       <div class="section-title">Prečo túto kartičku dostávate</div>
-      <p>Najviac si vážim odporúčania od spokojných klientov. Ak poznáte niekoho —
-      rodinu, priateľa či kolegu — komu by som mohol/-la pomôcť s poistením alebo
-      financiami, odovzdajte mu, prosím, tento kontakt alebo túto kartičku.</p>
+      <p>${escapeHtml(introText())}</p>
     </div>
 
     <div class="section">
@@ -286,7 +310,7 @@ function doPDF(){
 
 function doCopy(){
   const txt=['ODPORUČTE MA PRIATEĽOM', state.clientName ? 'Ďakujem, ' + state.clientName : 'Ďakujem za dôveru', '',
-    'Najviac si vážim odporúčania od spokojných klientov. Ak poznáte niekoho, komu by som mohol/-la pomôcť s poistením alebo financiami, dajte mu, prosím, tento kontakt:', '',
+    introText(), '',
     (state.advisorName||'…') + ' · ' + (state.advisorPhone||'…') + (state.advisorEmail ? ' · ' + state.advisorEmail : '')]
     .join('\n');
   try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
@@ -296,17 +320,20 @@ function doCopy(){
 
 function doReset(){
   Object.assign(state,{
-    clientName:'',
+    clientName:'', tone:'formalne',
     advisorName: state.advisorName, advisorPhone: state.advisorPhone, advisorEmail: state.advisorEmail,
     touched:false,
   });
-  syncInputs(); render();
+  renderTones(); syncInputs(); render();
 }
 
 /* ===========================================================================
    UDALOSTI
 =========================================================================== */
 function bind(){
+  document.addEventListener('click', function(e){
+    const t=e.target.closest('[data-tone]'); if(t){ state.tone=t.dataset.tone; renderTones(); render(); return; }
+  });
   document.addEventListener('input', function(e){
     ['clientName','advisorName','advisorPhone','advisorEmail'].forEach(function(k){
       if(e.target.id===k){ state[k]=e.target.value; render(); }
@@ -322,7 +349,7 @@ function bind(){
    ŠTART — predvyplní poradcu z prihláseného účtu (whoami)
 =========================================================================== */
 (function init(){
-  bind(); render();
+  renderTones(); bind(); render();
   fetch('/api/whoami.php', { credentials:'same-origin' })
     .then(function(r){ return r.ok ? r.json() : {}; })
     .then(function(adv){

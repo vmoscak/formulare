@@ -67,7 +67,12 @@
       </div>
 
       <div>
-        <div class="step-head"><div class="step-num">2</div><div class="step-title">Klient</div></div>
+        <div class="step-head"><div class="step-num">2</div><div class="step-title">Tón</div></div>
+        <div class="grid3" id="tones"></div>
+      </div>
+
+      <div>
+        <div class="step-head"><div class="step-num">3</div><div class="step-title">Klient</div></div>
         <div class="fields">
           <div class="field" data-k="clientName">
             <label>MENO KLIENTA</label>
@@ -128,23 +133,31 @@ const OCCASIONS = {
     label: 'Narodeniny', tile: '🎂', color: '#e11d48',
     headline: 'Všetko najlepšie k narodeninám!',
     subject: 'Všetko najlepšie k narodeninám 🎂',
-    body: 'pri príležitosti Vašich narodenín Vám prajem veľa zdravia, šťastia a pohody. Ďakujem, že mi dôverujete, a teším sa na ďalšiu spoluprácu.',
+    formal: 'pri príležitosti Vašich narodenín Vám prajem veľa zdravia, šťastia a pohody. Ďakujem, že mi dôverujete, a teším sa na ďalšiu spoluprácu.',
+    informal: 'pri príležitosti tvojich narodenín ti prajem veľa zdravia, šťastia a pohody. Ďakujem, že mi dôveruješ, a teším sa na ďalšiu spoluprácu.',
   },
   vianoce: {
     label: 'Vianoce / Nový rok', tile: '🎄', color: '#166534',
     headline: 'Krásne Vianoce a šťastný nový rok',
     subject: 'Krásne Vianoce a šťastný nový rok 🎄',
-    body: 'prajem Vám pokojné prežitie vianočných sviatkov v kruhu najbližších a úspešný nový rok. Ďakujem za dôveru, ktorú ste mi počas roka prejavili.',
+    formal: 'prajem Vám pokojné prežitie vianočných sviatkov v kruhu najbližších a úspešný nový rok. Ďakujem za dôveru, ktorú ste mi počas roka prejavili.',
+    informal: 'prajem ti pokojné prežitie vianočných sviatkov v kruhu najbližších a úspešný nový rok. Ďakujem za dôveru, ktorú si mi počas roka prejavil/-a.',
   },
   vyrocie: {
     label: 'Výročie zmluvy', tile: '📅', color: '#4338ca',
     headline: 'Ďakujeme za Vašu dôveru',
     subject: 'Ďakujeme za Vašu dôveru',
-    body: 'pri príležitosti výročia Vašej zmluvy by som Vám chcel/-a poďakovať za dôveru a spoluprácu. Ak by ste chceli prejsť aktuálne krytie alebo máte akékoľvek otázky, som Vám kedykoľvek k dispozícii.',
+    formal: 'pri príležitosti výročia Vašej zmluvy by som Vám chcel/-a poďakovať za dôveru a spoluprácu. Ak by ste chceli prejsť aktuálne krytie alebo máte akékoľvek otázky, som Vám kedykoľvek k dispozícii.',
+    informal: 'pri príležitosti výročia tvojej zmluvy by som ti chcel/-a poďakovať za dôveru a spoluprácu. Ak by si chcel/-a prejsť aktuálne krytie alebo máš akékoľvek otázky, som ti kedykoľvek k dispozícii.',
   },
 };
 
-const state = { occasion: 'narodeniny', clientName: '', years: '', customMessage: '', subject: '', subjectTouched: false };
+const TONES = {
+  formalne:   { label:'Formálne', sub:'Zdvorilé, vykanie', tile:'FO' },
+  neformalne: { label:'Neformálne', sub:'Priateľské, tykanie', tile:'NE' },
+};
+
+const state = { occasion: 'narodeniny', tone: 'formalne', clientName: '', years: '', customMessage: '', subject: '', subjectTouched: false };
 
 const $ = id => document.getElementById(id);
 function escapeHtml(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -164,7 +177,7 @@ function currentHeadline(){
 }
 
 function currentBody(){
-  return state.customMessage.trim() || OCCASIONS[state.occasion].body;
+  return state.customMessage.trim() || OCCASIONS[state.occasion][state.tone === 'formalne' ? 'formal' : 'informal'];
 }
 
 function currentSubject(){
@@ -223,6 +236,15 @@ function renderOccasions(){
   $('yearsField').style.display = state.occasion === 'vyrocie' ? '' : 'none';
 }
 
+function renderTones(){
+  $('tones').innerHTML = Object.keys(TONES).map(function(k){
+    const t=TONES[k], sel=k===state.tone?' sel':'';
+    return '<div class="type'+sel+'" data-tone="'+k+'">'
+      + '<div class="tile">'+t.tile+'</div>'
+      + '<div><div class="t-label">'+t.label+'</div><div class="t-sub">'+t.sub+'</div></div></div>';
+  }).join('');
+}
+
 function renderPreview(){
   $('avatar').textContent = OCCASIONS[state.occasion].tile;
   if (!state.subjectTouched) $('subject').value = currentSubject();
@@ -231,7 +253,7 @@ function renderPreview(){
   frame.srcdoc = doc;
 }
 
-function render(){ renderOccasions(); renderPreview(); }
+function render(){ renderOccasions(); renderTones(); renderPreview(); }
 
 /* ===========================================================================
    KOPÍROVANIE — formátovaný HTML (rich text) do schránky, s fallbackom
@@ -305,6 +327,7 @@ function doCopySubject(){
 function bind(){
   document.addEventListener('click', function(e){
     const o = e.target.closest('[data-occasion]'); if(o){ state.occasion = o.dataset.occasion; state.subjectTouched = false; render(); return; }
+    const t = e.target.closest('[data-tone]'); if(t){ state.tone = t.dataset.tone; render(); return; }
   });
   $('clientName').addEventListener('input', function(e){ state.clientName = e.target.value; renderPreview(); });
   $('years').addEventListener('input', function(e){ state.years = e.target.value; renderPreview(); });
