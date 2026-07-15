@@ -193,7 +193,7 @@ function render(){ renderProducts(); renderSteps(); }
 function doCopy(){
   const prod = PRODUCTS[state.product];
   const greeting = state.clientName.trim() ? 'Dobrý deň, ' + state.clientName.trim() + ',' : 'Dobrý deň,';
-  const txt = greeting + ' posielam prehľad, čo teraz nasleduje po podpise (' + prod.label + '):\n\n'
+  const txt = greeting + ' ďakujem za dôveru. Posielam prehľad, čo teraz nasleduje po podpise (' + prod.label + '):\n\n'
     + prod.steps.map(function(s){ return '• ' + s.when + ': ' + s.text; }).join('\n')
     + '\n\nS pozdravom, ' + (ADVISOR.name || '') + (ADVISOR.phone ? ' (' + ADVISOR.phone + ')' : '');
   try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
@@ -227,6 +227,7 @@ function buildLetterHtml(){
     .pdf-topbar { height:4mm; background:linear-gradient(90deg,#059669,#10b981); border-radius:1mm; margin-bottom:7mm; }
     .doctitle { text-align:center; font-size:19pt; letter-spacing:.3pt; font-weight:bold; padding:2pt 0 3pt; color:#065f46; }
     .card-sub { text-align:center; font-size:10.5pt; color:#666; margin-bottom:5mm; }
+    .thanks { text-align:center; font-size:10.5pt; color:#065f46; font-weight:bold; margin-bottom:5mm; }
     .meta { text-align:center; font-size:9pt; color:#8a8a8a; margin-bottom:8mm; padding-bottom:5mm; border-bottom:1pt solid #e5e5e5; }
     .ps-hd { color:#fff; background:#059669; font-weight:bold; font-size:12.5pt; padding:3.5mm 5mm; border-radius:2.5mm; margin-bottom:6mm; }
     .ps-item { width:100%; border-collapse:collapse; margin-bottom:3.5mm; background:#f0fdf7; border-left:3pt solid #059669; border-radius:0 2.5mm 2.5mm 0; }
@@ -247,6 +248,7 @@ function buildLetterHtml(){
     + '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
     + '<title>Prvých 30 dní</title><style>' + css + '</style></head><body>'
     + '<div class="pdf-topbar"></div><div class="doctitle">Prvých 30 dní</div>'
+    + '<div class="thanks">Ďakujem za dôveru!</div>'
     + '<div class="card-sub">Čo teraz nasleduje po podpise</div>'
     + '<div class="meta">' + escapeHtml(clientName) + ' &middot; ' + dateStr + '</div>'
     + '<div class="ps-hd">' + escapeHtml(prod.label) + '</div>'
