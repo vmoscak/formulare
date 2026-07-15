@@ -28,9 +28,17 @@ function advisorInitials(string $name): string {
     return mb_strtoupper($first . $last);
 }
 
+// Fáza sa v add/edit formulároch vyberá z roletky existujúcich fáz (+ "Nová fáza…").
+// Vyrieši sa buď na vybranú existujúcu hodnotu, alebo na ručne napísaný nový názov.
+function obResolvePhase(): string {
+    $select = trim((string)($_POST['phase_select'] ?? ''));
+    if ($select === '__new__') return trim((string)($_POST['phase_new'] ?? ''));
+    return $select;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($isOwner && isset($_POST['add'])) {
-        $phase = trim((string)($_POST['phase'] ?? ''));
+        $phase = obResolvePhase();
         $title = trim((string)($_POST['title'] ?? ''));
         $description = trim((string)($_POST['description'] ?? ''));
         $linkUrl = trim((string)($_POST['link_url'] ?? ''));
@@ -41,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } elseif ($isOwner && isset($_POST['edit_id'])) {
         $id = (int)$_POST['edit_id'];
-        $phase = trim((string)($_POST['phase'] ?? ''));
+        $phase = obResolvePhase();
         $title = trim((string)($_POST['title'] ?? ''));
         $description = trim((string)($_POST['description'] ?? ''));
         $linkUrl = trim((string)($_POST['link_url'] ?? ''));
@@ -53,6 +61,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id = (int)$_POST['delete_id'];
         db()->prepare('DELETE FROM formulare_onboarding_progress WHERE step_id = ?')->execute([$id]);
         db()->prepare('DELETE FROM formulare_onboarding_steps WHERE id = ?')->execute([$id]);
+    } elseif ($isOwner && isset($_POST['move_id'])) {
+        $id = (int)$_POST['move_id'];
+        $dir = (string)($_POST['direction'] ?? '');
+        $stmt = db()->prepare('SELECT id, phase, sort_order FROM formulare_onboarding_steps WHERE id = ?');
+        $stmt->execute([$id]);
+        $step = $stmt->fetch();
+        if ($step) {
+            $sibStmt = db()->prepare('SELECT id, sort_order FROM formulare_onboarding_steps WHERE phase = ? ORDER BY sort_order, id');
+            $sibStmt->execute([$step['phase']]);
+            $siblings = $sibStmt->fetchAll();
+            $pos = null;
+            foreach ($siblings as $i => $sib) { if ((int)$sib['id'] === $id) { $pos = $i; break; } }
+            if ($pos !== null) {
+                $swapPos = $dir === 'up' ? $pos - 1 : $pos + 1;
+                if (isset($siblings[$swapPos])) {
+                    $other = $siblings[$swapPos];
+                    db()->prepare('UPDATE formulare_onboarding_steps SET sort_order = ? WHERE id = ?')->execute([$other['sort_order'], $id]);
+                    db()->prepare('UPDATE formulare_onboarding_steps SET sort_order = ? WHERE id = ?')->execute([$step['sort_order'], $other['id']]);
+                }
+            }
+        }
     } elseif ($isOwner && isset($_POST['assign_advisor_id'])) {
         $id = (int)$_POST['assign_advisor_id'];
         if ($id) {
@@ -459,7 +488,7 @@ if ($isOwner) {
       <?php if (isset($OB_PHASE_SUPPORT[$phaseName])): ?>
       <div class="ob-phase-support"><span class="ob-support-emoji">🤝</span><span><?= h($OB_PHASE_SUPPORT[$phaseName]) ?></span></div>
       <?php endif; ?>
-      <?php foreach ($phaseSteps as $s): $isDone = in_array((int)$s['id'], $doneStepIds, true); $tip = $OB_TOOLTIPS[$s['title']] ?? null; ?>
+      <?php foreach ($phaseSteps as $sIdx => $s): $isDone = in_array((int)$s['id'], $doneStepIds, true); $tip = $OB_TOOLTIPS[$s['title']] ?? null; $isFirstInPhase = $sIdx === 0; $isLastInPhase = $sIdx === count($phaseSteps) - 1; ?>
       <div class="ob-step<?= $isDone ? ' done' : '' ?>" id="ob-step-<?= (int)$s['id'] ?>" data-step-id="<?= (int)$s['id'] ?>" data-phase-idx="<?= $st['idx'] ?>">
         <input type="checkbox" <?= $isDone ? 'checked' : '' ?> data-toggle-step="<?= (int)$s['id'] ?>">
         <div class="ob-step-body">
@@ -469,6 +498,20 @@ if ($isOwner) {
         <div class="ob-step-actions">
           <?php if ($s['link_url']): ?><a class="toggle-btn" href="<?= h($s['link_url']) ?>" target="_blank">Otvoriť</a><?php endif; ?>
           <?php if ($isOwner): ?>
+          <?php if (!$isFirstInPhase): ?>
+          <form method="post" style="margin:0;">
+            <input type="hidden" name="move_id" value="<?= (int)$s['id'] ?>">
+            <input type="hidden" name="direction" value="up">
+            <button type="submit" class="toggle-btn" title="Posunúť hore">↑</button>
+          </form>
+          <?php endif; ?>
+          <?php if (!$isLastInPhase): ?>
+          <form method="post" style="margin:0;">
+            <input type="hidden" name="move_id" value="<?= (int)$s['id'] ?>">
+            <input type="hidden" name="direction" value="down">
+            <button type="submit" class="toggle-btn" title="Posunúť dole">↓</button>
+          </form>
+          <?php endif; ?>
           <button type="button" class="toggle-btn" onclick="obEdit(<?= (int)$s['id'] ?>)">Upraviť</button>
           <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj zmazať tento krok?');">
             <input type="hidden" name="delete_id" value="<?= (int)$s['id'] ?>">
@@ -480,7 +523,13 @@ if ($isOwner) {
       <?php if ($isOwner): ?>
       <form method="post" class="kb-edit" id="ob-edit-<?= (int)$s['id'] ?>" style="display:none; margin-bottom:12px;">
         <input type="hidden" name="edit_id" value="<?= (int)$s['id'] ?>">
-        <input type="text" name="phase" value="<?= h($s['phase']) ?>" placeholder="Fáza (napr. Deň 1)" required>
+        <select name="phase_select" onchange="obPhaseSelectChange(this)" required>
+          <?php foreach (array_keys($phases) as $ph): ?>
+            <option value="<?= h($ph) ?>" <?= $ph === $s['phase'] ? 'selected' : '' ?>><?= h($ph) ?></option>
+          <?php endforeach; ?>
+          <option value="__new__">+ Nová fáza…</option>
+        </select>
+        <input type="text" name="phase_new" placeholder="Názov novej fázy" style="display:none;">
         <input type="text" name="title" value="<?= h($s['title']) ?>" placeholder="Názov kroku" required>
         <textarea name="description" rows="2" placeholder="Popis (nepovinné)"><?= h($s['description']) ?></textarea>
         <input type="text" name="link_url" value="<?= h((string)$s['link_url']) ?>" placeholder="Odkaz (nepovinné, napr. /financna-medzera/)">
@@ -502,9 +551,16 @@ if ($isOwner) {
     <form method="post" class="ob-add-form">
       <input type="hidden" name="add" value="1">
       <div class="ob-add-row">
-        <input type="text" name="phase" placeholder="Fáza (napr. Deň 1, Týždeň 1, Mesiac 1)" required>
+        <select name="phase_select" onchange="obPhaseSelectChange(this)" required>
+          <option value="">— Vyber fázu —</option>
+          <?php foreach (array_keys($phases) as $ph): ?>
+            <option value="<?= h($ph) ?>"><?= h($ph) ?></option>
+          <?php endforeach; ?>
+          <option value="__new__">+ Nová fáza…</option>
+        </select>
         <input type="text" name="title" placeholder="Názov kroku" required>
       </div>
+      <input type="text" name="phase_new" placeholder="Názov novej fázy" style="display:none;">
       <textarea name="description" rows="2" placeholder="Popis (nepovinné)"></textarea>
       <input type="text" name="link_url" placeholder="Odkaz (nepovinné, napr. /financna-medzera/)">
       <button type="submit" class="pillbtn solid" style="align-self:start; width:max-content;">Pridať krok</button>
@@ -523,6 +579,20 @@ function obEdit(id) {
 function obCancel(id) {
   document.getElementById('ob-step-' + id).style.display = 'flex';
   document.getElementById('ob-edit-' + id).style.display = 'none';
+}
+function obPhaseSelectChange(sel) {
+  var form = sel.closest('form');
+  var textInput = form.querySelector('input[name=phase_new]');
+  if (!textInput) return;
+  if (sel.value === '__new__') {
+    textInput.style.display = 'block';
+    textInput.required = true;
+    textInput.focus();
+  } else {
+    textInput.style.display = 'none';
+    textInput.required = false;
+    textInput.value = '';
+  }
 }
 function obJumpPhase(idx) {
   var el = document.getElementById('ob-phase-' + idx);
