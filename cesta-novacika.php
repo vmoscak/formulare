@@ -157,6 +157,16 @@ foreach ($phases as $phaseName => $phaseSteps) {
     if ($status === 'current') { $currentPhaseName = $phaseName; }
     $idx++;
 }
+
+// Fáza ako samostatná stránka: ?phase=<idx>. Bez parametra (alebo s neplatným
+// indexom) sa zobrazí prehľad všetkých fáz ako doteraz.
+$selectedPhaseIdx = (isset($_GET['phase']) && $_GET['phase'] !== '') ? (int)$_GET['phase'] : null;
+$selectedPhaseName = null;
+if ($selectedPhaseIdx !== null) {
+    $selectedPhaseName = array_search($selectedPhaseIdx, $phaseIndexByName, true);
+    if ($selectedPhaseName === false) { $selectedPhaseName = null; $selectedPhaseIdx = null; }
+}
+$maxPhaseIdx = count($phaseList) - 1;
 $currentPhaseName = $currentPhaseName ?? null;
 
 // Prvý neodškrtnutý krok naprieč celou osnovou — "Ďalší krok" callout.
@@ -218,6 +228,69 @@ function obRelativeTime(?string $ts): string {
     if ($days < 14) return 'pred ' . $days . ' dňami';
     $weeks = (int)floor($days / 7);
     return 'pred ' . $weeks . ' ' . ($weeks === 1 ? 'týždňom' : 'týždňami');
+}
+
+// Vykreslenie krokov jednej fázy (checkbox, tooltip, owner akcie, inline edit
+// formulár) — zdieľané medzi celkovým prehľadom osnovy a stránkou jednej fázy.
+function obRenderSteps(array $phaseSteps, int $phaseIdx, array $doneStepIds, array $OB_TOOLTIPS, bool $isOwner, array $allPhaseNames): void {
+    foreach ($phaseSteps as $sIdx => $s) {
+        $isDone = in_array((int)$s['id'], $doneStepIds, true);
+        $tip = $OB_TOOLTIPS[$s['title']] ?? null;
+        $isFirstInPhase = $sIdx === 0;
+        $isLastInPhase = $sIdx === count($phaseSteps) - 1;
+        ?>
+      <div class="ob-step<?= $isDone ? ' done' : '' ?>" id="ob-step-<?= (int)$s['id'] ?>" data-step-id="<?= (int)$s['id'] ?>" data-phase-idx="<?= $phaseIdx ?>">
+        <input type="checkbox" <?= $isDone ? 'checked' : '' ?> data-toggle-step="<?= (int)$s['id'] ?>">
+        <div class="ob-step-body">
+          <div class="ob-step-title"><?= h($s['title']) ?><?php if ($tip): ?><span class="ob-info" tabindex="0">i<span class="ob-info-bubble"><?= h($tip) ?></span></span><?php endif; ?></div>
+          <?php if ($s['description']): ?><div class="ob-step-desc"><?= h($s['description']) ?></div><?php endif; ?>
+        </div>
+        <div class="ob-step-actions">
+          <?php if ($s['link_url']): ?><a class="toggle-btn" href="<?= h($s['link_url']) ?>" target="_blank">Otvoriť</a><?php endif; ?>
+          <?php if ($isOwner): ?>
+          <?php if (!$isFirstInPhase): ?>
+          <form method="post" style="margin:0;">
+            <input type="hidden" name="move_id" value="<?= (int)$s['id'] ?>">
+            <input type="hidden" name="direction" value="up">
+            <button type="submit" class="toggle-btn" title="Posunúť hore">↑</button>
+          </form>
+          <?php endif; ?>
+          <?php if (!$isLastInPhase): ?>
+          <form method="post" style="margin:0;">
+            <input type="hidden" name="move_id" value="<?= (int)$s['id'] ?>">
+            <input type="hidden" name="direction" value="down">
+            <button type="submit" class="toggle-btn" title="Posunúť dole">↓</button>
+          </form>
+          <?php endif; ?>
+          <button type="button" class="toggle-btn" onclick="obEdit(<?= (int)$s['id'] ?>)">Upraviť</button>
+          <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj zmazať tento krok?');">
+            <input type="hidden" name="delete_id" value="<?= (int)$s['id'] ?>">
+            <button type="submit" class="toggle-btn">Zmazať</button>
+          </form>
+          <?php endif; ?>
+        </div>
+      </div>
+      <?php if ($isOwner): ?>
+      <form method="post" class="kb-edit" id="ob-edit-<?= (int)$s['id'] ?>" style="display:none; margin-bottom:12px;">
+        <input type="hidden" name="edit_id" value="<?= (int)$s['id'] ?>">
+        <select name="phase_select" onchange="obPhaseSelectChange(this)" required>
+          <?php foreach ($allPhaseNames as $ph): ?>
+            <option value="<?= h($ph) ?>" <?= $ph === $s['phase'] ? 'selected' : '' ?>><?= h($ph) ?></option>
+          <?php endforeach; ?>
+          <option value="__new__">+ Nová fáza…</option>
+        </select>
+        <input type="text" name="phase_new" placeholder="Názov novej fázy" style="display:none;">
+        <input type="text" name="title" value="<?= h($s['title']) ?>" placeholder="Názov kroku" required>
+        <textarea name="description" rows="2" placeholder="Popis (nepovinné)"><?= h($s['description']) ?></textarea>
+        <input type="text" name="link_url" value="<?= h((string)$s['link_url']) ?>" placeholder="Odkaz (nepovinné, napr. /financna-medzera/)">
+        <div style="display:flex; gap:8px;">
+          <button type="submit" class="pillbtn solid">Uložiť</button>
+          <button type="button" class="pillbtn" onclick="obCancel(<?= (int)$s['id'] ?>)">Zrušiť</button>
+        </div>
+      </form>
+      <?php endif; ?>
+        <?php
+    }
 }
 
 // Pre ownera: zoznam ostatných aktívnych poradcov (na priradenie/odobratie)
@@ -322,6 +395,10 @@ if ($isOwner) {
   .ob-phase-count{font-size:12px; color:var(--muted); font-weight:600; flex-shrink:0;}
   .ob-phase.status-upcoming .ob-phase-summary{opacity:.72;}
   .ob-phase-body{padding:0 8px 8px 42px;}
+  .ob-phase-open-link{flex-shrink:0; color:var(--muted); text-decoration:none; font-size:13px; padding:2px 5px; border-radius:6px;}
+  .ob-phase-open-link:hover{color:var(--accent); background:var(--accent-soft);}
+  .ob-phase-nav{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:14px;}
+  .ob-phase-count-inline{font-size:13px; font-weight:600; color:var(--muted); margin-left:8px;}
 
   .ob-phase-support{display:flex; gap:8px; align-items:flex-start; font-size:12.5px; color:var(--ink-2); line-height:1.5;
     background:var(--desk); border-radius:var(--radius-md); padding:9px 11px; margin:0 0 10px;}
@@ -481,6 +558,7 @@ if ($isOwner) {
   <?php endif; ?>
 
   <div class="card">
+    <?php if ($selectedPhaseIdx === null): ?>
     <h3>Osnova</h3>
     <?php if (!$phases): ?>
       <div class="empty-state">
@@ -495,66 +573,28 @@ if ($isOwner) {
           <span class="ob-phase-badge" id="ob-phase-badge-<?= $st['idx'] ?>"><?= $st['status'] === 'done' ? '✓' : ($st['idx'] + 1) ?></span>
           <span class="ob-phase-name"><?= h($phaseName) ?></span>
           <span class="ob-phase-count" id="ob-phase-count-<?= $st['idx'] ?>"><?= $st['done'] ?>/<?= $st['total'] ?></span>
+          <a class="ob-phase-open-link" href="?phase=<?= $st['idx'] ?>" onclick="event.stopPropagation();" title="Otvoriť len túto fázu">↗</a>
         </summary>
         <div class="ob-phase-body">
       <?php if (isset($OB_PHASE_SUPPORT[$phaseName])): ?>
       <div class="ob-phase-support"><span class="ob-support-emoji">🤝</span><span><?= h($OB_PHASE_SUPPORT[$phaseName]) ?></span></div>
       <?php endif; ?>
-      <?php foreach ($phaseSteps as $sIdx => $s): $isDone = in_array((int)$s['id'], $doneStepIds, true); $tip = $OB_TOOLTIPS[$s['title']] ?? null; $isFirstInPhase = $sIdx === 0; $isLastInPhase = $sIdx === count($phaseSteps) - 1; ?>
-      <div class="ob-step<?= $isDone ? ' done' : '' ?>" id="ob-step-<?= (int)$s['id'] ?>" data-step-id="<?= (int)$s['id'] ?>" data-phase-idx="<?= $st['idx'] ?>">
-        <input type="checkbox" <?= $isDone ? 'checked' : '' ?> data-toggle-step="<?= (int)$s['id'] ?>">
-        <div class="ob-step-body">
-          <div class="ob-step-title"><?= h($s['title']) ?><?php if ($tip): ?><span class="ob-info" tabindex="0">i<span class="ob-info-bubble"><?= h($tip) ?></span></span><?php endif; ?></div>
-          <?php if ($s['description']): ?><div class="ob-step-desc"><?= h($s['description']) ?></div><?php endif; ?>
-        </div>
-        <div class="ob-step-actions">
-          <?php if ($s['link_url']): ?><a class="toggle-btn" href="<?= h($s['link_url']) ?>" target="_blank">Otvoriť</a><?php endif; ?>
-          <?php if ($isOwner): ?>
-          <?php if (!$isFirstInPhase): ?>
-          <form method="post" style="margin:0;">
-            <input type="hidden" name="move_id" value="<?= (int)$s['id'] ?>">
-            <input type="hidden" name="direction" value="up">
-            <button type="submit" class="toggle-btn" title="Posunúť hore">↑</button>
-          </form>
-          <?php endif; ?>
-          <?php if (!$isLastInPhase): ?>
-          <form method="post" style="margin:0;">
-            <input type="hidden" name="move_id" value="<?= (int)$s['id'] ?>">
-            <input type="hidden" name="direction" value="down">
-            <button type="submit" class="toggle-btn" title="Posunúť dole">↓</button>
-          </form>
-          <?php endif; ?>
-          <button type="button" class="toggle-btn" onclick="obEdit(<?= (int)$s['id'] ?>)">Upraviť</button>
-          <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj zmazať tento krok?');">
-            <input type="hidden" name="delete_id" value="<?= (int)$s['id'] ?>">
-            <button type="submit" class="toggle-btn">Zmazať</button>
-          </form>
-          <?php endif; ?>
-        </div>
-      </div>
-      <?php if ($isOwner): ?>
-      <form method="post" class="kb-edit" id="ob-edit-<?= (int)$s['id'] ?>" style="display:none; margin-bottom:12px;">
-        <input type="hidden" name="edit_id" value="<?= (int)$s['id'] ?>">
-        <select name="phase_select" onchange="obPhaseSelectChange(this)" required>
-          <?php foreach ($allPhaseNames as $ph): ?>
-            <option value="<?= h($ph) ?>" <?= $ph === $s['phase'] ? 'selected' : '' ?>><?= h($ph) ?></option>
-          <?php endforeach; ?>
-          <option value="__new__">+ Nová fáza…</option>
-        </select>
-        <input type="text" name="phase_new" placeholder="Názov novej fázy" style="display:none;">
-        <input type="text" name="title" value="<?= h($s['title']) ?>" placeholder="Názov kroku" required>
-        <textarea name="description" rows="2" placeholder="Popis (nepovinné)"><?= h($s['description']) ?></textarea>
-        <input type="text" name="link_url" value="<?= h((string)$s['link_url']) ?>" placeholder="Odkaz (nepovinné, napr. /financna-medzera/)">
-        <div style="display:flex; gap:8px;">
-          <button type="submit" class="pillbtn solid">Uložiť</button>
-          <button type="button" class="pillbtn" onclick="obCancel(<?= (int)$s['id'] ?>)">Zrušiť</button>
-        </div>
-      </form>
-      <?php endif; ?>
-      <?php endforeach; ?>
+      <?php obRenderSteps($phaseSteps, $st['idx'], $doneStepIds, $OB_TOOLTIPS, $isOwner, $allPhaseNames); ?>
         </div>
       </details>
     <?php endforeach; ?>
+    <?php else: $phaseSteps = $phases[$selectedPhaseName]; $st = $phaseList[$selectedPhaseName]; ?>
+    <div class="ob-phase-nav">
+      <?php if ($selectedPhaseIdx > 0): ?><a class="pillbtn" href="?phase=<?= $selectedPhaseIdx - 1 ?>">← Predchádzajúca</a><?php else: ?><span></span><?php endif; ?>
+      <a class="pillbtn" href="?">Celá osnova</a>
+      <?php if ($selectedPhaseIdx < $maxPhaseIdx): ?><a class="pillbtn" href="?phase=<?= $selectedPhaseIdx + 1 ?>">Ďalšia fáza →</a><?php else: ?><span></span><?php endif; ?>
+    </div>
+    <h3><?= h($selectedPhaseName) ?> <span class="ob-phase-count-inline" id="ob-phase-count-<?= $st['idx'] ?>"><?= $st['done'] ?>/<?= $st['total'] ?></span></h3>
+    <?php if (isset($OB_PHASE_SUPPORT[$selectedPhaseName])): ?>
+    <div class="ob-phase-support"><span class="ob-support-emoji">🤝</span><span><?= h($OB_PHASE_SUPPORT[$selectedPhaseName]) ?></span></div>
+    <?php endif; ?>
+    <?php obRenderSteps($phaseSteps, $st['idx'], $doneStepIds, $OB_TOOLTIPS, $isOwner, $allPhaseNames); ?>
+    <?php endif; ?>
   </div>
 
   <?php if ($ongoingSteps || $isOwner): ?>
@@ -675,20 +715,18 @@ function obPhaseSelectChange(sel) {
   }
 }
 function obJumpPhase(idx) {
-  var el = document.getElementById('ob-phase-' + idx);
-  if (!el) return;
-  el.open = true;
-  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  location.href = '?phase=' + idx;
 }
 function obJumpStep(phaseIdx, stepId) {
-  var phase = document.getElementById('ob-phase-' + phaseIdx);
-  if (phase) phase.open = true;
-  var row = document.getElementById('ob-step-' + stepId);
+  location.href = '?phase=' + phaseIdx + '#ob-step-' + stepId;
+}
+document.addEventListener('DOMContentLoaded', function () {
+  if (location.hash.indexOf('#ob-step-') !== 0) return;
+  var row = document.querySelector(location.hash);
   if (!row) return;
-  row.scrollIntoView({ behavior: 'smooth', block: 'center' });
   row.classList.add('ob-highlight');
   setTimeout(function () { row.classList.remove('ob-highlight'); }, 1600);
-}
+});
 function obMotivationText(pct) {
   if (pct >= 100) return 'Hotovo! 🎉';
   if (pct >= 67) return 'Už len kúsok! 🔥';
