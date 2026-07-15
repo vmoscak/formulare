@@ -217,12 +217,12 @@ $OB_TOOLTIPS = [
 // Krátky podporný odkaz na začiatku každej fázy — pripomienka, že nováčik
 // v tom nie je sám a má sa na koho obrátiť.
 $OB_PHASE_SUPPORT = [
-    'Pred nástupom' => 'Papierovanie a školenia na začiatku vyzerajú ako veľa — a aj je to veľa. Netreba to zvládnuť dokonale na prvýkrát. Ak si niečím neistý, opýtaj sa — presne na to sú tu kolegovia aj tvoj manažér.',
+    'Pred nástupom' => 'Papierovanie a školenia na začiatku vyzerajú ako veľa — a naozaj toho je veľa. Netreba to zvládnuť dokonale na prvýkrát. Ak si niečím neistý, opýtaj sa — presne na to sú tu kolegovia aj tvoj manažér.',
     '0. mesiac' => 'Prvý mesiac je o učení sa veľa nového naraz. Je úplne normálne, že si na začiatku neistý — nikto od teba nečaká, že to vieš hneď. Manažér aj skúsenejší kolegovia ti radi pomôžu, stačí sa ozvať.',
     'I. mesiac' => 'Ak máš pocit, že iní to majú jednoduchšie, nemajú — každý si prešiel rovnakou krivkou učenia. Pýtaj sa toľko, koľko potrebuješ, nie je to znak slabosti.',
     'II. mesiac' => 'Blok Predaj je o skutočnom rozhovore s klientom — analýza potrieb, argumentácia, zvládanie námietok, uzatváracie techniky. Netreba to zvládnuť dokonale hneď, tieto zručnosti sa budujú praxou. Ak chceš niečo nacvičiť nanečisto, kolegovia aj manažér radi pomôžu.',
-    'III. mesiac' => 'Životné poistenie je srdcom tejto práce a najviac otázok je pri ňom úplne prirodzené. Nie si v tom sám — kolegovia aj manažér ťa podržia.',
-    'IV. mesiac' => 'Majetkové poistenie je technickejšia oblasť a prvé ponuky bývajú pomalšie — to je v poriadku. Radšej sa spýtaj vopred, než sa s tým trápiť sám.',
+    'III. mesiac' => 'Životné poistenie je srdcom tejto práce a je úplne prirodzené, že práve pri ňom máš najviac otázok. Nie si v tom sám — kolegovia aj manažér ťa podržia.',
+    'IV. mesiac' => 'Majetkové poistenie je technickejšia oblasť a prvé ponuky bývajú pomalšie — to je v poriadku. Radšej sa spýtaj vopred, než aby si sa s tým trápil sám.',
     'V. mesiac' => 'Posledný krok pred maturitou. Ver si — dostal si sa sem vlastnou prácou. A ak sa niečo nepodarí na prvý pokus, nie je to koniec sveta.',
 ];
 
