@@ -18,7 +18,7 @@
 
      KDE ČO UPRAVIŤ:
        • Farby / vzhľad ........ zdieľaný dizajnový systém ../assets/ui.css
-       • Kroky pri škode ........ JS, pole STEPS
+       • Odporúčania ............ JS, pole STEPS
 ========================================================================== -->
 
 <script src="../assets/theme-init.js"></script>
@@ -136,10 +136,9 @@
    DÁTA
 =========================================================================== */
 const STEPS = [
-  'Kontaktuj poradcu (kontakt vyššie) alebo priamo poisťovňu.',
-  'Zapíš si číslo škodovej udalosti, ktoré ti pridelia.',
-  'Odfoť/zdokumentuj škodu a uschovaj všetky doklady a účtenky.',
-  'Poisťovni nahlás škodu čo najskôr, ideálne do 24–48 hodín.',
+  'Ulož si túto kartičku — máš na nej všetky poistky aj kontakt na mňa na jednom mieste.',
+  'Pri zmene adresy, priezviska či iných údajov mi daj vedieť, nahlásim to za teba všetkým poisťovniam.',
+  'Raz ročne si spolu prejdeme, či krytie ešte zodpovedá tvojej aktuálnej situácii.',
 ];
 
 const state = {
@@ -272,7 +271,7 @@ function buildLetterHtml(previewMode){
     ${linesHtml ? '<div class="section"><div class="section-title">Núdzové / asistenčné linky</div>' + linesHtml + '</div>' : ''}
 
     <div class="section">
-      <div class="section-title">Čo robiť pri poistnej udalosti</div>
+      <div class="section-title">Odporúčania</div>
       ${stepsHtml}
     </div>
 
@@ -367,7 +366,7 @@ function doCopy(){
       ? policiesRows.map(function(p){ return '– ' + (p.institution||'—') + ' (' + (p.type||'—') + ', č. ' + (p.contractNo||'—') + ')'; })
       : ['(zatiaľ žiadne)'])
     .concat(linesFiltered.length ? ['', 'NÚDZOVÉ LINKY:'].concat(linesFiltered.map(function(l){ return '– ' + l; })) : [])
-    .concat(['', 'ČO ROBIŤ PRI ŠKODE:'])
+    .concat(['', 'ODPORÚČANIA:'])
     .concat(STEPS.map(function(s, i){ return (i+1) + '. ' + s; }))
     .join('\n');
   try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
