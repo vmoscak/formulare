@@ -21,18 +21,33 @@
 <script src="../assets/theme-init.js"></script>
 <link rel="stylesheet" href="../assets/ui.css?v=11">
 <style>
+  .su-timeline-head{font-weight:700; font-size:15px; color:var(--ink); margin-bottom:14px;}
+  .su-timeline{position:relative;}
+  .su-timeline::before{
+    content:''; position:absolute; left:19px; top:19px; bottom:19px; width:2px;
+    background:var(--border); z-index:0;
+  }
   .su-step{
-    display:flex; gap:14px; align-items:flex-start; padding:14px 0; border-bottom:1px solid #eef0f3;
+    display:flex; gap:14px; align-items:flex-start; padding:14px 0; border-bottom:1px solid var(--border);
+    position:relative;
   }
   .su-step:last-child{border-bottom:none;}
   .su-num{
-    width:28px; height:28px; border-radius:50%; background:var(--accent-soft); color:var(--accent);
-    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; flex-shrink:0;
+    width:38px; height:38px; border-radius:12px; background:var(--accent-soft); color:var(--accent);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0; position:relative; z-index:1;
+  }
+  .su-num svg{width:19px; height:19px;}
+  .su-num-badge{
+    position:absolute; right:-4px; bottom:-4px; width:16px; height:16px; border-radius:50%;
+    background:var(--paper); box-shadow:0 0 0 1.5px var(--border);
+    color:var(--muted); font-size:9.5px; font-weight:800;
+    display:flex; align-items:center; justify-content:center;
   }
   .su-step-body{flex:1; min-width:0;}
-  .su-step-title{font-weight:700; font-size:14.5px; color:#20242b;}
-  .su-step-why{font-size:12.5px; color:#5b6270; margin-top:3px; line-height:1.5;}
-  .su-step-note{font-size:12px; color:#9aa1ad; margin-top:6px; font-style:italic;}
+  .su-step-title{font-weight:700; font-size:14.5px; color:var(--ink);}
+  .su-owner-tag{font-weight:500; color:var(--label); font-size:11px;}
+  .su-step-why{font-size:12.5px; color:var(--muted); margin-top:3px; line-height:1.5;}
+  .su-step-note{font-size:12px; color:var(--label); margin-top:6px; font-style:italic;}
   .su-step-link{
     display:inline-block; margin-top:8px; font-size:12.5px; font-weight:700; color:var(--accent);
     text-decoration:none; padding:5px 12px; border:1.5px solid var(--accent-line); border-radius:999px;
@@ -80,7 +95,7 @@
         <button class="tool" id="copyBtn">Kopírovať zoznam krokov</button>
       </div>
       <div class="letter-wrap">
-        <div id="stepsBody" style="background:#fff; border-radius:8px; padding:24px;"></div>
+        <div id="stepsBody" style="background:var(--paper); border-radius:8px; padding:24px;"></div>
       </div>
     </div>
   </div>
@@ -99,49 +114,68 @@ const EVENTS = {
   svadba: {
     label: 'Svadba / nová domácnosť', tile: '💍',
     steps: [
-      { title: 'Aké poistenie potrebujem', why: 'Rýchly úvodný dotazník — kde teraz stoja s krytím ako pár.', href: '../wizard-poistenie/' },
-      { title: 'Kalkulačka poistného krytia', why: 'Prepočet krytia pri páre — počíta sa s výpadkom oboch príjmov naraz.', href: '../financna-medzera/' },
-      { title: 'Interaktívna Pyramída istoty', why: 'Vysvetliť poradie budovania istoty ako nová domácnosť.', href: '../pyramida-istoty/' },
-      { title: 'Univerzálna žiadosť o zmenu', why: 'Zmena priezviska alebo adresy v existujúcich zmluvách.', href: '../univerzalna-ziadost-zmena/' },
-      { title: 'Prvých 30 dní', why: 'Po podpise nových alebo upravených zmlúv.', href: '../prvych-30-dni/' },
+      { title: 'Aké poistenie potrebujem', why: 'Rýchly úvodný dotazník — kde teraz stoja s krytím ako pár.', href: '../wizard-poistenie/', ico: 'help' },
+      { title: 'Kalkulačka poistného krytia', why: 'Prepočet krytia pri páre — počíta sa s výpadkom oboch príjmov naraz.', href: '../financna-medzera/', ico: 'chart' },
+      { title: 'Interaktívna Pyramída istoty', why: 'Vysvetliť poradie budovania istoty ako nová domácnosť.', href: '../pyramida-istoty/', ico: 'pyramid' },
+      { title: 'Univerzálna žiadosť o zmenu', why: 'Zmena priezviska alebo adresy v existujúcich zmluvách.', href: '../univerzalna-ziadost-zmena/', ico: 'edit' },
+      { title: 'Prvých 30 dní', why: 'Po podpise nových alebo upravených zmlúv.', href: '../prvych-30-dni/', ico: 'calendar' },
     ],
   },
   dieta: {
     label: 'Narodenie dieťaťa', tile: '👶',
     steps: [
-      { title: 'Kalkulačka poistného krytia', why: 'Prepočet znova — pribudla závislá osoba, mení sa potrebné krytie.', href: '../financna-medzera/' },
-      { title: 'Univerzálna žiadosť o zmenu', why: 'Zmena oprávnenej osoby v existujúcich zmluvách.', href: '../univerzalna-ziadost-zmena/' },
-      { title: 'Interaktívna Pyramída istoty', why: 'Prejsť, čo sa mení pridaním dieťaťa — najmä rezerva a dlhodobé ciele.', href: '../pyramida-istoty/' },
-      { title: 'Simulátor dvoch extrémov', why: 'Zdôrazniť riziko náhlej straty príjmu teraz, keď je na starosti dieťa.', href: '../simulator-dvoch-extremov/' },
+      { title: 'Kalkulačka poistného krytia', why: 'Prepočet znova — pribudla závislá osoba, mení sa potrebné krytie.', href: '../financna-medzera/', ico: 'chart' },
+      { title: 'Univerzálna žiadosť o zmenu', why: 'Zmena oprávnenej osoby v existujúcich zmluvách.', href: '../univerzalna-ziadost-zmena/', ico: 'edit' },
+      { title: 'Interaktívna Pyramída istoty', why: 'Prejsť, čo sa mení pridaním dieťaťa — najmä rezerva a dlhodobé ciele.', href: '../pyramida-istoty/', ico: 'pyramid' },
+      { title: 'Simulátor dvoch extrémov', why: 'Zdôrazniť riziko náhlej straty príjmu teraz, keď je na starosti dieťa.', href: '../simulator-dvoch-extremov/', ico: 'spectrum' },
     ],
   },
   byt: {
     label: 'Kúpa bytu / domu', tile: '🏠',
     steps: [
-      { title: 'Kalkulačka poistného krytia', why: 'Nový záväzok (hypotéka) mení, koľko krytia je potrebné.', href: '../financna-medzera/' },
-      { title: 'Aké poistenie potrebujem', why: 'Overiť, či bude treba doplniť poistenie majetku/domácnosti.', href: '../wizard-poistenie/' },
-      { title: 'Preberací protokol', why: 'Pri odovzdaní nehnuteľnosti alebo dokumentov medzi stranami.', href: '../preberaci-protokol/' },
-      { title: 'Prvých 30 dní', why: 'Po podpise poistenia novej nehnuteľnosti.', href: '../prvych-30-dni/' },
+      { title: 'Kalkulačka poistného krytia', why: 'Nový záväzok (hypotéka) mení, koľko krytia je potrebné.', href: '../financna-medzera/', ico: 'chart' },
+      { title: 'Aké poistenie potrebujem', why: 'Overiť, či bude treba doplniť poistenie majetku/domácnosti.', href: '../wizard-poistenie/', ico: 'help' },
+      { title: 'Preberací protokol', why: 'Pri odovzdaní nehnuteľnosti alebo dokumentov medzi stranami.', href: '../preberaci-protokol/', ico: 'clipboard' },
+      { title: 'Prvých 30 dní', why: 'Po podpise poistenia novej nehnuteľnosti.', href: '../prvych-30-dni/', ico: 'calendar' },
     ],
   },
   zamestnanie: {
     label: 'Zmena zamestnania / podnikanie', tile: '💼',
     steps: [
-      { title: 'Kalkulačka poistného krytia', why: 'Zmena príjmu mení odporúčané krytie aj rezervu.', href: '../financna-medzera/' },
-      { title: 'Ťahák „Čo pýtať od klienta“', why: 'Kategória „Podnikateľ / SZČO“ — špecifické otázky pri prechode na živnosť.', href: '../tahak-co-pytat-od-klienta/' },
-      { title: 'Argument Builder', why: 'Argumenty k poisteniu príjmu, keď stráca nemocenské zamestnanca.', href: '../argument-builder/' },
-      { title: 'Univerzálna žiadosť o zmenu', why: 'Aktualizácia údajov (zamestnávateľ, príjem) v existujúcich zmluvách.', href: '../univerzalna-ziadost-zmena/' },
+      { title: 'Kalkulačka poistného krytia', why: 'Zmena príjmu mení odporúčané krytie aj rezervu.', href: '../financna-medzera/', ico: 'chart' },
+      { title: 'Ťahák „Čo pýtať od klienta“', why: 'Kategória „Podnikateľ / SZČO“ — špecifické otázky pri prechode na živnosť.', href: '../tahak-co-pytat-od-klienta/', ico: 'check' },
+      { title: 'Argument Builder', why: 'Argumenty k poisteniu príjmu, keď stráca nemocenské zamestnanca.', href: '../argument-builder/', ico: 'megaphone' },
+      { title: 'Univerzálna žiadosť o zmenu', why: 'Aktualizácia údajov (zamestnávateľ, príjem) v existujúcich zmluvách.', href: '../univerzalna-ziadost-zmena/', ico: 'edit' },
     ],
   },
   fixacia: {
     label: 'Končí fixácia hypotéky', tile: '📉',
     steps: [
-      { title: 'Oplatí sa mi refinancovať?', why: 'Rýchly break-even prepočet, či sa oplatí zmena banky.', href: '/oplati-sa-refinancovat.php', ownerOnly: true },
-      { title: 'Refinančný Radar', why: 'Aktuálny prehľad sadzieb podľa banky a fixácie.', href: '/refinancny-radar.php', ownerOnly: true },
-      { title: 'Prvých 30 dní', why: 'Po podpise novej úverovej zmluvy — kategória „Hypotéka“.', href: '../prvych-30-dni/' },
+      { title: 'Oplatí sa mi refinancovať?', why: 'Rýchly break-even prepočet, či sa oplatí zmena banky.', href: '/oplati-sa-refinancovat.php', ownerOnly: true, ico: 'percent' },
+      { title: 'Refinančný Radar', why: 'Aktuálny prehľad sadzieb podľa banky a fixácie.', href: '/refinancny-radar.php', ownerOnly: true, ico: 'trending' },
+      { title: 'Prvých 30 dní', why: 'Po podpise novej úverovej zmluvy — kategória „Hypotéka“.', href: '../prvych-30-dni/', ico: 'calendar' },
     ],
   },
 };
+
+/* Ikonky zhodné s tools-registry.php (toolIco), aby krok vizuálne sedel
+   s tým, ako nástroj vyzerá v nastroje.php. */
+const ICO = {
+  help: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+  chart: '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>',
+  pyramid: '<path d="M12 3l9 18H3z"/><path d="M7.5 12h9"/><path d="M5.2 16.5h13.6"/>',
+  edit: '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/>',
+  calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/>',
+  spectrum: '<circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="12" r="2.5"/><path d="M7.5 12h9"/>',
+  clipboard: '<path d="M16 3H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"/><path d="M9 3v4h6V3"/>',
+  check: '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
+  megaphone: '<path d="M3 11v3a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15 8a4 4 0 0 1 0 8"/><path d="M17.5 5.5a8 8 0 0 1 0 13"/>',
+  percent: '<line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
+  trending: '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+};
+function icoSvg(key){
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICO[key]||ICO.help)+'</svg>';
+}
 
 const state = { event: 'svadba', isOwner: false };
 
@@ -163,20 +197,22 @@ function renderEvents(){
 function renderSteps(){
   const ev = EVENTS[state.event];
   $('avatar').textContent = ev.tile;
-  $('stepsBody').innerHTML = '<div style="font-weight:700; font-size:15px; color:#20242b; margin-bottom:14px;">' + escapeHtml(ev.label) + '</div>'
+  $('stepsBody').innerHTML = '<div class="su-timeline-head">' + escapeHtml(ev.label) + '</div>'
+    + '<div class="su-timeline">'
     + ev.steps.map(function(s, i){
         const locked = s.ownerOnly && !state.isOwner;
         const linkHtml = locked
           ? '<div class="su-step-note">Toto rieši majiteľ priamo — hypotéky rieši výhradne on.</div>'
           : '<a class="su-step-link" href="' + escapeHtml(s.href) + '" target="_blank" rel="noopener">Otvoriť nástroj →</a>';
         return '<div class="su-step">'
-          + '<div class="su-num">' + (i + 1) + '</div>'
+          + '<div class="su-num">' + icoSvg(s.ico || 'help') + '<span class="su-num-badge">' + (i + 1) + '</span></div>'
           + '<div class="su-step-body">'
-            + '<div class="su-step-title">' + escapeHtml(s.title) + (s.ownerOnly ? ' <span style="font-weight:500;color:#9aa1ad;font-size:11px;">(len pre majiteľa)</span>' : '') + '</div>'
+            + '<div class="su-step-title">' + escapeHtml(s.title) + (s.ownerOnly ? ' <span class="su-owner-tag">(len pre majiteľa)</span>' : '') + '</div>'
             + '<div class="su-step-why">' + escapeHtml(s.why) + '</div>'
             + linkHtml
           + '</div></div>';
-      }).join('');
+      }).join('')
+    + '</div>';
 }
 
 function render(){ renderEvents(); renderSteps(); }
