@@ -366,26 +366,31 @@ if ($isOwner) {
   .ob-progress-badge{display:inline-block; margin-top:9px; padding:4px 12px; border-radius:999px; background:rgba(255,255,255,.2);
     font-size:11.5px; font-weight:700; letter-spacing:.02em; color:#fff;}
 
-  .ob-next-card{display:flex; align-items:center; gap:14px; background:linear-gradient(135deg, var(--accent-soft), var(--paper)); border:1px solid var(--accent-line); flex-wrap:wrap;}
-  .ob-next-icon{font-size:24px; flex-shrink:0;}
-  .ob-next-body{flex:1; min-width:160px;}
+  .ob-next-card{display:flex; align-items:center; gap:16px; background:linear-gradient(135deg, var(--accent-soft), var(--paper)); border:1px solid var(--accent-line); flex-wrap:wrap; position:relative; overflow:hidden;}
+  .ob-next-card::before{content:''; position:absolute; width:150px; height:150px; border-radius:50%; background:var(--accent); opacity:.06; top:-60px; right:-46px; pointer-events:none;}
+  .ob-next-icon{font-size:21px; flex-shrink:0; width:46px; height:46px; border-radius:50%; background:var(--paper); border:1px solid var(--accent-line); display:flex; align-items:center; justify-content:center; position:relative; z-index:1;}
+  .ob-next-body{flex:1; min-width:160px; position:relative; z-index:1;}
   .ob-next-label{font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--accent-ink);}
   .ob-next-title{font-size:14.5px; font-weight:600; color:var(--ink); margin-top:3px;}
   .ob-next-done{display:flex; align-items:center; gap:10px;}
-  .ob-next-done .ob-next-title{color:var(--good);}
+  .ob-next-done .ob-next-title{color:var(--good); position:relative; z-index:1;}
 
   .ob-trail{display:flex; align-items:center; gap:0; overflow-x:auto; padding:4px 2px 12px; margin:-4px 0 4px;}
   .ob-trail-item{display:flex; align-items:center; gap:7px; flex-shrink:0; cursor:pointer; padding:6px 10px; border-radius:999px; border:none; background:none; font:inherit; transition:transform .15s ease, background .15s ease;}
   .ob-trail-item:hover{background:var(--desk); transform:translateY(-1px);}
-  .ob-trail-dot{width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10.5px; font-weight:700; flex-shrink:0;}
+  .ob-trail-dot{width:20px; height:20px; border-radius:50%; flex-shrink:0; position:relative;
+    background:conic-gradient(var(--accent) calc(var(--pct, 0) * 3.6deg), var(--border) 0deg);}
+  .ob-trail-dot-inner{position:absolute; inset:2px; border-radius:50%; background:var(--paper); display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:var(--ink);}
   .ob-trail-name{font-size:12px; font-weight:600; white-space:nowrap;}
   .ob-trail-line{width:20px; height:2px; background:var(--border); flex-shrink:0; transition:background .3s ease;}
   .ob-trail-line.filled{background:var(--good);}
-  .ob-trail-item.status-done .ob-trail-dot{background:var(--good); color:#fff;}
+  .ob-trail-item.status-done .ob-trail-dot{background:var(--good);}
+  .ob-trail-item.status-done .ob-trail-dot-inner{background:var(--good); color:#fff;}
   .ob-trail-item.status-done .ob-trail-name{color:var(--muted);}
-  .ob-trail-item.status-current .ob-trail-dot{background:var(--accent); color:#fff; animation:obDotPulse 2.2s ease-in-out infinite;}
+  .ob-trail-item.status-current .ob-trail-dot{animation:obDotPulse 2.2s ease-in-out infinite;}
+  .ob-trail-item.status-current .ob-trail-dot-inner{color:var(--accent-ink);}
   .ob-trail-item.status-current .ob-trail-name{color:var(--ink);}
-  .ob-trail-item.status-upcoming .ob-trail-dot{background:var(--desk); color:var(--muted); border:1px solid var(--border);}
+  .ob-trail-item.status-upcoming .ob-trail-dot-inner{color:var(--muted);}
   .ob-trail-item.status-upcoming .ob-trail-name{color:var(--muted);}
   @keyframes obDotPulse{0%,100%{box-shadow:0 0 0 4px var(--accent-soft);}50%{box-shadow:0 0 0 8px transparent;}}
 
@@ -420,6 +425,10 @@ if ($isOwner) {
   .ob-phase-eyebrow{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--accent-ink); margin:0 0 4px;}
   .ob-phase-hero-title{font-size:21px; font-weight:800; letter-spacing:-.01em; color:var(--ink); margin:0 0 4px;}
   .ob-phase-hero-count{font-size:12.5px; color:var(--muted); margin:0;}
+  .ob-phase-toast{position:absolute; top:14px; right:16px; background:var(--good); color:#fff; font-size:12px; font-weight:700;
+    padding:6px 12px; border-radius:999px; z-index:2; opacity:0; transform:translateY(-6px) scale(.92); pointer-events:none;
+    transition:opacity .3s ease, transform .3s ease;}
+  .ob-phase-toast.show{opacity:1; transform:translateY(0) scale(1);}
 
   @keyframes obStepIn{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
   .ob-step.ob-step-card{border:1px solid var(--border); border-bottom:1px solid var(--border); border-radius:var(--radius-md); padding:12px 14px; margin-bottom:10px;
@@ -507,9 +516,9 @@ if ($isOwner) {
 
   <?php if ($totalSteps > 0): ?>
   <div class="card ob-trail">
-    <?php $i = 0; $prevStatus = null; foreach ($phaseList as $phaseName => $st): if ($i > 0): ?><span class="ob-trail-line<?= $prevStatus === 'done' ? ' filled' : '' ?>"></span><?php endif; ?>
+    <?php $i = 0; $prevStatus = null; foreach ($phaseList as $phaseName => $st): if ($i > 0): ?><span class="ob-trail-line<?= $prevStatus === 'done' ? ' filled' : '' ?>"></span><?php endif; $trailPct = $st['total'] > 0 ? round($st['done'] / $st['total'] * 100) : 0; ?>
     <button type="button" class="ob-trail-item status-<?= $st['status'] ?>" onclick="obJumpPhase(<?= $st['idx'] ?>)">
-      <span class="ob-trail-dot"><?= $st['status'] === 'done' ? '✓' : ($st['idx'] + 1) ?></span>
+      <span class="ob-trail-dot" style="--pct:<?= (int)$trailPct ?>;"><span class="ob-trail-dot-inner"><?= $st['status'] === 'done' ? '✓' : ($st['idx'] + 1) ?></span></span>
       <span class="ob-trail-name"><?= h($phaseName) ?></span>
     </button>
     <?php $i++; $prevStatus = $st['status']; endforeach; ?>
@@ -635,6 +644,7 @@ if ($isOwner) {
     </div>
     <?php $phasePct = $st['total'] > 0 ? round($st['done'] / $st['total'] * 100) : 0; ?>
     <div class="ob-phase-hero">
+      <span class="ob-phase-toast" id="ob-phase-toast-<?= $st['idx'] ?>">🎉 Fáza dokončená!</span>
       <div class="ob-phase-ring" id="ob-phase-ring-<?= $st['idx'] ?>" style="--pct:<?= (int)$phasePct ?>;">
         <div class="ob-phase-ring-label" id="ob-phase-badge-<?= $st['idx'] ?>"><?= $st['status'] === 'done' ? '✓' : ($st['idx'] + 1) ?></div>
       </div>
@@ -666,7 +676,7 @@ if ($isOwner) {
       </div>
     <?php endif; ?>
     <?php foreach ($ongoingSteps as $oIdx => $s): $tip = $OB_TOOLTIPS[$s['title']] ?? null; $isFirstOngoing = $oIdx === 0; $isLastOngoing = $oIdx === count($ongoingSteps) - 1; ?>
-    <div class="ob-step ob-step-ongoing" id="ob-step-<?= (int)$s['id'] ?>">
+    <div class="ob-step ob-step-ongoing ob-step-card" id="ob-step-<?= (int)$s['id'] ?>" style="--i:<?= $oIdx ?>;">
       <span class="ob-ongoing-dot" aria-hidden="true">•</span>
       <div class="ob-step-body">
         <div class="ob-step-title"><?= h($s['title']) ?><?php if ($tip): ?><span class="ob-info" tabindex="0">i<span class="ob-info-bubble"><?= h($tip) ?></span></span><?php endif; ?></div>
@@ -961,6 +971,13 @@ document.addEventListener('change', function(e){
       if (badgeEl) badgeEl.textContent = '✓';
       var phaseEl = document.getElementById('ob-phase-' + phaseIdx);
       if (phaseEl) phaseEl.classList.add('status-done');
+      if (done && phaseSteps.length > 0) {
+        var toastEl = document.getElementById('ob-phase-toast-' + phaseIdx);
+        if (toastEl) {
+          toastEl.classList.add('show');
+          setTimeout(function () { toastEl.classList.remove('show'); }, 2200);
+        }
+      }
     }
   }
 });
