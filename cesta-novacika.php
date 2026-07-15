@@ -158,16 +158,26 @@ foreach ($phases as $phaseName => $phaseSteps) {
     $idx++;
 }
 
-// Fáza ako samostatná stránka: ?phase=<idx>. Bez parametra (alebo s neplatným
-// indexom) sa zobrazí prehľad všetkých fáz ako doteraz.
+// Nováčik (nie owner) vidí vždy len jednu fázu ako kartu — owner naďalej
+// dostáva celý zoznam naraz, s tlačidlom na náhľad pohľadu nováčika
+// (?view=novice), aby vedel skontrolovať, ako to vyzerá bez toho, aby sám bol
+// priradený ako nováčik.
+$novicePreview = $isOwner && isset($_GET['view']) && $_GET['view'] === 'novice';
+$cardMode = !$isOwner || $novicePreview;
+$currentPhaseName = $currentPhaseName ?? null;
+
 $selectedPhaseIdx = (isset($_GET['phase']) && $_GET['phase'] !== '') ? (int)$_GET['phase'] : null;
+if ($selectedPhaseIdx === null && $cardMode && $phaseList) {
+    // Bez explicitného ?phase= v móde kariet naskočí rovno na aktuálnu fázu
+    // (alebo poslednú, ak je všetko hotové) — nie na prehľad všetkého.
+    $selectedPhaseIdx = $currentPhaseName !== null ? $phaseIndexByName[$currentPhaseName] : (count($phaseList) - 1);
+}
 $selectedPhaseName = null;
 if ($selectedPhaseIdx !== null) {
     $selectedPhaseName = array_search($selectedPhaseIdx, $phaseIndexByName, true);
     if ($selectedPhaseName === false) { $selectedPhaseName = null; $selectedPhaseIdx = null; }
 }
 $maxPhaseIdx = count($phaseList) - 1;
-$currentPhaseName = $currentPhaseName ?? null;
 
 // Prvý neodškrtnutý krok naprieč celou osnovou — "Ďalší krok" callout.
 $nextStep = null;
@@ -395,10 +405,10 @@ if ($isOwner) {
   .ob-phase-count{font-size:12px; color:var(--muted); font-weight:600; flex-shrink:0;}
   .ob-phase.status-upcoming .ob-phase-summary{opacity:.72;}
   .ob-phase-body{padding:0 8px 8px 42px;}
-  .ob-phase-open-link{flex-shrink:0; color:var(--muted); text-decoration:none; font-size:13px; padding:2px 5px; border-radius:6px;}
-  .ob-phase-open-link:hover{color:var(--accent); background:var(--accent-soft);}
   .ob-phase-nav{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:14px;}
   .ob-phase-count-inline{font-size:13px; font-weight:600; color:var(--muted); margin-left:8px;}
+  .ob-osnova-head{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px;}
+  .ob-preview-banner{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 14px; margin-bottom:16px; border-radius:var(--radius-md); background:var(--accent-soft); color:var(--accent); font-size:13px; font-weight:600;}
 
   .ob-phase-support{display:flex; gap:8px; align-items:flex-start; font-size:12.5px; color:var(--ink-2); line-height:1.5;
     background:var(--desk); border-radius:var(--radius-md); padding:9px 11px; margin:0 0 10px;}
@@ -558,13 +568,16 @@ if ($isOwner) {
   <?php endif; ?>
 
   <div class="card">
-    <?php if ($selectedPhaseIdx === null): ?>
-    <h3>Osnova</h3>
+    <?php if (!$cardMode): ?>
+    <div class="ob-osnova-head">
+      <h3 style="margin:0;">Osnova</h3>
+      <a class="pillbtn" href="?view=novice">👀 Náhľad nováčika</a>
+    </div>
     <?php if (!$phases): ?>
       <div class="empty-state">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
         <span class="es-title">Zatiaľ žiadne kroky</span>
-        <span class="es-sub"><?= $isOwner ? 'Pridaj prvý krok osnovy nižšie.' : 'Owner sem zatiaľ nič nepridal.' ?></span>
+        <span class="es-sub">Pridaj prvý krok osnovy nižšie.</span>
       </div>
     <?php endif; ?>
     <?php foreach ($phases as $phaseName => $phaseSteps): $st = $phaseList[$phaseName]; $phaseOpen = $isOwner || $st['status'] !== 'done'; ?>
@@ -573,7 +586,6 @@ if ($isOwner) {
           <span class="ob-phase-badge" id="ob-phase-badge-<?= $st['idx'] ?>"><?= $st['status'] === 'done' ? '✓' : ($st['idx'] + 1) ?></span>
           <span class="ob-phase-name"><?= h($phaseName) ?></span>
           <span class="ob-phase-count" id="ob-phase-count-<?= $st['idx'] ?>"><?= $st['done'] ?>/<?= $st['total'] ?></span>
-          <a class="ob-phase-open-link" href="?phase=<?= $st['idx'] ?>" onclick="event.stopPropagation();" title="Otvoriť len túto fázu">↗</a>
         </summary>
         <div class="ob-phase-body">
       <?php if (isset($OB_PHASE_SUPPORT[$phaseName])): ?>
@@ -583,17 +595,31 @@ if ($isOwner) {
         </div>
       </details>
     <?php endforeach; ?>
+    <?php else: $vp = $novicePreview ? '&view=novice' : ''; ?>
+    <?php if ($novicePreview): ?>
+    <div class="ob-preview-banner">
+      <span>👀 Náhľad pohľadu, aký vidí priradený nováčik.</span>
+      <a class="pillbtn" href="?">← Späť na správu osnovy</a>
+    </div>
+    <?php endif; ?>
+    <?php if ($selectedPhaseName === null): ?>
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        <span class="es-title">Zatiaľ žiadne kroky</span>
+        <span class="es-sub">Owner sem zatiaľ nič nepridal.</span>
+      </div>
     <?php else: $phaseSteps = $phases[$selectedPhaseName]; $st = $phaseList[$selectedPhaseName]; ?>
     <div class="ob-phase-nav">
-      <?php if ($selectedPhaseIdx > 0): ?><a class="pillbtn" href="?phase=<?= $selectedPhaseIdx - 1 ?>">← Predchádzajúca</a><?php else: ?><span></span><?php endif; ?>
-      <a class="pillbtn" href="?">Celá osnova</a>
-      <?php if ($selectedPhaseIdx < $maxPhaseIdx): ?><a class="pillbtn" href="?phase=<?= $selectedPhaseIdx + 1 ?>">Ďalšia fáza →</a><?php else: ?><span></span><?php endif; ?>
+      <?php if ($selectedPhaseIdx > 0): ?><a class="pillbtn" href="?phase=<?= $selectedPhaseIdx - 1 ?><?= $vp ?>">← Predchádzajúca</a><?php else: ?><span></span><?php endif; ?>
+      <?php if ($isOwner): ?><a class="pillbtn" href="?">Celá osnova</a><?php else: ?><span></span><?php endif; ?>
+      <?php if ($selectedPhaseIdx < $maxPhaseIdx): ?><a class="pillbtn" href="?phase=<?= $selectedPhaseIdx + 1 ?><?= $vp ?>">Ďalšia fáza →</a><?php else: ?><span></span><?php endif; ?>
     </div>
     <h3><?= h($selectedPhaseName) ?> <span class="ob-phase-count-inline" id="ob-phase-count-<?= $st['idx'] ?>"><?= $st['done'] ?>/<?= $st['total'] ?></span></h3>
     <?php if (isset($OB_PHASE_SUPPORT[$selectedPhaseName])): ?>
     <div class="ob-phase-support"><span class="ob-support-emoji">🤝</span><span><?= h($OB_PHASE_SUPPORT[$selectedPhaseName]) ?></span></div>
     <?php endif; ?>
     <?php obRenderSteps($phaseSteps, $st['idx'], $doneStepIds, $OB_TOOLTIPS, $isOwner, $allPhaseNames); ?>
+    <?php endif; ?>
     <?php endif; ?>
   </div>
 
@@ -714,11 +740,30 @@ function obPhaseSelectChange(sel) {
     textInput.value = '';
   }
 }
+var OB_CARD_MODE = <?= $cardMode ? 'true' : 'false' ?>;
+var OB_VIEW_PARAM = <?= $novicePreview ? "'&view=novice'" : "''" ?>;
 function obJumpPhase(idx) {
-  location.href = '?phase=' + idx;
+  if (OB_CARD_MODE) {
+    location.href = '?phase=' + idx + OB_VIEW_PARAM;
+    return;
+  }
+  var el = document.getElementById('ob-phase-' + idx);
+  if (!el) return;
+  el.open = true;
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 function obJumpStep(phaseIdx, stepId) {
-  location.href = '?phase=' + phaseIdx + '#ob-step-' + stepId;
+  if (OB_CARD_MODE) {
+    location.href = '?phase=' + phaseIdx + OB_VIEW_PARAM + '#ob-step-' + stepId;
+    return;
+  }
+  var phase = document.getElementById('ob-phase-' + phaseIdx);
+  if (phase) phase.open = true;
+  var row = document.getElementById('ob-step-' + stepId);
+  if (!row) return;
+  row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  row.classList.add('ob-highlight');
+  setTimeout(function () { row.classList.remove('ob-highlight'); }, 1600);
 }
 document.addEventListener('DOMContentLoaded', function () {
   if (location.hash.indexOf('#ob-step-') !== 0) return;
