@@ -5,16 +5,17 @@
 <title>Poistenie úveru: banka vs. UNIQA</title>
 
 <!-- =========================================================================
-     POISTENIE ÚVERU: BANKA VS. UNIQA ("Bancassurance Killer") — samostatný
-     editovateľný súbor. Porovnanie celkových nákladov bankového poistenia
-     úveru (predávaného spolu s úverom) oproti samostatnej individuálnej
-     poistke — obe ceny zadáva poradca (z úverovej zmluvy / vlastnej ponuky),
-     appka len počíta rozdiel a zobrazuje ho vedľa seba. Naživo prepočítava.
+     POISTENIE ÚVERU: BANKA VS. UNIQA — samostatný editovateľný súbor
+     -------------------------------------------------------------------------
+     Pôvodne kalkulačka rozdielu cien (banka vs. UNIQA) — v praxi sa cena
+     UNIQA nedá zistiť na mieste u klienta bez plnej ponuky, takže to ako
+     rýchla predajná pomôcka nefungovalo. Prerobené na zoznam argumentov,
+     prečo je samostatná poistka výhodnejšia než bankový balík k úveru —
+     nezávisle od aktuálnej ceny. Rovnaký vzor ako ../argument-builder/.
      Voliteľné meno klienta + PDF cez zdieľaný ../pdf.php (Dompdf).
 
      KDE ČO UPRAVIŤ:
-       • Výpočet rozdielu ................ JS, funkcia compute()
-       • Zoznam výhod samostatnej poistky . JS, pole ADVANTAGES
+       • Typy poistenia a argumenty ...... JS, objekt TYPES
        • Farby / vzhľad .................. zdieľaný dizajnový systém ../assets/ui.css
 ========================================================================== -->
 
@@ -22,31 +23,9 @@
 <script src="../assets/toast.js?v=1"></script>
 <link rel="stylesheet" href="../assets/ui.css?v=11">
 <style>
-  .bk-badge{
-    display:inline-flex; align-items:center; gap:8px; padding:8px 14px; border-radius:999px;
-    font-size:12.5px; font-weight:700; margin-bottom:16px;
-  }
-  .bk-badge.ok{background:var(--good-soft,#ecfdf5); color:var(--good,#059669);}
-  .bk-badge.bad{background:var(--err-soft,#fff1f2); color:var(--err,#e11d48);}
-  .bk-badge.neutral{background:var(--desk); color:var(--muted);}
-  .bk-chart-row{margin-bottom:14px;}
-  .bk-chart-row:last-child{margin-bottom:0;}
-  .bk-chart-label{display:flex; justify-content:space-between; font-size:12.5px; color:var(--muted); margin-bottom:6px;}
-  .bk-chart-track{height:26px; border-radius:6px; background:var(--desk); overflow:hidden;}
-  .bk-chart-fill{height:100%; display:flex; align-items:center; justify-content:flex-end; padding-right:9px; color:#fff; font-size:11.5px; font-weight:700; white-space:nowrap; box-sizing:border-box;}
-  .bk-chart-fill.bank{background:#94a3b8;}
-  .bk-chart-fill.uniqa{background:#4f46e5;}
-  .bk-hero{
-    border-radius:var(--radius-lg); padding:20px 22px; margin:16px 0; color:#fff;
-    background:linear-gradient(150deg,#818cf8,#4f46e5); box-shadow:0 14px 30px -14px rgba(79,70,229,.5);
-  }
-  .bk-hero .bk-label{font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; opacity:.85;}
-  .bk-hero .bk-big{font-size:30px; font-weight:800; margin-top:6px; line-height:1.15;}
-  .bk-hero .bk-sub{font-size:12.5px; opacity:.9; margin-top:6px; line-height:1.5;}
-  .bk-advantages{background:var(--desk); border-radius:var(--radius-lg); padding:16px 18px; margin-top:16px;}
-  .bk-advantages h4{margin:0 0 10px; font-size:12.5px; font-weight:700; color:var(--ink);}
-  .bk-advantages ul{margin:0; padding-left:18px; display:flex; flex-direction:column; gap:6px;}
-  .bk-advantages li{font-size:12px; color:var(--ink-2); line-height:1.5;}
+  #types{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .pu-list-head{font-weight:700; font-size:15px; color:var(--ink); margin-bottom:4px;}
+  .pu-list-sub{font-size:12.5px; color:var(--muted); margin-bottom:14px;}
 </style>
 </head>
 <body>
@@ -61,97 +40,48 @@
         <div class="logo">B</div>
         <div>
           <b>Poistenie úveru: banka vs. UNIQA</b><br>
-          <small>Koľko naozaj stojí bankové poistenie</small>
+          <small>Argumenty, prečo je výhodnejšia samostatná poistka</small>
         </div>
       </div>
     </div>
     <div class="head-actions">
-      <div class="avatar" id="avatar">%</div>
+      <div class="avatar" id="avatar">B</div>
     </div>
   </div>
 
   <div class="body">
-    <!-- ============ VSTUPY ============ -->
+    <!-- ============ VÝBER ============ -->
     <div class="form">
       <div>
-        <div class="step-head"><div class="step-num">1</div><div class="step-title">Úver</div></div>
-        <div class="fields">
-          <div class="field" data-k="loanAmount">
-            <label>VÝŠKA ÚVERU (€)</label>
-            <input type="number" min="0" id="loanAmount" placeholder="napr. 120000">
-          </div>
-          <div class="field" data-k="loanYears">
-            <label>DOBA SPLÁCANIA (rokov)</label>
-            <input type="number" min="0" step="1" id="loanYears" placeholder="napr. 25">
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <div class="step-head"><div class="step-num">2</div><div class="step-title">Mesačná cena poistenia</div></div>
-        <div class="fields">
-          <div class="field" data-k="bankMonthly">
-            <label>BANKOVÉ POISTENIE (€/mesiac)</label>
-            <input type="number" min="0" step="0.01" id="bankMonthly" placeholder="napr. 45">
-            <span class="hint">Z úverovej zmluvy / splátkového kalendára.</span>
-          </div>
-          <div class="field" data-k="uniqaMonthly">
-            <label>SAMOSTATNÁ POISTKA UNIQA (€/mesiac)</label>
-            <input type="number" min="0" step="0.01" id="uniqaMonthly" placeholder="napr. 28">
-            <span class="hint">Z tvojej ponuky/kalkulácie pre klienta.</span>
-          </div>
-        </div>
+        <div class="step-head"><div class="step-num">1</div><div class="step-title">Typ poistenia</div></div>
+        <div class="grid3" id="types"></div>
       </div>
 
       <p style="font-size:12px; color:var(--muted); line-height:1.6;">
-        Porovnanie celkových nákladov za celú dobu úveru. Obe ceny zadávaš ty — appka nič nedopočítava
-        ani neodhaduje, len počíta rozdiel. Orientačný prepočet, presné podmienky sa vždy overia v
-        konkrétnej ponuke.
+        Argumenty na to, prečo môže byť pre klienta výhodnejšia samostatná poistka UNIQA namiesto
+        bankového balíka k úveru — nezávisle od aktuálnej ceny. Presné podmienky konkrétnej bankovej
+        ponuky sa vždy overia individuálne.
       </p>
-
-      <div class="actions">
-        <button class="btn-ghost" id="resetBtn">Vynulovať</button>
-      </div>
     </div>
 
-    <!-- ============ VÝSLEDOK ============ -->
+    <!-- ============ ARGUMENTY ============ -->
     <div class="preview">
       <div class="preview-head">
-        <span class="t">Výsledok</span>
-        <span class="live"><i></i>Prepočítava sa naživo</span>
+        <span class="t">Argumenty na stretnutie</span>
+        <span class="live"><i></i>Pomôcka poradcu</span>
       </div>
       <div class="preview-tools">
-        <button class="tool" id="copyBtn">Kopírovať zhrnutie</button>
+        <button class="tool" id="copyBtn">Kopírovať zoznam</button>
         <button class="tool" id="pdfBtn">Stiahnuť PDF</button>
       </div>
-
-      <div class="field" data-k="clientName" style="margin-bottom:8px;">
-        <label>MENO KLIENTA <span style="font-weight:500;text-transform:none;">(nepovinné, pre PDF)</span></label>
-        <input id="clientName" placeholder="napr. Ján Novák">
-      </div>
-
-      <div id="bkBadgeWrap"></div>
-
-      <div id="bkChartCard" style="display:none;">
-        <div class="bk-chart-row">
-          <div class="bk-chart-label"><span>Bankové poistenie — celkovo za dobu úveru</span></div>
-          <div class="bk-chart-track"><div class="bk-chart-fill bank" id="bkBarBank" style="width:0%;"></div></div>
+      <div class="letter-wrap">
+        <div style="background:var(--paper); border-radius:8px; padding:24px;">
+          <div class="field" data-k="clientName" style="margin-bottom:16px;">
+            <label>MENO KLIENTA <span style="font-weight:500;text-transform:none;">(nepovinné, pre PDF)</span></label>
+            <input id="clientName" placeholder="napr. Ján Novák">
+          </div>
+          <div id="argList"></div>
         </div>
-        <div class="bk-chart-row">
-          <div class="bk-chart-label"><span>Samostatná poistka UNIQA — celkovo za dobu úveru</span></div>
-          <div class="bk-chart-track"><div class="bk-chart-fill uniqa" id="bkBarUniqa" style="width:0%;"></div></div>
-        </div>
-      </div>
-
-      <div class="bk-hero" id="bkHero" style="display:none;">
-        <div class="bk-label" id="bkHeroLabel">Rozdiel za celú dobu úveru</div>
-        <div class="bk-big" id="bkHeroDiff">0 €</div>
-        <div class="bk-sub" id="bkHeroSub"></div>
-      </div>
-
-      <div class="bk-advantages">
-        <h4>Prečo o tom uvažovať aj mimo ceny</h4>
-        <ul id="bkAdvantagesList"></ul>
       </div>
     </div>
   </div>
@@ -159,167 +89,105 @@
 
 <script src="../assets/advisor-panel.js"></script>
 <script>
-const ADVANTAGES = [
-  'Poistenie nie je viazané na konkrétny úver — zostáva platné aj pri refinancovaní alebo predčasnom splatení.',
-  'Poistná suma sa nezmenšuje automaticky so zostatkom úveru — necháva rezervu aj pre rodinu, nielen na doplatenie banke.',
-  'Poistné plnenie ide priamo klientovi/rodine, nie automaticky banke.',
-  'Individuálne nastavenie krytia a rizík podľa potreby klienta, nie podľa štandardného balíka banky.',
-];
+/* ===========================================================================
+   DÁTA — tu meníš typy poistenia a argumenty
+=========================================================================== */
+const TYPES = {
+  zivotne: {
+    label: 'Životné poistenie', sub: 'Schopnosť splácať úver', tile: 'Ž',
+    arguments: [
+      'Pri bankovom poistení úveru je ako oprávnená osoba spravidla nastavená banka — poistné plnenie ide na doplatenie úveru, rodina z neho priamo nič nedostane. Pri samostatnej poistke si oprávnenú osobu určuje klient sám (napr. manžel/ka, deti) a peniaze idú rovno rodine.',
+      'Bankové poistenie zvyčajne kryje len aktuálny zostatok úveru — poistná suma klesá spolu so splácaním. Pri úmrtí v neskoršej fáze splácania tak rodine ostane len zlomok, hoci jej potreby (bývanie, výchova detí) sa nezmenšujú. Samostatná poistka môže mať konštantnú poistnú sumu podľa reálnej potreby rodiny, nie podľa zostatku dlhu.',
+      'Poistenie viazané na úver spravidla zaniká pri refinancovaní do inej banky alebo pri predčasnom splatení — klient tak môže na chvíľu ostať bez krytia práve pri zmene úveru. Samostatná poistka je od úveru nezávislá a zostáva platná aj po jeho splatení.',
+      'Bankový balík často kryje len úmrtie a základnú invaliditu, bez PN, kritických chorôb či trvalých následkov úrazom. Samostatná poistka sa dá nastaviť presne na riziká, ktoré klient potrebuje.',
+      'Bankové poistenie sa predáva paušálne k úveru, bez zohľadnenia veku a zdravotného stavu klienta — pri mladšom a zdravšom klientovi vychádza individuálne dojednaná poistka často výhodnejšie aj cenovo.',
+    ],
+  },
+  majetok: {
+    label: 'Poistenie majetku', sub: 'Nehnuteľnosť k úveru', tile: 'M',
+    arguments: [
+      'Banka spravidla vyžaduje poistiť nehnuteľnosť len na výšku úveru (alebo jeho aktuálneho zostatku), nie na jej skutočnú hodnotu. Pri väčšej škode tak môže byť nehnuteľnosť podpoistená a klient dostane menej, než reálne potrebuje na opravu či výstavbu. Samostatná poistka sa nastavuje na skutočnú hodnotu nehnuteľnosti.',
+      'Bankový balík často kryje len konštrukciu (múry), nie vybavenie a zariadenie domácnosti — to treba riešiť samostatným poistením domácnosti.',
+      'Pri poistnej udalosti ide plnenie z bankového poistenia primárne na úhradu zostatku úveru — klient dostane až prípadný zvyšok. Pri samostatnej poistke ide plnenie priamo klientovi, ktorý si opravu rieši podľa vlastného uváženia.',
+      'Podobne ako pri životnom poistení, aj poistenie majetku viazané na úver často zaniká pri refinancovaní alebo doplatení hypotéky — treba ho riešiť nanovo. Samostatná poistka trvá nezávisle od úveru.',
+      'Individuálna poistka umožňuje doplniť pripoistenia podľa potreby (zodpovednosť, sklo, elektronika) — bankový balík ponúka spravidla len základný rozsah.',
+    ],
+  },
+};
 
-const state = { loanAmount:'', loanYears:'', bankMonthly:'', uniqaMonthly:'', clientName:'' };
+const state = { type: 'zivotne', clientName: '' };
 
 const $ = id => document.getElementById(id);
-function num(v){ const n = Number(v); return isFinite(n) && n >= 0 ? n : 0; }
-function eur(n){ return Math.round(n).toLocaleString('sk-SK') + ' €'; }
 function escapeHtml(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-/* ===========================================================================
-   VÝPOČET — celkové náklady = mesačná cena × 12 × počet rokov úveru.
-=========================================================================== */
-function compute(){
-  const loanAmount = num(state.loanAmount);
-  const loanYears = num(state.loanYears);
-  const bankMonthly = num(state.bankMonthly);
-  const uniqaMonthly = num(state.uniqaMonthly);
-  const hasData = loanYears > 0 && (bankMonthly > 0 || uniqaMonthly > 0);
-
-  const months = loanYears * 12;
-  const totalBank = bankMonthly * months;
-  const totalUniqa = uniqaMonthly * months;
-  const diff = totalBank - totalUniqa;
-  const diffPct = totalBank > 0 ? Math.abs(diff) / totalBank * 100 : 0;
-
-  return { loanAmount, loanYears, bankMonthly, uniqaMonthly, hasData, months, totalBank, totalUniqa, diff, diffPct };
-}
 
 /* ===========================================================================
    VYKRESLENIE
 =========================================================================== */
-function render(){
-  const r = compute();
-
-  const badgeWrap = $('bkBadgeWrap');
-  if (r.hasData && r.bankMonthly > 0 && r.uniqaMonthly > 0) {
-    if (r.diff > 0) {
-      badgeWrap.innerHTML = '<div class="bk-badge ok">✓ UNIQA vychádza lacnejšie o ' + eur(r.diff) + ' za dobu úveru</div>';
-    } else if (r.diff < 0) {
-      badgeWrap.innerHTML = '<div class="bk-badge neutral">Bankové poistenie vychádza lacnejšie o ' + eur(Math.abs(r.diff)) + ' — cena však nie je jediné hľadisko</div>';
-    } else {
-      badgeWrap.innerHTML = '<div class="bk-badge neutral">Rovnaká celková cena — rozhodujú ostatné výhody</div>';
-    }
-  } else {
-    badgeWrap.innerHTML = '';
-  }
-
-  $('bkAdvantagesList').innerHTML = ADVANTAGES.map(function(a){ return '<li>' + escapeHtml(a) + '</li>'; }).join('');
-
-  if (!r.hasData) {
-    $('bkChartCard').style.display = 'none';
-    $('bkHero').style.display = 'none';
-    return r;
-  }
-
-  $('bkChartCard').style.display = 'block';
-  const maxTotal = Math.max(r.totalBank, r.totalUniqa, 1);
-  $('bkBarBank').style.width = Math.max(4, r.totalBank/maxTotal*100) + '%';
-  $('bkBarBank').textContent = eur(r.totalBank);
-  $('bkBarUniqa').style.width = Math.max(4, r.totalUniqa/maxTotal*100) + '%';
-  $('bkBarUniqa').textContent = eur(r.totalUniqa);
-
-  if (r.bankMonthly > 0 && r.uniqaMonthly > 0 && r.diff !== 0) {
-    $('bkHero').style.display = 'block';
-    $('bkHeroLabel').textContent = r.diff > 0 ? 'Úspora s UNIQA za celú dobu úveru' : 'Bankové poistenie je za dobu úveru lacnejšie o';
-    $('bkHeroDiff').textContent = eur(Math.abs(r.diff));
-    $('bkHeroSub').textContent = 'To je o ' + Math.round(r.diffPct) + ' % ' + (r.diff > 0 ? 'menej' : 'viac') + ' oproti druhej možnosti, pri ' + r.months + ' mesiacoch splácania.';
-  } else {
-    $('bkHero').style.display = 'none';
-  }
-
-  return r;
+function renderTypes(){
+  $('types').innerHTML = Object.keys(TYPES).map(function(k){
+    const t = TYPES[k], sel = k === state.type ? ' sel' : '';
+    return '<div class="type' + sel + '" data-type="' + k + '">'
+      + '<div class="tile">' + t.tile + '</div>'
+      + '<div><div class="t-label">' + escapeHtml(t.label) + '</div><div class="t-sub">' + escapeHtml(t.sub) + '</div></div></div>';
+  }).join('');
 }
+
+function renderArgs(){
+  const t = TYPES[state.type];
+  $('avatar').textContent = t.tile;
+  $('argList').innerHTML = '<div class="pu-list-head">' + escapeHtml(t.label) + '</div>'
+    + '<p class="pu-list-sub">' + t.arguments.length + ' argumentov, prečo zvážiť samostatnú poistku UNIQA</p>'
+    + t.arguments.map(function(a, idx){
+        return '<div class="rec-card" style="margin-bottom:10px;">'
+          + '<div class="rc-title" style="align-items:flex-start;"><span class="rc-num">' + (idx + 1) + '</span>'
+          + '<span style="font-weight:400; font-size:13.5px; color:var(--ink-2); line-height:1.55;">' + escapeHtml(a) + '</span></div>'
+          + '</div>';
+      }).join('');
+}
+
+function render(){ renderTypes(); renderArgs(); }
 
 /* ===========================================================================
    AKCIE
 =========================================================================== */
-function summaryText(r){
-  const lines = [];
-  lines.push('Poistenie úveru: banka vs. UNIQA' + (state.clientName.trim() ? ' — ' + state.clientName.trim() : ''));
-  lines.push('');
-  lines.push('Výška úveru: ' + eur(r.loanAmount));
-  lines.push('Doba splácania: ' + r.loanYears + ' rokov (' + r.months + ' mesiacov)');
-  lines.push('');
-  lines.push('Bankové poistenie: ' + eur(r.bankMonthly) + '/mesiac, celkovo ' + eur(r.totalBank));
-  lines.push('Samostatná poistka UNIQA: ' + eur(r.uniqaMonthly) + '/mesiac, celkovo ' + eur(r.totalUniqa));
-  if (r.diff !== 0) lines.push('Rozdiel: ' + (r.diff > 0 ? '−' : '+') + eur(Math.abs(r.diff)) + ' (' + Math.round(r.diffPct) + ' %)');
-  lines.push('');
-  lines.push('Prečo o tom uvažovať aj mimo ceny:');
-  ADVANTAGES.forEach(function(a){ lines.push('• ' + a); });
-  return lines.join('\n');
-}
-
 function doCopy(){
-  const r = compute();
-  if (!r.hasData) { showToast('Najprv vyplň dobu úveru a aspoň jednu cenu poistenia.', 'error'); return; }
-  const txt = summaryText(r);
+  const t = TYPES[state.type];
+  const txt = t.label + ' — argumenty pre samostatnú poistku UNIQA\n\n'
+    + t.arguments.map(function(a, idx){ return (idx + 1) + '. ' + a; }).join('\n');
   try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
   const b = $('copyBtn'); const orig = b.textContent;
   b.textContent = 'Skopírované ✓'; setTimeout(function(){ b.textContent = orig; }, 1600);
 }
 
-function doReset(){
-  state.loanAmount=''; state.loanYears=''; state.bankMonthly=''; state.uniqaMonthly='';
-  ['loanAmount','loanYears','bankMonthly','uniqaMonthly'].forEach(function(id){ $(id).value = ''; });
-  render();
-}
-
 /* ===========================================================================
    PDF PRE KLIENTA (server-side Dompdf cez zdieľaný ../pdf.php, presné A4)
 =========================================================================== */
-function buildLetterHtml(r){
+function buildLetterHtml(){
+  const t = TYPES[state.type];
   const clientName = state.clientName.trim() || 'Klient';
   const today = new Date();
   const SK_MONTHS = ['január','február','marec','apríl','máj','jún','júl','august','september','október','november','december'];
   const dateStr = today.getDate() + '. ' + SK_MONTHS[today.getMonth()] + ' ' + today.getFullYear();
 
-  const maxTotal = Math.max(r.totalBank, r.totalUniqa, 1);
-  const pctBank = Math.max(4, r.totalBank/maxTotal*100);
-  const pctUniqa = Math.max(4, r.totalUniqa/maxTotal*100);
-
-  let badge = '';
-  if (r.bankMonthly > 0 && r.uniqaMonthly > 0) {
-    if (r.diff > 0) badge = '<div class="bk-badge ok">✓ UNIQA vychádza lacnejšie o ' + eur(r.diff) + ' za dobu úveru</div>';
-    else if (r.diff < 0) badge = '<div class="bk-badge neutral">Bankové poistenie vychádza lacnejšie o ' + eur(Math.abs(r.diff)) + '</div>';
-  }
-
-  const advantagesHtml = '<ul class="adv-list">' + ADVANTAGES.map(function(a){ return '<li>' + escapeHtml(a) + '</li>'; }).join('') + '</ul>';
+  const rows = t.arguments.map(function(a, idx){
+    return '<div class="pu-item"><span class="pu-num">' + (idx + 1) + '</span>'
+      + '<span class="pu-q">' + escapeHtml(a) + '</span></div>';
+  }).join('');
 
   const css = `
     @font-face { font-family:'DejaVu Sans'; src:url('../vendor/dompdf/lib/fonts/DejaVuSans.ttf'); }
     @font-face { font-family:'DejaVu Sans'; font-weight:bold; src:url('../vendor/dompdf/lib/fonts/DejaVuSans-Bold.ttf'); }
     * { box-sizing:border-box; }
-    div,p,span,ul,li { margin:0; padding:0; }
+    div,p,span { margin:0; padding:0; }
     body { margin:0; padding:0; font-family:'DejaVu Sans',sans-serif; font-size:10.5pt; line-height:1.5; color:#20242b; background:#fff; }
-    .pdf-topbar { height:3mm; background:#4f46e5; border-radius:0.8mm; margin-bottom:6mm; }
-    .doctitle { text-align:center; font-size:16pt; letter-spacing:.5pt; font-weight:bold; padding:7pt 0 2pt; }
+    .pdf-topbar { height:3mm; background:#4f46e5; border-radius:0.8mm; margin-bottom:6mm; } .doctitle { text-align:center; font-size:16pt; letter-spacing:.5pt; font-weight:bold; padding:7pt 0 2pt; }
     .card-sub { text-align:center; font-size:10.5pt; color:#666; margin-bottom:5mm; }
     .meta { text-align:center; font-size:9pt; color:#8a8a8a; margin-bottom:9mm; padding-bottom:5mm; border-bottom:1pt solid #e5e5e5; }
-    .bk-badge{ display:block; padding:3mm 4mm; border-radius:2mm; font-size:10pt; font-weight:bold; margin-bottom:5mm; }
-    .bk-badge.ok{ background:#ecfdf5; color:#059669; }
-    .bk-badge.neutral{ background:#f5f6f8; color:#5b6270; }
-    .kv{ display:table; width:100%; margin-bottom:2mm; }
-    .kv .k{ display:table-cell; font-size:9.5pt; color:#666; padding:1.5mm 0; }
-    .kv .v{ display:table-cell; font-size:9.5pt; font-weight:bold; text-align:right; }
-    .chart-row{ margin:5mm 0 2mm; }
-    .chart-label{ font-size:9.5pt; color:#666; margin-bottom:1.5mm; }
-    .chart-track{ height:6mm; border-radius:1.5mm; background:#f5f6f8; }
-    .chart-fill{ height:6mm; border-radius:1.5mm; color:#fff; font-size:9pt; font-weight:bold; text-align:right; padding-right:2mm; line-height:6mm; box-sizing:border-box; }
-    .chart-fill.bank{ background:#94a3b8; }
-    .chart-fill.uniqa{ background:#4f46e5; }
-    .concl { margin-top:5mm; padding:4mm 5mm; background:#eef2ff; border-radius:2mm; font-size:9.5pt; color:#3730a3; }
-    .adv-box { margin-top:6mm; }
-    .adv-box h4 { font-size:9.5pt; font-weight:bold; margin-bottom:2mm; }
-    .adv-list { padding-left:4mm; }
-    .adv-list li { font-size:9pt; color:#444; margin-bottom:1.5mm; }
+    .pu-hd { color:#fff; background:#4f46e5; font-weight:bold; font-size:12pt; padding:3mm 4mm; border-radius:2mm; margin-bottom:5mm; }
+    .pu-item { display:flex; align-items:flex-start; padding:3mm 3.5mm; margin-bottom:2.5mm; background:#f5f4f0; border-radius:2mm; }
+    .pu-num { width:14pt; height:14pt; flex-shrink:0; margin-right:7pt; border-radius:50%; background:#4f46e5; color:#fff; text-align:center; font-size:8.5pt; font-weight:bold; line-height:14pt; }
+    .pu-q { font-size:10.5pt; }
+    .pu-foot { margin-top:5mm; padding:4mm 5mm; background:#f5f6f8; border-radius:2mm; font-size:9.5pt; color:#5b6270; }
     @page{ margin:20mm 20mm 20mm 20mm; }
   `;
 
@@ -327,32 +195,20 @@ function buildLetterHtml(r){
     + '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
     + '<title>Poistenie uveru: banka vs. UNIQA</title><style>' + css + '</style></head><body>'
     + '<div class="pdf-topbar"></div><div class="doctitle">Poistenie úveru: banka vs. UNIQA</div>'
-    + '<div class="card-sub">Koľko naozaj stojí bankové poistenie</div>'
+    + '<div class="card-sub">Argumenty, prečo je výhodnejšia samostatná poistka</div>'
     + '<div class="meta">' + escapeHtml(clientName) + ' &middot; ' + dateStr + '</div>'
-    + badge
-    + '<div class="kv"><span class="k">Výška úveru</span><span class="v">' + eur(r.loanAmount) + '</span></div>'
-    + '<div class="kv"><span class="k">Doba splácania</span><span class="v">' + r.loanYears + ' rokov</span></div>'
-    + '<div class="kv"><span class="k">Bankové poistenie</span><span class="v">' + eur(r.bankMonthly) + '/mesiac</span></div>'
-    + '<div class="kv"><span class="k">Samostatná poistka UNIQA</span><span class="v">' + eur(r.uniqaMonthly) + '/mesiac</span></div>'
-    + '<div class="chart-row"><div class="chart-label">Bankové poistenie — celkovo za dobu úveru</div>'
-    + '<div class="chart-track"><div class="chart-fill bank" style="width:' + pctBank + '%;">' + eur(r.totalBank) + '</div></div></div>'
-    + '<div class="chart-row"><div class="chart-label">Samostatná poistka UNIQA — celkovo za dobu úveru</div>'
-    + '<div class="chart-track"><div class="chart-fill uniqa" style="width:' + pctUniqa + '%;">' + eur(r.totalUniqa) + '</div></div></div>'
-    + (r.diff !== 0 ? '<div class="concl"><b>Rozdiel: ' + (r.diff > 0 ? '−' : '+') + eur(Math.abs(r.diff)) + '</b> za celú dobu úveru (' + Math.round(r.diffPct) + ' %).</div>' : '')
-    + '<div class="adv-box"><h4>Prečo o tom uvažovať aj mimo ceny</h4>' + advantagesHtml + '</div>'
-    + '<div class="concl" style="background:#f5f6f8; color:#5b6270; margin-top:5mm;">Orientačný prepočet na základe zadaných cien — presné podmienky sa vždy overia v konkrétnej ponuke.</div>'
+    + '<div class="pu-hd">' + escapeHtml(t.label) + '</div>'
+    + rows
+    + '<div class="pu-foot">Orientačná pomôcka na rozhovor s klientom — presné podmienky konkrétnej bankovej ponuky sa vždy overia individuálne.</div>'
     + '</body></html>';
 }
 
 function doPDF(){
-  const r = compute();
-  if (!r.hasData) { showToast('Najprv vyplň dobu úveru a aspoň jednu cenu poistenia.', 'error'); return; }
-
   const btn = $('pdfBtn'); const orig = btn.textContent;
   btn.textContent = 'Generujem…'; btn.disabled = true;
 
-  const html = buildLetterHtml(r);
-  const filename = 'Poistenie_uveru_banka_vs_uniqa' + (state.clientName.trim() ? '_' + state.clientName.trim().replace(/\s+/g,'_') : '');
+  const html = buildLetterHtml();
+  const filename = 'Poistenie_uveru_banka_vs_uniqa_' + state.type + (state.clientName.trim() ? '_' + state.clientName.trim().replace(/\s+/g,'_') : '');
 
   fetch('../pdf.php', {
     method: 'POST',
@@ -387,13 +243,12 @@ function doPDF(){
    UDALOSTI
 =========================================================================== */
 function bind(){
-  ['loanAmount','loanYears','bankMonthly','uniqaMonthly'].forEach(function(id){
-    $(id).addEventListener('input', function(e){ state[id] = e.target.value; render(); });
+  document.addEventListener('click', function(e){
+    const t = e.target.closest('[data-type]'); if(t){ state.type = t.dataset.type; render(); return; }
   });
   $('clientName').addEventListener('input', function(e){ state.clientName = e.target.value; });
   $('copyBtn').addEventListener('click', doCopy);
   $('pdfBtn').addEventListener('click', doPDF);
-  $('resetBtn').addEventListener('click', doReset);
 }
 
 /* ===========================================================================
