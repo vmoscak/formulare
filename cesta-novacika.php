@@ -375,24 +375,25 @@ if ($isOwner) {
   .ob-next-done{display:flex; align-items:center; gap:10px;}
   .ob-next-done .ob-next-title{color:var(--good); position:relative; z-index:1;}
 
-  .ob-trail{display:flex; align-items:center; gap:0; overflow-x:auto; padding:4px 2px 12px; margin:-4px 0 4px;}
-  .ob-trail-item{display:flex; align-items:center; gap:7px; flex-shrink:0; cursor:pointer; padding:6px 10px; border-radius:999px; border:none; background:none; font:inherit; transition:transform .15s ease, background .15s ease;}
-  .ob-trail-item:hover{background:var(--desk); transform:translateY(-1px);}
-  .ob-trail-dot{width:20px; height:20px; border-radius:50%; flex-shrink:0; position:relative;
-    background:conic-gradient(var(--accent) calc(var(--pct, 0) * 3.6deg), var(--border) 0deg);}
-  .ob-trail-dot-inner{position:absolute; inset:2px; border-radius:50%; background:var(--paper); display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:var(--ink);}
-  .ob-trail-name{font-size:12px; font-weight:600; white-space:nowrap;}
-  .ob-trail-line{width:20px; height:2px; background:var(--border); flex-shrink:0; transition:background .3s ease;}
-  .ob-trail-line.filled{background:var(--good);}
-  .ob-trail-item.status-done .ob-trail-dot{background:var(--good);}
-  .ob-trail-item.status-done .ob-trail-dot-inner{background:var(--good); color:#fff;}
-  .ob-trail-item.status-done .ob-trail-name{color:var(--muted);}
-  .ob-trail-item.status-current .ob-trail-dot{animation:obDotPulse 2.2s ease-in-out infinite;}
-  .ob-trail-item.status-current .ob-trail-dot-inner{color:var(--accent-ink);}
-  .ob-trail-item.status-current .ob-trail-name{color:var(--ink);}
-  .ob-trail-item.status-upcoming .ob-trail-dot-inner{color:var(--muted);}
-  .ob-trail-item.status-upcoming .ob-trail-name{color:var(--muted);}
-  @keyframes obDotPulse{0%,100%{box-shadow:0 0 0 4px var(--accent-soft);}50%{box-shadow:0 0 0 8px transparent;}}
+  .ob-journey-card{padding:20px 8px 6px;}
+  .ob-journey-scroll{overflow-x:auto; overflow-y:hidden; padding:2px 0 0;}
+  .ob-journey-svg{display:block; margin:0 auto;}
+  .oj-track{fill:none; stroke:var(--border); stroke-width:6; stroke-linecap:round; stroke-linejoin:round;}
+  .oj-progress{fill:none; stroke:var(--good); stroke-width:6; stroke-linecap:round; stroke-linejoin:round;}
+  .oj-stop{cursor:pointer; text-decoration:none; outline-offset:4px;}
+  .oj-dot{fill:var(--paper); stroke:var(--border); stroke-width:2.5; transition:stroke-width .15s ease;}
+  .oj-stop:hover .oj-dot{stroke-width:3.5;}
+  .oj-dot-label{font-size:13px; font-weight:800; fill:var(--muted);}
+  .oj-name{font-size:10.5px; font-weight:600; fill:var(--muted);}
+  .oj-stop.status-done .oj-dot{fill:var(--good); stroke:var(--good);}
+  .oj-stop.status-done .oj-dot-label{fill:#fff;}
+  .oj-stop.status-current .oj-dot{fill:var(--accent); stroke:var(--accent);}
+  .oj-stop.status-current .oj-dot-label{fill:#fff;}
+  .oj-stop.status-current .oj-name{fill:var(--ink); font-weight:700;}
+  .oj-stop.status-upcoming .oj-dot{stroke-dasharray:3 3;}
+  .oj-pulse{fill:none; stroke:var(--accent); stroke-width:2.5; opacity:.55; transform-box:fill-box; transform-origin:center;
+    animation:ojPulseRing 2.2s ease-out infinite;}
+  @keyframes ojPulseRing{0%{transform:scale(1); opacity:.55;}100%{transform:scale(1.7); opacity:0;}}
 
   .ob-phase{border:none; border-left:3px solid transparent; margin:0 0 6px; border-radius:0 var(--radius-md) var(--radius-md) 0; transition:background .2s ease;}
   .ob-phase.status-current{border-left-color:var(--accent); background:var(--accent-soft);}
@@ -515,13 +516,52 @@ if ($isOwner) {
   </div>
 
   <?php if ($totalSteps > 0): ?>
-  <div class="card ob-trail">
-    <?php $i = 0; $prevStatus = null; foreach ($phaseList as $phaseName => $st): if ($i > 0): ?><span class="ob-trail-line<?= $prevStatus === 'done' ? ' filled' : '' ?>"></span><?php endif; $trailPct = $st['total'] > 0 ? round($st['done'] / $st['total'] * 100) : 0; ?>
-    <button type="button" class="ob-trail-item status-<?= $st['status'] ?>" onclick="obJumpPhase(<?= $st['idx'] ?>)">
-      <span class="ob-trail-dot" style="--pct:<?= (int)$trailPct ?>;"><span class="ob-trail-dot-inner"><?= $st['status'] === 'done' ? '✓' : ($st['idx'] + 1) ?></span></span>
-      <span class="ob-trail-name"><?= h($phaseName) ?></span>
-    </button>
-    <?php $i++; $prevStatus = $st['status']; endforeach; ?>
+  <div class="card ob-journey-card">
+    <?php
+      $jSpacing = 96; $jAmp = 24; $jMidY = 58; $jPad = 30;
+      $jN = count($phaseList);
+      $jWidth = $jPad * 2 + $jSpacing * max(0, $jN - 1);
+      $jHeight = 110;
+      $jPoints = [];
+      foreach ($phaseList as $jName => $jSt) {
+          $jPoints[] = ['x' => $jPad + $jSt['idx'] * $jSpacing, 'y' => $jMidY + sin($jSt['idx'] * 1.1) * $jAmp, 'name' => $jName, 'st' => $jSt];
+      }
+      $jPathD = ''; $jSegLen = [];
+      foreach ($jPoints as $k => $jp) {
+          $jPathD .= ($k === 0 ? 'M' : 'L') . round($jp['x'], 1) . ',' . round($jp['y'], 1) . ' ';
+          if ($k > 0) {
+              $dx = $jp['x'] - $jPoints[$k - 1]['x']; $dy = $jp['y'] - $jPoints[$k - 1]['y'];
+              $jSegLen[] = sqrt($dx * $dx + $dy * $dy);
+          }
+      }
+      $jTotalLen = array_sum($jSegLen);
+      $jProgressLen = 0;
+      foreach ($jPoints as $k => $jp) {
+          if ($k === count($jPoints) - 1) break;
+          if ($jp['st']['status'] === 'done') { $jProgressLen += $jSegLen[$k]; }
+          elseif ($jp['st']['status'] === 'current') {
+              $segPct = $jp['st']['total'] > 0 ? ($jp['st']['done'] / $jp['st']['total']) : 0;
+              $jProgressLen += $jSegLen[$k] * $segPct;
+              break;
+          } else { break; }
+      }
+    ?>
+    <div class="ob-journey-scroll">
+      <svg viewBox="0 0 <?= $jWidth ?> <?= $jHeight ?>" width="<?= $jWidth ?>" height="<?= $jHeight ?>" class="ob-journey-svg" role="img" aria-label="Cesta naprieč fázami onboardingu">
+        <?php if ($jN > 1): ?>
+        <path d="<?= trim($jPathD) ?>" class="oj-track" />
+        <path d="<?= trim($jPathD) ?>" class="oj-progress" style="stroke-dasharray:<?= round($jTotalLen, 1) ?>; stroke-dashoffset:<?= round($jTotalLen - $jProgressLen, 1) ?>;" />
+        <?php endif; ?>
+        <?php foreach ($jPoints as $jp): $jSt = $jp['st']; ?>
+        <a href="?phase=<?= $jSt['idx'] ?><?= $novicePreview ? '&view=novice' : '' ?>" class="oj-stop status-<?= $jSt['status'] ?>" aria-label="<?= h($jp['name']) ?> (<?= $jSt['done'] ?>/<?= $jSt['total'] ?>)">
+          <?php if ($jSt['status'] === 'current'): ?><circle cx="<?= $jp['x'] ?>" cy="<?= $jp['y'] ?>" r="15" class="oj-pulse" /><?php endif; ?>
+          <circle cx="<?= $jp['x'] ?>" cy="<?= $jp['y'] ?>" r="15" class="oj-dot" />
+          <text x="<?= $jp['x'] ?>" y="<?= $jp['y'] ?>" class="oj-dot-label" text-anchor="middle" dominant-baseline="central"><?= $jSt['status'] === 'done' ? '✓' : ($jSt['idx'] + 1) ?></text>
+          <text x="<?= $jp['x'] ?>" y="<?= $jp['y'] + 30 ?>" class="oj-name" text-anchor="middle"><?= h($jp['name']) ?></text>
+        </a>
+        <?php endforeach; ?>
+      </svg>
+    </div>
   </div>
 
   <?php if ($nextStep): $npIdx = $phaseIndexByName[$nextStep['phase']]; ?>
@@ -781,16 +821,6 @@ function obPhaseSelectChange(sel) {
 }
 var OB_CARD_MODE = <?= $cardMode ? 'true' : 'false' ?>;
 var OB_VIEW_PARAM = <?= $novicePreview ? "'&view=novice'" : "''" ?>;
-function obJumpPhase(idx) {
-  if (OB_CARD_MODE) {
-    location.href = '?phase=' + idx + OB_VIEW_PARAM;
-    return;
-  }
-  var el = document.getElementById('ob-phase-' + idx);
-  if (!el) return;
-  el.open = true;
-  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
 function obJumpStep(phaseIdx, stepId) {
   if (OB_CARD_MODE) {
     location.href = '?phase=' + phaseIdx + OB_VIEW_PARAM + '#ob-step-' + stepId;
