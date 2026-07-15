@@ -149,6 +149,7 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
     <p>Prehľad noviniek a rýchly vstup do appky</p>
   </div>
   <div class="tb-actions">
+    <a class="pillbtn" href="/moje-dokumenty.php">Moje dokumenty</a>
     <span class="who">
       <span class="ini" style="background:<?= h($me['color']) ?>;"><?= h(advisorInitials($me['name'])) ?></span>
       <b><?= h($me['name']) ?></b>
