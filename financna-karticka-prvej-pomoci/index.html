@@ -136,9 +136,10 @@
    DÁTA
 =========================================================================== */
 const STEPS = [
-  'Ulož si túto kartičku — máš na nej všetky poistky aj kontakt na mňa na jednom mieste.',
-  'Pri zmene adresy, priezviska či iných údajov mi daj vedieť, nahlásim to za teba všetkým poisťovniam.',
-  'Raz ročne si spolu prejdeme, či krytie ešte zodpovedá tvojej aktuálnej situácii.',
+  'Uložte si túto kartičku — nájdete na nej všetky svoje poistky aj kontakt na mňa na jednom mieste.',
+  'Pri zmene adresy, priezviska či iných údajov mi dajte vedieť, nahlásim to za Vás všetkým poisťovniam.',
+  'Ak budete čokoľvek potrebovať, som tu pre Vás aj po podpise zmluvy — je to moja práca a moja povinnosť sa o Vás starať.',
+  'Raz ročne sa stretneme a prejdeme si, či sa niečo nezmenilo a netreba poistenie prehodnotiť.',
 ];
 
 const state = {
@@ -257,9 +258,10 @@ function buildLetterHtml(previewMode){
   const body = `
     <div class="pdf-topbar"></div><div class="doctitle">Prehľad poistiek klienta</div>
     <div class="card-sub">${escapeHtml(state.clientName||'…')}</div>
+    <div class="thanks">Ďakujem za dôveru a spoluprácu.</div>
 
     <div class="section">
-      <div class="section-title">Tvoj poradca</div>
+      <div class="section-title">Váš poradca</div>
       <p>${escapeHtml(state.advisorName||'…')} · ${escapeHtml(state.advisorPhone||'…')}${state.advisorEmail ? ' · ' + escapeHtml(state.advisorEmail) : ''}</p>
     </div>
 
@@ -288,6 +290,7 @@ function buildLetterHtml(previewMode){
     .pdf-topbar { height:3mm; background:#e11d48; border-radius:0.8mm; margin-bottom:6mm; } .doctitle { text-align:center; font-size:16pt; letter-spacing:1pt; text-transform:uppercase; font-weight:bold;
       padding:7pt 0 2pt; }
     .card-sub { text-align:center; font-size:12pt; color:#555; margin-bottom:8mm; padding-bottom:5mm; border-bottom:1pt solid #20242b; }
+    .thanks { text-align:center; font-size:10.5pt; color:#4f46e5; font-weight:bold; margin-bottom:8mm; }
     .section { margin-bottom:7mm; }
     .section-title { font-size:10pt; font-weight:bold; text-transform:uppercase; letter-spacing:0.5pt; color:#4f46e5; margin-bottom:2.5mm; }
     .muted { color:#888; }
@@ -360,7 +363,8 @@ function doCopy(){
   const linesFiltered = state.lines.filter(function(l){ return l.trim(); });
 
   const txt=['PREHĽAD POISTIEK KLIENTA', state.clientName||'', '',
-    'Tvoj poradca: ' + (state.advisorName||'…') + ' · ' + (state.advisorPhone||'…'), '',
+    'Ďakujem za dôveru a spoluprácu.', '',
+    'Váš poradca: ' + (state.advisorName||'…') + ' · ' + (state.advisorPhone||'…'), '',
     'POISTKY:']
     .concat(policiesRows.length
       ? policiesRows.map(function(p){ return '– ' + (p.institution||'—') + ' (' + (p.type||'—') + ', č. ' + (p.contractNo||'—') + ')'; })
