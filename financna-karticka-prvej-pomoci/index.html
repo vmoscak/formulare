@@ -2,10 +2,10 @@
 <html lang="sk"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Finančná kartička prvej pomoci</title>
+<title>Prehľad poistiek klienta</title>
 
 <!-- =========================================================================
-     GENERÁTOR FINANČNEJ KARTIČKY PRVEJ POMOCI — samostatný editovateľný súbor
+     GENERÁTOR PREHĽADU POISTIEK KLIENTA — samostatný editovateľný súbor
      -------------------------------------------------------------------------
      Kompaktný jednostránkový prehľad pre klienta: kontakt na poradcu, zoznam
      poistiek, núdzové/asistenčné linky a krátky návod čo robiť pri škode.
@@ -34,9 +34,9 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
       </a>
       <div class="brand">
-        <div class="logo">K</div>
+        <div class="logo">P</div>
         <div>
-          <b>Finančná kartička prvej pomoci</b><br>
+          <b>Prehľad poistiek klienta</b><br>
           <small>Priebežný prehľad všetkých zmlúv klienta — keď má u teba viac poistiek</small>
         </div>
       </div>
@@ -256,7 +256,7 @@ function buildLetterHtml(previewMode){
   const stepsHtml = '<ol class="steps-list">' + STEPS.map(function(s){ return '<li>'+escapeHtml(s)+'</li>'; }).join('') + '</ol>';
 
   const body = `
-    <div class="pdf-topbar"></div><div class="doctitle">Finančná kartička prvej pomoci</div>
+    <div class="pdf-topbar"></div><div class="doctitle">Prehľad poistiek klienta</div>
     <div class="card-sub">${escapeHtml(state.clientName||'…')}</div>
 
     <div class="section">
@@ -279,7 +279,7 @@ function buildLetterHtml(previewMode){
     <div class="footer-bar">
       <table><tr>
         <td class="fl">${escapeHtml(state.clientName||'…')}</td>
-        <td class="fr">Finančná kartička prvej pomoci</td>
+        <td class="fr">Prehľad poistiek klienta</td>
       </tr></table>
     </div>`;
 
@@ -312,7 +312,7 @@ function buildLetterHtml(previewMode){
 
   return '<!DOCTYPE html><html lang="sk"><head>'
     +'<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
-    +'<title>Finančná kartička prvej pomoci</title>'
+    +'<title>Prehľad poistiek klienta</title>'
     +'<style>'+finalCss+'</style></head><body>'+body+'</body></html>';
 }
 
@@ -325,7 +325,7 @@ function doPDF(){
   btn.textContent='Generujem…'; btn.disabled=true;
 
   const letterHtml=buildLetterHtml();
-  const filename='Kartička_prvej_pomoci_'+(state.clientName||'klient').replace(/\s+/g,'_');
+  const filename='Prehlad_poistiek_klienta_'+(state.clientName||'klient').replace(/\s+/g,'_');
 
   fetch('../pdf.php', {
     method: 'POST',
@@ -360,7 +360,7 @@ function doCopy(){
   const policiesRows = state.policies.filter(function(p){ return p.institution||p.type||p.contractNo; });
   const linesFiltered = state.lines.filter(function(l){ return l.trim(); });
 
-  const txt=['FINANČNÁ KARTIČKA PRVEJ POMOCI', state.clientName||'', '',
+  const txt=['PREHĽAD POISTIEK KLIENTA', state.clientName||'', '',
     'Tvoj poradca: ' + (state.advisorName||'…') + ' · ' + (state.advisorPhone||'…'), '',
     'POISTKY:']
     .concat(policiesRows.length

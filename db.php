@@ -48,7 +48,7 @@ function toolLabel(string $slug): string {
         'odvolanie-zamietnutie-plnenia' => 'Odvolanie voči likvidácii',
         'reklamacia-postup-institucie' => 'Reklamácia / sťažnosť',
         'ziadost-vyplata-poistneho-plnenia' => 'Výplata poistného plnenia',
-        'financna-karticka-prvej-pomoci' => 'Finančná kartička prvej pomoci',
+        'financna-karticka-prvej-pomoci' => 'Prehľad poistiek klienta',
         'checklisty-skody' => 'Checklisty podľa typu škody',
         'generator-recenzii' => 'Generátor 5-hviezdičkovej prosby',
         'warm-intro-whatsapp' => 'Warm-Intro WhatsApp generátor',

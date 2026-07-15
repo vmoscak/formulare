@@ -127,7 +127,7 @@ $TOOL_CATEGORIES = [
          'desc' => 'Oficiálna reklamácia alebo sťažnosť voči postupu inštitúcie – predmet, popis a požadovaná náprava.'],
     ]],
     ['title' => 'Kartičky a rýchle texty pre klienta', 'group' => 'pomocky', 'tools' => [
-        ['href' => 'financna-karticka-prvej-pomoci/', 'name' => 'Finančná kartička prvej pomoci', 'ico' => 'firstaid', 'color' => 'rose',
+        ['href' => 'financna-karticka-prvej-pomoci/', 'name' => 'Prehľad poistiek klienta', 'ico' => 'firstaid', 'color' => 'rose',
          'desc' => 'Priebežný prehľad všetkých zmlúv a núdzových kontaktov – pre klienta, ktorý už má u teba viac poistiek. PDF aj text na SMS/WhatsApp.'],
         ['href' => 'checklisty-skody/', 'name' => 'Checklisty podľa typu škody', 'ico' => 'check', 'color' => 'amber',
          'desc' => 'Vyber typ škody – hotový zoznam dokladov pre klienta, na SMS/WhatsApp alebo ako PDF.'],
