@@ -55,11 +55,10 @@
     <div class="preview">
       <div class="preview-head">
         <span class="t">Odporúčané reakcie</span>
-        <span class="live"><i></i>Odškrtávaj, čo si vyskúšal/-a</span>
+        <span class="live"><i></i>Pomôcka poradcu</span>
       </div>
       <div class="preview-tools">
         <button class="tool" id="copyBtn">Kopírovať reakcie</button>
-        <button class="tool" id="resetBtn">Vynulovať odškrtnuté</button>
       </div>
       <div class="letter-wrap">
         <div id="responses" style="background:var(--paper); border-radius:8px; padding:24px;"></div>
@@ -80,7 +79,7 @@ const OBJECTIONS = {
       'Porovnajme to nie s nulou, ale s cenou toho, čo sa stane, keď na to nebudete pripravení — mesačná suma je zlomok toho, o čo by ste prišli.',
       'Skúsme sa pozrieť, či vieme rozsah krytia doladiť tak, aby cena sedela — nie je to len áno/nie, dá sa to poskladať.',
       'Cena rastie s vekom — čím skôr začnete, tým je nižšia na celé obdobie, kým ju máte dojednanú.',
-      'Porovnajte si to k bežnému mesačnému výdavku, ktorý si možno ani nevšimnete — často je to porovnateľná suma.',
+      'Porovnajte si to s bežným mesačným výdavkom, ktorý si možno ani nevšimnete — často je to porovnateľná suma.',
     ],
   },
   premyslim: {
@@ -125,7 +124,7 @@ const OBJECTIONS = {
   },
 };
 
-const state = { objection: 'drahe', checked: {} };
+const state = { objection: 'drahe' };
 
 const $ = id => document.getElementById(id);
 function escapeHtml(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -144,15 +143,13 @@ function renderObjections(){
 
 function renderResponses(){
   const obj = OBJECTIONS[state.objection];
-  const checkedSet = state.checked[state.objection] || {};
   $('avatar').textContent = obj.tile;
   $('responses').innerHTML = '<div style="font-weight:700; font-size:15px; color:var(--ink); margin-bottom:14px;">' + escapeHtml(obj.label) + '</div>'
     + '<div class="rec-list">' + obj.responses.map(function(r, i){
-        const isChecked = !!checkedSet[i];
-        return '<label class="rec-card" style="display:flex; align-items:flex-start; gap:12px; cursor:pointer;">'
-          + '<input type="checkbox" data-q="' + i + '" ' + (isChecked ? 'checked' : '') + ' style="margin-top:2px; flex-shrink:0; width:17px; height:17px; accent-color:var(--rc-color, var(--accent));">'
-          + '<span style="font-size:13.5px; line-height:1.6; color:' + (isChecked ? 'var(--muted)' : 'var(--ink-2)') + '; text-decoration:' + (isChecked ? 'line-through' : 'none') + ';">' + escapeHtml(r) + '</span>'
-          + '</label>';
+        return '<div class="rec-card">'
+          + '<div class="rc-title" style="align-items:flex-start;"><span class="rc-num">' + (i + 1) + '</span>'
+          + '<span style="font-weight:400; font-size:13.5px; color:var(--ink-2); line-height:1.55;">' + escapeHtml(r) + '</span></div>'
+          + '</div>';
       }).join('') + '</div>';
 }
 
@@ -163,18 +160,12 @@ function render(){ renderObjections(); renderResponses(); }
 =========================================================================== */
 function doCopy(){
   const obj = OBJECTIONS[state.objection];
-  const checkedSet = state.checked[state.objection] || {};
   const txt = obj.label + '\n\n' + obj.responses.map(function(r, i){
-    return (checkedSet[i] ? '[x] ' : '[ ] ') + r;
+    return (i + 1) + '. ' + r;
   }).join('\n');
   try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
   const b = $('copyBtn'); const orig = b.textContent;
   b.textContent = 'Skopírované ✓'; setTimeout(function(){ b.textContent = orig; }, 1600);
-}
-
-function doReset(){
-  state.checked[state.objection] = {};
-  renderResponses();
 }
 
 /* ===========================================================================
@@ -184,16 +175,7 @@ function bind(){
   document.addEventListener('click', function(e){
     const o = e.target.closest('[data-objection]'); if(o){ state.objection = o.dataset.objection; render(); return; }
   });
-  document.addEventListener('change', function(e){
-    if(e.target.matches('input[type="checkbox"][data-q]')){
-      const i = +e.target.dataset.q;
-      if(!state.checked[state.objection]) state.checked[state.objection] = {};
-      state.checked[state.objection][i] = e.target.checked;
-      renderResponses();
-    }
-  });
   $('copyBtn').addEventListener('click', doCopy);
-  $('resetBtn').addEventListener('click', doReset);
 }
 
 /* ===========================================================================
