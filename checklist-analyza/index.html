@@ -30,6 +30,17 @@
     color:var(--accent); background:var(--accent-soft); border-radius:999px; padding:5px 12px;
     white-space:nowrap;
   }
+  .seed-banner{
+    display:none; align-items:flex-start; gap:9px;
+    font-size:12.5px; line-height:1.5; color:var(--accent-ink);
+    background:var(--accent-soft); border:1px solid var(--accent-line);
+    border-radius:var(--radius-md); padding:10px 12px; margin-bottom:10px;
+  }
+  .seed-banner svg{flex:none; margin-top:1px;}
+  /* farebné rozlíšenie úlohy podľa toho, kto je zodpovedný */
+  .item[data-owner="klient"]{box-shadow:inset 4px 0 0 var(--accent);}
+  .item[data-owner="poradca"]{box-shadow:inset 4px 0 0 var(--teal);}
+  .item[data-owner="spolocne"]{box-shadow:inset 4px 0 0 var(--amber);}
 </style>
 </head>
 <body>
@@ -83,6 +94,10 @@
       <!-- 2. úlohy -->
       <div>
         <div class="step-head"><div class="step-num">2</div><div class="step-title">Úlohy a odporúčania</div></div>
+        <div class="seed-banner" id="seedBanner">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <span id="seedBannerMsg"></span>
+        </div>
         <div class="items" id="items"></div>
         <button type="button" class="add-item" id="addItem" style="margin-top:10px;">+ Pridať úlohu</button>
       </div>
@@ -153,6 +168,21 @@ const OWNERS = { klient:'klient', poradca:'poradca', spolocne:'spoločne' };
 let _idSeq = 1;
 function withId(it){ return Object.assign({ id:_idSeq++ }, it); }
 
+/* Počet úloh prevzatých zo seedu (Kalkulačka poistného krytia) — len na banner,
+   neovplyvňuje ukladanie ani PDF. */
+let seededFromAnalysis = 0;
+function updateSeedBanner(){
+  const el = $('seedBanner'); if(!el) return;
+  if(seededFromAnalysis > 0){
+    const n = seededFromAnalysis;
+    const word = n===1 ? 'úloha prevzatá' : (n>=2 && n<=4 ? 'úlohy prevzaté' : 'úloh prevzatých');
+    $('seedBannerMsg').textContent = n+' '+word+' z Kalkulačky poistného krytia — texty môžeš upraviť alebo zmazať.';
+    el.style.display = 'flex';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
 const state = {
   clientName:'', analysisDate: toISO(TODAY), advisorName:'',
   items: DEFAULT_ITEMS.map(withId),
@@ -187,7 +217,7 @@ const $ = id => document.getElementById(id);
 function renderItems(){
   const box = $('items');
   box.innerHTML = state.items.map(function(it){
-    return '<div class="item'+(it.done?' done':'')+'" data-id="'+it.id+'">'
+    return '<div class="item'+(it.done?' done':'')+'" data-id="'+it.id+'" data-owner="'+it.owner+'">'
       + '<div class="item-top">'
       + '<div class="item-check'+(it.done?' on':'')+'" data-act="toggle">'+(it.done?'✓':'')+'</div>'
       + '<div class="item-body">'
@@ -383,7 +413,8 @@ function doReset(){
     items: DEFAULT_ITEMS.map(withId),
     followupDate:'', note:'', touched:false,
   });
-  syncInputs(); render();
+  seededFromAnalysis = 0;
+  syncInputs(); render(); updateSeedBanner();
 }
 
 function syncInputs(){
@@ -418,7 +449,7 @@ function bind(){
     const it = state.items.find(x=>x.id===id); if(!it) return;
     const act = e.target.dataset.act;
     if(act==='text') it.text=e.target.value;
-    if(act==='owner') it.owner=e.target.value;
+    if(act==='owner'){ it.owner=e.target.value; row.dataset.owner=it.owner; }
     if(act==='due') it.due=e.target.value;
     refreshPreview();
   };
@@ -442,10 +473,11 @@ function bind(){
       if(seed.advisorName) state.advisorName = seed.advisorName;
       if(Array.isArray(seed.items) && seed.items.length){
         state.items = seed.items.map(function(it){ return withId({ text: it.text||'', owner: it.owner||'klient', due:'', done:false }); });
+        seededFromAnalysis = state.items.length;
       }
     }catch(e){ /* ticho ignoruj, ostanú predvolené úlohy */ }
   }
-  syncInputs(); bind(); render();
+  syncInputs(); bind(); render(); updateSeedBanner();
   autoOpenSavedDocument(function(d){ Object.assign(state, d); state.touched = true; syncInputs(); render(); }, doPDF);
 })();
 </script>
