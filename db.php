@@ -576,6 +576,7 @@ function dbInitSqlite(PDO $pdo): void {
         color TEXT NOT NULL DEFAULT '#1f5fd1',
         pin_hash TEXT NULL,
         disabled_tools TEXT NULL,
+        favorite_tools TEXT NULL,
         is_admin INTEGER NOT NULL DEFAULT 0,
         is_owner INTEGER NOT NULL DEFAULT 0,
         active INTEGER NOT NULL DEFAULT 1,
@@ -584,6 +585,7 @@ function dbInitSqlite(PDO $pdo): void {
     // Defenzívne pre už existujúce lokálne SQLite DB založené pred zavedením PIN-u / prepínačov nástrojov / náborovej zóny.
     try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN pin_hash TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
     try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN disabled_tools TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
+    try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN favorite_tools TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
     try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN is_owner INTEGER NOT NULL DEFAULT 0"); } catch (Throwable $e) { /* stĺpec už existuje */ }
     try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN onboarding_started_at TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
     try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN onboarding_completed_at TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }

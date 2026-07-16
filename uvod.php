@@ -1,9 +1,9 @@
 <?php
 /**
  * Domov / Úvod — prvá záložka po prihlásení. Ukazuje novinky (presunuté
- * sem z index.php, kde boli predtým) a veľké karty na 3 sekcie appky
- * (Nástroje / Formuláre / Pomôcky) — v inom dizajne než farebné karty
- * jednotlivých nástrojov na ich vlastných stránkach.
+ * sem z index.php, kde boli predtým), vyhľadávanie naprieč nástrojmi a
+ * osobné Obľúbené (hviezdička nastavená v Nástrojoch/Formulároch/Pomôckach) —
+ * plná navigácia na všetky skupiny ostáva v ľavej lište (assets/shell.js).
  */
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/tools-registry.php';
@@ -12,7 +12,7 @@ $curAdvisorId = curAdvisorId();
 if (!$curAdvisorId) { header('Location: /'); exit; }
 
 try {
-    $stmt = db()->prepare('SELECT name, color, disabled_tools, is_admin, is_owner, onboarding_started_at FROM formulare_advisors WHERE id = ? AND active = 1');
+    $stmt = db()->prepare('SELECT name, color, disabled_tools, favorite_tools, is_admin, is_owner, onboarding_started_at FROM formulare_advisors WHERE id = ? AND active = 1');
     $stmt->execute([$curAdvisorId]);
     $me = $stmt->fetch();
 } catch (Throwable $e) { $me = null; }
@@ -33,21 +33,38 @@ if (!empty($me['disabled_tools'])) {
     if (is_array($decoded)) $disabledSlugs = $decoded;
 }
 
-// Počet viditeľných nástrojov v každej skupine (rovnaké pravidlo ako inc-tools-page.php).
-$groupCounts = array_fill_keys(array_keys($TOOL_GROUPS), 0);
+$favoriteSlugs = [];
+if (!empty($me['favorite_tools'])) {
+    $decodedFav = json_decode($me['favorite_tools'], true);
+    if (is_array($decodedFav)) $favoriteSlugs = $decodedFav;
+}
+
+// Plochý zoznam všetkých nástrojov (na vyhľadávanie aj obľúbené) — vynecháva
+// adminom vypnuté, drží si aj skupinu kvôli farbe/ikone karty.
+$allToolsFlat = [];
 foreach ($TOOL_CATEGORIES as $cat) {
     $group = $cat['group'] ?? 'nastroje';
     foreach ($cat['tools'] as $t) {
-        if (!in_array(toolSlug($t['href']), $disabledSlugs, true)) $groupCounts[$group]++;
+        $slug = toolSlug($t['href']);
+        if (in_array($slug, $disabledSlugs, true)) continue;
+        $allToolsFlat[$slug] = $t + ['group' => $group];
     }
 }
 
-$hubMeta = [
-    'nastroje'  => ['ico' => 'chart', 'color' => '#4f46e5', 'href' => '/nastroje.php'],
-    'formulare' => ['ico' => 'file-x', 'color' => '#0284c7', 'href' => '/formulare.php'],
-    'pomocky'   => ['ico' => 'message', 'color' => '#e11d48', 'href' => '/pomocky.php'],
-    'uniqa'     => ['ico' => 'shield', 'color' => '#0d9488', 'href' => '/uniqa-tlaciva.php'],
-];
+// Obľúbené v poradí, v akom si ich poradca pridal (nie abecedne/podľa registra).
+$favoriteTools = [];
+foreach ($favoriteSlugs as $slug) {
+    if (isset($allToolsFlat[$slug])) $favoriteTools[] = $allToolsFlat[$slug] + ['slug' => $slug];
+}
+
+// Dáta pre klientské vyhľadávanie (JS filtruje bez ďalšieho requestu na server).
+$searchData = [];
+foreach ($allToolsFlat as $slug => $t) {
+    $searchData[] = [
+        'name' => $t['name'], 'desc' => $t['desc'], 'href' => $t['href'],
+        'group' => $TOOL_GROUPS[$t['group']]['label'] ?? '',
+    ];
+}
 
 // Skratky na zvyšné časti appky (mimo troch hlavných záložiek) — najmä pre
 // mobil, kde ľavá lišta je skrytá za hamburger menu. Moje dokumenty vidí
@@ -200,23 +217,44 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
 
   <div class="domov-layout<?= $upcomingEvents ? ' has-sidebar' : '' ?>">
     <div class="domov-main">
-      <div class="section-head"><h3>Kam chceš ísť?</h3></div>
-      <div class="hub-grid">
-        <?php foreach ($TOOL_GROUPS as $key => $meta): ?>
-        <a class="hub-card" href="<?= h($hubMeta[$key]['href']) ?>" style="--hub-color:<?= h($hubMeta[$key]['color']) ?>;">
-          <span class="hub-ic"><?= toolIco($hubMeta[$key]['ico']) ?></span>
-          <div class="hub-body">
-            <h4><?= h($meta['label']) ?></h4>
-            <p><?= h($meta['subtitle']) ?></p>
+      <div class="dom-search-wrap">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" id="domSearchInput" placeholder="Hľadaj nástroj podľa názvu alebo popisu…" autocomplete="off">
+      </div>
+
+      <div id="domSearchResults" class="search-results" hidden></div>
+
+      <div id="domFavSection">
+        <div class="section-head"><h3>Obľúbené</h3></div>
+        <?php if ($favoriteTools): ?>
+        <div class="tool-grid" id="domFavGrid">
+          <?php foreach ($favoriteTools as $t): ?>
+          <div class="tool-card-wrap">
+            <button type="button" class="fav-star is-fav" data-slug="<?= h($t['slug']) ?>" onclick="bzUnfavorite(this)" title="Odobrať z obľúbených" aria-label="Odobrať z obľúbených">
+              <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            </button>
+            <a class="tool-card c-<?= h($t['color']) ?>" href="<?= h($t['href']) ?>">
+              <span class="ic"><?= toolIco($t['ico']) ?></span>
+              <h4><?= h($t['name']) ?></h4>
+              <p><?= h($t['desc']) ?></p>
+              <span class="go">Otvoriť
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </span>
+            </a>
           </div>
-          <div class="hub-foot">
-            <span class="hub-count"><?= (int)$groupCounts[$key] ?> nástrojov</span>
-            <span class="hub-go">Otvoriť
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            </span>
+          <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+        <div class="empty-state" id="domFavEmpty" <?= $favoriteTools ? 'hidden' : '' ?>>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <span class="es-title">Zatiaľ žiadne obľúbené</span>
+          <span class="es-sub">Klikni na hviezdičku pri nástroji v Nástrojoch, Formulároch alebo Pomôckach — nech sa ti tu zobrazí to, čo naozaj používaš.</span>
+          <div class="fav-empty-cta">
+            <a class="pillbtn" href="/nastroje.php">Nástroje</a>
+            <a class="pillbtn" href="/formulare.php">Formuláre</a>
+            <a class="pillbtn" href="/pomocky.php">Pomôcky</a>
           </div>
-        </a>
-        <?php endforeach; ?>
+        </div>
       </div>
     </div>
 
@@ -275,5 +313,62 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
 
 </main>
 
+<script>
+var DOM_ALL_TOOLS = <?= json_encode($searchData, JSON_UNESCAPED_UNICODE) ?>;
+
+function domEscape(s) {
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+(function () {
+  var input = document.getElementById('domSearchInput');
+  var results = document.getElementById('domSearchResults');
+  var favSection = document.getElementById('domFavSection');
+  if (!input) return;
+  input.addEventListener('input', function () {
+    var q = input.value.trim().toLowerCase();
+    if (!q) {
+      results.hidden = true;
+      favSection.style.display = '';
+      return;
+    }
+    favSection.style.display = 'none';
+    results.hidden = false;
+    var matches = DOM_ALL_TOOLS.filter(function (t) {
+      return t.name.toLowerCase().indexOf(q) !== -1 || t.desc.toLowerCase().indexOf(q) !== -1;
+    });
+    if (!matches.length) {
+      results.innerHTML = '<div class="empty-state"><span class="es-title">Nič sa nenašlo</span><span class="es-sub">Skús iné slovo.</span></div>';
+      return;
+    }
+    results.innerHTML = matches.map(function (t) {
+      return '<a class="search-result-item" href="' + t.href + '">' +
+        '<span class="sri-group">' + domEscape(t.group) + '</span>' +
+        '<b>' + domEscape(t.name) + '</b>' +
+        '<span class="sri-desc">' + domEscape(t.desc) + '</span></a>';
+    }).join('');
+  });
+})();
+
+function bzUnfavorite(btn) {
+  var slug = btn.dataset.slug;
+  var wrap = btn.closest('.tool-card-wrap');
+  fetch('/api/toggle-favorite.php', {
+    method: 'POST', credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slug: slug })
+  }).then(function () {
+    if (wrap) wrap.remove();
+    var grid = document.getElementById('domFavGrid');
+    if (grid && !grid.querySelector('.tool-card-wrap')) {
+      grid.remove();
+      var empty = document.getElementById('domFavEmpty');
+      if (empty) empty.hidden = false;
+    }
+  });
+}
+</script>
 <script src="/assets/shell.js?v=20"></script>
 </body></html>

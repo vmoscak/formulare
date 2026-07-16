@@ -14,7 +14,7 @@ $curAdvisorId = curAdvisorId();
 if (!$curAdvisorId) { header('Location: /'); exit; }
 
 try {
-    $stmt = db()->prepare('SELECT name, color, disabled_tools FROM formulare_advisors WHERE id = ? AND active = 1');
+    $stmt = db()->prepare('SELECT name, color, disabled_tools, favorite_tools FROM formulare_advisors WHERE id = ? AND active = 1');
     $stmt->execute([$curAdvisorId]);
     $me = $stmt->fetch();
 } catch (Throwable $e) { $me = null; }
@@ -33,6 +33,13 @@ $disabledSlugs = [];
 if (!empty($me['disabled_tools'])) {
     $decoded = json_decode($me['disabled_tools'], true);
     if (is_array($decoded)) $disabledSlugs = $decoded;
+}
+
+// Obľúbené (hviezdička) — vlastný zoznam poradcu, zobrazuje sa na Domove.
+$favoriteSlugs = [];
+if (!empty($me['favorite_tools'])) {
+    $decodedFav = json_decode($me['favorite_tools'], true);
+    if (is_array($decodedFav)) $favoriteSlugs = $decodedFav;
 }
 
 // "Flow" banner — 3-krokový reťazec poistnej analýzy klienta (len na záložke
@@ -140,13 +147,18 @@ $arrow = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="cu
       <span class="count"><?= count($cat['tools']) ?></span>
     </div>
     <div class="tool-grid">
-      <?php foreach ($cat['tools'] as $t): ?>
-      <a class="tool-card c-<?= htmlspecialchars($t['color']) ?>" href="<?= htmlspecialchars($t['href']) ?>">
-        <span class="ic"><?= toolIco($t['ico']) ?></span>
-        <h4><?= htmlspecialchars($t['name']) ?></h4>
-        <p><?= htmlspecialchars($t['desc']) ?></p>
-        <span class="go">Otvoriť <?= $arrow ?></span>
-      </a>
+      <?php foreach ($cat['tools'] as $t): $tSlug = toolSlug($t['href']); $tIsFav = in_array($tSlug, $favoriteSlugs, true); ?>
+      <div class="tool-card-wrap">
+        <button type="button" class="fav-star<?= $tIsFav ? ' is-fav' : '' ?>" data-slug="<?= htmlspecialchars($tSlug) ?>" onclick="bzToggleFav(this)" title="Obľúbené" aria-label="Obľúbené">
+          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        </button>
+        <a class="tool-card c-<?= htmlspecialchars($t['color']) ?>" href="<?= htmlspecialchars($t['href']) ?>">
+          <span class="ic"><?= toolIco($t['ico']) ?></span>
+          <h4><?= htmlspecialchars($t['name']) ?></h4>
+          <p><?= htmlspecialchars($t['desc']) ?></p>
+          <span class="go">Otvoriť <?= $arrow ?></span>
+        </a>
+      </div>
       <?php endforeach; ?>
     </div>
   </div>
@@ -154,6 +166,17 @@ $arrow = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="cu
 
 </main>
 
+<script>
+function bzToggleFav(btn) {
+  var slug = btn.dataset.slug;
+  btn.classList.toggle('is-fav');
+  fetch('/api/toggle-favorite.php', {
+    method: 'POST', credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slug: slug })
+  }).catch(function () { btn.classList.toggle('is-fav'); });
+}
+</script>
 <script src="/assets/shell.js?v=20"></script>
 </body>
 </html>
