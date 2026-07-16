@@ -167,6 +167,8 @@ function bzBadge(array $r): string {
   .bz-table .neg{color:var(--rose); font-weight:600;}
   .bz-table .pos{color:var(--good); font-weight:600;}
   .bz-table .bz-row-actions{display:flex; gap:4px; justify-content:flex-end;}
+  .bz-table .bz-owner-cell{display:none;}
+  .app.bz-editing .bz-table .bz-owner-cell{display:table-cell;}
   .bz-cols{display:grid; grid-template-columns:1fr 1fr; gap:36px; align-items:start; margin:0 0 32px;}
   .bz-col{min-width:0;}
   @media(max-width:760px){.bz-cols{grid-template-columns:1fr; gap:0;} .bz-col + .bz-col{margin-top:28px;}}
@@ -174,23 +176,40 @@ function bzBadge(array $r): string {
   .bz-info{border-top:1px solid var(--border); padding-top:26px;}
   .bz-info .bz-section-title .ico{background:var(--desk); color:var(--muted);}
   .bz-info-intro{font-size:13px; color:var(--muted); margin:-4px 0 16px; line-height:1.5;}
-  .bz-rc-actions{display:flex; gap:6px; margin-top:10px;}
+  .bz-rc-actions{display:none; gap:6px; margin-top:10px;}
+  .app.bz-editing .bz-rc-actions{display:flex;}
   .bz-edit-form{display:none; flex-direction:column; gap:8px; border:1px solid var(--border); border-radius:var(--radius-xl);
     padding:14px 16px; margin-bottom:14px; background:var(--desk);}
   .bz-edit-form input, .bz-edit-form textarea, .bz-edit-form select{width:100%; box-sizing:border-box;}
-  .bz-add-form{display:flex; flex-direction:column; gap:8px; border:1.5px dashed var(--border); border-radius:var(--radius-xl);
+  .bz-add-form{display:none; flex-direction:column; gap:8px; border:1.5px dashed var(--border); border-radius:var(--radius-xl);
     padding:14px 16px; margin-top:4px;}
+  .app.bz-editing .bz-add-form{display:flex;}
   .bz-add-form input, .bz-add-form textarea, .bz-add-form select{width:100%; box-sizing:border-box;}
   .bz-row-edit{display:none;}
   .bz-row-edit td{padding:8px 12px;}
   .bz-row-edit input, .bz-row-edit select{width:100%; box-sizing:border-box;}
   .bz-tip-edit{display:none; flex-direction:column; gap:8px;}
   .bz-tip-edit textarea{width:100%; box-sizing:border-box;}
+  .bz-owner-inline.toggle-btn{display:none;}
+  .app.bz-editing .bz-owner-inline.toggle-btn{display:inline-block;}
+  .toggle-btn{display:inline-block; padding:6px 12px; border:1px solid var(--line-strong); border-radius:var(--radius-md);
+    background:var(--paper); font-size:12px; font-weight:600; cursor:pointer; color:var(--ink-2); text-decoration:none;
+    transition:border-color .15s, color .15s, background .15s, transform .1s;}
+  .toggle-btn:hover{border-color:var(--accent); color:var(--accent); background:var(--accent-soft);}
+  .toggle-btn:active{transform:scale(.95);}
+  .head-actions{display:flex; align-items:center; gap:10px;}
+  .pillbtn{display:inline-flex; align-items:center; gap:7px; padding:9px 15px; border-radius:var(--radius-lg);
+    border:1px solid var(--line-strong); background:var(--paper); color:var(--ink-2); font-size:13px; font-weight:600;
+    cursor:pointer; text-decoration:none; transition:border-color .15s, color .15s, background .15s, transform .1s;}
+  .pillbtn:hover{border-color:var(--accent); color:var(--accent); background:var(--accent-soft);}
+  .pillbtn:active{transform:scale(.96);}
+  .pillbtn.solid{background:var(--accent); color:#fff; border-color:var(--accent);}
+  .pillbtn.solid:hover{background:var(--accent-ink); color:#fff;}
 </style>
 </head>
 <body>
 
-<div class="app" style="max-width:1080px;">
+<div class="app" id="bzApp" style="max-width:1080px;">
   <div class="head">
     <div class="head-left">
       <a href="../uniqa-tlaciva.php" class="back-btn" title="Späť na UNIQA">
@@ -204,6 +223,11 @@ function bzBadge(array $r): string {
         </div>
       </div>
     </div>
+    <?php if ($isOwner): ?>
+    <div class="head-actions">
+      <button type="button" class="pillbtn" id="bzEditToggle" onclick="bzToggleEdit()">✏️ Upraviť obsah</button>
+    </div>
+    <?php endif; ?>
   </div>
 
   <div class="bz-content">
@@ -266,7 +290,7 @@ function bzBadge(array $r): string {
     <div class="empty-state">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/></svg>
       <span class="es-title">Zatiaľ žiadne pravidlá</span>
-      <?php if ($isOwner): ?><span class="es-sub">Pridaj prvé nižšie.</span><?php endif; ?>
+      <?php if ($isOwner): ?><span class="es-sub">Zapni „Upraviť obsah“ hore a pridaj prvé.</span><?php endif; ?>
     </div>
     <?php endif; ?>
   </div>
@@ -302,14 +326,14 @@ function bzBadge(array $r): string {
 
     <div class="bz-table-wrap">
       <table class="bz-table">
-        <thead><tr><th>Spoluúčasť</th><th>Vplyv na výšku poistného</th><?php if ($isOwner): ?><th></th><?php endif; ?></tr></thead>
+        <thead><tr><th>Spoluúčasť</th><th>Vplyv na výšku poistného</th><?php if ($isOwner): ?><th class="bz-owner-cell"></th><?php endif; ?></tr></thead>
         <tbody>
           <?php foreach ($tableRows as $i => $row): $isFirst = $i === 0; $isLast = $i === count($tableRows) - 1; ?>
           <tr id="row-view-<?= (int)$row['id'] ?>">
             <td><?= h($row['label']) ?></td>
             <td class="<?= h($row['polarity']) ?>"><?= h($row['effect_text']) ?></td>
             <?php if ($isOwner): ?>
-            <td>
+            <td class="bz-owner-cell">
               <div class="bz-row-actions">
                 <?php if (!$isFirst): ?><form method="post" style="margin:0;"><input type="hidden" name="move_row_id" value="<?= (int)$row['id'] ?>"><input type="hidden" name="direction" value="up"><button type="submit" class="toggle-btn" title="Hore">↑</button></form><?php endif; ?>
                 <?php if (!$isLast): ?><form method="post" style="margin:0;"><input type="hidden" name="move_row_id" value="<?= (int)$row['id'] ?>"><input type="hidden" name="direction" value="down"><button type="submit" class="toggle-btn" title="Dole">↓</button></form><?php endif; ?>
@@ -358,7 +382,7 @@ function bzBadge(array $r): string {
       <div class="bz-callout">
         <b>Tip:</b> <?= nl2br(h($tipText)) ?>
       </div>
-      <?php if ($isOwner): ?><button type="button" class="toggle-btn" onclick="bzEditTip()">Upraviť tip</button><?php endif; ?>
+      <?php if ($isOwner): ?><button type="button" class="toggle-btn bz-owner-inline" onclick="bzEditTip()">Upraviť tip</button><?php endif; ?>
     </div>
     <?php if ($isOwner): ?>
     <form method="post" class="bz-tip-edit" id="tip-edit">
@@ -375,6 +399,21 @@ function bzBadge(array $r): string {
   </div>
 </div>
 <script>
+function bzToggleEdit() {
+  var app = document.getElementById('bzApp');
+  app.classList.toggle('bz-editing');
+  var editing = app.classList.contains('bz-editing');
+  var btn = document.getElementById('bzEditToggle');
+  if (btn) btn.textContent = editing ? '✕ Zavrieť úpravy' : '✏️ Upraviť obsah';
+  if (!editing) {
+    document.querySelectorAll('.bz-edit-form').forEach(function (f) { f.style.display = 'none'; });
+    document.querySelectorAll('.bz-row-edit').forEach(function (f) { f.style.display = 'none'; });
+    document.querySelectorAll('[id^="rule-view-"]').forEach(function (v) { v.style.display = 'block'; });
+    document.querySelectorAll('[id^="row-view-"]').forEach(function (v) { v.style.display = 'table-row'; });
+    var tipEdit = document.getElementById('tip-edit'); if (tipEdit) tipEdit.style.display = 'none';
+    var tipView = document.getElementById('tip-view'); if (tipView) tipView.style.display = 'block';
+  }
+}
 function bzEditRule(id) {
   document.getElementById('rule-view-' + id).style.display = 'none';
   var f = document.getElementById('rule-edit-' + id);
