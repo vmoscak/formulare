@@ -66,40 +66,6 @@ foreach ($allToolsFlat as $slug => $t) {
     ];
 }
 
-// Skratky na zvyšné časti appky (mimo troch hlavných záložiek) — najmä pre
-// mobil, kde ľavá lišta je skrytá za hamburger menu. Moje dokumenty vidí
-// každý, ostatné len admin/owner presne podľa rovnakých pravidiel ako v
-// ľavej lište (assets/shell.js).
-$extraHubs = [
-    ['label' => 'Moje dokumenty', 'subtitle' => 'História vygenerovaných PDF a odoslaných klientských odkazov.',
-     'ico' => 'folder', 'color' => '#059669', 'href' => '/moje-dokumenty.php', 'tag' => null],
-    ['label' => 'Tímový kalendár', 'subtitle' => 'Udalosti a úlohy pre celý tím, farebne priradené konkrétnym kolegom.',
-     'ico' => 'calendar', 'color' => '#2563eb', 'href' => '/tim-kalendar.php', 'tag' => null],
-];
-if (!empty($me['is_admin'])) {
-    $extraHubs[] = ['label' => 'Admin', 'subtitle' => 'Správa poradcov, PIN kódov a zapínanie/vypínanie nástrojov.',
-        'ico' => 'shield', 'color' => '#7c3aed', 'href' => '/admin.php', 'tag' => 'Admin'];
-}
-if (!empty($me['is_owner'])) {
-    $extraHubs[] = ['label' => 'Nábor', 'subtitle' => 'Evidencia oslovených kandidátov, register agentov NBS a mapa ako doplnok.',
-        'ico' => 'users', 'color' => '#d97706', 'href' => '/nabor-kandidati.php', 'tag' => 'Len pre teba'];
-    $extraHubs[] = ['label' => 'Znalostná báza', 'subtitle' => 'Interné FAQ a rýchle texty na kopírovanie jedným klikom.',
-        'ico' => 'book', 'color' => '#0d9488', 'href' => '/znalostna-baza.php', 'tag' => 'Len pre teba'];
-    $extraHubs[] = ['label' => 'Novinky', 'subtitle' => 'Editor noviniek zobrazovaných na tejto stránke.',
-        'ico' => 'megaphone', 'color' => '#ea580c', 'href' => '/novinky.php', 'tag' => 'Len pre teba'];
-    $extraHubs[] = ['label' => 'Refinančný Radar', 'subtitle' => 'Ručne udržiavaný prehľad hypotekárnych sadzieb podľa banky a fixácie.',
-        'ico' => 'euro', 'color' => '#475569', 'href' => '/refinancny-radar.php', 'tag' => 'Len pre teba'];
-    $extraHubs[] = ['label' => 'Oplatí sa mi refinancovať?', 'subtitle' => 'Break-even prepočet — mesačná úspora novej sadzby vs. náklady na prechod.',
-        'ico' => 'chart', 'color' => '#0891b2', 'href' => '/oplati-sa-refinancovat.php', 'tag' => 'Len pre teba'];
-    // Zatiaľ len pre teba, kým sa overí užitočnosť — potom presunúť medzi
-    // nepodmienené karty (viditeľné pre každého poradcu).
-    $extraHubs[] = ['label' => 'Copy-Paste zóna', 'subtitle' => 'Tvoje osobné rýchle texty na kopírovanie jedným klikom.',
-        'ico' => 'clipboard', 'color' => '#0e7490', 'href' => '/copy-paste.php', 'tag' => 'Len pre teba'];
-    $extraHubs[] = ['label' => 'Cesta nováčika', 'subtitle' => 'Onboarding checklist pre nových poradcov — Deň 1 / Týždeň 1 / Mesiac 1.',
-        'ico' => 'target', 'color' => '#be185d', 'href' => '/cesta-novacika.php', 'tag' => 'Len pre teba'];
-    $extraHubs[] = ['label' => 'Tímový prehľad', 'subtitle' => 'Kto z tímu ktoré nástroje používa — pre lepšiu podporu nováčikov.',
-        'ico' => 'trending', 'color' => '#65a30d', 'href' => '/tim-prehlad.php', 'tag' => 'Len pre teba'];
-}
 
 $news = [];
 try {
@@ -287,29 +253,6 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
     </aside>
     <?php endif; ?>
   </div>
-
-  <?php if ($extraHubs): ?>
-  <div class="section">
-    <div class="section-head"><h3>Ďalšie skratky</h3></div>
-    <div class="hub-grid">
-      <?php foreach ($extraHubs as $eh): ?>
-      <a class="hub-card" href="<?= h($eh['href']) ?>" style="--hub-color:<?= h($eh['color']) ?>;">
-        <span class="hub-ic"><?= toolIco($eh['ico']) ?></span>
-        <div class="hub-body">
-          <h4><?= h($eh['label']) ?></h4>
-          <p><?= h($eh['subtitle']) ?></p>
-        </div>
-        <div class="hub-foot">
-          <span class="hub-count"><?php if ($eh['tag']): ?><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><?= h($eh['tag']) ?><?php endif; ?></span>
-          <span class="hub-go">Otvoriť
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </span>
-        </div>
-      </a>
-      <?php endforeach; ?>
-    </div>
-  </div>
-  <?php endif; ?>
 
 </main>
 
