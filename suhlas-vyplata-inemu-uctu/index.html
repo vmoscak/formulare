@@ -265,11 +265,11 @@ function buildParas(){
   const incidentPart = parseDate(state.incidentDate) ? (', ku ktorej došlo dňa ' + fmt(parseDate(state.incidentDate))) : '';
   const payeeAddrPart = state.payeeAddress.trim() ? (', ' + state.payeeAddress.trim()) : '';
 
-  const intro = 'Ja, dolu podpísaný/á ' + (state.name||'…') + ', trvale bytom ' + (state.street||'…') + ', '
-    + (state.zip||'…') + ' ' + (state.city||'…') + ' (ďalej len „poškodený/-á“), ako poškodený/-á v škodovej udalosti č. '
-    + (state.contractNo||'…') + incidentPart
+  const intro = 'Ja, dolu podpísaný/á ' + (state.name||'__________') + ', trvale bytom ' + (state.street||'__________') + ', '
+    + (state.zip||'__________') + ' ' + (state.city||'__________') + ' (ďalej len „poškodený/-á“), ako poškodený/-á v škodovej udalosti č. '
+    + (state.contractNo||'__________') + incidentPart
     + ', týmto udeľujem súhlas, aby poisťovňa vyplatila poistné plnenie za uvedenú škodovú udalosť priamo na účet tretej osoby: '
-    + (state.payeeName||'…') + payeeAddrPart + ', IBAN ' + (state.payeeIban.trim()||'…') + '.';
+    + (state.payeeName||'__________') + payeeAddrPart + ', IBAN ' + (state.payeeIban.trim()||'__________') + '.';
 
   const reasonPara = state.reason.trim() ? ('Dôvod / súvisiaci doklad: ' + state.reason.trim() + '.') : '';
 
@@ -376,7 +376,7 @@ function escapeHtml(x){ return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt
 =========================================================================== */
 function buildLetterHtml(previewMode){
   const d = buildParas();
-  const placeDate = (state.place||'…') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '…');
+  const placeDate = (state.place||'__________') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '__________');
   const ins = insurerInfo();
   const insZipCity = [ins.zip, ins.city].filter(Boolean).join(' ');
 
@@ -392,13 +392,13 @@ function buildLetterHtml(previewMode){
     <div class="sig-grid">
       <div class="sig-col">
         <div class="sig-line"></div>
-        <div class="sig-name">${escapeHtml(state.name||'…')}</div>
+        <div class="sig-name">${escapeHtml(state.name||'__________')}</div>
         <div class="sig-role">poškodený/-á</div>
       </div>
     </div>
     <div class="footer-bar">
       <table><tr>
-        <td class="fl">${escapeHtml(state.name||'…')}</td>
+        <td class="fl">${escapeHtml(state.name||'__________')}</td>
         <td class="fr">Súhlas s výplatou na iný účet</td>
       </tr></table>
     </div>`;
@@ -478,11 +478,11 @@ function doPDF(){
 
 function doCopy(){
   const d=buildParas();
-  const placeDate = (state.place||'…') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '…');
+  const placeDate = (state.place||'__________') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '__________');
   const ins = insurerInfo();
   const txt=['SÚHLAS S VÝPLATOU POISTNÉHO PLNENIA NA INÝ ÚČET','','Predkladá sa: '+ins.name,'',d.intro]
     .concat(d.reasonPara?[d.reasonPara]:[])
-    .concat([d.ack,'',placeDate,'','Poškodený/-á: '+(state.name||'…')])
+    .concat([d.ack,'',placeDate,'','Poškodený/-á: '+(state.name||'__________')])
     .join('\n');
   try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
   const b=$('copyBtn'); b.textContent='Skopírované ✓'; setTimeout(()=>b.textContent='Kopírovať text',1600);

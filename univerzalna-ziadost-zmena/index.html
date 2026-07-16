@@ -342,23 +342,23 @@ function anyChangeSelected(){ return state.changes.personal || state.changes.add
 =========================================================================== */
 function buildParas(){
   const paras = [];
-  paras.push('dolu podpísaný/á ' + (state.name||'…') + ', poistník/-čka poistnej zmluvy č. ' + (state.contractNo||'…')
+  paras.push('dolu podpísaný/á ' + (state.name||'__________') + ', poistník/-čka poistnej zmluvy č. ' + (state.contractNo||'__________')
     + ', žiadam o vykonanie nasledovnej zmeny/zmien v uvedenej poistnej zmluve:');
 
   if(state.changes.personal){
     const idPart = state.newIdNum.trim() ? (', nové číslo dokladu totožnosti ' + state.newIdNum.trim()) : '';
     const rcPart = state.newBirthCert.trim() ? (', rodné číslo ' + state.newBirthCert.trim()) : '';
-    paras.push('Zmena osobných údajov: nové meno a priezvisko ' + (state.newName.trim()||'…') + idPart + rcPart + '.');
+    paras.push('Zmena osobných údajov: nové meno a priezvisko ' + (state.newName.trim()||'__________') + idPart + rcPart + '.');
   }
   if(state.changes.address){
-    paras.push('Zmena ' + ADDRESS_TYPE_LABELS[state.addressType] + ': nová adresa ' + (state.newStreet||'…')
-      + ', ' + (state.newZip||'…') + ' ' + (state.newCity||'…') + '.');
+    paras.push('Zmena ' + ADDRESS_TYPE_LABELS[state.addressType] + ': nová adresa ' + (state.newStreet||'__________')
+      + ', ' + (state.newZip||'__________') + ' ' + (state.newCity||'__________') + '.');
   }
   if(state.changes.beneficiary){
     const sharePart = state.beneficiaryShare ? (', s podielom na plnení ' + state.beneficiaryShare + ' %') : '';
     paras.push('Zmena oprávnenej osoby: novou oprávnenou osobou na výplatu poistného plnenia je '
-      + (state.beneficiaryName||'…') + ', nar. ' + (parseDate(state.beneficiaryBirth) ? fmt(parseDate(state.beneficiaryBirth)) : '…')
-      + ', vzťah k poistníkovi/-čke: ' + (state.beneficiaryRelation||'…') + sharePart + '.');
+      + (state.beneficiaryName||'__________') + ', nar. ' + (parseDate(state.beneficiaryBirth) ? fmt(parseDate(state.beneficiaryBirth)) : '__________')
+      + ', vzťah k poistníkovi/-čke: ' + (state.beneficiaryRelation||'__________') + sharePart + '.');
   }
 
   paras.push('Žiadam o vykonanie uvedenej zmeny/zmien a o písomné potvrdenie.');
@@ -489,14 +489,14 @@ function buildLetterHtml(previewMode){
   const paraHtml = paras.map(function(p){ return '<p>'+escapeHtml(p).replace(/\n/g,'<br>')+'</p>'; }).join('');
   const ins = insurerInfo();
   const insZipCity = [ins.zip, ins.city].filter(Boolean).join(' ');
-  const placeDate = (state.signPlace||'…') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '…');
+  const placeDate = (state.signPlace||'__________') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '__________');
   const contactLine=[
     state.phone ? 'Tel.: '+escapeHtml(state.phone) : '',
     state.email ? 'E-mail: '+escapeHtml(state.email) : ''
   ].filter(Boolean).join(' | ');
 
   const parties = `<table class="parties"><tr>
-    <td class="from"><strong>${escapeHtml(state.name||'…')}</strong><br>${escapeHtml(state.street||'…')}<br>${escapeHtml((state.zip||'…')+' '+(state.city||'…'))}</td>
+    <td class="from"><strong>${escapeHtml(state.name||'__________')}</strong><br>${escapeHtml(state.street||'__________')}<br>${escapeHtml((state.zip||'__________')+' '+(state.city||'__________'))}</td>
     <td class="to"><strong>${escapeHtml(ins.name)}</strong>${ins.street?'<br>'+escapeHtml(ins.street):''}${insZipCity?'<br>'+escapeHtml(insZipCity):''}</td>
   </tr></table>`;
 
@@ -508,12 +508,12 @@ function buildLetterHtml(previewMode){
     <div class="body-text">${paraHtml}</div>
     <div class="farewell">S úctou,</div>
     <div class="sig-block">
-      <div class="sig-line">${escapeHtml(state.name||'…')}</div>
+      <div class="sig-line">${escapeHtml(state.name||'__________')}</div>
       ${contactLine?'<div class="sig-contact">'+contactLine+'</div>':''}
     </div>
     <div class="footer-bar">
       <table><tr>
-        <td class="fl">${escapeHtml(state.name||'…')}</td>
+        <td class="fl">${escapeHtml(state.name||'__________')}</td>
         <td class="fr">Žiadosť o zmenu</td>
       </tr></table>
     </div>`;
@@ -599,7 +599,7 @@ function doCopy(){
   const paras = buildParas();
   const ins = insurerInfo();
   const insZipCity = [ins.zip, ins.city].filter(Boolean).join(' ');
-  const placeDate = (state.signPlace||'…') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '…');
+  const placeDate = (state.signPlace||'__________') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '__________');
   const txt=[state.name,state.street,(state.zip+' '+state.city),'',ins.name,ins.street,insZipCity,'',placeDate,'',
     'Vec: Univerzálna žiadosť o zmenu v poistnej zmluve','','Vážená poisťovňa,']
     .concat(paras).concat(['','S úctou,','',state.name]).join('\n');

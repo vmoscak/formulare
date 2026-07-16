@@ -317,12 +317,12 @@ function buildParas(){
   const validFromDate = parseDate(state.validFrom);
 
   const paras = [];
-  paras.push('dolu podpísaný/á ' + (state.name||'…') + idPart
+  paras.push('dolu podpísaný/á ' + (state.name||'__________') + idPart
     + ', si Vás týmto dovoľujem požiadať o vystavenie krycieho listu (potvrdenia o poistení) pre vozidlo '
-    + (state.brand||'…') + ecvPart + vinPart + ', v súvislosti s ' + insuranceTypeLabel()
-    + ', s platnosťou od ' + (validFromDate ? fmt(validFromDate) : '…') + '.');
+    + (state.brand||'__________') + ecvPart + vinPart + ', v súvislosti s ' + insuranceTypeLabel()
+    + ', s platnosťou od ' + (validFromDate ? fmt(validFromDate) : '__________') + '.');
 
-  const reasonText = state.reason==='ine' ? (state.reasonOther.trim() || '…') : REASONS[state.reason];
+  const reasonText = state.reason==='ine' ? (state.reasonOther.trim() || '__________') : REASONS[state.reason];
   paras.push('Dôvodom žiadosti je ' + reasonText + '.');
 
   paras.push('Krycí list mi prosím doručte ' + deliveryLabel() + '.');
@@ -443,14 +443,14 @@ function buildLetterHtml(previewMode){
   const paraHtml = paras.map(function(p){ return '<p>'+escapeHtml(p).replace(/\n/g,'<br>')+'</p>'; }).join('');
   const ins = insurerInfo();
   const insZipCity = [ins.zip, ins.city].filter(Boolean).join(' ');
-  const placeDate = (state.signPlace||'…') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '…');
+  const placeDate = (state.signPlace||'__________') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '__________');
   const contactLine=[
     state.phone ? 'Tel.: '+escapeHtml(state.phone) : '',
     state.email ? 'E-mail: '+escapeHtml(state.email) : ''
   ].filter(Boolean).join(' | ');
 
   const parties = `<table class="parties"><tr>
-    <td class="from"><strong>${escapeHtml(state.name||'…')}</strong><br>${escapeHtml(state.street||'…')}<br>${escapeHtml((state.zip||'…')+' '+(state.city||'…'))}</td>
+    <td class="from"><strong>${escapeHtml(state.name||'__________')}</strong><br>${escapeHtml(state.street||'__________')}<br>${escapeHtml((state.zip||'__________')+' '+(state.city||'__________'))}</td>
     <td class="to"><strong>${escapeHtml(ins.name)}</strong>${ins.street?'<br>'+escapeHtml(ins.street):''}${insZipCity?'<br>'+escapeHtml(insZipCity):''}</td>
   </tr></table>`;
 
@@ -462,12 +462,12 @@ function buildLetterHtml(previewMode){
     <div class="body-text">${paraHtml}</div>
     <div class="farewell">S úctou,</div>
     <div class="sig-block">
-      <div class="sig-line">${escapeHtml(state.name||'…')}</div>
+      <div class="sig-line">${escapeHtml(state.name||'__________')}</div>
       ${contactLine?'<div class="sig-contact">'+contactLine+'</div>':''}
     </div>
     <div class="footer-bar">
       <table><tr>
-        <td class="fl">${escapeHtml(state.name||'…')}</td>
+        <td class="fl">${escapeHtml(state.name||'__________')}</td>
         <td class="fr">Žiadosť o vystavenie krycieho listu</td>
       </tr></table>
     </div>`;
@@ -552,7 +552,7 @@ function doCopy(){
   const paras = buildParas();
   const ins = insurerInfo();
   const insZipCity = [ins.zip, ins.city].filter(Boolean).join(' ');
-  const placeDate = (state.signPlace||'…') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '…');
+  const placeDate = (state.signPlace||'__________') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '__________');
   const txt=[state.name,state.street,(state.zip+' '+state.city),'',ins.name,ins.street,insZipCity,'',placeDate,'',
     'Vec: Žiadosť o vystavenie krycieho listu','','Vážená poisťovňa,']
     .concat(paras).concat(['','S úctou,','',state.name]).join('\n');

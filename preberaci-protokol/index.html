@@ -253,13 +253,13 @@ function refreshPreview(){
    ZOSTAVENIE LISTU (HTML pre PDF aj náhľad)
 =========================================================================== */
 function buildLetterHtml(previewMode){
-  const dateFmt = parseDate(state.date) ? fmt(parseDate(state.date)) : '…';
-  const placeDate = (state.place||'…') + ', ' + dateFmt;
+  const dateFmt = parseDate(state.date) ? fmt(parseDate(state.date)) : '__________';
+  const placeDate = (state.place||'__________') + ', ' + dateFmt;
 
   const rows = state.items.map(function(it,i){
     return '<tr>'
       + '<td class="num">'+(i+1)+'.</td>'
-      + '<td class="tx">'+escapeHtml(it.text||'…')+'</td>'
+      + '<td class="tx">'+escapeHtml(it.text||'__________')+'</td>'
       + '<td class="qty">'+escapeHtml(it.qty||'—')+'</td>'
       + '</tr>';
   }).join('');
@@ -267,8 +267,8 @@ function buildLetterHtml(previewMode){
   const body = `
     <div class="pdf-topbar"></div><div class="doctitle">Preberací / odovzdávací protokol</div>
     <div class="meta">
-      <div><strong>Odovzdávajúci/-a:</strong> ${escapeHtml(state.fromName||'…')}${state.fromRole.trim()?' – '+escapeHtml(state.fromRole.trim()):''}</div>
-      <div><strong>Preberajúci/-a:</strong> ${escapeHtml(state.toName||'…')}${state.toRole.trim()?' – '+escapeHtml(state.toRole.trim()):''}</div>
+      <div><strong>Odovzdávajúci/-a:</strong> ${escapeHtml(state.fromName||'__________')}${state.fromRole.trim()?' – '+escapeHtml(state.fromRole.trim()):''}</div>
+      <div><strong>Preberajúci/-a:</strong> ${escapeHtml(state.toName||'__________')}${state.toRole.trim()?' – '+escapeHtml(state.toRole.trim()):''}</div>
     </div>
     <div class="body-text">
       <p>Odovzdávajúci/-a týmto odovzdáva a preberajúci/-a preberá nižšie uvedené dokumenty a materiály, a to v úplnom a nepoškodenom stave:</p>
@@ -282,18 +282,18 @@ function buildLetterHtml(previewMode){
     <div class="sig-grid">
       <div class="sig-col">
         <div class="sig-line"></div>
-        <div class="sig-name">${escapeHtml(state.fromName||'…')}</div>
+        <div class="sig-name">${escapeHtml(state.fromName||'__________')}</div>
         <div class="sig-role">odovzdal/-a</div>
       </div>
       <div class="sig-col">
         <div class="sig-line"></div>
-        <div class="sig-name">${escapeHtml(state.toName||'…')}</div>
+        <div class="sig-name">${escapeHtml(state.toName||'__________')}</div>
         <div class="sig-role">prevzal/-a</div>
       </div>
     </div>
     <div class="footer-bar">
       <table><tr>
-        <td class="fl">${escapeHtml(state.fromName||'…')} → ${escapeHtml(state.toName||'…')}</td>
+        <td class="fl">${escapeHtml(state.fromName||'__________')} → ${escapeHtml(state.toName||'__________')}</td>
         <td class="fr">Preberací protokol</td>
       </tr></table>
     </div>`;
@@ -380,14 +380,14 @@ function doPDF(){
 }
 
 function doCopy(){
-  const dateFmt = parseDate(state.date) ? fmt(parseDate(state.date)) : '…';
+  const dateFmt = parseDate(state.date) ? fmt(parseDate(state.date)) : '__________';
   const lines = ['PREBERACÍ / ODOVZDÁVACÍ PROTOKOL','',
-    'Odovzdávajúci/-a: '+(state.fromName||'…')+(state.fromRole.trim()?' – '+state.fromRole.trim():''),
-    'Preberajúci/-a: '+(state.toName||'…')+(state.toRole.trim()?' – '+state.toRole.trim():''),''];
+    'Odovzdávajúci/-a: '+(state.fromName||'__________')+(state.fromRole.trim()?' – '+state.fromRole.trim():''),
+    'Preberajúci/-a: '+(state.toName||'__________')+(state.toRole.trim()?' – '+state.toRole.trim():''),''];
   state.items.forEach(function(it,i){
     lines.push((i+1)+'. '+it.text+' — '+(it.qty||'—'));
   });
-  lines.push('', (state.place||'…')+', '+dateFmt);
+  lines.push('', (state.place||'__________')+', '+dateFmt);
   if(state.note.trim()) lines.push('', 'Poznámka: '+state.note.trim());
   try{ if(navigator.clipboard) navigator.clipboard.writeText(lines.join('\n')); }catch(e){}
   const b=$('copyBtn'); b.textContent='Skopírované ✓'; setTimeout(()=>b.textContent='Kopírovať text',1600);

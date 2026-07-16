@@ -268,21 +268,21 @@ function insurerInfo(){
    ZOSTAVENIE TEXTU PREHLÁSENIA
 =========================================================================== */
 function buildParas(){
-  const birth = parseDate(state.birth) ? fmt(parseDate(state.birth)) : '…';
+  const birth = parseDate(state.birth) ? fmt(parseDate(state.birth)) : '__________';
   const idPart = state.idNum ? (', rodné číslo ' + state.idNum) : '';
-  const purchaseDate = parseDate(state.purchaseDate) ? fmt(parseDate(state.purchaseDate)) : '…';
+  const purchaseDate = parseDate(state.purchaseDate) ? fmt(parseDate(state.purchaseDate)) : '__________';
   const placePart = state.purchasePlace.trim() ? (' u predajcu/na mieste: ' + state.purchasePlace.trim()) : '';
   const pricePart = state.purchasePrice ? (', za kúpnu cenu ' + eur(state.purchasePrice)) : '';
 
-  const intro = 'Ja, dolu podpísaný/á ' + (state.name||'…') + ', nar. ' + birth + idPart
-    + ', trvale bytom ' + (state.street||'…') + ', ' + (state.zip||'…') + ' ' + (state.city||'…')
+  const intro = 'Ja, dolu podpísaný/á ' + (state.name||'__________') + ', nar. ' + birth + idPart
+    + ', trvale bytom ' + (state.street||'__________') + ', ' + (state.zip||'__________') + ' ' + (state.city||'__________')
     + ' (ďalej len „vyhlasujúci/-a“), čestne vyhlasujem, že som vlastníkom/vlastníčkou nasledovnej veci: '
-    + (state.itemDescription.trim()||'…') + '.';
+    + (state.itemDescription.trim()||'__________') + '.';
 
   const purchasePara = 'Uvedenú vec som nadobudol/la kúpou dňa (aspoň približne) ' + purchaseDate + placePart + pricePart + '.';
 
   const reasonPara = 'Pôvodný doklad o kúpe (pokladničný blok / faktúra) k uvedenej veci nepredkladám z nasledovného dôvodu: '
-    + (state.missingReason.trim()||'…') + '.';
+    + (state.missingReason.trim()||'__________') + '.';
 
   const incidentPara = parseDate(state.incidentDate)
     ? 'Uvedená vec súvisí so škodovou udalosťou, ku ktorej došlo dňa ' + fmt(parseDate(state.incidentDate))
@@ -391,7 +391,7 @@ function escapeHtml(x){ return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt
 =========================================================================== */
 function buildLetterHtml(previewMode){
   const d = buildParas();
-  const placeDate = (state.place||'…') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '…');
+  const placeDate = (state.place||'__________') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '__________');
   const ins = insurerInfo();
   const insZipCity = [ins.zip, ins.city].filter(Boolean).join(' ');
 
@@ -409,13 +409,13 @@ function buildLetterHtml(previewMode){
     <div class="sig-grid">
       <div class="sig-col">
         <div class="sig-line"></div>
-        <div class="sig-name">${escapeHtml(state.name||'…')}</div>
+        <div class="sig-name">${escapeHtml(state.name||'__________')}</div>
         <div class="sig-role">vyhlasujúci/-a</div>
       </div>
     </div>
     <div class="footer-bar">
       <table><tr>
-        <td class="fl">${escapeHtml(state.name||'…')}</td>
+        <td class="fl">${escapeHtml(state.name||'__________')}</td>
         <td class="fr">Čestné prehlásenie</td>
       </tr></table>
     </div>`;
@@ -495,11 +495,11 @@ function doPDF(){
 
 function doCopy(){
   const d=buildParas();
-  const placeDate = (state.place||'…') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '…');
+  const placeDate = (state.place||'__________') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '__________');
   const ins = insurerInfo();
   const txt=['ČESTNÉ PREHLÁSENIE','','Predkladá sa: '+ins.name,'',d.intro,d.purchasePara,d.reasonPara]
     .concat(d.incidentPara?[d.incidentPara]:[])
-    .concat([d.warning,'',placeDate,'','Vyhlasujúci/-a: '+(state.name||'…')])
+    .concat([d.warning,'',placeDate,'','Vyhlasujúci/-a: '+(state.name||'__________')])
     .join('\n');
   try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
   const b=$('copyBtn'); b.textContent='Skopírované ✓'; setTimeout(()=>b.textContent='Kopírovať text',1600);

@@ -312,7 +312,7 @@ function computeEnd(){
 =========================================================================== */
 function buildParas(endDate){
   const subj = TYPES[state.type].subject;
-  const c = state.contract;
+  const c = state.contract||'__________';
   const legal = {       // odkazy na zákon (môžeš upraviť/zmazať)
     anniversary:' v súlade s § 800 ods. 1 Občianskeho zákonníka',
     early:' v súlade s § 800 ods. 2 Občianskeho zákonníka',
@@ -322,13 +322,13 @@ function buildParas(endDate){
   if(state.reason==='agreement'){
     return [
       'týmto Vás žiadam o ukončenie '+subj+' č. '+c+' dohodou.',
-      'Dôvod ukončenia: '+state.note,
+      'Dôvod ukončenia: '+(state.note||'__________'),
       'Navrhujem ukončenie poistnej zmluvy k '+endDate+'. V prípade súhlasu Vás prosím o zaslanie dohody o ukončení a o písomné potvrdenie.',
     ];
   }
   if(state.reason==='sale'){
     const refund = state.ibanOn
-      ? 'Žiadam o ukončenie poistnej zmluvy a o vrátenie nespotrebovaného poistného na bankový účet IBAN:\n'+state.iban+'.'
+      ? 'Žiadam o ukončenie poistnej zmluvy a o vrátenie nespotrebovaného poistného na bankový účet IBAN:\n'+(state.iban||'__________')+'.'
       : 'Žiadam o ukončenie poistnej zmluvy a o vrátenie nespotrebovaného poistného.';
     return [
       'týmto Vám oznamujem zánik predmetu poistenia a podávam výpoveď '+subj+' č. '+c+'.',
@@ -360,7 +360,7 @@ function buildParas(endDate){
     ];
   }
   if(state.ibanOn){
-    paras.push('Prípadný preplatok na poistnom Vás žiadam poukázať na bankový účet IBAN:\n'+state.iban+'.');
+    paras.push('Prípadný preplatok na poistnom Vás žiadam poukázať na bankový účet IBAN:\n'+(state.iban||'__________')+'.');
   }
   return paras;
 }
@@ -492,10 +492,10 @@ function buildLetterData(){
   const endDate = fmt(endEff);
   const ins = INSURERS[state.insurer];
   return {
-    name:state.name, street:state.street, zipCity:state.zip+' '+state.city,
+    name:state.name||'__________', street:state.street||'__________', zipCity:(state.zip||'___')+' '+(state.city||'__________'),
     insName:ins.name, insStreet:ins.street, insZipCity:ins.zip+' '+ins.city,
-    placeDate:(state.city||'…')+', '+fmt(TODAY),
-    subject:'Vec: Výpoveď poistnej zmluvy č. '+state.contract,
+    placeDate:(state.city||'__________')+', '+fmt(TODAY),
+    subject:'Vec: Výpoveď poistnej zmluvy č. '+(state.contract||'__________'),
     paras: buildParas(endDate),
   };
 }

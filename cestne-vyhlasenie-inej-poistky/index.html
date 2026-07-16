@@ -259,20 +259,20 @@ function insurerInfo(){
    ZOSTAVENIE TEXTU PREHLÁSENIA
 =========================================================================== */
 function buildParas(){
-  const birth = parseDate(state.birth) ? fmt(parseDate(state.birth)) : '…';
+  const birth = parseDate(state.birth) ? fmt(parseDate(state.birth)) : '__________';
   const idPart = state.idNum ? (', rodné číslo ' + state.idNum) : '';
-  const incidentDate = parseDate(state.incidentDate) ? fmt(parseDate(state.incidentDate)) : '…';
+  const incidentDate = parseDate(state.incidentDate) ? fmt(parseDate(state.incidentDate)) : '__________';
   const contractPart = state.contractNo ? (', evidovanou pod č. ' + state.contractNo) : '';
   const descPart = state.incidentDescription.trim() ? (' (' + state.incidentDescription.trim() + ')') : '';
 
-  const intro = 'Ja, dolu podpísaný/á ' + (state.name||'…') + ', nar. ' + birth + idPart
-    + ', trvale bytom ' + (state.street||'…') + ', ' + (state.zip||'…') + ' ' + (state.city||'…')
+  const intro = 'Ja, dolu podpísaný/á ' + (state.name||'__________') + ', nar. ' + birth + idPart
+    + ', trvale bytom ' + (state.street||'__________') + ', ' + (state.zip||'__________') + ' ' + (state.city||'__________')
     + ' (ďalej len „vyhlasujúci/-a“), čestne vyhlasujem, že v súvislosti so škodovou udalosťou' + descPart
     + ', ku ktorej došlo dňa ' + incidentDate + contractPart
     + ', som si doposiaľ neuplatnil/a a ani do budúcna si neuplatním náhradu škody z iného poistenia toho istého rizika u inej poisťovne ani z inej poistnej zmluvy.';
 
   const otherPara = state.hasOther
-    ? 'Zároveň uvádzam, že mám uzatvorené iné poistenie, ktoré by mohlo súvisieť s uvedeným rizikom: ' + (state.otherNote.trim()||'…') + '. Napriek tomu si z tohto poistenia náhradu za uvedenú škodu neuplatňujem.'
+    ? 'Zároveň uvádzam, že mám uzatvorené iné poistenie, ktoré by mohlo súvisieť s uvedeným rizikom: ' + (state.otherNote.trim()||'__________') + '. Napriek tomu si z tohto poistenia náhradu za uvedenú škodu neuplatňujem.'
     : '';
 
   const warning = 'Som si vedomý/á, že uvedenie nepravdivých údajov v tomto čestnom vyhlásení môže mať za následok zamietnutie poistného plnenia, prípadne inú právnu zodpovednosť.';
@@ -380,7 +380,7 @@ function escapeHtml(x){ return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt
 =========================================================================== */
 function buildLetterHtml(previewMode){
   const d = buildParas();
-  const placeDate = (state.place||'…') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '…');
+  const placeDate = (state.place||'__________') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '__________');
   const ins = insurerInfo();
   const insZipCity = [ins.zip, ins.city].filter(Boolean).join(' ');
 
@@ -396,13 +396,13 @@ function buildLetterHtml(previewMode){
     <div class="sig-grid">
       <div class="sig-col">
         <div class="sig-line"></div>
-        <div class="sig-name">${escapeHtml(state.name||'…')}</div>
+        <div class="sig-name">${escapeHtml(state.name||'__________')}</div>
         <div class="sig-role">vyhlasujúci/-a</div>
       </div>
     </div>
     <div class="footer-bar">
       <table><tr>
-        <td class="fl">${escapeHtml(state.name||'…')}</td>
+        <td class="fl">${escapeHtml(state.name||'__________')}</td>
         <td class="fr">Čestné prehlásenie</td>
       </tr></table>
     </div>`;
@@ -482,11 +482,11 @@ function doPDF(){
 
 function doCopy(){
   const d=buildParas();
-  const placeDate = (state.place||'…') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '…');
+  const placeDate = (state.place||'__________') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '__________');
   const ins = insurerInfo();
   const txt=['ČESTNÉ PREHLÁSENIE','','Predkladá sa: '+ins.name,'',d.intro]
     .concat(d.otherPara?[d.otherPara]:[])
-    .concat([d.warning,'',placeDate,'','Vyhlasujúci/-a: '+(state.name||'…')])
+    .concat([d.warning,'',placeDate,'','Vyhlasujúci/-a: '+(state.name||'__________')])
     .join('\n');
   try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
   const b=$('copyBtn'); b.textContent='Skopírované ✓'; setTimeout(()=>b.textContent='Kopírovať text',1600);
