@@ -27,9 +27,13 @@
   .bz-table tr:last-child td{border-bottom:none;}
   .bz-table .neg{color:var(--rose); font-weight:600;}
   .bz-table .pos{color:var(--good); font-weight:600;}
-  .bz-cols{display:grid; grid-template-columns:1fr 1fr; gap:36px; align-items:start;}
+  .bz-cols{display:grid; grid-template-columns:1fr 1fr; gap:36px; align-items:start; margin:0 0 32px;}
   .bz-col{min-width:0;}
   @media(max-width:760px){.bz-cols{grid-template-columns:1fr; gap:0;} .bz-col + .bz-col{margin-top:28px;}}
+  .bz-content{padding:6px 30px 30px;}
+  .bz-info{border-top:1px solid var(--border); padding-top:26px;}
+  .bz-info .bz-section-title .ico{background:var(--desk); color:var(--muted);}
+  .bz-info-intro{font-size:13px; color:var(--muted); margin:-4px 0 16px; line-height:1.5;}
 </style>
 </head>
 <body>
@@ -49,6 +53,8 @@
       </div>
     </div>
   </div>
+
+  <div class="bz-content">
 
   <p class="bz-updated">Aktualizované: 16. 7. 2026 · zdroj: interná sumarizácia UNIQA</p>
 
@@ -93,23 +99,6 @@
     </div>
   </div>
 
-  <div class="bz-table-wrap">
-    <table class="bz-table">
-      <thead><tr><th>Spoluúčasť</th><th>Vplyv na výšku poistného</th></tr></thead>
-      <tbody>
-        <tr><td>Fix 80 €</td><td class="neg">cca +30 % prirážka</td></tr>
-        <tr><td>Fix 200 €</td><td class="neg">cca +17 % prirážka</td></tr>
-        <tr><td>5 %, max 200 €</td><td class="neg">cca +3 % prirážka</td></tr>
-        <tr><td>Fix 400 €</td><td class="pos">cca −18 % (zľava z poistného, akoby zľava z budgetu)</td></tr>
-        <tr><td>Spoluúčasť mladého vodiča</td><td class="pos">zníženie poistného o desiatky €</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="bz-callout">
-    <b>Tip — fix 400 €:</b> spoluúčasť fix 400 € (320 € v autorizovanom servise) je spôsob, ako znížiť poistné pre klienta aj v prípade, že je budget minutý. V niektorých prípadoch to klient bez problémov zoberie.
-  </div>
-
   </div>
   <div class="bz-col">
 
@@ -147,6 +136,32 @@
   </div>
   </div>
 
+  <div class="bz-info">
+    <div class="bz-section-title">
+      <span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg></span>
+      <h2>Spoluúčasť — vplyv na poistné</h2>
+    </div>
+    <p class="bz-info-intro">Toto nie je pravidlo pre schvaľovanie budgetovej zľavy — len prehľad toho, ako výška spoluúčasti pri autopoistení mení výšku poistného.</p>
+
+    <div class="bz-table-wrap">
+      <table class="bz-table">
+        <thead><tr><th>Spoluúčasť</th><th>Vplyv na výšku poistného</th></tr></thead>
+        <tbody>
+          <tr><td>Fix 80 €</td><td class="neg">cca +30 % prirážka</td></tr>
+          <tr><td>Fix 200 €</td><td class="neg">cca +17 % prirážka</td></tr>
+          <tr><td>5 %, max 200 €</td><td class="neg">cca +3 % prirážka</td></tr>
+          <tr><td>Fix 400 €</td><td class="pos">cca −18 % (zľava z poistného, akoby zľava z budgetu)</td></tr>
+          <tr><td>Spoluúčasť mladého vodiča</td><td class="pos">zníženie poistného o desiatky €</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="bz-callout">
+      <b>Tip — fix 400 €:</b> spoluúčasť fix 400 € (320 € v autorizovanom servise) je spôsob, ako znížiť poistné pre klienta aj v prípade, že je budget minutý. V niektorých prípadoch to klient bez problémov zoberie.
+    </div>
+  </div>
+
+  </div>
 </div>
 <script src="../assets/shell.js?v=20"></script>
 </body></html>
