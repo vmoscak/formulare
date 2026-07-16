@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="sk"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Budgetové zľavy</title>
+
+<script src="../assets/theme-init.js"></script>
+<link rel="stylesheet" href="../assets/ui.css?v=12">
+<style>
+  .bz-updated{font-size:12px; color:var(--muted); margin:-6px 0 22px;}
+  .bz-section-title{display:flex; align-items:center; gap:10px; margin:0 0 14px;}
+  .bz-section-title h2{margin:0; font-size:16.5px; font-weight:700; color:var(--ink);}
+  .bz-section-title .ico{width:30px; height:30px; border-radius:9px; background:var(--accent-soft); color:var(--accent);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .bz-approver{display:inline-block; font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px; margin-top:8px;}
+  .bz-approver.asist{background:var(--good-soft); color:var(--good);}
+  .bz-approver.daniel{background:var(--rose-soft); color:var(--rose);}
+  .bz-approver.both{background:var(--amber-soft); color:var(--amber);}
+  .bz-callout{border:1px solid var(--accent-line); background:var(--accent-soft); border-radius:var(--radius-xl);
+    padding:14px 16px; margin:0 0 24px; font-size:13px; color:var(--ink-2); line-height:1.55;}
+  .bz-callout b{color:var(--ink);}
+  .bz-table-wrap{overflow-x:auto; margin:0 0 26px;}
+  .bz-table{width:100%; border-collapse:collapse; font-size:13px;}
+  .bz-table th{text-align:left; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.03em;
+    color:var(--muted); padding:8px 12px; border-bottom:1px solid var(--border);}
+  .bz-table td{padding:10px 12px; border-bottom:1px solid var(--border); color:var(--ink);}
+  .bz-table tr:last-child td{border-bottom:none;}
+  .bz-table .neg{color:var(--rose); font-weight:600;}
+  .bz-table .pos{color:var(--good); font-weight:600;}
+  .bz-divider{height:1px; background:var(--border); margin:0 0 26px;}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="head">
+    <div class="head-left">
+      <a href="../uniqa-tlaciva.php" class="back-btn" title="Späť na tlačivá UNIQA">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <div class="brand">
+        <div class="logo">%</div>
+        <div>
+          <b>Budgetové zľavy</b><br>
+          <small>Podmienky poskytovania zliav z budgetu — autopoistenie a majetok</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="bz-updated">Aktualizované: 16. 7. 2026 · zdroj: interná sumarizácia UNIQA</p>
+
+  <div class="bz-section-title">
+    <span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="7" r="4"/><circle cx="17" cy="17" r="4"/><line x1="19" y1="5" x2="5" y2="19"/></svg></span>
+    <h2>Autopoistenie</h2>
+  </div>
+  <div class="rec-list">
+    <div class="rec-card">
+      <div class="rc-title"><span class="rc-num">1</span>Rozsah zľavy</div>
+      <div class="rc-why">Zľavy sa môžu poskytovať v rozsahu <b>5 % – 20 %</b>.</div>
+    </div>
+    <div class="rec-card">
+      <div class="rc-title"><span class="rc-num">2</span>Zľava do 100 €</div>
+      <div class="rc-why">Automaticky schvaľuje regionálna asistentka, pokiaľ škodovosť klienta nepresiahne 50 % (asistentka to vždy skontroluje). Ak je škodovosť vyššia, posudzuje Daniel Jurčík.
+        <br><span class="bz-approver asist">Schvaľuje: asistentka</span> <span class="bz-approver both">pri vyššej škodovosti: Daniel Jurčík</span>
+      </div>
+    </div>
+    <div class="rec-card">
+      <div class="rc-title"><span class="rc-num">3</span>Zľava nad 100 €</div>
+      <div class="rc-why">Vždy schvaľuje Daniel Jurčík. Do poznámky treba vždy uviesť, <b>prečo</b> pýtame takú zľavu a <b>aké poistné zmluvy</b> klient u nás má — nestačí napísať iba „viaczmluvný klient“. Dôležité je, aby mal zmluvy ako Majetok, Život, Dôchodok alebo Tempo (nie CP alebo iné auto).
+        <br><span class="bz-approver daniel">Schvaľuje: Daniel Jurčík</span>
+      </div>
+    </div>
+    <div class="rec-card">
+      <div class="rc-title"><span class="rc-num">4</span>Spoluúčasť a budgetová zľava</div>
+      <div class="rc-why">
+        Fix <b>80 €</b> (0 € spoluúčasť v autorizovanom servise) — budgetová zľava sa <b>nebude schvaľovať</b>.<br>
+        Fix <b>200 €</b> — budgetová zľava sa <b>bude schvaľovať</b>.
+      </div>
+    </div>
+    <div class="rec-card">
+      <div class="rc-title"><span class="rc-num">5</span>Nízke poistné na PZP</div>
+      <div class="rc-why">Ak na PZP vychádza poistné menej ako <b>100 €</b>, budgetová zľava bude zamietnutá. Netýka sa prívesných vozíkov a motocyklov.</div>
+    </div>
+    <div class="rec-card">
+      <div class="rc-title"><span class="rc-num">6</span>UW zľava pri vysokej poistnej sume</div>
+      <div class="rc-why">Pri poistnej sume nad <b>100 000 €</b> je možné opätovne požiadať o UW zľavu.</div>
+    </div>
+  </div>
+
+  <div class="bz-table-wrap">
+    <table class="bz-table">
+      <thead><tr><th>Spoluúčasť</th><th>Vplyv na výšku poistného</th></tr></thead>
+      <tbody>
+        <tr><td>Fix 80 €</td><td class="neg">cca +30 % prirážka</td></tr>
+        <tr><td>Fix 200 €</td><td class="neg">cca +17 % prirážka</td></tr>
+        <tr><td>5 %, max 200 €</td><td class="neg">cca +3 % prirážka</td></tr>
+        <tr><td>Fix 400 €</td><td class="pos">cca −18 % (zľava z poistného, akoby zľava z budgetu)</td></tr>
+        <tr><td>Spoluúčasť mladého vodiča</td><td class="pos">zníženie poistného o desiatky €</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="bz-callout">
+    <b>Tip — fix 400 €:</b> spoluúčasť fix 400 € (320 € v autorizovanom servise) je spôsob, ako znížiť poistné pre klienta aj v prípade, že je budget minutý. V niektorých prípadoch to klient bez problémov zoberie.
+  </div>
+
+  <div class="bz-divider"></div>
+
+  <div class="bz-section-title">
+    <span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9"/></svg></span>
+    <h2>Majetok</h2>
+  </div>
+  <div class="rec-list">
+    <div class="rec-card">
+      <div class="rc-title"><span class="rc-num">1</span>Maximálna zľava z budgetu</div>
+      <div class="rc-why">Maximálna zľava z budgetu je <b>10 %</b> (pokiaľ nebolo možné dať akčnú zľavu).
+        <br><span class="bz-approver asist">Schvaľuje: asistentka</span>
+      </div>
+    </div>
+    <div class="rec-card">
+      <div class="rc-title"><span class="rc-num">2</span>Súbeh s akčnou zľavou</div>
+      <div class="rc-why">Pri použití akčnej zľavy 10 % (aktuálne prebieha kampaň) je maximálna možná budgetová zľava <b>5 %</b>.
+        <br><span class="bz-approver asist">Schvaľuje: asistentka</span>
+      </div>
+    </div>
+    <div class="rec-card">
+      <div class="rc-title"><span class="rc-num">3</span>Rozsah zľavy</div>
+      <div class="rc-why">Zľavy sa môžu poskytovať v rozsahu <b>5 % – 20 %</b>. Zľavy vyššie ako 10 % sa budú odsúhlasovať iba v prípadoch nižšie.
+        <br><span class="bz-approver daniel">Vyššie ako 10 %: vždy Daniel Jurčík</span>
+      </div>
+    </div>
+    <div class="rec-card">
+      <div class="rc-title"><span class="rc-num">4</span>Zľava vyššia ako 10 %</div>
+      <div class="rc-why">Napr. povodňové zóny, konkurenčná ponuka, VIP klient, klient si naraz poisťuje viac nehnuteľností… Dôvod treba napísať do poznámky — schvaľuje sa individuálne podľa toho, čo klient u nás má poistené, podobne ako pri autopoistení.
+        <br><span class="bz-approver daniel">Schvaľuje: Daniel Jurčík</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body></html>

@@ -146,6 +146,10 @@ $TOOL_CATEGORIES = [
         ['href' => 'zmena-spravcu-zmluvy/', 'name' => 'Zmena správcu zmluvy', 'ico' => 'swap', 'color' => 'emerald',
          'desc' => 'Príloha 3 (UNIQA) – presný pretlač zadaných údajov na oficiálnu predlohu, až 5 zmlúv na jednu žiadosť.'],
     ]],
+    ['title' => 'Interné pravidlá', 'group' => 'uniqa', 'tools' => [
+        ['href' => 'budgetove-zlavy/', 'name' => 'Budgetové zľavy', 'ico' => 'percent', 'color' => 'amber',
+         'desc' => 'Podmienky poskytovania zliav z budgetu pri autopoistení a majetku – limity, schvaľovanie, prirážky podľa spoluúčasti.'],
+    ]],
 ];
 
 /** Slug nástroja z href ('wizard-poistenie/' -> 'wizard-poistenie') — kľúč pre disabled_tools. */
