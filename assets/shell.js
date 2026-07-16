@@ -115,7 +115,7 @@
       { key: 'nastroje', icon: ICONS.tools, href: '/nastroje.php', label: 'Nástroje', active: currentGroup === 'nastroje' },
       { key: 'formulare', icon: ICONS.formulare, href: '/formulare.php', label: 'Formuláre', active: currentGroup === 'formulare' },
       { key: 'pomocky', icon: ICONS.pomocky, href: '/pomocky.php', label: 'Pomôcky', active: currentGroup === 'pomocky' },
-      { key: 'uniqa', icon: ICONS.uniqa, href: '/uniqa-tlaciva.php', label: 'Tlačivá UNIQA', active: currentGroup === 'uniqa' },
+      { key: 'uniqa', icon: ICONS.uniqa, href: '/uniqa-tlaciva.php', label: 'UNIQA', active: currentGroup === 'uniqa' },
       { key: 'docs', icon: ICONS.docs, href: '/moje-dokumenty.php', label: 'Moje dokumenty', active: isDocs },
       { key: 'timKalendar', icon: ICONS.calendar, href: '/tim-kalendar.php', label: 'Tímový kalendár', active: isTimKalendar }
     ];

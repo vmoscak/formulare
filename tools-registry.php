@@ -52,7 +52,7 @@ $TOOL_GROUPS = [
     'nastroje'  => ['label' => 'Nástroje',  'subtitle' => 'Kalkulačky a analytické nástroje pre klienta.'],
     'formulare' => ['label' => 'Formuláre', 'subtitle' => 'Zmluvy, žiadosti, vyhlásenia a reklamácie na podpis.'],
     'pomocky'   => ['label' => 'Pomôcky',   'subtitle' => 'Kartičky a rýchle texty pre klienta na SMS/WhatsApp.'],
-    'uniqa'     => ['label' => 'Tlačivá UNIQA', 'subtitle' => 'Interné oficiálne tlačivá UNIQA – presný pretlač na predlohu.'],
+    'uniqa'     => ['label' => 'UNIQA', 'subtitle' => 'Interné oficiálne tlačivá a pravidlá UNIQA.'],
 ];
 
 // Register nástrojov. `hero` = veľká indigo karta, `color` = farba ikonového čipu.
