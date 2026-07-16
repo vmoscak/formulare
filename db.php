@@ -763,6 +763,45 @@ function dbInitSqlite(PDO $pdo): void {
         FOREIGN KEY (created_by) REFERENCES formulare_advisors(id)
     )");
     $pdo->exec("CREATE INDEX IF NOT EXISTS idx_recruit_candidates_status ON formulare_recruit_candidates(status)");
+
+    // Budgetové zľavy — pravidlá editovateľné ownerom priamo v appke (viď
+    // sql/026_budget_rules.sql pre produkčný náprotivok tejto migrácie).
+    $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_budget_rules (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        category TEXT NOT NULL,
+        title TEXT NOT NULL,
+        body TEXT NOT NULL,
+        badge_text TEXT NULL,
+        badge_color TEXT NOT NULL DEFAULT 'none',
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_budget_table_rows (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        label TEXT NOT NULL,
+        effect_text TEXT NOT NULL,
+        polarity TEXT NOT NULL DEFAULT 'neg',
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_budget_meta (
+        id INTEGER PRIMARY KEY,
+        tip_text TEXT NULL,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )");
+    $ruleCount = (int)$pdo->query('SELECT COUNT(*) FROM formulare_budget_rules')->fetchColumn();
+    if ($ruleCount === 0) {
+        $ins = $pdo->prepare('INSERT INTO formulare_budget_rules (category, title, body, badge_text, badge_color, sort_order) VALUES (?, ?, ?, ?, ?, ?)');
+        foreach (dbBudgetSeedRules() as $r) {
+            $ins->execute([$r['category'], $r['title'], $r['body'], $r['badge_text'], $r['badge_color'], $r['sort_order']]);
+        }
+        $insRow = $pdo->prepare('INSERT INTO formulare_budget_table_rows (label, effect_text, polarity, sort_order) VALUES (?, ?, ?, ?)');
+        foreach (dbBudgetSeedTableRows() as $r) {
+            $insRow->execute([$r['label'], $r['effect_text'], $r['polarity'], $r['sort_order']]);
+        }
+        $pdo->prepare('INSERT INTO formulare_budget_meta (id, tip_text) VALUES (1, ?)')
+            ->execute(['Spoluúčasť fix 400 € (320 € v autorizovanom servise) je spôsob, ako znížiť poistné pre klienta aj v prípade, že je budget minutý. V niektorých prípadoch to klient bez problémov zoberie.']);
+    }
 }
 
 /**
@@ -810,5 +849,35 @@ function dbOnboardingSeedSteps(): array {
 
         ['phase' => 'V. mesiac', 'title' => 'Príprava na maturitu', 'description' => 'Štúdium produktovej časti maturity vrátane skúšobných testov.', 'link_url' => null],
         ['phase' => 'V. mesiac', 'title' => 'Maturita', 'description' => 'Podmienka: absolvovanie všetkých školení z 0.-4. mesiaca. Overenie produktových znalostí a predajných zručností.', 'link_url' => null],
+    ];
+}
+
+/**
+ * Predvolené pravidlá Budgetových zliav — zdieľané medzi lokálnym SQLite
+ * seedom (dbInitSqlite) aj produkčnou migráciou (sql/026_budget_rules.sql
+ * má rovnaký zoznam natvrdo v SQL, keďže produkcia sa nemigruje z PHP kódu).
+ */
+function dbBudgetSeedRules(): array {
+    return [
+        ['category' => 'auto', 'title' => 'Rozsah zľavy', 'body' => 'Zľavy sa môžu poskytovať v rozsahu 5 % – 20 %.', 'badge_text' => null, 'badge_color' => 'none', 'sort_order' => 0],
+        ['category' => 'auto', 'title' => 'Zľava do 100 €', 'body' => 'Automaticky schvaľuje regionálna asistentka, pokiaľ škodovosť klienta nepresiahne 50 % (asistentka to vždy skontroluje). Ak je škodovosť vyššia, posudzuje Daniel Jurčík.', 'badge_text' => 'Asistentka · pri vyššej škodovosti Daniel Jurčík', 'badge_color' => 'both', 'sort_order' => 1],
+        ['category' => 'auto', 'title' => 'Zľava nad 100 €', 'body' => 'Vždy schvaľuje Daniel Jurčík. Do poznámky treba vždy uviesť, prečo pýtame takú zľavu a aké poistné zmluvy klient u nás má — nestačí napísať iba „viaczmluvný klient“. Dôležité je, aby mal zmluvy ako Majetok, Život, Dôchodok alebo Tempo (nie CP alebo iné auto).', 'badge_text' => 'Schvaľuje: Daniel Jurčík', 'badge_color' => 'daniel', 'sort_order' => 2],
+        ['category' => 'auto', 'title' => 'Spoluúčasť a budgetová zľava', 'body' => 'Fix 80 € (0 € spoluúčasť v autorizovanom servise) — budgetová zľava sa nebude schvaľovať. Fix 200 € — budgetová zľava sa bude schvaľovať.', 'badge_text' => null, 'badge_color' => 'none', 'sort_order' => 3],
+        ['category' => 'auto', 'title' => 'Nízke poistné na PZP', 'body' => 'Ak na PZP vychádza poistné menej ako 100 €, budgetová zľava bude zamietnutá. Netýka sa prívesných vozíkov a motocyklov.', 'badge_text' => null, 'badge_color' => 'none', 'sort_order' => 4],
+        ['category' => 'auto', 'title' => 'UW zľava pri vysokej poistnej sume', 'body' => 'Pri poistnej sume nad 100 000 € je možné opätovne požiadať o UW zľavu.', 'badge_text' => null, 'badge_color' => 'none', 'sort_order' => 5],
+        ['category' => 'majetok', 'title' => 'Maximálna zľava z budgetu', 'body' => 'Maximálna zľava z budgetu je 10 % (pokiaľ nebolo možné dať akčnú zľavu).', 'badge_text' => 'Schvaľuje: asistentka', 'badge_color' => 'asist', 'sort_order' => 0],
+        ['category' => 'majetok', 'title' => 'Súbeh s akčnou zľavou', 'body' => 'Pri použití akčnej zľavy 10 % (aktuálne prebieha kampaň) je maximálna možná budgetová zľava 5 %.', 'badge_text' => 'Schvaľuje: asistentka', 'badge_color' => 'asist', 'sort_order' => 1],
+        ['category' => 'majetok', 'title' => 'Rozsah zľavy', 'body' => 'Zľavy sa môžu poskytovať v rozsahu 5 % – 20 %. Zľavy vyššie ako 10 % sa budú odsúhlasovať iba v prípadoch nižšie.', 'badge_text' => 'Vyššie ako 10 %: vždy Daniel Jurčík', 'badge_color' => 'daniel', 'sort_order' => 2],
+        ['category' => 'majetok', 'title' => 'Zľava vyššia ako 10 %', 'body' => 'Napr. povodňové zóny, konkurenčná ponuka, VIP klient, klient si naraz poisťuje viac nehnuteľností… Dôvod treba napísať do poznámky — schvaľuje sa individuálne podľa toho, čo klient u nás má poistené, podobne ako pri autopoistení.', 'badge_text' => 'Schvaľuje: Daniel Jurčík', 'badge_color' => 'daniel', 'sort_order' => 3],
+    ];
+}
+
+function dbBudgetSeedTableRows(): array {
+    return [
+        ['label' => 'Fix 80 €', 'effect_text' => 'cca +30 % prirážka', 'polarity' => 'neg', 'sort_order' => 0],
+        ['label' => 'Fix 200 €', 'effect_text' => 'cca +17 % prirážka', 'polarity' => 'neg', 'sort_order' => 1],
+        ['label' => '5 %, max 200 €', 'effect_text' => 'cca +3 % prirážka', 'polarity' => 'neg', 'sort_order' => 2],
+        ['label' => 'Fix 400 €', 'effect_text' => 'cca −18 % (zľava z poistného, akoby zľava z budgetu)', 'polarity' => 'pos', 'sort_order' => 3],
+        ['label' => 'Spoluúčasť mladého vodiča', 'effect_text' => 'zníženie poistného o desiatky €', 'polarity' => 'pos', 'sort_order' => 4],
     ];
 }
