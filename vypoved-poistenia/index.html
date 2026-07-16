@@ -625,10 +625,9 @@ function buildLetterHtml(previewMode){
 
 function doPrint(){
   state.touched=true; render();
-  const errors=validate();
   const concl=parseDate(state.conclDate)||TODAY;
   const tooLate=state.reason==='early'&&(TODAY>addMonths(concl,2));
-  if(Object.keys(errors).length>0||tooLate) return;
+  if(tooLate) return;
   const doc=buildLetterHtml();
   const w=window.open('','_blank');
   if(!w){ showToast('Povoľ vyskakovacie okná pre tlač.', 'error'); return; }
@@ -637,10 +636,9 @@ function doPrint(){
 
 function doPDF(){
   state.touched=true; render();
-  const errors=validate();
   const concl=parseDate(state.conclDate)||TODAY;
   const tooLate=state.reason==='early'&&(TODAY>addMonths(concl,2));
-  if(Object.keys(errors).length>0||tooLate) return;
+  if(tooLate) return;
 
   const btn=$('genBtn');
   btn.textContent='Generujem\u2026'; btn.disabled=true;

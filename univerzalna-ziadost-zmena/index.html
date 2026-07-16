@@ -558,8 +558,7 @@ function buildLetterHtml(previewMode){
 =========================================================================== */
 function doPDF(){
   state.touched=true; render();
-  const errors=validate();
-  if(Object.keys(errors).length>0 || !anyChangeSelected()) return;
+  if(!anyChangeSelected()) return;
 
   const btn=$('genBtn');
   btn.textContent='Generujem…'; btn.disabled=true;
