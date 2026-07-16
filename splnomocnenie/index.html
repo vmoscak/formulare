@@ -301,9 +301,9 @@ function buildParas(){
   const aRolePart = state.aRole ? (', ' + state.aRole) : '';
   const pIdPart = state.pIdNum ? (', rodné číslo ' + state.pIdNum) : '';
 
-  const intro = 'Ja, dolu podpísaný/á ' + (state.pName||'__________') + ', nar. ' + pBirth + pIdPart
+  const intro = 'Ja, dolu podpísaný/á ' + (state.pName||'____________________') + ', nar. ' + pBirth + pIdPart
     + ', trvale bytom ' + (state.pStreet||'__________') + ', ' + (state.pZip||'__________') + ' ' + (state.pCity||'__________')
-    + ' (ďalej len „splnomocniteľ/-ka“), týmto splnomocňujem ' + (state.aName||'__________') + ', nar. ' + aBirth
+    + ' (ďalej len „splnomocniteľ/-ka“), týmto splnomocňujem ' + (state.aName||'____________________') + ', nar. ' + aBirth
     + ', trvale bytom ' + (state.aStreet||'__________') + ', ' + (state.aZip||'__________') + ' ' + (state.aCity||'__________') + aRolePart
     + ' (ďalej len „splnomocnenec/-kyňa“), aby ma zastupoval/a ' + scopeText();
 
@@ -459,18 +459,18 @@ function buildLetterHtml(previewMode){
     <div class="sig-grid">
       <div class="sig-col">
         <div class="sig-line"></div>
-        <div class="sig-name">${escapeHtml(state.pName||'__________')}</div>
+        <div class="sig-name">${escapeHtml(state.pName||'____________________')}</div>
         <div class="sig-role">splnomocniteľ/-ka</div>
       </div>
       <div class="sig-col">
         <div class="sig-line"></div>
-        <div class="sig-name">${escapeHtml(state.aName||'__________')}</div>
+        <div class="sig-name">${escapeHtml(state.aName||'____________________')}</div>
         <div class="sig-role">splnomocnenec/-kyňa – splnomocnenie prijímam</div>
       </div>
     </div>
     <div class="footer-bar">
       <table><tr>
-        <td class="fl">${escapeHtml(state.pName||'__________')}</td>
+        <td class="fl">${escapeHtml(state.pName||'____________________')}</td>
         <td class="fr">Splnomocnenie</td>
       </tr></table>
     </div>`;
@@ -552,7 +552,7 @@ function doCopy(){
   const placeDate = (state.place||'__________') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '__________');
   const txt=['SPLNOMOCNENIE','',d.intro,'',d.powersIntro]
     .concat(d.powersList.map(p=>'– '+p))
-    .concat(['', d.validity, '', placeDate, '', 'Splnomocniteľ/-ka: '+(state.pName||'__________'), 'Splnomocnenec/-kyňa: '+(state.aName||'__________')])
+    .concat(['', d.validity, '', placeDate, '', 'Splnomocniteľ/-ka: '+(state.pName||'____________________'), 'Splnomocnenec/-kyňa: '+(state.aName||'____________________')])
     .join('\n');
   try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
   const b=$('copyBtn'); b.textContent='Skopírované ✓'; setTimeout(()=>b.textContent='Kopírovať text',1600);

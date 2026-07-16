@@ -265,7 +265,7 @@ function buildParas(){
   const contractPart = state.contractNo ? (', evidovanou pod č. ' + state.contractNo) : '';
   const descPart = state.incidentDescription.trim() ? (' (' + state.incidentDescription.trim() + ')') : '';
 
-  const intro = 'Ja, dolu podpísaný/á ' + (state.name||'__________') + ', nar. ' + birth + idPart
+  const intro = 'Ja, dolu podpísaný/á ' + (state.name||'____________________') + ', nar. ' + birth + idPart
     + ', trvale bytom ' + (state.street||'__________') + ', ' + (state.zip||'__________') + ' ' + (state.city||'__________')
     + ' (ďalej len „vyhlasujúci/-a“), čestne vyhlasujem, že v súvislosti so škodovou udalosťou' + descPart
     + ', ku ktorej došlo dňa ' + incidentDate + contractPart
@@ -396,13 +396,13 @@ function buildLetterHtml(previewMode){
     <div class="sig-grid">
       <div class="sig-col">
         <div class="sig-line"></div>
-        <div class="sig-name">${escapeHtml(state.name||'__________')}</div>
+        <div class="sig-name">${escapeHtml(state.name||'____________________')}</div>
         <div class="sig-role">vyhlasujúci/-a</div>
       </div>
     </div>
     <div class="footer-bar">
       <table><tr>
-        <td class="fl">${escapeHtml(state.name||'__________')}</td>
+        <td class="fl">${escapeHtml(state.name||'____________________')}</td>
         <td class="fr">Čestné prehlásenie</td>
       </tr></table>
     </div>`;
@@ -486,7 +486,7 @@ function doCopy(){
   const ins = insurerInfo();
   const txt=['ČESTNÉ PREHLÁSENIE','','Predkladá sa: '+ins.name,'',d.intro]
     .concat(d.otherPara?[d.otherPara]:[])
-    .concat([d.warning,'',placeDate,'','Vyhlasujúci/-a: '+(state.name||'__________')])
+    .concat([d.warning,'',placeDate,'','Vyhlasujúci/-a: '+(state.name||'____________________')])
     .join('\n');
   try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
   const b=$('copyBtn'); b.textContent='Skopírované ✓'; setTimeout(()=>b.textContent='Kopírovať text',1600);

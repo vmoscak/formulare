@@ -492,7 +492,7 @@ function buildLetterData(){
   const endDate = fmt(endEff);
   const ins = INSURERS[state.insurer];
   return {
-    name:state.name||'__________', street:state.street||'__________', zipCity:(state.zip||'___')+' '+(state.city||'__________'),
+    name:state.name||'____________________', street:state.street||'__________', zipCity:(state.zip||'___')+' '+(state.city||'__________'),
     insName:ins.name, insStreet:ins.street, insZipCity:ins.zip+' '+ins.city,
     placeDate:(state.city||'__________')+', '+fmt(TODAY),
     subject:'Vec: Výpoveď poistnej zmluvy č. '+(state.contract||'__________'),
