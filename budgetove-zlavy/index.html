@@ -27,12 +27,14 @@
   .bz-table tr:last-child td{border-bottom:none;}
   .bz-table .neg{color:var(--rose); font-weight:600;}
   .bz-table .pos{color:var(--good); font-weight:600;}
-  .bz-divider{height:1px; background:var(--border); margin:0 0 26px;}
+  .bz-cols{display:grid; grid-template-columns:1fr 1fr; gap:36px; align-items:start;}
+  .bz-col{min-width:0;}
+  @media(max-width:760px){.bz-cols{grid-template-columns:1fr; gap:0;} .bz-col + .bz-col{margin-top:28px;}}
 </style>
 </head>
 <body>
 
-<div class="app">
+<div class="app" style="max-width:1080px;">
   <div class="head">
     <div class="head-left">
       <a href="../uniqa-tlaciva.php" class="back-btn" title="Späť na UNIQA">
@@ -49,6 +51,9 @@
   </div>
 
   <p class="bz-updated">Aktualizované: 16. 7. 2026 · zdroj: interná sumarizácia UNIQA</p>
+
+  <div class="bz-cols">
+  <div class="bz-col">
 
   <div class="bz-section-title">
     <span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="7" r="4"/><circle cx="17" cy="17" r="4"/><line x1="19" y1="5" x2="5" y2="19"/></svg></span>
@@ -105,7 +110,8 @@
     <b>Tip — fix 400 €:</b> spoluúčasť fix 400 € (320 € v autorizovanom servise) je spôsob, ako znížiť poistné pre klienta aj v prípade, že je budget minutý. V niektorých prípadoch to klient bez problémov zoberie.
   </div>
 
-  <div class="bz-divider"></div>
+  </div>
+  <div class="bz-col">
 
   <div class="bz-section-title">
     <span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9"/></svg></span>
@@ -136,6 +142,9 @@
         <br><span class="bz-approver daniel">Schvaľuje: Daniel Jurčík</span>
       </div>
     </div>
+  </div>
+
+  </div>
   </div>
 
 </div>
