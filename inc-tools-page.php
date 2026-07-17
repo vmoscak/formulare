@@ -87,6 +87,13 @@ $arrow = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="cu
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/assets/icon-192.png">
+<link rel="manifest" href="/assets/manifest.json">
+<meta name="theme-color" content="#4f46e5">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Portál">
 <title>Portál — <?= htmlspecialchars($groupMeta['label']) ?></title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -114,8 +121,9 @@ $arrow = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="cu
 
   <div class="page-head">
     <div class="kicker">Pracovný pult</div>
-    <h2>Dobrý deň, <?= htmlspecialchars(explode(' ', $me['name'])[0]) ?></h2>
-    <p>Máš pripravených <?= array_sum(array_map(fn($c) => count($c['tools']), $categories)) ?> nástrojov v <?= count($categories) ?> kategóriách.</p>
+    <h2>Ahoj, <?= htmlspecialchars(explode(' ', $me['name'])[0]) ?></h2>
+    <?php $toolCount = array_sum(array_map(fn($c) => count($c['tools']), $categories)); ?>
+    <p>Máš <?= toolCountPhrase($toolCount) ?> <?= categoryCountPhrase(count($categories)) ?>.</p>
   </div>
 
   <?php if ($flowTools): ?>
@@ -153,6 +161,7 @@ $arrow = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="cu
           <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
         </button>
         <a class="tool-card c-<?= htmlspecialchars($t['color']) ?>" href="<?= htmlspecialchars($t['href']) ?>">
+          <?php if (toolIsNew($t)): ?><span class="tool-new-badge">Nové</span><?php endif; ?>
           <span class="ic"><?= toolIco($t['ico']) ?></span>
           <h4><?= htmlspecialchars($t['name']) ?></h4>
           <p><?= htmlspecialchars($t['desc']) ?></p>

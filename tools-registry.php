@@ -150,11 +150,31 @@ $TOOL_CATEGORIES = [
         ['href' => 'budgetove-zlavy/', 'name' => 'Budgetové zľavy', 'ico' => 'percent', 'color' => 'amber',
          'desc' => 'Podmienky poskytovania zliav z budgetu pri autopoistení a majetku – limity, schvaľovanie, prirážky podľa spoluúčasti.'],
         ['href' => 'model-zapracovania/', 'name' => 'Model zapracovania 2026', 'ico' => 'trending', 'color' => 'sky',
-         'desc' => 'Dodatková provízia, produkčné body a statusy agentov (FIT/STD/TOP) – kritériá, sumy a kde si pozrieť aktuálny stav.'],
+         'desc' => 'Dodatková provízia, produkčné body a statusy agentov (FIT/STD/TOP) – kritériá, sumy a kde si pozrieť aktuálny stav.',
+         'added' => '2026-07-17'],
     ]],
 ];
 
 /** Slug nástroja z href ('wizard-poistenie/' -> 'wizard-poistenie') — kľúč pre disabled_tools. */
 function toolSlug(string $href): string {
     return rtrim($href, '/');
+}
+
+/** "pripravený 1 nástroj" / "pripravené 3 nástroje" / "pripravených 13 nástrojov" — sloven. skloňovanie. */
+function toolCountPhrase(int $n): string {
+    if ($n === 1) return "pripravený $n nástroj";
+    if ($n >= 2 && $n <= 4) return "pripravené $n nástroje";
+    return "pripravených $n nástrojov";
+}
+
+/** "v 1 kategórii" / "v 3 kategóriách" — lokál množného čísla sa nemení podľa počtu, len singulár je iný. */
+function categoryCountPhrase(int $n): string {
+    return $n === 1 ? "v $n kategórii" : "v $n kategóriách";
+}
+
+/** Badge "NOVÉ" na karte — nástroj má voliteľný kľúč 'added' (dátum pridania do registra). */
+function toolIsNew(array $t): bool {
+    if (empty($t['added'])) return false;
+    $added = strtotime($t['added']);
+    return $added !== false && $added >= strtotime('-14 days');
 }

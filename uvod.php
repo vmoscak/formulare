@@ -61,9 +61,20 @@ foreach ($favoriteSlugs as $slug) {
 $searchData = [];
 foreach ($allToolsFlat as $slug => $t) {
     $searchData[] = [
-        'name' => $t['name'], 'desc' => $t['desc'], 'href' => $t['href'],
+        'name' => $t['name'], 'desc' => $t['desc'], 'href' => $t['href'], 'slug' => $slug,
         'group' => $TOOL_GROUPS[$t['group']]['label'] ?? '',
+        'fav' => in_array($slug, $favoriteSlugs, true),
     ];
+}
+
+// Odporúčané nástroje na rýchly štart, kým si poradca nevytvorí vlastné
+// Obľúbené — ručne vybraný prierez naprieč skupinami, nie automatika.
+$RECOMMENDED_SLUGS = ['wizard-poistenie', 'splnomocnenie', 'checklisty-skody', 'prvych-30-dni'];
+$recommendedTools = [];
+if (!$favoriteTools) {
+    foreach ($RECOMMENDED_SLUGS as $slug) {
+        if (isset($allToolsFlat[$slug])) $recommendedTools[] = $allToolsFlat[$slug] + ['slug' => $slug];
+    }
 }
 
 
@@ -119,6 +130,12 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/assets/icon-192.png">
+<link rel="manifest" href="/assets/manifest.json">
+<meta name="theme-color" content="#4f46e5">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Portál">
 <title>Portál — Domov</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -129,7 +146,7 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
 <header class="topbar">
   <div class="tb-title">
     <h1>Ahoj, <?= h(explode(' ', $me['name'])[0]) ?></h1>
-    <p>Prehľad noviniek a rýchly vstup do appky</p>
+    <p><?= $news ? 'Prehľad noviniek a rýchly vstup do appky' : 'Rýchly vstup do appky a tvoje obľúbené nástroje' ?></p>
   </div>
   <div class="tb-actions">
     <a class="pillbtn" href="/moje-dokumenty.php">Moje dokumenty</a>
@@ -186,6 +203,7 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
       <div class="dom-search-wrap">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input type="search" id="domSearchInput" placeholder="Hľadaj nástroj podľa názvu alebo popisu…" autocomplete="off">
+        <kbd class="dom-search-kbd">/</kbd>
       </div>
 
       <div id="domSearchResults" class="search-results" hidden></div>
@@ -221,6 +239,28 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
             <a class="pillbtn" href="/pomocky.php">Pomôcky</a>
           </div>
         </div>
+        <?php if ($recommendedTools): ?>
+        <div id="domRecommended">
+          <div class="section-head"><h3>Odporúčané na štart</h3></div>
+          <div class="tool-grid">
+            <?php foreach ($recommendedTools as $t): ?>
+            <div class="tool-card-wrap">
+              <button type="button" class="fav-star" data-slug="<?= h($t['slug']) ?>" onclick="bzToggleFav(this)" title="Obľúbené" aria-label="Obľúbené">
+                <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              </button>
+              <a class="tool-card c-<?= h($t['color']) ?>" href="<?= h($t['href']) ?>">
+                <span class="ic"><?= toolIco($t['ico']) ?></span>
+                <h4><?= h($t['name']) ?></h4>
+                <p><?= h($t['desc']) ?></p>
+                <span class="go">Otvoriť
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </span>
+              </a>
+            </div>
+            <?php endforeach; ?>
+          </div>
+        </div>
+        <?php endif; ?>
       </div>
     </div>
 
@@ -265,13 +305,30 @@ function domEscape(s) {
   return d.innerHTML;
 }
 
+// Diakritika sa pri rýchlom písaní často vynecháva ("vypoved" má nájsť aj
+// "Výpoveď") — porovnávame aj triedime podľa tejto zjednodušenej formy.
+var DOM_DIACRITIC_RE = /[\u0300-\u036f]/g;
+function domNormalize(s) {
+  return (s || '').toString().normalize('NFD').replace(DOM_DIACRITIC_RE, '').toLowerCase();
+}
+
+// Zvýrazní nájdenú zhodu v pôvodnom (neupravenom) texte — normalizácia
+// diakritiky cez NFD zachováva dĺžku reťazca, takže index z normalizovanej
+// verzie sedí aj v origináli.
+function domHighlight(original, normQuery) {
+  var normOriginal = domNormalize(original);
+  var i = normOriginal.indexOf(normQuery);
+  if (i === -1) return domEscape(original);
+  return domEscape(original.slice(0, i)) + '<mark>' + domEscape(original.slice(i, i + normQuery.length)) + '</mark>' + domEscape(original.slice(i + normQuery.length));
+}
+
 (function () {
   var input = document.getElementById('domSearchInput');
   var results = document.getElementById('domSearchResults');
   var favSection = document.getElementById('domFavSection');
   if (!input) return;
   input.addEventListener('input', function () {
-    var q = input.value.trim().toLowerCase();
+    var q = domNormalize(input.value.trim());
     if (!q) {
       results.hidden = true;
       favSection.style.display = '';
@@ -280,20 +337,48 @@ function domEscape(s) {
     favSection.style.display = 'none';
     results.hidden = false;
     var matches = DOM_ALL_TOOLS.filter(function (t) {
-      return t.name.toLowerCase().indexOf(q) !== -1 || t.desc.toLowerCase().indexOf(q) !== -1;
+      return domNormalize(t.name).indexOf(q) !== -1 || domNormalize(t.desc).indexOf(q) !== -1;
     });
     if (!matches.length) {
       results.innerHTML = '<div class="empty-state"><span class="es-title">Nič sa nenašlo</span><span class="es-sub">Skús iné slovo.</span></div>';
       return;
     }
     results.innerHTML = matches.map(function (t) {
-      return '<a class="search-result-item" href="' + t.href + '">' +
+      return '<div class="search-result-item">' +
+        '<button type="button" class="fav-star' + (t.fav ? ' is-fav' : '') + '" data-slug="' + domEscape(t.slug) + '" onclick="bzToggleFav(this)" title="Obľúbené" aria-label="Obľúbené">' +
+        '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></button>' +
+        '<a class="sri-link" href="' + t.href + '">' +
         '<span class="sri-group">' + domEscape(t.group) + '</span>' +
-        '<b>' + domEscape(t.name) + '</b>' +
-        '<span class="sri-desc">' + domEscape(t.desc) + '</span></a>';
+        '<b>' + domHighlight(t.name, q) + '</b>' +
+        '<span class="sri-desc">' + domHighlight(t.desc, q) + '</span></a></div>';
     }).join('');
   });
+
+  // "/" alebo Ctrl+K odkiaľkoľvek na Domove skočí do vyhľadávania — bežná
+  // skratka (napr. GitHub, Slack), nech sa netreba naň klikať myšou.
+  document.addEventListener('keydown', function (e) {
+    var tag = (document.activeElement && document.activeElement.tagName) || '';
+    var typing = tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement.isContentEditable;
+    if (e.key === '/' && !typing) {
+      e.preventDefault();
+      input.focus();
+    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      input.focus();
+      input.select();
+    }
+  });
 })();
+
+function bzToggleFav(btn) {
+  var slug = btn.dataset.slug;
+  btn.classList.toggle('is-fav');
+  fetch('/api/toggle-favorite.php', {
+    method: 'POST', credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slug: slug })
+  }).catch(function () { btn.classList.toggle('is-fav'); });
+}
 
 function bzUnfavorite(btn) {
   var slug = btn.dataset.slug;

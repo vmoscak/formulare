@@ -45,6 +45,10 @@ function advisorInitials(string $name): string {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/assets/icon-192.png">
+<link rel="manifest" href="/assets/manifest.json">
+<meta name="theme-color" content="#4f46e5">
 <title>Moje dokumenty</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -70,10 +74,16 @@ function advisorInitials(string $name): string {
 
   <div class="card">
     <h3>Vygenerované dokumenty · posledných 200</h3>
+    <?php if ($docs): ?>
+    <div class="dom-search-wrap" style="max-width:360px; margin-bottom:14px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="search" id="docFilterInput" placeholder="Hľadaj podľa klienta alebo nástroja…" autocomplete="off">
+    </div>
+    <?php endif; ?>
     <table>
       <tr><th>Klient</th><th>Nástroj</th><th>Zdroj</th><th>Kedy</th><th></th></tr>
       <?php foreach ($docs as $d): ?>
-      <tr>
+      <tr data-filter="<?= h($d['client_label'] . ' ' . toolLabel($d['tool'])) ?>">
         <td><span class="strong"><?= h($d['client_label']) ?></span></td>
         <td><?= h(toolLabel($d['tool'])) ?></td>
         <td><?= $d['source'] === 'client' ? 'klient' : 'poradca' ?></td>
@@ -93,6 +103,10 @@ function advisorInitials(string $name): string {
         <span class="es-sub">Vygenerované PDF sa tu objavia automaticky, hneď ako si nejaké stiahneš z niektorého nástroja.</span>
       </div></td></tr><?php endif; ?>
     </table>
+    <div class="empty-state" id="docFilterEmpty" hidden>
+      <span class="es-title">Nič sa nenašlo</span>
+      <span class="es-sub">Skús iné meno alebo nástroj.</span>
+    </div>
   </div>
 
   <div class="card">
@@ -117,5 +131,26 @@ function advisorInitials(string $name): string {
 
 </main>
 
+<script>
+(function () {
+  var input = document.getElementById('docFilterInput');
+  if (!input) return;
+  var rows = Array.prototype.slice.call(document.querySelectorAll('tr[data-filter]'));
+  var empty = document.getElementById('docFilterEmpty');
+  function normalize(s) {
+    return (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  }
+  input.addEventListener('input', function () {
+    var q = normalize(input.value.trim());
+    var visible = 0;
+    rows.forEach(function (row) {
+      var match = !q || normalize(row.dataset.filter).indexOf(q) !== -1;
+      row.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+    if (empty) empty.hidden = visible !== 0 || !q;
+  });
+})();
+</script>
 <script src="/assets/shell.js?v=20"></script>
 </body></html>
