@@ -804,6 +804,18 @@ function dbInitSqlite(PDO $pdo): void {
         $pdo->prepare('INSERT INTO formulare_budget_meta (id, tip_text) VALUES (1, ?)')
             ->execute(['Spoluúčasť fix 400 € (320 € v autorizovanom servise) je spôsob, ako znížiť poistné pre klienta aj v prípade, že je budget minutý. V niektorých prípadoch to klient bez problémov zoberie.']);
     }
+
+    // Model zapracovania — mesačný tracker statusu (FIT/STD/TOP) za mesiace
+    // 6.–24., na výpočet kvartálneho doplatku DP v Ceste nováčika.
+    $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_mz_status (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        advisor_id INTEGER NOT NULL,
+        month_number INTEGER NOT NULL,
+        status TEXT NOT NULL,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(advisor_id, month_number),
+        FOREIGN KEY (advisor_id) REFERENCES formulare_advisors(id)
+    )");
 }
 
 /**
@@ -858,28 +870,8 @@ function dbOnboardingSeedSteps(): array {
         ['phase' => 'VI.–XII. mesiac', 'title' => 'Priebežný status a dodatková provízia', 'description' => 'DP podľa statusu: FIT 500 € · STD 750 € · TOP 1 000 € mesačne (7.–12. mesiac MZ). Pozri si aktuálny status a podrobnosti v Modeli zapracovania.', 'link_url' => '/model-zapracovania/'],
         ['phase' => 'VI.–XII. mesiac', 'title' => 'Skúška MATURITA — termíny', 'description' => 'Ak si MATURITU nezložil do konca 6. mesiaca, DP za 7.–12. mesiac sa kráti o 50 %. Ak nie ani do konca 9. mesiaca, nasleduje automatické trvalé vyradenie z Modelu zapracovania.', 'link_url' => null],
         ['phase' => 'VI.–XII. mesiac', 'title' => 'Vrátenie DP pri ukončení zmluvy', 'description' => 'Ak zmluvu o obchodnom zastúpení ukončíš v tomto období (7.–24. mesiac MZ), vraciaš 50 % vyplatenej DP za posledných 12 mesiacov.', 'link_url' => null],
-        ['phase' => 'VI.–XII. mesiac', 'title' => 'Kvartálny doplatok DP — ako funguje', 'description' => 'MZ sa vyhodnocuje aj kumulatívne po každých 3 mesiacoch. Ak niektorý mesiac kvartálu dosiahneš nižší status, ale v poslednom mesiaci kvartálu vyšší, doplatia ti rozdiel DP za celý kvartál — podľa statusu dosiahnutého v treťom mesiaci.', 'link_url' => null],
-        ['phase' => 'VI.–XII. mesiac', 'title' => '6. mesiac — kvartál sa uzatvára', 'description' => 'Posledný mesiac tohto kvartálu. Ak dosiahneš vyšší status ako v predošlých dvoch mesiacoch, doplatia ti rozdiel za celý kvartál — napr. z FIT na TOP môže znamenať až 1 000 € navyše.', 'link_url' => null],
-        ['phase' => 'VI.–XII. mesiac', 'title' => '7. mesiac — zaznamenaj dosiahnutý status', 'description' => 'Na konci mesiaca si zaznamenaj dosiahnutý status (FIT/STD/TOP).', 'link_url' => null],
-        ['phase' => 'VI.–XII. mesiac', 'title' => '8. mesiac — zaznamenaj dosiahnutý status', 'description' => 'Na konci mesiaca si zaznamenaj dosiahnutý status (FIT/STD/TOP).', 'link_url' => null],
-        ['phase' => 'VI.–XII. mesiac', 'title' => '9. mesiac — kvartál sa uzatvára', 'description' => 'Posledný mesiac tohto kvartálu. Ak dosiahneš vyšší status ako v predošlých dvoch mesiacoch, doplatia ti rozdiel za celý kvartál — napr. z FIT na TOP môže znamenať až 1 000 € navyše.', 'link_url' => null],
-        ['phase' => 'VI.–XII. mesiac', 'title' => '10. mesiac — zaznamenaj dosiahnutý status', 'description' => 'Na konci mesiaca si zaznamenaj dosiahnutý status (FIT/STD/TOP).', 'link_url' => null],
-        ['phase' => 'VI.–XII. mesiac', 'title' => '11. mesiac — zaznamenaj dosiahnutý status', 'description' => 'Na konci mesiaca si zaznamenaj dosiahnutý status (FIT/STD/TOP).', 'link_url' => null],
-        ['phase' => 'VI.–XII. mesiac', 'title' => '12. mesiac — kvartál sa uzatvára', 'description' => 'Posledný mesiac tohto kvartálu. Ak dosiahneš vyšší status ako v predošlých dvoch mesiacoch, doplatia ti rozdiel za celý kvartál — napr. z FIT na TOP môže znamenať až 1 000 € navyše.', 'link_url' => null],
         ['phase' => 'XIII.–XXIV. mesiac', 'title' => 'Priebežný status a dodatková provízia', 'description' => 'DP podľa statusu: FIT 300 € · STD 500 € · TOP 700 € mesačne (13.–24. mesiac MZ). Pozri si aktuálny status a podrobnosti v Modeli zapracovania.', 'link_url' => '/model-zapracovania/'],
         ['phase' => 'XIII.–XXIV. mesiac', 'title' => 'Posledná šanca na MATURITU', 'description' => 'Ak program adaptácie a skúšku MATURITA nezložíš do konca 13. mesiaca od nástupu, spolupráca sa ukončuje.', 'link_url' => null],
-        ['phase' => 'XIII.–XXIV. mesiac', 'title' => '13. mesiac — zaznamenaj dosiahnutý status', 'description' => 'Na konci mesiaca si zaznamenaj dosiahnutý status (FIT/STD/TOP).', 'link_url' => null],
-        ['phase' => 'XIII.–XXIV. mesiac', 'title' => '14. mesiac — zaznamenaj dosiahnutý status', 'description' => 'Na konci mesiaca si zaznamenaj dosiahnutý status (FIT/STD/TOP).', 'link_url' => null],
-        ['phase' => 'XIII.–XXIV. mesiac', 'title' => '15. mesiac — kvartál sa uzatvára', 'description' => 'Posledný mesiac tohto kvartálu. Ak dosiahneš vyšší status ako v predošlých dvoch mesiacoch, doplatia ti rozdiel za celý kvartál — napr. z FIT na TOP môže znamenať až 800 € navyše.', 'link_url' => null],
-        ['phase' => 'XIII.–XXIV. mesiac', 'title' => '16. mesiac — zaznamenaj dosiahnutý status', 'description' => 'Na konci mesiaca si zaznamenaj dosiahnutý status (FIT/STD/TOP).', 'link_url' => null],
-        ['phase' => 'XIII.–XXIV. mesiac', 'title' => '17. mesiac — zaznamenaj dosiahnutý status', 'description' => 'Na konci mesiaca si zaznamenaj dosiahnutý status (FIT/STD/TOP).', 'link_url' => null],
-        ['phase' => 'XIII.–XXIV. mesiac', 'title' => '18. mesiac — kvartál sa uzatvára', 'description' => 'Posledný mesiac tohto kvartálu. Ak dosiahneš vyšší status ako v predošlých dvoch mesiacoch, doplatia ti rozdiel za celý kvartál — napr. z FIT na TOP môže znamenať až 800 € navyše.', 'link_url' => null],
-        ['phase' => 'XIII.–XXIV. mesiac', 'title' => '19. mesiac — zaznamenaj dosiahnutý status', 'description' => 'Na konci mesiaca si zaznamenaj dosiahnutý status (FIT/STD/TOP).', 'link_url' => null],
-        ['phase' => 'XIII.–XXIV. mesiac', 'title' => '20. mesiac — zaznamenaj dosiahnutý status', 'description' => 'Na konci mesiaca si zaznamenaj dosiahnutý status (FIT/STD/TOP).', 'link_url' => null],
-        ['phase' => 'XIII.–XXIV. mesiac', 'title' => '21. mesiac — kvartál sa uzatvára', 'description' => 'Posledný mesiac tohto kvartálu. Ak dosiahneš vyšší status ako v predošlých dvoch mesiacoch, doplatia ti rozdiel za celý kvartál — napr. z FIT na TOP môže znamenať až 800 € navyše.', 'link_url' => null],
-        ['phase' => 'XIII.–XXIV. mesiac', 'title' => '22. mesiac — zaznamenaj dosiahnutý status', 'description' => 'Na konci mesiaca si zaznamenaj dosiahnutý status (FIT/STD/TOP).', 'link_url' => null],
-        ['phase' => 'XIII.–XXIV. mesiac', 'title' => '23. mesiac — zaznamenaj dosiahnutý status', 'description' => 'Na konci mesiaca si zaznamenaj dosiahnutý status (FIT/STD/TOP).', 'link_url' => null],
-        ['phase' => 'XIII.–XXIV. mesiac', 'title' => '24. mesiac — posledný mesiac MZ', 'description' => 'Posledný mesiac Modelu zapracovania. Ak dosiahneš vyšší status ako v predošlých dvoch mesiacoch, doplatia ti rozdiel za celý kvartál — napr. z FIT na TOP môže znamenať až 800 € navyše.', 'link_url' => null],
     ];
 }
 
