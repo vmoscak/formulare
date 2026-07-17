@@ -149,6 +149,8 @@ $TOOL_CATEGORIES = [
     ['title' => 'Interné pravidlá', 'group' => 'uniqa', 'tools' => [
         ['href' => 'budgetove-zlavy/', 'name' => 'Budgetové zľavy', 'ico' => 'percent', 'color' => 'amber',
          'desc' => 'Podmienky poskytovania zliav z budgetu pri autopoistení a majetku – limity, schvaľovanie, prirážky podľa spoluúčasti.'],
+        ['href' => 'model-zapracovania/', 'name' => 'Model zapracovania 2026', 'ico' => 'trending', 'color' => 'sky',
+         'desc' => 'Dodatková provízia, produkčné body a statusy agentov (FIT/STD/TOP) – kritériá, sumy a kde si pozrieť aktuálny stav.'],
     ]],
 ];
 
