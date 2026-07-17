@@ -156,6 +156,11 @@
               <input type="date" id="beneficiaryBirth">
               <span class="err">Zadaj dátum narodenia</span>
             </div>
+            <div class="field" data-k="beneficiaryBirthCert">
+              <label>RODNÉ ČÍSLO <span style="font-weight:500;text-transform:none;">(nepovinné)</span></label>
+              <input id="beneficiaryBirthCert" placeholder="000000/0000">
+              <span class="err"></span>
+            </div>
             <div class="field" data-k="beneficiaryRelation">
               <label>VZŤAH K POISTNÍKOVI/-ČKE</label>
               <input id="beneficiaryRelation" placeholder="napr. manžel/-ka, dieťa, rodič…">
@@ -314,7 +319,7 @@ const state = {
   contractNo:'',
   newName:'', newIdNum:'', newBirthCert:'',
   addressType:'trvala', newStreet:'', newZip:'', newCity:'',
-  beneficiaryName:'', beneficiaryBirth:'', beneficiaryRelation:'', beneficiaryShare:'',
+  beneficiaryName:'', beneficiaryBirth:'', beneficiaryBirthCert:'', beneficiaryRelation:'', beneficiaryShare:'',
   name:'', street:'', zip:'', city:'', phone:'', email:'',
   signPlace:'', signDate: toISO(TODAY),
   touched:false,
@@ -356,8 +361,9 @@ function buildParas(){
   }
   if(state.changes.beneficiary){
     const sharePart = state.beneficiaryShare ? (', s podielom na plnení ' + state.beneficiaryShare + ' %') : '';
+    const benRcPart = state.beneficiaryBirthCert.trim() ? (', rodné číslo ' + state.beneficiaryBirthCert.trim()) : '';
     paras.push('Zmena oprávnenej osoby: novou oprávnenou osobou na výplatu poistného plnenia je '
-      + (state.beneficiaryName||'____________________') + ', nar. ' + (parseDate(state.beneficiaryBirth) ? fmt(parseDate(state.beneficiaryBirth)) : '__________')
+      + (state.beneficiaryName||'____________________') + ', nar. ' + (parseDate(state.beneficiaryBirth) ? fmt(parseDate(state.beneficiaryBirth)) : '__________') + benRcPart
       + ', vzťah k poistníkovi/-čke: ' + (state.beneficiaryRelation||'__________') + sharePart + '.');
   }
 
@@ -433,7 +439,7 @@ function renderControls(){
 
 function syncInputs(){
   ['contractNo','newName','newIdNum','newBirthCert','addressType','newStreet','newZip','newCity',
-   'beneficiaryName','beneficiaryBirth','beneficiaryRelation','beneficiaryShare',
+   'beneficiaryName','beneficiaryBirth','beneficiaryBirthCert','beneficiaryRelation','beneficiaryShare',
    'name','zip','city','phone','email','signPlace','signDate']
     .forEach(k=>{ if($(k)) $(k).value = state[k]; });
 }
@@ -614,7 +620,7 @@ function doReset(){
     contractNo:'',
     newName:'', newIdNum:'', newBirthCert:'',
     addressType:'trvala', newStreet:'', newZip:'', newCity:'',
-    beneficiaryName:'', beneficiaryBirth:'', beneficiaryRelation:'', beneficiaryShare:'',
+    beneficiaryName:'', beneficiaryBirth:'', beneficiaryBirthCert:'', beneficiaryRelation:'', beneficiaryShare:'',
     name:'', street:'', zip:'', city:'', phone:'', email:'',
     signPlace:'', signDate: toISO(TODAY), touched:false,
   });
@@ -671,7 +677,7 @@ function bind(){
   });
 
   ['contractNo','newName','newIdNum','newBirthCert','newZip','newCity',
-   'beneficiaryName','beneficiaryBirth','beneficiaryRelation','beneficiaryShare',
+   'beneficiaryName','beneficiaryBirth','beneficiaryBirthCert','beneficiaryRelation','beneficiaryShare',
    'name','zip','city','phone','email','signPlace','signDate'].forEach(k=>{
     if($(k)) $(k).addEventListener('input', e=>{ state[k]=e.target.value; render(); });
   });
