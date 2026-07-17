@@ -24,6 +24,8 @@
   .mz-table td.wrap{white-space:normal; min-width:220px;}
   .mz-table-coef{table-layout:fixed;}
   .mz-table-coef th, .mz-table-coef td, .mz-table-coef td.num{text-align:center;}
+  .mz-table-status th, .mz-table-status td{padding:9px 8px; font-size:12.5px;}
+  .mz-table-status td.wrap{min-width:150px;}
   .mz-note{font-size:12px; color:var(--muted); margin:-10px 0 22px; line-height:1.5;}
   .mz-shots{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:0 0 10px;}
   .mz-shots img{width:100%; border:1px solid var(--border); border-radius:var(--radius-lg); display:block;}
@@ -132,8 +134,8 @@
     <h2>Statusy agentov (priebežne, aj mimo MZ)</h2>
   </div>
   <div class="mz-table-wrap">
-    <table class="mz-table">
-      <thead><tr><th>Status</th><th>PB spolu</th><th>z toho osoby</th><th>z toho neživotné</th><th>PB bez rozdielu branží</th><th>Produkčný bonus</th></tr></thead>
+    <table class="mz-table mz-table-status">
+      <thead><tr><th>Status</th><th>PB spolu</th><th>z toho osoby</th><th>z toho neživotné</th><th>PB (bez rozdielu)</th><th>Bonus</th></tr></thead>
       <tbody>
         <tr><td>UNIQA TOP</td><td class="num">53 340</td><td class="num">17 820</td><td class="num">13 380</td><td class="num">89 220</td><td class="num">15 %</td></tr>
         <tr><td>UNIQA STD</td><td class="num">35 520</td><td class="num">13 320</td><td class="num">9 840</td><td class="num">60 960</td><td class="num">10 %</td></tr>
