@@ -215,7 +215,10 @@ body.rail-scrolled .topbar{box-shadow:var(--shadow-md);}
   .tool-grid .tool-card:nth-child(n+5){animation-delay:.18s;}
 }
 @keyframes cardIn{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
-.tool-card-wrap{position:relative;}
+/* display:grid natiahne kartu (jediné dieťa v toku — hviezdička je absolute)
+   na plnú výšku wrapu, takže karty v jednom rade mriežky sú vždy rovnako
+   vysoké bez ohľadu na dĺžku popisu. */
+.tool-card-wrap{position:relative; display:grid;}
 .tool-new-badge{align-self:flex-start; font-size:10px; font-weight:700; text-transform:uppercase;
   letter-spacing:.04em; color:#fff; background:var(--good); padding:2px 8px; border-radius:999px; margin-bottom:-4px;}
 .fav-star{
@@ -543,11 +546,18 @@ td .strong{font-weight:600; color:var(--ink);}
 .fav-empty-cta{display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; justify-content:center;}
 
 @media (max-width:720px){
-  .topbar{padding:14px 18px;}
+  .topbar{padding:14px 18px; flex-wrap:wrap; row-gap:10px;}
+  .topbar .tb-actions{flex-wrap:wrap; row-gap:8px;}
+  /* Meno vedľa iniciálok sa na úzkej obrazovke nezmestí (topbar pretekal
+     cez okraj) — ostáva len farebné koliesko s iniciálkami. */
+  .topbar .who b{display:none;}
+  .topbar .who{padding:4px;}
   .content{padding:22px 18px 48px;}
   .add-form{grid-template-columns:1fr;}
   .card{overflow-x:auto;}
   .tools-grid{grid-template-columns:1fr;}
+  /* Klávesová skratka "/" nemá na dotykovej obrazovke zmysel. */
+  .dom-search-kbd{display:none;}
 
   /* Tabuľky (napr. admin.php) sa na mobile nedajú čítať v pôvodnej forme
      (deväť stĺpcov, akčné tlačidlá mimo obrazovky) — každý riadok sa

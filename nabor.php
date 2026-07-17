@@ -131,7 +131,7 @@ function qs(array $overrides): string {
 <title>Register a mapa (NBS) — Nábor</title>
 <link rel="stylesheet" href="/assets/fonts.css">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=27">
+<link rel="stylesheet" href="/assets/panel.css?v=28">
 </head><body>
 <header class="topbar">
   <div class="tb-title">

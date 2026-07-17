@@ -52,7 +52,7 @@ function daysAgo(?string $dt, DateTimeImmutable $now): ?int {
 <title>Tímový prehľad</title>
 <link rel="stylesheet" href="/assets/fonts.css">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=27">
+<link rel="stylesheet" href="/assets/panel.css?v=28">
 <style>
   .tp-who{display:flex; align-items:center; gap:10px;}
   .tp-ini{width:32px; height:32px; border-radius:50%; color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; flex-shrink:0;}

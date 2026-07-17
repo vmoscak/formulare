@@ -91,7 +91,7 @@ $joinedCount = $statusCounts['pripojil'] ?? 0;
 <title>Kandidáti na nábor</title>
 <link rel="stylesheet" href="/assets/fonts.css">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=27">
+<link rel="stylesheet" href="/assets/panel.css?v=28">
 <style>
   .rk-status{display:inline-flex; align-items:center; font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px;}
   .rk-status.neutral{background:var(--desk); color:var(--muted);}

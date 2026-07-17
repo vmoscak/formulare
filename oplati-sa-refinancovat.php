@@ -32,7 +32,7 @@ try {
 <link rel="stylesheet" href="/assets/fonts.css">
 <script src="/assets/theme-init.js"></script>
 <script src="/assets/toast.js?v=1"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=27">
+<link rel="stylesheet" href="/assets/panel.css?v=28">
 <style>
   .rf-verdict{margin-top:16px; padding:16px 18px; border-radius:var(--radius-lg); font-weight:700; font-size:14.5px;}
   .rf-verdict.good{background:var(--good-soft,#ecfdf5); color:var(--good,#059669);}

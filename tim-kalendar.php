@@ -141,7 +141,7 @@ $editAssigneeIds = $editEventId ? ($assigneesByEvent[$editEventId] ?? []) : [];
 <title>Tímový kalendár</title>
 <link rel="stylesheet" href="/assets/fonts.css">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=27">
+<link rel="stylesheet" href="/assets/panel.css?v=28">
 <style>
   .cal-nav{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
   .cal-nav h3{margin:0; font-size:16px; text-transform:capitalize;}

@@ -97,7 +97,7 @@ $arrow = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="cu
 <title>Portál — <?= htmlspecialchars($groupMeta['label']) ?></title>
 <link rel="stylesheet" href="/assets/fonts.css">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=27">
+<link rel="stylesheet" href="/assets/panel.css?v=28">
 </head>
 <body>
 

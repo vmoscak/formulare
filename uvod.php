@@ -139,7 +139,7 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
 <title>Portál — Domov</title>
 <link rel="stylesheet" href="/assets/fonts.css">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=27">
+<link rel="stylesheet" href="/assets/panel.css?v=28">
 </head><body class="home-page">
 <div class="home-bg" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
 <header class="topbar">

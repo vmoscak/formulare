@@ -441,7 +441,7 @@ if ($isOwner) {
 <title>Cesta nováčika</title>
 <link rel="stylesheet" href="/assets/fonts.css">
 <script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=27">
+<link rel="stylesheet" href="/assets/panel.css?v=28">
 <style>
   .ob-hero{position:relative; overflow:hidden; display:flex; align-items:center; gap:22px; flex-wrap:wrap;
     background:linear-gradient(135deg, var(--accent) 0%, var(--accent-ink) 100%); border:none; color:#fff;}
