@@ -503,7 +503,7 @@ function buildLetterHtml(previewMode){
   const body = `
     <div class="header-block">${parties}</div>
     <div class="place-date">${escapeHtml(placeDate)}</div>
-    <div class="subject">Vec: Univerzálna žiadosť o zmenu v poistnej zmluve</div>
+    <div class="subject">Vec: Žiadosť o zmenu v poistnej zmluve</div>
     <div class="salutation">Vážená poisťovňa,</div>
     <div class="body-text">${paraHtml}</div>
     <div class="farewell">S úctou,</div>
@@ -601,7 +601,7 @@ function doCopy(){
   const insZipCity = [ins.zip, ins.city].filter(Boolean).join(' ');
   const placeDate = (state.signPlace||'__________') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '__________');
   const txt=[state.name,state.street,(state.zip+' '+state.city),'',ins.name,ins.street,insZipCity,'',placeDate,'',
-    'Vec: Univerzálna žiadosť o zmenu v poistnej zmluve','','Vážená poisťovňa,']
+    'Vec: Žiadosť o zmenu v poistnej zmluve','','Vážená poisťovňa,']
     .concat(paras).concat(['','S úctou,','',state.name]).join('\n');
   try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
   const b=$('copyBtn'); b.textContent='Skopírované ✓'; setTimeout(()=>b.textContent='Kopírovať text',1600);
