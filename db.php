@@ -851,6 +851,11 @@ function dbOnboardingSeedSteps(): array {
 
         ['phase' => 'V. mesiac', 'title' => 'Príprava na maturitu', 'description' => 'Štúdium produktovej časti maturity vrátane skúšobných testov.', 'link_url' => null],
         ['phase' => 'V. mesiac', 'title' => 'Maturita', 'description' => 'Podmienka: absolvovanie všetkých školení z 0.-4. mesiaca. Overenie produktových znalostí a predajných zručností.', 'link_url' => null],
+
+        // Zvyšok Modelu zapracovania (mesiace 6.–24.) nemá vlastné školenia,
+        // len priebežné bonusové kritériá — viď sql/028_onboarding_month_ranges.sql.
+        ['phase' => 'VI.–XII. mesiac', 'title' => 'Priebežný status a dodatková provízia', 'description' => 'DP podľa statusu: FIT 500 € · STD 750 € · TOP 1 000 € mesačne (7.–12. mesiac MZ). Pozri si aktuálny status a podrobnosti v Modeli zapracovania.', 'link_url' => '/model-zapracovania/'],
+        ['phase' => 'XIII.–XXIV. mesiac', 'title' => 'Priebežný status a dodatková provízia', 'description' => 'DP podľa statusu: FIT 300 € · STD 500 € · TOP 700 € mesačne (13.–24. mesiac MZ). Pozri si aktuálny status a podrobnosti v Modeli zapracovania.', 'link_url' => '/model-zapracovania/'],
     ];
 }
 

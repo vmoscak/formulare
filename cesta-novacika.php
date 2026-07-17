@@ -224,6 +224,8 @@ $OB_PHASE_SUPPORT = [
     'III. mesiac' => 'Životné poistenie je srdcom tejto práce a je úplne prirodzené, že práve pri ňom máš najviac otázok. Nie si v tom sám — kolegovia aj manažér ťa podržia.',
     'IV. mesiac' => 'Majetkové poistenie je technickejšia oblasť a prvé ponuky bývajú pomalšie — to je v poriadku. Radšej sa spýtaj vopred, než aby si sa s tým trápil sám.',
     'V. mesiac' => 'Posledný krok pred maturitou. Ver si — dostal si sa sem vlastnou prácou. A ak sa niečo nepodarí na prvý pokus, nie je to koniec sveta.',
+    'VI.–XII. mesiac' => 'Školenia sú za tebou — teraz ide hlavne o pravidelnosť. Status FIT/STD/TOP sa vyhodnocuje priebežne, takže sa oplatí sledovať ho každý mesiac.',
+    'XIII.–XXIV. mesiac' => 'Posledná časť Modelu zapracovania. Drž si svoj status a dodatková provízia ide s ním — nič nové sa už neučíš, len pokračuješ v tom, čo už vieš.',
 ];
 
 // Ľudsky čitateľný odstup od poslednej aktivity — pre ownera nižšie, aby vedel
