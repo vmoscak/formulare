@@ -378,7 +378,7 @@ if ($isOwner) {
   .ob-next-done .ob-next-title{color:var(--good); position:relative; z-index:1;}
 
   .ob-journey-card{padding:20px 8px 6px;}
-  .ob-journey-scroll{overflow-x:auto; overflow-y:hidden; padding:2px 0 0;}
+  .ob-journey-scroll{overflow-x:auto; padding:2px 0 0;}
   .ob-journey-svg{display:block; margin:0 auto;}
   .oj-track{fill:none; stroke:var(--border); stroke-width:6; stroke-linecap:round; stroke-linejoin:round;}
   .oj-progress{fill:none; stroke:var(--good); stroke-width:6; stroke-linecap:round; stroke-linejoin:round;}
@@ -520,10 +520,10 @@ if ($isOwner) {
   <?php if ($totalSteps > 0): ?>
   <div class="card ob-journey-card">
     <?php
-      $jSpacing = 96; $jAmp = 24; $jMidY = 58; $jPad = 30;
+      $jSpacing = 96; $jAmp = 20; $jMidY = 44; $jPad = 30;
       $jN = count($phaseList);
       $jWidth = $jPad * 2 + $jSpacing * max(0, $jN - 1);
-      $jHeight = 110;
+      $jHeight = 122;
       $jPoints = [];
       foreach ($phaseList as $jName => $jSt) {
           $jPoints[] = ['x' => $jPad + $jSt['idx'] * $jSpacing, 'y' => $jMidY + sin($jSt['idx'] * 1.1) * $jAmp, 'name' => $jName, 'st' => $jSt];

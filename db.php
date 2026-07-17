@@ -855,7 +855,10 @@ function dbOnboardingSeedSteps(): array {
         // Zvyšok Modelu zapracovania (mesiace 6.–24.) nemá vlastné školenia,
         // len priebežné bonusové kritériá — viď sql/028_onboarding_month_ranges.sql.
         ['phase' => 'VI.–XII. mesiac', 'title' => 'Priebežný status a dodatková provízia', 'description' => 'DP podľa statusu: FIT 500 € · STD 750 € · TOP 1 000 € mesačne (7.–12. mesiac MZ). Pozri si aktuálny status a podrobnosti v Modeli zapracovania.', 'link_url' => '/model-zapracovania/'],
+        ['phase' => 'VI.–XII. mesiac', 'title' => 'Skúška MATURITA — termíny', 'description' => 'Ak si MATURITU nezložil do konca 6. mesiaca, DP za 7.–12. mesiac sa kráti o 50 %. Ak nie ani do konca 9. mesiaca, nasleduje automatické trvalé vyradenie z Modelu zapracovania.', 'link_url' => null],
+        ['phase' => 'VI.–XII. mesiac', 'title' => 'Vrátenie DP pri ukončení zmluvy', 'description' => 'Ak zmluvu o obchodnom zastúpení ukončíš v tomto období (7.–24. mesiac MZ), vraciaš 50 % vyplatenej DP za posledných 12 mesiacov.', 'link_url' => null],
         ['phase' => 'XIII.–XXIV. mesiac', 'title' => 'Priebežný status a dodatková provízia', 'description' => 'DP podľa statusu: FIT 300 € · STD 500 € · TOP 700 € mesačne (13.–24. mesiac MZ). Pozri si aktuálny status a podrobnosti v Modeli zapracovania.', 'link_url' => '/model-zapracovania/'],
+        ['phase' => 'XIII.–XXIV. mesiac', 'title' => 'Posledná šanca na MATURITU', 'description' => 'Ak program adaptácie a skúšku MATURITA nezložíš do konca 13. mesiaca od nástupu, spolupráca sa ukončuje.', 'link_url' => null],
     ];
 }
 
