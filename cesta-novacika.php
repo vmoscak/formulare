@@ -322,7 +322,25 @@ function mzDpAmount(int $month, string $status): int {
     return $table[$status] ?? 0;
 }
 
-const MZ_STATUS_LABELS = ['fit' => 'FIT', 'std' => 'STD', 'top' => 'TOP'];
+const MZ_STATUS_LABELS = ['fit' => 'FIT', 'std' => '⭐ STD', 'top' => '🏆 TOP'];
+const MZ_QUARTERS = [[7, 8, 9], [10, 11, 12], [13, 14, 15], [16, 17, 18], [19, 20, 21], [22, 23, 24]];
+
+/** Súčet DP, ktoré poradca doteraz reálne získal — pri uzatvorených kvartáloch
+ * (všetky 3 mesiace vyplnené) počíta s doplatkom na status 3. mesiaca. */
+function mzTotalEarned(array $mzStatusMap): int {
+    $total = 0;
+    if (!empty($mzStatusMap[6])) $total += mzDpAmount(6, $mzStatusMap[6]);
+    foreach (MZ_QUARTERS as $q) {
+        $statuses = array_map(fn($m) => $mzStatusMap[$m] ?? null, $q);
+        if (!in_array(null, $statuses, true)) {
+            $final = $statuses[2];
+            foreach ($q as $m) $total += mzDpAmount($m, $final);
+        } else {
+            foreach ($q as $i => $m) { if ($statuses[$i]) $total += mzDpAmount($m, $statuses[$i]); }
+        }
+    }
+    return $total;
+}
 
 /**
  * Mesačný tracker statusu (FIT/STD/TOP) — vykresľuje sa len vo fázach
@@ -336,8 +354,16 @@ function obRenderMzTracker(string $phaseName, array $mzStatusMap): void {
         'XIII.–XXIV. mesiac' => [[13, 14, 15], [16, 17, 18], [19, 20, 21], [22, 23, 24]],
     ];
     if (!isset($quartersByPhase[$phaseName])) return;
+    $totalEarned = mzTotalEarned($mzStatusMap);
     ?>
     <div class="mz-tracker-title">📊 Mesačný tracker statusu</div>
+    <div class="mz-summary-bar">
+      <div class="mz-summary-icon">💰</div>
+      <div class="mz-summary-text">
+        <div class="mz-summary-label">Doteraz získané DP z Modelu zapracovania</div>
+        <div class="mz-summary-value mz-total-value"><?= number_format($totalEarned, 0, ',', ' ') ?> €</div>
+      </div>
+    </div>
     <?php if ($phaseName === 'VI.–XII. mesiac'): $sel6 = $mzStatusMap[6] ?? null; ?>
     <div class="mz-card mz-card-single">
       <div class="mz-card-head">
@@ -347,7 +373,7 @@ function obRenderMzTracker(string $phaseName, array $mzStatusMap): void {
       <p class="mz-card-note">Mesiace 4.–5. nie sú súčasťou trackera, doplatok preto tu nevieme dopočítať — sleduj si ho v CRM.</p>
       <div class="mz-status-picker" data-month="6">
         <?php foreach (MZ_STATUS_LABELS as $sKey => $sLabel): $amt = mzDpAmount(6, $sKey); ?>
-        <button type="button" class="mz-status-btn<?= $sel6 === $sKey ? ' is-selected' : '' ?>" data-status="<?= $sKey ?>" onclick="mzSelectStatus(this)"><?= $sLabel ?><span class="mz-status-amt"><?= $amt ?> €</span></button>
+        <button type="button" class="mz-status-btn mz-status-btn-<?= $sKey ?><?= $sel6 === $sKey ? ' is-selected' : '' ?>" data-status="<?= $sKey ?>" onclick="mzSelectStatus(this)"><?= $sLabel ?><span class="mz-status-amt"><?= $amt ?> €</span></button>
         <?php endforeach; ?>
       </div>
     </div>
@@ -363,7 +389,7 @@ function obRenderMzTracker(string $phaseName, array $mzStatusMap): void {
           <div class="mz-month-label"><?= $m ?>. mesiac<?= $isFinal ? ' 🎯' : '' ?></div>
           <div class="mz-status-picker" data-month="<?= $m ?>">
             <?php foreach (MZ_STATUS_LABELS as $sKey => $sLabel): $amt = mzDpAmount($m, $sKey); ?>
-            <button type="button" class="mz-status-btn<?= $selM === $sKey ? ' is-selected' : '' ?>" data-status="<?= $sKey ?>" onclick="mzSelectStatus(this)"><?= $sLabel ?><span class="mz-status-amt"><?= $amt ?> €</span></button>
+            <button type="button" class="mz-status-btn mz-status-btn-<?= $sKey ?><?= $selM === $sKey ? ' is-selected' : '' ?>" data-status="<?= $sKey ?>" onclick="mzSelectStatus(this)"><?= $sLabel ?><span class="mz-status-amt"><?= $amt ?> €</span></button>
             <?php endforeach; ?>
           </div>
         </div>
@@ -515,7 +541,17 @@ if ($isOwner) {
     background:var(--desk); border-radius:var(--radius-md); padding:9px 11px; margin:0 0 10px;}
   .ob-phase-support .ob-support-emoji{flex-shrink:0;}
 
-  .mz-tracker-title{font-size:13.5px; font-weight:700; color:var(--ink); margin:22px 0 12px; padding-top:18px; border-top:1px solid var(--border);}
+  .mz-tracker-title{font-size:14.5px; font-weight:700; color:var(--ink); margin:22px 0 12px; padding-top:18px; border-top:1px solid var(--border);}
+
+  .mz-summary-bar{display:flex; align-items:center; gap:12px; background:linear-gradient(135deg, var(--accent-soft), var(--good-soft));
+    border:1px solid var(--accent-line); border-radius:var(--radius-xl); padding:14px 18px; margin-bottom:16px;}
+  .mz-summary-icon{font-size:26px; line-height:1; flex-shrink:0;}
+  .mz-summary-label{font-size:11.5px; font-weight:600; color:var(--ink-2); text-transform:uppercase; letter-spacing:.03em;}
+  .mz-summary-value{font-size:22px; font-weight:800; color:var(--accent-ink); letter-spacing:-.01em; margin-top:1px;
+    transition:transform .25s ease;}
+  .mz-summary-value.mz-bump{animation:mzBump .4s ease;}
+  @keyframes mzBump{0%{transform:scale(1);} 40%{transform:scale(1.12);} 100%{transform:scale(1);}}
+
   .mz-card{border:1px solid var(--border); border-radius:var(--radius-xl); padding:16px 18px; margin-bottom:12px; background:var(--desk);}
   .mz-card-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;}
   .mz-card-month{font-size:13.5px; font-weight:700; color:var(--ink);}
@@ -526,20 +562,34 @@ if ($isOwner) {
     font-size:12px; font-weight:700; color:var(--ink-2); cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px;
     transition:border-color .15s ease, background .15s ease, transform .1s ease;}
   .mz-status-btn .mz-status-amt{font-size:10px; font-weight:600; color:var(--muted);}
-  .mz-status-btn:hover{border-color:var(--accent); transform:translateY(-1px);}
+  .mz-status-btn:hover{transform:translateY(-1px);}
   .mz-status-btn:active{transform:translateY(0) scale(.97);}
-  .mz-status-btn.is-selected{border-color:var(--accent); background:var(--accent-soft); color:var(--accent-ink);}
-  .mz-status-btn.is-selected .mz-status-amt{color:var(--accent-ink);}
-  .mz-status-btn[data-status="top"].is-selected{border-color:var(--good); background:var(--good-soft); color:var(--good);}
-  .mz-status-btn[data-status="top"].is-selected .mz-status-amt{color:var(--good);}
+
+  .mz-status-btn-fit{border-color:var(--accent-line); background:var(--accent-soft);}
+  .mz-status-btn-fit:hover{border-color:var(--accent);}
+  .mz-status-btn-fit.is-selected{border-color:var(--accent); background:var(--accent); color:#fff;}
+  .mz-status-btn-fit.is-selected .mz-status-amt{color:rgba(255,255,255,.85);}
+
+  .mz-status-btn-std{border-color:var(--amber-soft); background:var(--amber-soft);}
+  .mz-status-btn-std:hover{border-color:var(--amber);}
+  .mz-status-btn-std.is-selected{border-color:var(--amber); background:var(--amber); color:#fff;}
+  .mz-status-btn-std.is-selected .mz-status-amt{color:rgba(255,255,255,.85);}
+
+  .mz-status-btn-top{border-color:var(--good-soft); background:var(--good-soft);}
+  .mz-status-btn-top:hover{border-color:var(--good);}
+  .mz-status-btn-top.is-selected{border-color:var(--good); background:var(--good); color:#fff; transform:translateY(-1px) scale(1.02);}
+  .mz-status-btn-top.is-selected .mz-status-amt{color:rgba(255,255,255,.85);}
+
   .mz-quarter-months{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:12px;}
   .mz-month-label{font-size:10.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.02em; margin-bottom:6px; text-align:center;}
   .mz-month-col-final .mz-month-label{color:var(--accent-ink);}
-  .mz-doplatok{border-radius:var(--radius-md); padding:10px 12px; font-size:12.5px; text-align:center; background:var(--paper); border:1px dashed var(--border);}
-  .mz-doplatok-win{color:var(--good); font-weight:700;}
+  .mz-doplatok{border-radius:var(--radius-md); padding:10px 12px; font-size:12.5px; text-align:center; background:var(--paper); border:1px dashed var(--border); line-height:1.5;}
+  .mz-doplatok strong{font-weight:800;}
+  .mz-doplatok-win{color:var(--good); font-weight:700; background:var(--good-soft); border:1px solid var(--accent-line); font-size:13px; padding:12px;}
   .mz-doplatok-flat{color:var(--ink-2);}
   .mz-doplatok-hint{color:var(--muted);}
-  @media(max-width:560px){.mz-quarter-months{grid-template-columns:1fr;} .mz-month-col{border-bottom:1px solid var(--border); padding-bottom:10px;} .mz-month-col:last-child{border-bottom:none; padding-bottom:0;}}
+  .mz-doplatok-hint strong{color:var(--ink-2);}
+  @media(max-width:560px){.mz-quarter-months{grid-template-columns:1fr;} .mz-month-col{border-bottom:1px solid var(--border); padding-bottom:10px;} .mz-month-col:last-child{border-bottom:none; padding-bottom:0;} .mz-summary-value{font-size:19px;}}
 
   .ob-info{position:relative; display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px;
     border-radius:50%; background:var(--accent-soft); color:var(--accent-ink); font-size:10px; font-weight:700; cursor:help;
@@ -1119,7 +1169,31 @@ function mzAmount(month, status) {
   var table = month <= 12 ? { fit: 500, std: 750, top: 1000 } : { fit: 300, std: 500, top: 700 };
   return table[status] || 0;
 }
-function mzUpdateQuarterDisplay(month) {
+function mzComputeTotal() {
+  var total = MZ_STATUS[6] ? mzAmount(6, MZ_STATUS[6]) : 0;
+  MZ_QUARTERS.forEach(function (q) {
+    var statuses = q.map(function (m) { return MZ_STATUS[m]; });
+    if (statuses.every(Boolean)) {
+      var finalStatus = statuses[2];
+      q.forEach(function (m) { total += mzAmount(m, finalStatus); });
+    } else {
+      q.forEach(function (m, i) { total += mzAmount(m, statuses[i]); });
+    }
+  });
+  return total;
+}
+function mzRenderTotal(bump) {
+  var value = mzComputeTotal();
+  document.querySelectorAll('.mz-total-value').forEach(function (el) {
+    el.textContent = value.toLocaleString('sk-SK') + ' €';
+    if (bump) {
+      el.classList.remove('mz-bump');
+      void el.offsetWidth;
+      el.classList.add('mz-bump');
+    }
+  });
+}
+function mzUpdateQuarterDisplay(month, fromClick) {
   var quarter = null;
   for (var i = 0; i < MZ_QUARTERS.length; i++) {
     if (MZ_QUARTERS[i].indexOf(month) !== -1) { quarter = MZ_QUARTERS[i]; break; }
@@ -1129,14 +1203,28 @@ function mzUpdateQuarterDisplay(month) {
   if (!el) return;
 
   var statuses = quarter.map(function (m) { return MZ_STATUS[m]; });
-  if (statuses.indexOf(undefined) !== -1 || statuses.indexOf(null) !== -1 || statuses.some(function (s) { return !s; })) {
+  var filled = statuses.filter(Boolean).length;
+  var maxTotal = quarter.reduce(function (s, m) { return s + mzAmount(m, 'top'); }, 0);
+
+  if (filled < 3) {
+    if (filled === 0) {
+      el.className = 'mz-doplatok mz-doplatok-hint';
+      el.textContent = 'Vyplň status za mesiace tohto kvartálu — priebežne ti tu ukážeme aj potenciálny doplatok.';
+      return;
+    }
+    var partialTotal = 0;
+    quarter.forEach(function (m, i) { partialTotal += mzAmount(m, statuses[i]); });
+    var potential = maxTotal - partialTotal;
     el.className = 'mz-doplatok mz-doplatok-hint';
-    el.textContent = 'Vyplň status za všetky 3 mesiace kvartálu — spočítame ti prípadný doplatok.';
+    if (potential > 0) {
+      el.innerHTML = 'Zatiaľ za kvartál: <strong>' + partialTotal + ' €</strong> · pri statuse TOP až <strong>' + maxTotal + ' €</strong> (potenciál +' + potential + ' € 🚀)';
+    } else {
+      el.innerHTML = 'Zatiaľ za kvartál: <strong>' + partialTotal + ' €</strong> — už si na maxime, drž to! 🏆';
+    }
     return;
   }
 
   var finalStatus = statuses[2];
-  var order = { fit: 1, std: 2, top: 3 };
   var actualTotal = 0, upgradedTotal = 0;
   for (var j = 0; j < quarter.length; j++) {
     actualTotal += mzAmount(quarter[j], statuses[j]);
@@ -1146,10 +1234,11 @@ function mzUpdateQuarterDisplay(month) {
 
   if (diff > 0) {
     el.className = 'mz-doplatok mz-doplatok-win';
-    el.textContent = '🎉 Doplatok DP za kvartál: +' + diff + ' € (za 3. mesiac si dosiahol status ' + finalStatus.toUpperCase() + ', doplatia ti rozdiel za celý kvartál).';
+    el.innerHTML = '🎉 Doplatok DP za kvartál: <strong>+' + diff + ' €</strong> (za 3. mesiac si dosiahol status ' + finalStatus.toUpperCase() + ', doplatia ti rozdiel za celý kvartál).';
+    if (fromClick && typeof obConfetti === 'function') obConfetti();
   } else {
     el.className = 'mz-doplatok mz-doplatok-flat';
-    el.textContent = 'Kvartál uzatvorený na statuse ' + finalStatus.toUpperCase() + ' — spolu ' + actualTotal + ' € DP. Vyšší status v 3. mesiaci ti nabudúce prinesie ešte doplatok navyše.';
+    el.innerHTML = 'Kvartál uzatvorený na statuse ' + finalStatus.toUpperCase() + ' — spolu <strong>' + actualTotal + ' €</strong> DP.';
   }
 }
 function mzSelectStatus(btn) {
@@ -1163,7 +1252,8 @@ function mzSelectStatus(btn) {
   if (!wasSelected) btn.classList.add('is-selected');
 
   if (newStatus) MZ_STATUS[month] = newStatus; else delete MZ_STATUS[month];
-  mzUpdateQuarterDisplay(month);
+  mzUpdateQuarterDisplay(month, true);
+  mzRenderTotal(true);
 
   fetch('/api/mz-status.php', {
     method: 'POST',
