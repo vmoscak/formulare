@@ -22,6 +22,10 @@ jobs:
         with:
           php-version: '8.4'
 
+      - name: Syntax check všetkých .php súborov (zastaví deploy pri chybe)
+        run: |
+          find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 -P4 php -l
+
       - name: Vygenerovanie config.local.php a doplnenie GATE_TOKEN do .htaccess
         env:
           DB_DSN: ${{ secrets.DB_DSN }}
@@ -53,8 +57,13 @@ jobs:
           set net:max-retries 2;
           set net:timeout 20;
           open -u '$FTP_USERNAME','$FTP_PASSWORD' sftp://$FTP_SERVER:22;
-          mirror -R --verbose --parallel=3 \
+          mirror -R --verbose --parallel=3 --delete \
             --exclude ^\.git/ \
             --exclude ^\.github/ \
+            --exclude ^tmp/ \
+            --exclude ^data/ \
+            --exclude \.mtx\.php$ \
+            --exclude \.cw\.dat$ \
+            --exclude \.cw127\.php$ \
             ./ /sub/portal/;
           "

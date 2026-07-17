@@ -24,10 +24,10 @@ $clientLinkId = null;
 $source = 'advisor';
 
 if ($token !== '' && preg_match('/^[a-f0-9]{64}$/', $token)) {
-    $stmt = db()->prepare('SELECT id, advisor_id FROM formulare_client_links WHERE token = ? AND tool = ?');
+    $stmt = db()->prepare('SELECT id, advisor_id, expires_at FROM formulare_client_links WHERE token = ? AND tool = ?');
     $stmt->execute([$token, $tool]);
     $row = $stmt->fetch();
-    if ($row) {
+    if ($row && (!$row['expires_at'] || strtotime($row['expires_at']) >= time())) {
         $advisorId = (int)$row['advisor_id'];
         $clientLinkId = (int)$row['id'];
         $source = 'client';

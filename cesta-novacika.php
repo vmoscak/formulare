@@ -439,8 +439,7 @@ if ($isOwner) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
 <title>Cesta nováčika</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/fonts.css">
 <script src="/assets/theme-init.js"></script>
 <link rel="stylesheet" href="/assets/panel.css?v=27">
 <style>

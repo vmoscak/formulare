@@ -17,7 +17,10 @@
 <IfModule mod_rewrite.c>
     # 1) Vždy verejné infraštruktúrne endpointy — nikdy za bránou
     RewriteRule ^(brana\.php|pdf\.php|api/client-session\.php|api/client-submit\.php|api/log-document\.php|cron/nabor-geocode\.php)$ - [L]
-    RewriteRule ^assets/.*\.js$ - [L]
+    # Statické assety (JS/CSS/ikony/manifest) nenesú citlivé dáta — verejné,
+    # nech sa favicon/manifest.json/panel.css nenačítavajú cez bránu (brana.php
+    # aj index.php ich potrebujú ešte pred prihlásením).
+    RewriteRule ^assets/.*\.(js|css|png|svg|json|woff2?)$ - [L]
 
     # 2) Klientský odkaz s jedinečným tokenom — pustí dnu len konkrétne
     #    nástroje, ktoré majú klientský režim (nie celý web)
@@ -36,11 +39,28 @@
 
 DirectoryIndex index.php index.html
 
+# Základné bezpečnostné hlavičky — nič citlivé sa tu nekonfiguruje (žiadne
+# tajomstvá), len obrana proti bežným triedam útokov cez prehliadač.
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+</IfModule>
+
 # Nekešovať HTML — aby sa vždy načítala aktuálna verzia formulárov
 <IfModule mod_headers.c>
     <FilesMatch "\.html$">
         Header set Cache-Control "no-cache, no-store, must-revalidate"
         Header set Pragma "no-cache"
         Header set Expires "0"
+    </FilesMatch>
+</IfModule>
+
+# Statické assety v /assets/ sú verzované cez ?v=NN v odkazoch (panel.css?v=27
+# a pod.) — pri zmene obsahu sa mení aj číslo, takže dlhé kešovanie je bezpečné.
+<IfModule mod_headers.c>
+    <FilesMatch "\.(css|js|png|svg|woff2?|json)$">
+        Header set Cache-Control "public, max-age=2592000"
     </FilesMatch>
 </IfModule>

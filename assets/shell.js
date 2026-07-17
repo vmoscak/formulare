@@ -18,12 +18,16 @@
 (function () {
   'use strict';
 
-  // Inter font (rovnaký ako v predlohe) — s fallbackom na systémové písmo.
+  // Inter font — self-hosted (assets/fonts.css), nie z fonts.googleapis.com:
+  // rýchlejšie (žiadny extra DNS/handshake na cudziu doménu) a bez posielania
+  // IP adresy poradcov/klientov Google pri každom načítaní stránky.
   try {
-    var f = document.createElement('link');
-    f.rel = 'stylesheet';
-    f.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap';
-    document.head.appendChild(f);
+    if (!document.querySelector('link[href="/assets/fonts.css"]')) {
+      var f = document.createElement('link');
+      f.rel = 'stylesheet';
+      f.href = '/assets/fonts.css';
+      document.head.appendChild(f);
+    }
   } catch (e) { /* bez Interu ostane systémové písmo */ }
 
   var ICONS = {

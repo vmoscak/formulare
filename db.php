@@ -6,6 +6,15 @@
 
 require_once __DIR__ . '/config.local.php';
 
+// Na produkcii (MySQL) nikdy nezobrazovať chyby priamo v odpovedi — môžu
+// prezradiť cesty na serveri alebo obsah dát. Lokálne (SQLite) ostávajú
+// zapnuté, nech je vývoj pohodlný. Platí pre každú stránku, čo includne
+// db.php (čiže prakticky celú appku).
+if (!str_starts_with(DB_DSN, 'sqlite:')) {
+    ini_set('display_errors', '0');
+    error_reporting(E_ALL);
+}
+
 /**
  * Podpísaná hodnota cur_advisor cookie ("id.podpis") — HMAC kľúčom GATE_TOKEN.
  * Bráni tomu, aby si poradca len zmenou cookie v prehliadači vydával za iného

@@ -18,9 +18,11 @@ if (!preg_match('/^[a-f0-9]{64}$/', $token) || $tool === '' || $formData === nul
     http_response_code(400); echo '{"ok":false}'; exit;
 }
 
-$stmt = db()->prepare('SELECT id FROM formulare_client_links WHERE token = ? AND tool = ?');
+$stmt = db()->prepare('SELECT id, expires_at FROM formulare_client_links WHERE token = ? AND tool = ?');
 $stmt->execute([$token, $tool]);
-if (!$stmt->fetch()) { http_response_code(404); echo '{"ok":false}'; exit; }
+$row = $stmt->fetch();
+if (!$row) { http_response_code(404); echo '{"ok":false}'; exit; }
+if ($row['expires_at'] && strtotime($row['expires_at']) < time()) { http_response_code(410); echo '{"ok":false}'; exit; }
 
 $upd = db()->prepare("UPDATE formulare_client_links SET form_data = ?, status = 'submitted', submitted_at = ? WHERE token = ? AND tool = ?");
 $upd->execute([json_encode($formData), date('Y-m-d H:i:s'), $token, $tool]);
