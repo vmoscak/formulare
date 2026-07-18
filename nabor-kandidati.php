@@ -113,6 +113,27 @@ $totalCount = array_sum($statusCounts);
 $activeCount = ($statusCounts['novy'] ?? 0) + ($statusCounts['oslovene'] ?? 0) + ($statusCounts['zaujem'] ?? 0) + ($statusCounts['stretnutie'] ?? 0);
 $joinedCount = $statusCounts['pripojil'] ?? 0;
 
+// Konverzný lievik — postupné stavy pipeline (bez "odmietol"/"stratil", tie
+// pipeline opúšťajú, nepokračujú ňou ďalej). Šírka pruhu je voči prvému
+// stavu (Nový kontakt), percento pod ňou je konverzia oproti PREDCHÁDZAJÚCEMU
+// stavu — nech je vidieť, kde kandidáti z pipeline najviac odpadávajú.
+const RK_FUNNEL_STAGES = ['novy', 'oslovene', 'zaujem', 'stretnutie', 'pripojil'];
+$funnel = [];
+$funnelMax = $statusCounts[RK_FUNNEL_STAGES[0]] ?? 0;
+$funnelPrev = null;
+foreach (RK_FUNNEL_STAGES as $fKey) {
+    $fCount = $statusCounts[$fKey] ?? 0;
+    $funnel[] = [
+        'key' => $fKey,
+        'label' => RK_STATUSES[$fKey][0],
+        'count' => $fCount,
+        'widthPct' => $funnelMax > 0 ? round($fCount / $funnelMax * 100) : 0,
+        'convPct' => ($funnelPrev !== null && $funnelPrev > 0) ? round($fCount / $funnelPrev * 100) : null,
+    ];
+    $funnelPrev = $fCount;
+}
+$funnelLostCount = ($statusCounts['odmietol'] ?? 0) + ($statusCounts['stratil'] ?? 0);
+
 $staleCount = 0;
 try {
     $stStmt = db()->prepare(
@@ -175,6 +196,21 @@ function rkQs(array $overrides): string {
   .rk-kanban-note{font-size:11.5px; color:var(--ink-2); line-height:1.4; white-space:pre-wrap;}
   .rk-kanban-move{width:100%; font-size:11.5px; padding:5px 6px; border-radius:6px; border:1px solid var(--border); background:var(--desk); color:var(--ink-2); margin-top:2px;}
   .rk-kanban-empty{font-size:11.5px; color:var(--muted); text-align:center; padding:10px 4px;}
+  .rk-funnel{display:flex; flex-direction:column; gap:8px;}
+  .rk-funnel-row{display:grid; grid-template-columns:140px 1fr 34px 46px; align-items:center; gap:10px; text-decoration:none; padding:4px 6px; border-radius:var(--radius-md); transition:background .15s ease;}
+  .rk-funnel-row:hover{background:var(--desk);}
+  .rk-funnel-label{font-size:12.5px; font-weight:600; color:var(--ink-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .rk-funnel-track{height:20px; border-radius:6px; background:var(--desk); overflow:hidden;}
+  .rk-funnel-fill{display:block; height:100%; border-radius:6px; min-width:3px; background:var(--accent); transition:width .4s ease;}
+  .rk-funnel-fill-novy{background:#94a3b8;}
+  .rk-funnel-fill-oslovene{background:var(--amber);}
+  .rk-funnel-fill-zaujem{background:var(--accent);}
+  .rk-funnel-fill-stretnutie{background:#7c3aed;}
+  .rk-funnel-fill-pripojil{background:var(--good);}
+  .rk-funnel-count{font-size:13px; font-weight:700; color:var(--ink); text-align:right; font-variant-numeric:tabular-nums;}
+  .rk-funnel-conv{font-size:11.5px; font-weight:700; color:var(--muted); text-align:right; font-variant-numeric:tabular-nums;}
+  .rk-funnel-lost{font-size:11.5px; color:var(--muted); margin-top:10px;}
+  @media(max-width:560px){.rk-funnel-row{grid-template-columns:96px 1fr 28px 40px; gap:6px;}}
 </style>
 </head><body>
 <header class="topbar">
@@ -210,6 +246,28 @@ function rkQs(array $overrides): string {
     </div>
     <?php endif; ?>
   </div>
+
+  <?php if ($totalCount > 0): ?>
+  <div class="card">
+    <h3>Konverzný lievik</h3>
+    <p style="margin:-6px 0 16px; font-size:12.5px; color:var(--muted);">
+      Šírka pruhu je voči „Nový kontakt“, percento je konverzia oproti predchádzajúcemu stavu — kde to najviac klesá, tam sa oplatí zatlačiť.
+    </p>
+    <div class="rk-funnel">
+      <?php foreach ($funnel as $f): ?>
+      <a class="rk-funnel-row" href="<?= rkQs(['status' => $f['key'], 'stale' => '']) ?>">
+        <span class="rk-funnel-label"><?= h($f['label']) ?></span>
+        <span class="rk-funnel-track"><span class="rk-funnel-fill rk-funnel-fill-<?= h($f['key']) ?>" style="width:<?= $f['widthPct'] ?>%;"></span></span>
+        <span class="rk-funnel-count"><?= $f['count'] ?></span>
+        <span class="rk-funnel-conv"><?= $f['convPct'] !== null ? $f['convPct'] . '%' : '—' ?></span>
+      </a>
+      <?php endforeach; ?>
+    </div>
+    <?php if ($funnelLostCount > 0): ?>
+    <div class="rk-funnel-lost">↳ <?= $funnelLostCount ?> odmietlo alebo sa stratil kontakt (mimo lievika, pipeline opúšťajú)</div>
+    <?php endif; ?>
+  </div>
+  <?php endif; ?>
 
   <div class="card">
     <h3>Hľadať a filtrovať</h3>

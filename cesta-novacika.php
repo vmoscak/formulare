@@ -430,12 +430,39 @@ if ($isOwner) {
         $progAll = db()->query('SELECT advisor_id, COUNT(*) AS c, MAX(done_at) AS last_done FROM formulare_onboarding_progress GROUP BY advisor_id')->fetchAll();
         $progByAdvisor = [];
         foreach ($progAll as $p) { $progByAdvisor[$p['advisor_id']] = $p; }
+
+        // Odznaky za dokončené fázy (napr. 🏠 Majetkové poistenie) — čisto
+        // pre tímový prehľad ownera, nezávisle od per-krokového $doneStepIds
+        // vyššie (ten je len pre aktuálne prihláseného poradcu).
+        $taIds = array_column($teamAdvisors, 'id');
+        $phaseProgByAdvisor = [];
+        if ($taIds) {
+            $placeholders = implode(',', array_fill(0, count($taIds), '?'));
+            $phaseProgStmt = db()->prepare(
+                "SELECT op.advisor_id, os.phase, COUNT(*) c FROM formulare_onboarding_progress op
+                 JOIN formulare_onboarding_steps os ON os.id = op.step_id
+                 WHERE op.advisor_id IN ($placeholders) AND os.phase != ?
+                 GROUP BY op.advisor_id, os.phase"
+            );
+            $phaseProgStmt->execute(array_merge($taIds, [OB_ONGOING_PHASE]));
+            foreach ($phaseProgStmt->fetchAll() as $pp) {
+                $phaseProgByAdvisor[$pp['advisor_id']][$pp['phase']] = (int)$pp['c'];
+            }
+        }
+
         foreach ($teamAdvisors as &$ta) {
             $ta['doneCount'] = (int)($progByAdvisor[$ta['id']]['c'] ?? 0);
             $ta['lastDone'] = $progByAdvisor[$ta['id']]['last_done'] ?? null;
             $lastRef = $ta['lastDone'] ?? $ta['onboarding_started_at'];
             $daysSince = $lastRef ? floor((time() - strtotime($lastRef)) / 86400) : 0;
             $ta['stalled'] = !empty($ta['onboarding_started_at']) && $ta['doneCount'] < $totalSteps && $daysSince >= 10;
+            $ta['badges'] = [];
+            foreach ($phaseList as $phName => $phSt) {
+                $phDoneForTa = $phaseProgByAdvisor[$ta['id']][$phName] ?? 0;
+                if ($phSt['total'] > 0 && $phDoneForTa >= $phSt['total']) {
+                    $ta['badges'][] = ['name' => $phName, 'icon' => $OB_PHASE_ICONS[$phName] ?? null, 'idx' => $phSt['idx']];
+                }
+            }
         }
         unset($ta);
     }
@@ -670,6 +697,9 @@ if ($isOwner) {
   .ob-team-card-bar-track{width:100%; height:5px; border-radius:999px; background:var(--desk); overflow:hidden;}
   .ob-team-card-bar-fill{height:100%; background:var(--accent); border-radius:999px;}
   .ob-team-card-foot{margin-top:auto;}
+  .ob-team-badges{display:flex; flex-wrap:wrap; gap:4px;}
+  .ob-team-badge{display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%;
+    background:var(--accent-soft); border:1px solid var(--accent-line); font-size:12px; cursor:default;}
   @media(max-width:720px){ .ob-add-row{grid-template-columns:1fr;} }
 
   .ob-confetti{position:fixed; inset:0; pointer-events:none; z-index:9999; overflow:hidden;}
@@ -803,6 +833,13 @@ if ($isOwner) {
       <div class="ob-team-card-bar-track"><div class="ob-team-card-bar-fill" style="width:<?= $taPct ?>%;"></div></div>
       <div class="ob-team-card-sub"><?= (int)($ta['doneCount'] ?? 0) ?>/<?= $totalSteps ?> krokov · posledná aktivita: <?= h(obRelativeTime($ta['lastDone'] ?? null)) ?></div>
       <?php if (!empty($ta['stalled'])): ?><span class="ob-team-stalled">⚠️ Bez pohybu</span><?php endif; ?>
+      <?php if (!empty($ta['badges'])): ?>
+      <div class="ob-team-badges">
+        <?php foreach ($ta['badges'] as $b): ?>
+        <span class="ob-team-badge" title="Dokončená fáza: <?= h($b['name']) ?>"><?= $b['icon'] ?? ($b['idx'] + 1) ?></span>
+        <?php endforeach; ?>
+      </div>
+      <?php endif; ?>
       <?php endif; ?>
       <div class="ob-team-card-foot">
         <form method="post" style="margin:0;">

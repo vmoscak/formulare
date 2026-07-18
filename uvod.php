@@ -207,6 +207,13 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
 <link rel="stylesheet" href="/assets/fonts.css">
 <script src="/assets/theme-init.js"></script>
 <link rel="stylesheet" href="/assets/panel.css?v=28">
+<style>
+  .fav-draggable{cursor:grab;}
+  .fav-draggable.is-dragging{opacity:.4;}
+  .fav-drag-handle{position:absolute; top:10px; left:10px; z-index:3; width:26px; height:26px; border-radius:50%;
+    background:rgba(255,255,255,.88); box-shadow:0 2px 6px rgba(0,0,0,.12); display:flex; align-items:center; justify-content:center;
+    font-size:14px; color:var(--muted); line-height:1; pointer-events:none;}
+</style>
 </head><body class="home-page">
 <div class="home-bg" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
 <header class="topbar">
@@ -301,11 +308,12 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
         <?php if ($favoriteTools): ?>
         <div class="tool-grid" id="domFavGrid">
           <?php foreach ($favoriteTools as $t): ?>
-          <div class="tool-card-wrap">
+          <div class="tool-card-wrap fav-draggable" draggable="true" data-slug="<?= h($t['slug']) ?>">
+            <span class="fav-drag-handle" title="Presunúť" aria-hidden="true">⠿</span>
             <button type="button" class="fav-star is-fav" data-slug="<?= h($t['slug']) ?>" onclick="bzUnfavorite(this)" title="Odobrať z obľúbených" aria-label="Odobrať z obľúbených">
               <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
             </button>
-            <a class="tool-card c-<?= h($t['color']) ?>" href="<?= h($t['href']) ?>">
+            <a class="tool-card c-<?= h($t['color']) ?>" href="<?= h($t['href']) ?>" draggable="false">
               <span class="ic"><?= toolIco($t['ico']) ?></span>
               <h4><?= h($t['name']) ?></h4>
               <p><?= h($t['desc']) ?></p>
@@ -487,6 +495,46 @@ function bzUnfavorite(btn) {
     }
   });
 }
+
+// Vlastné poradie Obľúbených myšou (HTML5 drag & drop, len desktop —
+// dotykové zariadenia poradie naďalej menia len cez pridanie/odobratie
+// hviezdičky). Poradie sa ukladá do rovnakého stĺpca ako favorite_tools,
+// len sa prehodí — endpoint nepridáva ani neuberá žiadny nástroj.
+(function () {
+  var grid = document.getElementById('domFavGrid');
+  if (!grid) return;
+  var draggedEl = null;
+
+  grid.addEventListener('dragstart', function (e) {
+    var wrap = e.target.closest('.tool-card-wrap');
+    if (!wrap) return;
+    draggedEl = wrap;
+    wrap.classList.add('is-dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    try { e.dataTransfer.setData('text/plain', wrap.dataset.slug || ''); } catch (err) {}
+  });
+
+  grid.addEventListener('dragover', function (e) {
+    if (!draggedEl) return;
+    e.preventDefault();
+    var target = e.target.closest('.tool-card-wrap');
+    if (!target || target === draggedEl) return;
+    var box = target.getBoundingClientRect();
+    var before = (e.clientX - box.left) < box.width / 2;
+    grid.insertBefore(draggedEl, before ? target : target.nextSibling);
+  });
+
+  grid.addEventListener('dragend', function () {
+    if (draggedEl) draggedEl.classList.remove('is-dragging');
+    draggedEl = null;
+    var slugs = Array.prototype.map.call(grid.querySelectorAll('.tool-card-wrap'), function (w) { return w.dataset.slug; });
+    fetch('/api/reorder-favorites.php', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slugs: slugs })
+    }).catch(function () {});
+  });
+})();
 </script>
 <script src="/assets/shell.js?v=22"></script>
 </body></html>
