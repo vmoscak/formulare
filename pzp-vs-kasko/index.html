@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="sk"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PZP vs. KASKO</title>
+
+<!-- =========================================================================
+     PZP vs. KASKO — samostatný editovateľný súbor
+     -------------------------------------------------------------------------
+     Scenárový vysvetľovač na stretnutie s klientom: klikne sa na bežnú
+     situáciu ("krupobitie", "vinník ušiel"...) a ukáže sa, čo kryje PZP,
+     čo KASKO a čo ani jedno — v ľudskej reči. Nie je to porovnávač cien
+     (ten je v UNIPOINT), ale porovnávač KRYTIA na argumentáciu.
+
+     KDE ČO UPRAVIŤ:
+       • Scenáre a verdikty .... JS, pole SCENARIOS
+       • Kontakt poradcu ....... JS, objekt ADVISOR (prepíše sa automaticky)
+       • Farby / vzhľad ........ zdieľaný dizajnový systém ../assets/ui.css
+========================================================================== -->
+
+<script src="../assets/theme-init.js"></script>
+<script src="../assets/toast.js?v=1"></script>
+<link rel="stylesheet" href="../assets/ui.css?v=12">
+<style>
+  .pk-scenarios{display:flex; flex-direction:column; gap:8px;}
+  .pk-scenario{display:flex; align-items:center; gap:12px; padding:12px 14px; border:1.5px solid var(--border);
+    border-radius:var(--radius-lg); cursor:pointer; background:var(--paper); font-size:13px; font-weight:600;
+    color:var(--ink-2); transition:border-color .15s, background .15s, transform .1s;}
+  .pk-scenario:hover{transform:translateY(-1px); border-color:var(--accent);}
+  .pk-scenario.sel{border-color:var(--accent); background:var(--accent-soft); color:var(--accent-ink);}
+  .pk-scenario .pk-emoji{font-size:18px; flex-shrink:0;}
+
+  .pk-verdicts{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;}
+  .pk-verdict{border-radius:var(--radius-lg); padding:16px 14px; text-align:center; border:1.5px solid var(--border);}
+  .pk-verdict .pk-prod{font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px;}
+  .pk-verdict .pk-ans{font-size:22px; font-weight:800; line-height:1;}
+  .pk-verdict .pk-note{font-size:11.5px; margin-top:6px; line-height:1.45; color:var(--muted);}
+  .pk-verdict.yes{border-color:#a7f3d0; background:var(--good-soft);}
+  .pk-verdict.yes .pk-ans, .pk-verdict.yes .pk-prod{color:var(--good);}
+  .pk-verdict.no{border-color:var(--border); background:var(--desk);}
+  .pk-verdict.no .pk-ans, .pk-verdict.no .pk-prod{color:var(--muted);}
+  .pk-verdict.maybe{border-color:#fce7c0; background:var(--amber-soft);}
+  .pk-verdict.maybe .pk-ans, .pk-verdict.maybe .pk-prod{color:var(--amber);}
+
+  .pk-explain{padding:14px 16px; border-radius:var(--radius-lg); background:var(--desk); font-size:13px; line-height:1.65; color:var(--ink-2);}
+  .pk-explain b{color:var(--ink);}
+
+  .pk-basics{margin-top:18px; border-top:1px solid var(--border); padding-top:16px;}
+  .pk-basics h4{margin:0 0 10px; font-size:13px; font-weight:700; color:var(--ink);}
+  .pk-basic-row{display:flex; gap:10px; font-size:12.5px; line-height:1.55; color:var(--muted); margin-bottom:8px;}
+  .pk-basic-row b{color:var(--ink); flex-shrink:0; min-width:52px;}
+  @media(max-width:560px){ .pk-verdicts{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="head">
+    <div class="head-left">
+      <a href="../nastroje.php" class="back-btn" title="Späť na nástroje">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <div class="brand">
+        <div class="logo">A</div>
+        <div>
+          <b>PZP vs. KASKO</b><br>
+          <small>Čo ktoré poistenie skutočne kryje — na scenároch</small>
+        </div>
+      </div>
+    </div>
+    <div class="head-actions">
+      <div class="avatar" id="avatar">🚗</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- ============ SCENÁRE ============ -->
+    <div class="form">
+      <div>
+        <div class="step-head"><div class="step-num">1</div><div class="step-title">Vyber situáciu, ktorá klienta zaujíma</div></div>
+        <div class="pk-scenarios" id="scenarioList"></div>
+      </div>
+    </div>
+
+    <!-- ============ VERDIKT ============ -->
+    <div class="preview">
+      <div class="preview-head">
+        <span class="t">Kryje to poistenie?</span>
+        <span class="live"><i></i>Klikni na scenár vľavo</span>
+      </div>
+      <div class="preview-tools">
+        <button class="tool" id="copyBtn">Kopírovať vysvetlenie</button>
+      </div>
+
+      <div id="verdictBody"></div>
+
+      <div class="pk-basics">
+        <h4>Základný rozdiel jednou vetou</h4>
+        <div class="pk-basic-row"><b>PZP</b><span>Povinné zo zákona. Platí škody, ktoré svojím autom spôsobíš OSTATNÝM — ich auto, majetok, zdravie. Tvoje vlastné auto z neho nikdy nedostane nič.</span></div>
+        <div class="pk-basic-row"><b>KASKO</b><span>Dobrovoľné. Kryje TVOJE vlastné auto — havária (aj vlastnou vinou), živel, krádež, vandalizmus, stret so zverou. Rozsah závisí od dojednaných rizík a spoluúčasti.</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/advisor-panel.js"></script>
+<script>
+/* ===========================================================================
+   DÁTA — scenáre a verdikty (pzp/kasko: 'yes' | 'no' | 'maybe')
+=========================================================================== */
+const SCENARIOS = [
+  { emoji: '💥', title: 'Spôsobím nehodu — poškodím cudzie auto',
+    pzp: { v: 'yes', note: 'Zaplatí škodu poškodenému' },
+    kasko: { v: 'yes', note: 'Zaplatí škodu na TVOJOM aute' },
+    explain: 'Tvoje <b>PZP zaplatí škodu tomu druhému</b> (jeho auto, majetok, prípadne zdravie). Ale oprava <b>tvojho</b> auta ide z tvojho vrecka — pokiaľ nemáš KASKO. Toto je najčastejší omyl: „mám poistku" ešte neznamená, že mám poistené svoje auto.' },
+  { emoji: '🅿️', title: 'Niekto mi poškodil auto na parkovisku a ušiel',
+    pzp: { v: 'no', note: 'Vinník neznámy — niet koho PZP uplatniť' },
+    kasko: { v: 'yes', note: 'Rieši sa ako havária / vandalizmus' },
+    explain: 'Ak sa vinník nenájde, <b>z PZP niet čo čerpať</b> — PZP je vždy poistenie vinníka. KASKO takúto škodu kryje (podľa dojednaných rizík, so spoluúčasťou). Bez KASKO ostáva škoda na klientovi.' },
+  { emoji: '🌩️', title: 'Krupobitie / spadnutý strom / povodeň',
+    pzp: { v: 'no', note: 'Živel nie je „vinník"' },
+    kasko: { v: 'yes', note: 'Riziko živel' },
+    explain: 'Pri živle neexistuje vinník, ktorého PZP by platilo. <b>Živelné škody kryje výhradne KASKO.</b> Argument pre klientov parkujúcich vonku — krupobitie vie urobiť škodu za tisíce eur za pár minút.' },
+  { emoji: '🔑', title: 'Ukradnú mi auto',
+    pzp: { v: 'no', note: 'PZP nekryje vlastné auto' },
+    kasko: { v: 'yes', note: 'Riziko krádež' },
+    explain: 'Krádež vlastného auta je <b>čisto KASKO riziko</b>. PZP s tým nemá nič spoločné. Dôležité pri drahších a dobre predajných autách.' },
+  { emoji: '🦌', title: 'Zrazím srnku / diviaka',
+    pzp: { v: 'no', note: 'Škoda na vlastnom aute' },
+    kasko: { v: 'yes', note: 'Riziko stret so zverou' },
+    explain: 'Stret so zverou je škoda na vlastnom aute — <b>kryje ju KASKO</b> (alebo samostatné pripoistenie stretu so zverou). Na cestách mimo miest je to jedna z najčastejších škôd vôbec.' },
+  { emoji: '🪨', title: 'Kamienok od protiidúceho auta rozbije čelné sklo',
+    pzp: { v: 'maybe', note: 'Teoreticky PZP vinníka — prakticky ťažko dokázateľné' },
+    kasko: { v: 'yes', note: 'Riziko čelné sklo / havária' },
+    explain: 'Dokázať, spod ktorého auta kamienok vyletel, je prakticky nemožné — <b>cez PZP vinníka sa takáto škoda takmer nikdy nevymôže</b>. Rieši ju KASKO alebo samostatné pripoistenie čelného skla.' },
+  { emoji: '🔨', title: 'Vandal mi poškriabe lak / odlomí zrkadlo',
+    pzp: { v: 'no', note: 'Vinník sa spravidla nenájde' },
+    kasko: { v: 'yes', note: 'Riziko vandalizmus' },
+    explain: 'Ak sa vandal nenájde (čo je pravidlo), <b>bez KASKO niet z čoho platiť</b>. KASKO kryje vandalizmus podľa dojednaných rizík.' },
+  { emoji: '🚧', title: 'Sám nabúram do stĺpika / plota',
+    pzp: { v: 'maybe', note: 'Zaplatí škodu na plote — nie na aute' },
+    kasko: { v: 'yes', note: 'Havária vlastnou vinou' },
+    explain: 'Škodu na cudzom majetku (plot) zaplatí tvoje PZP. Ale <b>škodu na vlastnom aute z vlastnej viny kryje len KASKO</b>. Ďalší častý omyl — „veď mám PZP" pri vlastnej chybe nepomôže.' },
+  { emoji: '🚑', title: 'Pri nehode zraním spolujazdca alebo chodca',
+    pzp: { v: 'yes', note: 'Škody na zdraví tretích osôb' },
+    kasko: { v: 'no', note: 'KASKO rieši len vozidlo' },
+    explain: '<b>Škody na zdraví iných kryje PZP</b> — a práve preto je povinné, tieto škody idú do státisícov. KASKO rieši len samotné vozidlo; na vlastné zranenia slúži úrazové pripoistenie osôb vo vozidle.' },
+];
+
+const ADVISOR = { name: 'Vladimír Moščák', email: 'vmfin@vmfin.sk', phone: '+421 910 491 768' };
+const state = { selected: 0 };
+
+const $ = id => document.getElementById(id);
+function escapeHtml(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ===========================================================================
+   VYKRESLENIE
+=========================================================================== */
+const ANSWER = { yes: 'ÁNO', no: 'NIE', maybe: 'ČIASTOČNE' };
+
+function renderList(){
+  $('scenarioList').innerHTML = SCENARIOS.map(function(s, i){
+    return '<div class="pk-scenario' + (i === state.selected ? ' sel' : '') + '" data-i="' + i + '">'
+      + '<span class="pk-emoji">' + s.emoji + '</span><span>' + escapeHtml(s.title) + '</span></div>';
+  }).join('');
+}
+
+function renderVerdict(){
+  const s = SCENARIOS[state.selected];
+  $('verdictBody').innerHTML =
+    '<div style="font-weight:700; font-size:14.5px; color:var(--ink); margin-bottom:12px;">' + s.emoji + ' ' + escapeHtml(s.title) + '</div>'
+    + '<div class="pk-verdicts">'
+    + '<div class="pk-verdict ' + s.pzp.v + '"><div class="pk-prod">PZP</div><div class="pk-ans">' + ANSWER[s.pzp.v] + '</div><div class="pk-note">' + escapeHtml(s.pzp.note) + '</div></div>'
+    + '<div class="pk-verdict ' + s.kasko.v + '"><div class="pk-prod">KASKO</div><div class="pk-ans">' + ANSWER[s.kasko.v] + '</div><div class="pk-note">' + escapeHtml(s.kasko.note) + '</div></div>'
+    + '</div>'
+    + '<div class="pk-explain">' + s.explain + '</div>';
+}
+
+function render(){ renderList(); renderVerdict(); }
+
+/* ===========================================================================
+   AKCIE
+=========================================================================== */
+function doCopy(){
+  const s = SCENARIOS[state.selected];
+  const strip = s.explain.replace(/<[^>]+>/g, '');
+  const txt = s.title + '\n'
+    + '• PZP: ' + ANSWER[s.pzp.v] + ' — ' + s.pzp.note + '\n'
+    + '• KASKO: ' + ANSWER[s.kasko.v] + ' — ' + s.kasko.note + '\n\n'
+    + strip + '\n\n'
+    + (ADVISOR.name || '') + (ADVISOR.phone ? ' · ' + ADVISOR.phone : '');
+  try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
+  const b = $('copyBtn'); const orig = b.textContent;
+  b.textContent = 'Skopírované ✓'; setTimeout(function(){ b.textContent = orig; }, 1600);
+}
+
+/* ===========================================================================
+   UDALOSTI A ŠTART — predvyplní poradcu z prihláseného účtu (whoami)
+=========================================================================== */
+(function init(){
+  $('scenarioList').addEventListener('click', function(e){
+    const el = e.target.closest('[data-i]');
+    if(!el) return;
+    state.selected = Number(el.dataset.i);
+    render();
+  });
+  $('copyBtn').addEventListener('click', doCopy);
+  render();
+  fetch('/api/whoami.php', { credentials: 'same-origin' })
+    .then(function(r){ return r.ok ? r.json() : {}; })
+    .then(function(adv){
+      if(adv && adv.id){
+        ADVISOR.name = adv.name || ADVISOR.name;
+        ADVISOR.phone = adv.phone || ADVISOR.phone;
+        ADVISOR.email = adv.email || ADVISOR.email;
+      }
+    })
+    .catch(function(){});
+})();
+</script>
+
+<script src="/assets/shell.js?v=20"></script>
+</body></html>

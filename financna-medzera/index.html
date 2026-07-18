@@ -1281,6 +1281,17 @@ function bind(){
       updatePartnerVisibility();
       render();
     }, doGeneratePdf);
+    // ?poslat=1 (CTA "Poslať klientovi" na karte nástroja) — zroluj rovno na
+    // kartu vytvorenia klientskeho odkazu; meno klienta sa berie z poľa
+    // "Meno a priezvisko" formulára (data-k="contactName").
+    if(params.get('poslat')){
+      setTimeout(()=>{
+        const card = $('sendLinkCard');
+        if(card){ card.scrollIntoView({behavior:'smooth', block:'center'}); }
+        const nameInput = document.querySelector('[data-k="contactName"] input');
+        if(nameInput) nameInput.focus();
+      }, 200);
+    }
   }
 })();
 </script>

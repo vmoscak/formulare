@@ -695,6 +695,12 @@ function initSendLinkPanel(){
     try{ if(navigator.clipboard) navigator.clipboard.writeText(input.value); }catch(e){}
     const b=$('copyLinkBtn'); const orig=b.textContent; b.textContent='Skopírované ✓'; setTimeout(()=>b.textContent=orig,1600);
   });
+  // ?poslat=1 (CTA "Poslať klientovi" na karte nástroja) — rovno otvor panel
+  // na vytvorenie klientskeho odkazu a nasmeruj kurzor na meno klienta.
+  if(new URLSearchParams(location.search).get('poslat')){
+    $('sendLinkPanel').style.display = 'block';
+    setTimeout(()=>{ $('sendLinkPanel').scrollIntoView({behavior:'smooth', block:'center'}); $('clientLinkLabel').focus(); }, 150);
+  }
 }
 
 /* ===========================================================================

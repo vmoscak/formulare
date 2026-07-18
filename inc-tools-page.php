@@ -141,6 +141,7 @@ $arrow = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="cu
         <h4><?= htmlspecialchars($t['name']) ?></h4>
         <p><?= htmlspecialchars($t['blurb']) ?></p>
         <span class="go">Otvoriť <?= $arrow ?></span>
+        <?php if (!empty($t['client'])): ?><span class="tool-client-cta" onclick="event.preventDefault();event.stopPropagation();window.location='<?= htmlspecialchars($t['href']) ?>?poslat=1';">✉ Poslať klientovi</span><?php endif; ?>
       </a>
       <?php endforeach; ?>
     </div>
@@ -165,6 +166,7 @@ $arrow = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="cu
           <h4><?= htmlspecialchars($t['name']) ?></h4>
           <p><?= htmlspecialchars($t['desc']) ?></p>
           <span class="go">Otvoriť <?= $arrow ?></span>
+          <?php if (!empty($t['client'])): ?><span class="tool-client-cta" onclick="event.preventDefault();event.stopPropagation();window.location='<?= htmlspecialchars($t['href']) ?>?poslat=1';">✉ Poslať klientovi</span><?php endif; ?>
         </a>
       </div>
       <?php endforeach; ?>

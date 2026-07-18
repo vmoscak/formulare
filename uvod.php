@@ -101,6 +101,50 @@ if (!empty($me['onboarding_started_at'])) {
     } catch (Throwable $e) { /* tabuľka ešte nemusí existovať */ }
 }
 
+// "Pokračuj, kde si skončil" — posledný vygenerovaný dokument poradcu za
+// posledné 2 týždne. Otvára sa rovnakým mechanizmom ako v Mojich dokumentoch
+// (?loadDoc=id načíta uložené dáta a rovno vygeneruje PDF).
+$lastDoc = null;
+try {
+    $ldStmt = db()->prepare(
+        "SELECT id, tool, client_label, generated_at FROM formulare_generated_documents
+         WHERE advisor_id = ? ORDER BY generated_at DESC LIMIT 1"
+    );
+    $ldStmt->execute([$curAdvisorId]);
+    $ld = $ldStmt->fetch();
+    if ($ld && strtotime($ld['generated_at']) > time() - 14 * 86400) $lastDoc = $ld;
+} catch (Throwable $e) { /* tabuľka ešte nemusí existovať */ }
+
+// Vyplnené klientske odkazy, ktoré poradca ešte nevidel (claimed_at sa
+// nastaví pri otvorení Mojich dokumentov) — nech sa o vyplnení dozvie
+// hneď na Domove a nemusí nikam preklikávať naslepo.
+$newSubmitted = 0;
+try {
+    $nsStmt = db()->prepare(
+        "SELECT COUNT(*) FROM formulare_client_links
+         WHERE advisor_id = ? AND status = 'submitted' AND claimed_at IS NULL"
+    );
+    $nsStmt->execute([$curAdvisorId]);
+    $newSubmitted = (int)$nsStmt->fetchColumn();
+} catch (Throwable $e) { /* tabuľka ešte nemusí existovať */ }
+
+/** "1 klientsky odkaz bol vyplnený" / "3 odkazy boli vyplnené" / "5 odkazov bolo vyplnených" */
+function submittedPhrase(int $n): string {
+    if ($n === 1) return "1 klientsky odkaz bol vyplnený";
+    if ($n >= 2 && $n <= 4) return "$n klientske odkazy boli vyplnené";
+    return "$n klientskych odkazov bolo vyplnených";
+}
+
+/** Ľudský relatívny čas po slovensky ("pred chvíľou", "včera", "pred 3 dňami"). */
+function timeAgoSk(string $dt): string {
+    $diff = time() - strtotime($dt);
+    if ($diff < 3600) return 'pred chvíľou';
+    if ($diff < 86400) return 'dnes';
+    if ($diff < 2 * 86400) return 'včera';
+    $days = (int)floor($diff / 86400);
+    return "pred $days dňami";
+}
+
 // Náhľad najbližších udalostí z Tímového kalendára — viditeľný pre celý tím.
 // Udalosť môže byť priradená viacerým kolegom naraz (napr. obchodníci + owner).
 $upcomingEvents = [];
@@ -176,6 +220,29 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
   </div>
   <?php endif; ?>
 
+  <?php if ($newSubmitted > 0 || $lastDoc): ?>
+  <div class="section dom-quick-banners">
+    <?php if ($newSubmitted > 0): ?>
+    <a class="dom-banner dom-banner-submitted" href="/moje-dokumenty.php">
+      <span class="dom-banner-ic">📥</span>
+      <span class="dom-banner-text"><b><?= submittedPhrase($newSubmitted) ?></b> — pozri si odpovede klientov</span>
+      <span class="dom-banner-go">Otvoriť
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </span>
+    </a>
+    <?php endif; ?>
+    <?php if ($lastDoc): ?>
+    <a class="dom-banner" href="/<?= h(rawurlencode($lastDoc['tool'])) ?>/index.html?loadDoc=<?= (int)$lastDoc['id'] ?>" target="_blank">
+      <span class="dom-banner-ic">🕘</span>
+      <span class="dom-banner-text">Naposledy: <b><?= h(toolLabel($lastDoc['tool'])) ?></b> — <?= h($lastDoc['client_label']) ?> · <?= timeAgoSk($lastDoc['generated_at']) ?></span>
+      <span class="dom-banner-go">Otvoriť
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </span>
+    </a>
+    <?php endif; ?>
+  </div>
+  <?php endif; ?>
+
   <?php if ($news): ?>
   <div class="section">
     <div class="section-head"><h3>Novinky</h3></div>
@@ -223,6 +290,7 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
               <span class="go">Otvoriť
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </span>
+              <?php if (!empty($t['client'])): ?><span class="tool-client-cta" onclick="event.preventDefault();event.stopPropagation();window.location='<?= h($t['href']) ?>?poslat=1';">✉ Poslať klientovi</span><?php endif; ?>
             </a>
           </div>
           <?php endforeach; ?>
@@ -254,6 +322,7 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
                 <span class="go">Otvoriť
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 </span>
+                <?php if (!empty($t['client'])): ?><span class="tool-client-cta" onclick="event.preventDefault();event.stopPropagation();window.location='<?= h($t['href']) ?>?poslat=1';">✉ Poslať klientovi</span><?php endif; ?>
               </a>
             </div>
             <?php endforeach; ?>

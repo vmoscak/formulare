@@ -42,6 +42,7 @@ function toolIco(string $key): string {
         'percent'   => '<line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
         'target'    => '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.3"/>',
         'trending'  => '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+        'home'      => '<path d="M3 10.5L12 3l9 7.5"/><path d="M5 9v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9"/>',
     ];
     return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . ($p[$key] ?? $p['help']) . '</svg>';
 }
@@ -61,9 +62,9 @@ $TOOL_CATEGORIES = [
     // v mriežke sa nezobrazia, keďže sú zvýraznené vo flow banneri vyššie
     // (viď inc-tools-page.php, $FLOW_STEPS).
     ['title' => 'Pred stretnutím / motivácia', 'group' => 'nastroje', 'tools' => [
-        ['href' => 'wizard-poistenie/', 'name' => 'Aké poistenie potrebujem', 'ico' => 'help', 'color' => 'violet',
+        ['href' => 'wizard-poistenie/', 'name' => 'Aké poistenie potrebujem', 'ico' => 'help', 'color' => 'violet', 'client' => true,
          'desc' => 'Krátky dotazník na 8 otázok – odporúčanie typov poistenia, s prekliknutím do Kalkulačky poistného krytia.'],
-        ['href' => 'financna-medzera/', 'name' => 'Kalkulačka poistného krytia', 'ico' => 'chart', 'color' => 'indigo',
+        ['href' => 'financna-medzera/', 'name' => 'Kalkulačka poistného krytia', 'ico' => 'chart', 'color' => 'indigo', 'client' => true,
          'desc' => 'Koľko by rodine chýbalo pri úmrtí, invalidite alebo dlhodobej PN – odporúčané krytie vs. existujúce poistenie.'],
         ['href' => 'checklist-analyza/', 'name' => 'Checklist – výstup z analýzy', 'ico' => 'check', 'color' => 'emerald',
          'desc' => 'Kontrolný zoznam krokov a odporúčaní, s termínmi a zodpovednosťou. Dá sa predvyplniť z Kalkulačky.'],
@@ -81,6 +82,10 @@ $TOOL_CATEGORIES = [
          'desc' => 'Koľko reálne dostane klient pri škode, ak je majetok podpoistený – princíp pomerného plnenia, so správnou sumou vedľa seba na porovnanie.'],
         ['href' => 'poistenie-uveru-banka-vs-uniqa/', 'name' => 'Poistenie úveru: banka vs. UNIQA', 'ico' => 'swap', 'color' => 'indigo',
          'desc' => 'Argumenty, prečo je pre klienta výhodnejšia samostatná poistka UNIQA namiesto bankového balíka k úveru – životné aj majetkové poistenie.'],
+        ['href' => 'hodnota-nehnutelnosti/', 'name' => 'Poistná hodnota nehnuteľnosti', 'ico' => 'home', 'color' => 'sky', 'added' => '2026-07-18',
+         'desc' => 'Orientačný prepočet reprodukčnej hodnoty stavby (plocha × cena za m² podľa typu a štandardu) — na koľko poistiť, nadväzuje na Simulátor krátenia plnenia.'],
+        ['href' => 'pzp-vs-kasko/', 'name' => 'PZP vs. KASKO', 'ico' => 'shield', 'color' => 'teal', 'added' => '2026-07-18',
+         'desc' => 'Čo kryje PZP, čo KASKO a čo ani jedno — na bežných situáciách (krupobitie, vinník ušiel, krádež...). Porovnávač krytia na argumentáciu, nie cien.'],
     ]],
     ['title' => 'Podpora poradcu', 'group' => 'pomocky', 'tools' => [
         ['href' => 'tahak-co-pytat-od-klienta/', 'name' => 'Ťahák „Čo pýtať od klienta“', 'ico' => 'check', 'color' => 'amber',
@@ -89,10 +94,14 @@ $TOOL_CATEGORIES = [
          'desc' => 'Vyber produkt a typ klienta — poskladá sa zoznam odporúčaných argumentov na jeho predstavenie. Opak Ťaháku „čo pýtať“ — toto je čo povedať.'],
         ['href' => 'vybavovac-namietok/', 'name' => 'Vybavovač námietok', 'ico' => 'help', 'color' => 'violet',
          'desc' => 'Vyber typickú námietku klienta („je to drahé“, „musím si to premyslieť“...) — appka ukáže odporúčané reakcie. Interný nástroj, čo povedať, keď klient zaváha.'],
+        ['href' => 'generator-agendy/', 'name' => 'Generátor agendy na stretnutie', 'ico' => 'clipboard', 'color' => 'indigo', 'added' => '2026-07-18',
+         'desc' => 'Poskladaj program stretnutia z bežných tém (alebo pridaj vlastné) a pošli klientovi vopred — prichádza pripravený, pôsobí to profesionálne.'],
     ]],
     ['title' => 'Po podpise', 'group' => 'pomocky', 'tools' => [
         ['href' => 'prvych-30-dni/', 'name' => 'Prvých 30 dní', 'ico' => 'calendar', 'color' => 'emerald',
          'desc' => 'Kartička pre klienta hneď po podpise — čo teraz nasleduje, kedy začína platiť krytie, ako postupovať pri poistnej udalosti. PDF aj text na SMS/WhatsApp.'],
+        ['href' => 'rocny-servisny-plan/', 'name' => 'Ročný servisný plán', 'ico' => 'calendar', 'color' => 'violet', 'added' => '2026-07-18',
+         'desc' => 'Pozvánka na servisné stretnutie pri výročí zmluvy — zaklikni témy podľa klienta (zmeny v rodine, majetok, hypotéka...), pošli PDF aj text na SMS/WhatsApp.'],
     ]],
     ['title' => 'Zmluvy a dokumentácia', 'group' => 'formulare', 'tools' => [
         ['href' => 'splnomocnenie/', 'name' => 'Všeobecné splnomocnenie', 'ico' => 'user-plus', 'color' => 'indigo',

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="sk"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generátor agendy na stretnutie</title>
+
+<!-- =========================================================================
+     GENERÁTOR AGENDY NA STRETNUTIE — samostatný editovateľný súbor
+     -------------------------------------------------------------------------
+     Poradca zaklikne témy, ktoré chce na stretnutí prebrať, appka poskladá
+     prehľadnú agendu (poradie, orientačný čas) na poslanie klientovi vopred
+     — pôsobí to profesionálne a klient prichádza pripravený.
+
+     KDE ČO UPRAVIŤ:
+       • Ponuka tém ............ JS, pole TOPIC_LIBRARY
+       • Kontakt poradcu ....... JS, objekt ADVISOR (prepíše sa automaticky)
+       • Farby / vzhľad ........ zdieľaný dizajnový systém ../assets/ui.css
+========================================================================== -->
+
+<script src="../assets/theme-init.js"></script>
+<script src="../assets/toast.js?v=1"></script>
+<link rel="stylesheet" href="../assets/ui.css?v=12">
+<style>
+  .ag-lib{display:flex; flex-direction:column; gap:6px;}
+  .ag-lib-item{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 12px;
+    border:1.5px solid var(--border); border-radius:var(--radius-md); font-size:12.5px; color:var(--ink-2);}
+  .ag-lib-item button{flex-shrink:0; border:none; background:var(--accent-soft); color:var(--accent); font-weight:700;
+    font-size:11.5px; padding:5px 11px; border-radius:999px; cursor:pointer;}
+  .ag-lib-item button:hover{background:var(--accent); color:#fff;}
+  .ag-lib-item button.added{background:var(--good-soft); color:var(--good);}
+
+  .ag-agenda{display:flex; flex-direction:column; gap:0; margin-bottom:14px;}
+  .ag-row{display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border);}
+  .ag-row:last-child{border-bottom:none;}
+  .ag-num{width:22px; height:22px; border-radius:50%; background:var(--accent); color:#fff; font-size:11px; font-weight:800;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .ag-row-title{flex:1; font-size:13px; font-weight:600; color:var(--ink);}
+  .ag-time{width:52px; text-align:right; font-size:12px; color:var(--muted); flex-shrink:0;}
+  .ag-remove{border:none; background:none; color:var(--muted); cursor:pointer; font-size:16px; line-height:1; flex-shrink:0; padding:2px 4px;}
+  .ag-remove:hover{color:#e11d48;}
+  .ag-total{display:flex; justify-content:space-between; align-items:center; padding:12px 14px; background:var(--accent-soft);
+    border-radius:var(--radius-md); font-size:13px; font-weight:700; color:var(--accent-ink); margin-top:6px;}
+  .ag-empty{font-size:12.5px; color:var(--muted); text-align:center; padding:20px 0;}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="head">
+    <div class="head-left">
+      <a href="../pomocky.php" class="back-btn" title="Späť na pomôcky">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <div class="brand">
+        <div class="logo">A</div>
+        <div>
+          <b>Generátor agendy</b><br>
+          <small>Poskladaj program stretnutia na poslanie klientovi vopred</small>
+        </div>
+      </div>
+    </div>
+    <div class="head-actions">
+      <div class="avatar" id="avatar">📋</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- ============ VSTUPY ============ -->
+    <div class="form">
+      <div>
+        <div class="step-head"><div class="step-num">1</div><div class="step-title">Klient a termín</div></div>
+        <div class="fields">
+          <div class="field" data-k="clientName">
+            <label>MENO KLIENTA</label>
+            <input id="clientName" placeholder="napr. Ján Novák">
+          </div>
+          <div class="field" data-k="when">
+            <label>KEDY (nepovinné)</label>
+            <input id="when" placeholder="napr. streda 14:00, kancelária">
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="step-head"><div class="step-num">2</div><div class="step-title">Pridaj témy do agendy</div></div>
+        <p style="font-size:12px; color:var(--muted); margin:0 0 10px; line-height:1.55;">Klikni na "+" pri téme — pridá sa do agendy vpravo v poradí, v akom klikáš.</p>
+        <div class="ag-lib" id="topicLib"></div>
+        <div class="field" data-k="customTopic" style="margin-top:12px;">
+          <label>VLASTNÁ TÉMA</label>
+          <div style="display:flex; gap:8px;">
+            <input id="customTopic" placeholder="napr. Podpis dodatku k zmluve" style="flex:1;">
+            <button class="btn-ghost" id="addCustomBtn" style="flex-shrink:0;">Pridať</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn-ghost" id="resetBtn">Vynulovať</button>
+      </div>
+    </div>
+
+    <!-- ============ AGENDA ============ -->
+    <div class="preview">
+      <div class="preview-head">
+        <span class="t">Agenda stretnutia</span>
+        <span class="live"><i></i>Aktualizuje sa naživo</span>
+      </div>
+      <div class="preview-tools">
+        <button class="tool" id="copyBtn">Kopírovať pre klienta</button>
+      </div>
+
+      <div id="agendaWrap"></div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/advisor-panel.js"></script>
+<script>
+/* ===========================================================================
+   DÁTA — ponuka bežných tém s orientačným časom (minúty)
+=========================================================================== */
+const TOPIC_LIBRARY = [
+  { t: 'Úvod a zhrnutie doterajšej spolupráce', min: 5 },
+  { t: 'Zmeny v rodinnej/pracovnej situácii', min: 10 },
+  { t: 'Analýza poistného krytia', min: 15 },
+  { t: 'Kontrola poistnej sumy nehnuteľnosti/majetku', min: 10 },
+  { t: 'Prehľad existujúcich zmlúv a prípadné duplicity', min: 10 },
+  { t: 'Predstavenie nového produktu/riešenia', min: 15 },
+  { t: 'Otázky k hypotéke / refinancovaniu', min: 15 },
+  { t: 'Podpis dokumentov', min: 10 },
+  { t: 'Ďalšie kroky a termín ďalšieho stretnutia', min: 5 },
+];
+
+const ADVISOR = { name: 'Vladimír Moščák', email: 'vmfin@vmfin.sk', phone: '+421 910 491 768' };
+const state = { clientName: '', when: '', agenda: [] };
+
+const $ = id => document.getElementById(id);
+function escapeHtml(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ===========================================================================
+   VYKRESLENIE
+=========================================================================== */
+function renderLib(){
+  $('topicLib').innerHTML = TOPIC_LIBRARY.map(function(item, i){
+    const added = state.agenda.some(function(a){ return a.t === item.t; });
+    return '<div class="ag-lib-item"><span>' + escapeHtml(item.t) + ' <span style="color:var(--muted);">(' + item.min + ' min)</span></span>'
+      + '<button data-lib-i="' + i + '" class="' + (added ? 'added' : '') + '">' + (added ? '✓ Pridané' : '+ Pridať') + '</button></div>';
+  }).join('');
+}
+
+function totalMinutes(){ return state.agenda.reduce(function(s, a){ return s + (Number(a.min) || 0); }, 0); }
+
+function renderAgenda(){
+  const name = state.clientName.trim();
+  let html = '<div style="font-weight:800; font-size:16px; color:var(--ink); margin-bottom:2px;">Agenda stretnutia</div>'
+    + '<p style="font-size:12.5px; color:var(--muted); margin:0 0 14px;">' + (name ? escapeHtml(name) : 'Klient') + (state.when.trim() ? ' · ' + escapeHtml(state.when.trim()) : '') + '</p>';
+
+  if(!state.agenda.length){
+    html += '<div class="ag-empty">Agenda je zatiaľ prázdna — pridaj témy vľavo.</div>';
+  } else {
+    html += '<div class="ag-agenda">' + state.agenda.map(function(a, i){
+      return '<div class="ag-row"><span class="ag-num">' + (i+1) + '</span>'
+        + '<span class="ag-row-title">' + escapeHtml(a.t) + '</span>'
+        + '<span class="ag-time">~' + a.min + ' min</span>'
+        + '<button class="ag-remove" data-remove-i="' + i + '" title="Odobrať">×</button></div>';
+    }).join('') + '</div>';
+    html += '<div class="ag-total"><span>Orientačná dĺžka stretnutia</span><span>~' + totalMinutes() + ' min</span></div>';
+  }
+  $('agendaWrap').innerHTML = html;
+}
+
+function render(){ renderLib(); renderAgenda(); }
+
+/* ===========================================================================
+   AKCIE
+=========================================================================== */
+function doCopy(){
+  const name = state.clientName.trim();
+  const greeting = name ? 'Dobrý deň, ' + name + ',' : 'Dobrý deň,';
+  const txt = greeting + ' posielam program nášho stretnutia' + (state.when.trim() ? ' (' + state.when.trim() + ')' : '') + ':\n\n'
+    + state.agenda.map(function(a, i){ return (i+1) + '. ' + a.t + ' (~' + a.min + ' min)'; }).join('\n')
+    + '\n\nOrientačná dĺžka: ~' + totalMinutes() + ' min. Ak by ste chceli niečo doplniť, dajte vedieť vopred.\n\n'
+    + (ADVISOR.name || '') + (ADVISOR.phone ? ' · ' + ADVISOR.phone : '');
+  try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
+  const b = $('copyBtn'); const orig = b.textContent;
+  b.textContent = 'Skopírované ✓'; setTimeout(function(){ b.textContent = orig; }, 1600);
+}
+
+/* ===========================================================================
+   UDALOSTI A ŠTART — predvyplní poradcu z prihláseného účtu (whoami)
+=========================================================================== */
+(function init(){
+  $('clientName').addEventListener('input', function(){ state.clientName = this.value; renderAgenda(); });
+  $('when').addEventListener('input', function(){ state.when = this.value; renderAgenda(); });
+
+  $('topicLib').addEventListener('click', function(e){
+    const btn = e.target.closest('[data-lib-i]');
+    if(!btn) return;
+    const item = TOPIC_LIBRARY[Number(btn.dataset.libI)];
+    if(state.agenda.some(function(a){ return a.t === item.t; })){
+      state.agenda = state.agenda.filter(function(a){ return a.t !== item.t; });
+    } else {
+      state.agenda.push({ t: item.t, min: item.min });
+    }
+    render();
+  });
+
+  $('addCustomBtn').addEventListener('click', function(){
+    const val = $('customTopic').value.trim();
+    if(!val) return;
+    state.agenda.push({ t: val, min: 10 });
+    $('customTopic').value = '';
+    render();
+  });
+  $('customTopic').addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); $('addCustomBtn').click(); } });
+
+  $('agendaWrap').addEventListener('click', function(e){
+    const btn = e.target.closest('[data-remove-i]');
+    if(!btn) return;
+    state.agenda.splice(Number(btn.dataset.removeI), 1);
+    render();
+  });
+
+  $('resetBtn').addEventListener('click', function(){
+    state.clientName = ''; state.when = ''; state.agenda = [];
+    $('clientName').value = ''; $('when').value = '';
+    render();
+  });
+  $('copyBtn').addEventListener('click', doCopy);
+  render();
+
+  fetch('/api/whoami.php', { credentials: 'same-origin' })
+    .then(function(r){ return r.ok ? r.json() : {}; })
+    .then(function(adv){
+      if(adv && adv.id){
+        ADVISOR.name = adv.name || ADVISOR.name;
+        ADVISOR.phone = adv.phone || ADVISOR.phone;
+        ADVISOR.email = adv.email || ADVISOR.email;
+      }
+    })
+    .catch(function(){});
+})();
+</script>
+
+<script src="/assets/shell.js?v=20"></script>
+</body></html>

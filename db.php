@@ -79,6 +79,7 @@ function toolLabel(string $slug): string {
         'obchadzac-notara' => 'Obchádzač notára',
         'financny-rontgen' => 'Finančný röntgen (Pred/Po)',
         'zmena-spravcu-zmluvy' => 'Zmena správcu zmluvy',
+        'rocny-servisny-plan' => 'Ročný servisný plán',
     ];
     return $labels[$slug] ?? $slug;
 }

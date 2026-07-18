@@ -33,6 +33,13 @@ $links = db()->prepare(
 $links->execute([$advisorId]);
 $links = $links->fetchAll();
 
+// Zobrazením tejto stránky sa vyplnené odkazy považujú za "videné" — banner
+// na Domove (uvod.php) ukazuje len tie s claimed_at IS NULL.
+try {
+    db()->prepare("UPDATE formulare_client_links SET claimed_at = ? WHERE advisor_id = ? AND status = 'submitted' AND claimed_at IS NULL")
+        ->execute([date('Y-m-d H:i:s'), $advisorId]);
+} catch (Throwable $e) { /* nie je kritické */ }
+
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 function advisorInitials(string $name): string {
     $parts = preg_split('/\s+/', trim($name));
