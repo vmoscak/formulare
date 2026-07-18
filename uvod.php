@@ -71,9 +71,32 @@ foreach ($allToolsFlat as $slug => $t) {
 // Obľúbené — ručne vybraný prierez naprieč skupinami, nie automatika.
 $RECOMMENDED_SLUGS = ['wizard-poistenie', 'splnomocnenie', 'checklisty-skody', 'prvych-30-dni'];
 $recommendedTools = [];
+$recommendedTitle = 'Odporúčané na štart';
 if (!$favoriteTools) {
-    foreach ($RECOMMENDED_SLUGS as $slug) {
-        if (isset($allToolsFlat[$slug])) $recommendedTools[] = $allToolsFlat[$slug] + ['slug' => $slug];
+    // Ak už má poradca reálnu históriu generovania, odporúčania nahradí tým,
+    // čo naozaj najviac používa — statický zoznam ostáva len pre úplný
+    // začiatok, kým appku ešte nepoužil.
+    $usageCounts = [];
+    try {
+        $uStmt = db()->prepare(
+            'SELECT tool, COUNT(*) c FROM formulare_generated_documents
+             WHERE advisor_id = ? GROUP BY tool ORDER BY c DESC, MAX(generated_at) DESC LIMIT 6'
+        );
+        $uStmt->execute([$curAdvisorId]);
+        $usageCounts = $uStmt->fetchAll();
+    } catch (Throwable $e) { /* tabuľka ešte nemusí existovať */ }
+
+    if ($usageCounts) {
+        $recommendedTitle = 'Najčastejšie používané';
+        foreach ($usageCounts as $u) {
+            $slug = $u['tool'];
+            if (isset($allToolsFlat[$slug])) $recommendedTools[] = $allToolsFlat[$slug] + ['slug' => $slug];
+        }
+    }
+    if (!$recommendedTools) {
+        foreach ($RECOMMENDED_SLUGS as $slug) {
+            if (isset($allToolsFlat[$slug])) $recommendedTools[] = $allToolsFlat[$slug] + ['slug' => $slug];
+        }
     }
 }
 
@@ -307,7 +330,7 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
         </div>
         <?php if ($recommendedTools): ?>
         <div id="domRecommended">
-          <div class="section-head"><h3>Odporúčané na štart</h3></div>
+          <div class="section-head"><h3><?= h($recommendedTitle) ?></h3></div>
           <div class="tool-grid">
             <?php foreach ($recommendedTools as $t): ?>
             <div class="tool-card-wrap">

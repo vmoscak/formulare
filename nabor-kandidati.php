@@ -65,16 +65,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
+// Stavy, v ktorých je kandidát ešte "v jednaní" — mimo nich (pripojil/odmietol/
+// stratil) sa zaspatosť kontaktu už nerieši, vec je uzavretá.
+const RK_ACTIVE_STATUSES = ['novy', 'oslovene', 'zaujem', 'stretnutie'];
+const RK_STALE_DAYS = 14;
+
 $fStatus = trim((string)($_GET['status'] ?? ''));
-$where = '';
+$q = trim((string)($_GET['q'] ?? ''));
+$fStale = isset($_GET['stale']) && $_GET['stale'] === '1';
+$view = ($_GET['view'] ?? 'list') === 'kanban' ? 'kanban' : 'list';
+
+$where = [];
 $params = [];
 if ($fStatus !== '' && array_key_exists($fStatus, RK_STATUSES)) {
-    $where = 'WHERE status = ?';
+    $where[] = 'status = ?';
     $params[] = $fStatus;
 }
-$stmt = db()->prepare("SELECT * FROM formulare_recruit_candidates $where ORDER BY updated_at DESC, id DESC");
+if ($q !== '') {
+    $where[] = '(name LIKE ? OR phone LIKE ? OR email LIKE ?)';
+    $params[] = '%' . $q . '%'; $params[] = '%' . $q . '%'; $params[] = '%' . $q . '%';
+}
+$staleThreshold = date('Y-m-d', strtotime('-' . RK_STALE_DAYS . ' days'));
+if ($fStale) {
+    $where[] = '(' . implode(' OR ', array_fill(0, count(RK_ACTIVE_STATUSES), 'status = ?')) . ')';
+    foreach (RK_ACTIVE_STATUSES as $s) { $params[] = $s; }
+    $where[] = '(contact_date IS NULL OR contact_date < ?)';
+    $params[] = $staleThreshold;
+}
+$whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
+$stmt = db()->prepare("SELECT * FROM formulare_recruit_candidates $whereSql ORDER BY updated_at DESC, id DESC");
 $stmt->execute($params);
 $candidates = $stmt->fetchAll();
+
+// Zaspatosť sa počíta per riadok (nie v SQL vyššie, keď stale filter nie je
+// aktívny) — nech sa dá zobraziť badge aj mimo filtra "Bez pohybu".
+foreach ($candidates as &$c) {
+    $isActiveStatus = in_array($c['status'], RK_ACTIVE_STATUSES, true);
+    $c['is_stale'] = $isActiveStatus && (!$c['contact_date'] || $c['contact_date'] < $staleThreshold);
+}
+unset($c);
 
 $statusCounts = [];
 foreach (db()->query('SELECT status, COUNT(*) c FROM formulare_recruit_candidates GROUP BY status') as $r) {
@@ -83,6 +112,21 @@ foreach (db()->query('SELECT status, COUNT(*) c FROM formulare_recruit_candidate
 $totalCount = array_sum($statusCounts);
 $activeCount = ($statusCounts['novy'] ?? 0) + ($statusCounts['oslovene'] ?? 0) + ($statusCounts['zaujem'] ?? 0) + ($statusCounts['stretnutie'] ?? 0);
 $joinedCount = $statusCounts['pripojil'] ?? 0;
+
+$staleCount = 0;
+try {
+    $stStmt = db()->prepare(
+        'SELECT COUNT(*) FROM formulare_recruit_candidates WHERE (' . implode(' OR ', array_fill(0, count(RK_ACTIVE_STATUSES), 'status = ?')) . ') AND (contact_date IS NULL OR contact_date < ?)'
+    );
+    $stStmt->execute(array_merge(RK_ACTIVE_STATUSES, [$staleThreshold]));
+    $staleCount = (int)$stStmt->fetchColumn();
+} catch (Throwable $e) { /* nič */ }
+
+function rkQs(array $overrides): string {
+    $params = array_merge($_GET, $overrides);
+    $params = array_filter($params, fn($v) => $v !== '' && $v !== null);
+    return '?' . http_build_query($params);
+}
 ?>
 <!DOCTYPE html><html lang="sk"><head>
 <meta charset="UTF-8">
@@ -114,6 +158,23 @@ $joinedCount = $statusCounts['pripojil'] ?? 0;
   .rk-stats{display:flex; align-items:center; gap:22px; flex-wrap:wrap;}
   .rk-stat-num{font-size:20px; font-weight:700; color:var(--ink);}
   .rk-stat-label{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em;}
+  .rk-stale-badge{display:inline-flex; align-items:center; gap:4px; font-size:10.5px; font-weight:700; color:var(--amber); background:var(--amber-soft); padding:2px 8px; border-radius:999px; margin-left:8px; white-space:nowrap;}
+  .rk-filter-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px;}
+  .rk-search{flex:1; min-width:220px; display:flex; align-items:center; gap:8px; padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-md); background:var(--desk);}
+  .rk-search input{flex:1; border:none; background:transparent; font-size:13.5px; color:var(--ink); outline:none;}
+  .rk-search svg{flex-shrink:0; color:var(--muted);}
+  .rk-view-toggle{display:flex; gap:6px; flex-shrink:0;}
+  .rk-kanban{display:flex; gap:12px; overflow-x:auto; padding-bottom:6px;}
+  .rk-kanban-col{flex:0 0 250px; background:var(--desk); border-radius:var(--radius-md); padding:10px; display:flex; flex-direction:column; gap:8px;}
+  .rk-kanban-col-head{display:flex; align-items:center; justify-content:space-between; padding:2px 4px 6px; border-bottom:1px solid var(--border);}
+  .rk-kanban-col-title{font-size:12px; font-weight:700; color:var(--ink-2);}
+  .rk-kanban-col-count{font-size:11px; font-weight:700; color:var(--muted);}
+  .rk-kanban-card{background:var(--paper); border:1px solid var(--border); border-radius:var(--radius-md); padding:10px; display:flex; flex-direction:column; gap:5px;}
+  .rk-kanban-name{font-size:13px; font-weight:700; color:var(--ink);}
+  .rk-kanban-meta{font-size:11.5px; color:var(--muted); line-height:1.4;}
+  .rk-kanban-note{font-size:11.5px; color:var(--ink-2); line-height:1.4; white-space:pre-wrap;}
+  .rk-kanban-move{width:100%; font-size:11.5px; padding:5px 6px; border-radius:6px; border:1px solid var(--border); background:var(--desk); color:var(--ink-2); margin-top:2px;}
+  .rk-kanban-empty{font-size:11.5px; color:var(--muted); text-align:center; padding:10px 4px;}
 </style>
 </head><body>
 <header class="topbar">
@@ -142,18 +203,74 @@ $joinedCount = $statusCounts['pripojil'] ?? 0;
       <div class="rk-stat-label">Pripojili sa</div>
       <div class="rk-stat-num" style="color:var(--good);"><?= $joinedCount ?></div>
     </div>
+    <?php if ($staleCount > 0): ?>
+    <div>
+      <div class="rk-stat-label">Bez pohybu &gt; <?= RK_STALE_DAYS ?> dní</div>
+      <div class="rk-stat-num" style="color:var(--amber);"><?= $staleCount ?></div>
+    </div>
+    <?php endif; ?>
   </div>
 
   <div class="card">
-    <h3>Filtrovať podľa stavu</h3>
-    <div style="display:flex; gap:8px; flex-wrap:wrap;">
-      <a class="pillbtn<?= $fStatus === '' ? ' solid' : '' ?>" href="/nabor-kandidati.php">Všetci (<?= $totalCount ?>)</a>
+    <h3>Hľadať a filtrovať</h3>
+    <form method="get" class="rk-search" style="margin-bottom:12px;">
+      <?php if ($fStatus !== ''): ?><input type="hidden" name="status" value="<?= h($fStatus) ?>"><?php endif; ?>
+      <?php if ($fStale): ?><input type="hidden" name="stale" value="1"><?php endif; ?>
+      <?php if ($view === 'kanban'): ?><input type="hidden" name="view" value="kanban"><?php endif; ?>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" name="q" value="<?= h($q) ?>" placeholder="Hľadať podľa mena, telefónu alebo e-mailu…">
+      <button type="submit" class="toggle-btn">Hľadať</button>
+      <?php if ($q !== ''): ?><a class="toggle-btn" href="<?= rkQs(['q' => '']) ?>">✕</a><?php endif; ?>
+    </form>
+    <div class="rk-filter-row">
+      <a class="pillbtn<?= $fStatus === '' && !$fStale ? ' solid' : '' ?>" href="<?= rkQs(['status' => '', 'stale' => '']) ?>">Všetci (<?= $totalCount ?>)</a>
       <?php foreach (RK_STATUSES as $key => $meta): ?>
-      <a class="pillbtn<?= $fStatus === $key ? ' solid' : '' ?>" href="/nabor-kandidati.php?status=<?= urlencode($key) ?>"><?= h($meta[0]) ?> (<?= $statusCounts[$key] ?? 0 ?>)</a>
+      <a class="pillbtn<?= $fStatus === $key ? ' solid' : '' ?>" href="<?= rkQs(['status' => $key, 'stale' => '']) ?>"><?= h($meta[0]) ?> (<?= $statusCounts[$key] ?? 0 ?>)</a>
       <?php endforeach; ?>
+      <?php if ($staleCount > 0): ?>
+      <a class="pillbtn<?= $fStale ? ' solid' : '' ?>" href="<?= rkQs(['stale' => $fStale ? '' : '1', 'status' => '']) ?>">⚠️ Bez pohybu (<?= $staleCount ?>)</a>
+      <?php endif; ?>
+      <div class="rk-view-toggle" style="margin-left:auto;">
+        <a class="pillbtn<?= $view === 'list' ? ' solid' : '' ?>" href="<?= rkQs(['view' => '']) ?>">☰ Zoznam</a>
+        <a class="pillbtn<?= $view === 'kanban' ? ' solid' : '' ?>" href="<?= rkQs(['view' => 'kanban']) ?>">▦ Kanban</a>
+      </div>
     </div>
   </div>
 
+  <?php if ($view === 'kanban'): ?>
+  <div class="card">
+    <h3>Kanban podľa stavu</h3>
+    <div class="rk-kanban">
+      <?php foreach (RK_STATUSES as $key => $meta): $colCandidates = array_values(array_filter($candidates, fn($c) => $c['status'] === $key)); ?>
+      <div class="rk-kanban-col">
+        <div class="rk-kanban-col-head">
+          <span class="rk-kanban-col-title"><?= h($meta[0]) ?></span>
+          <span class="rk-kanban-col-count"><?= count($colCandidates) ?></span>
+        </div>
+        <?php if (!$colCandidates): ?>
+        <div class="rk-kanban-empty">—</div>
+        <?php endif; ?>
+        <?php foreach ($colCandidates as $c): ?>
+        <div class="rk-kanban-card" id="rk-kcard-<?= (int)$c['id'] ?>">
+          <div class="rk-kanban-name"><?= h($c['name']) ?><?php if ($c['is_stale']): ?><span class="rk-stale-badge">⚠️ bez pohybu</span><?php endif; ?></div>
+          <div class="rk-kanban-meta">
+            <?= h(RK_INITIATORS[$c['initiator']] ?? '') ?>
+            <?php if ($c['phone']): ?><br><?= h($c['phone']) ?><?php endif; ?>
+            <?php if ($c['contact_date']): ?><br>posledný kontakt <?= h(date('j. n. Y', strtotime($c['contact_date']))) ?><?php endif; ?>
+          </div>
+          <?php if ($c['note']): ?><div class="rk-kanban-note"><?= h($c['note']) ?></div><?php endif; ?>
+          <select class="rk-kanban-move" data-id="<?= (int)$c['id'] ?>" onchange="rkMoveCard(this)">
+            <?php foreach (RK_STATUSES as $mKey => $mMeta): ?>
+            <option value="<?= h($mKey) ?>" <?= $mKey === $key ? 'selected' : '' ?>><?= h($mMeta[0]) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <?php endforeach; ?>
+      </div>
+      <?php endforeach; ?>
+    </div>
+  </div>
+  <?php else: ?>
   <div class="card">
     <h3>Zoznam kandidátov</h3>
     <?php if (!$candidates): ?>
@@ -169,6 +286,7 @@ $joinedCount = $statusCounts['pripojil'] ?? 0;
         <div class="rk-name-line">
           <span class="rk-name"><?= h($c['name']) ?></span>
           <span class="rk-status <?= h($st[1]) ?>"><?= h($st[0]) ?></span>
+          <?php if ($c['is_stale']): ?><span class="rk-stale-badge">⚠️ bez pohybu</span><?php endif; ?>
         </div>
         <div class="rk-meta">
           <?= h(RK_INITIATORS[$c['initiator']] ?? '') ?>
@@ -214,6 +332,7 @@ $joinedCount = $statusCounts['pripojil'] ?? 0;
     </form>
     <?php endforeach; ?>
   </div>
+  <?php endif; ?>
 
   <div class="card">
     <h3>Pridať kandidáta</h3>
@@ -252,6 +371,26 @@ function rkCancel(id) {
   document.getElementById('rk-row-' + id).style.display = 'flex';
   document.getElementById('rk-edit-' + id).style.display = 'none';
 }
+function rkMoveCard(sel) {
+  var id = +sel.dataset.id;
+  var status = sel.value;
+  var card = document.getElementById('rk-kcard-' + id);
+  sel.disabled = true;
+  fetch('/api/nabor-candidate-status.php', {
+    method: 'POST', credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: id, status: status })
+  }).then(function (r) { return r.json(); }).then(function (data) {
+    if (!data.ok) throw new Error();
+    if (window.showToast) showToast('Stav kandidáta zmenený.', 'success');
+    location.reload();
+  }).catch(function () {
+    sel.disabled = false;
+    if (window.showToast) showToast('Nepodarilo sa zmeniť stav.', 'error');
+  });
+  if (card) card.style.opacity = '.5';
+}
 </script>
+<script src="/assets/toast.js"></script>
 <script src="/assets/shell.js?v=21"></script>
 </body></html>

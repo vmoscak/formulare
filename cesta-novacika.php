@@ -223,6 +223,22 @@ $OB_TOOLTIPS = [
     'Maturita' => 'Overenie produktových znalostí a predajných zručností.',
 ];
 
+// Tematická ikonka pri každej fáze (žurnál/journey bodky, akordeón, hero) —
+// čisto vizuálne, nič nemení na logike. Fáza mimo tejto mapy (napr. vlastná
+// fáza pridaná ownerom) jednoducho ostane bez ikonky a zobrazí sa číslo/✓
+// ako doteraz.
+$OB_PHASE_ICONS = [
+    'Pred nástupom' => '📋',
+    '0. mesiac' => '🌱',
+    'I. mesiac' => '🧭',
+    'II. mesiac' => '💬',
+    'III. mesiac' => '❤️',
+    'IV. mesiac' => '🏠',
+    'V. mesiac' => '🎓',
+    'VI.–XII. mesiac' => '📈',
+    'XIII.–XXIV. mesiac' => '🏆',
+];
+
 // Krátky podporný odkaz na začiatku každej fázy — pripomienka, že nováčik
 // v tom nie je sám a má sa na koho obrátiť.
 $OB_PHASE_SUPPORT = [
@@ -453,6 +469,8 @@ if ($isOwner) {
     transition:transform .4s ease;}
   .ob-ring.pulse{animation:obRingPulse .55s ease;}
   @keyframes obRingPulse{0%{transform:scale(1);}40%{transform:scale(1.1);}100%{transform:scale(1);}}
+  .ob-ring.glow{animation:obRingGlow 1s ease-out;}
+  @keyframes obRingGlow{0%{box-shadow:0 0 0 0 rgba(255,255,255,.55);}70%{box-shadow:0 0 0 26px rgba(255,255,255,0);}100%{box-shadow:0 0 0 0 rgba(255,255,255,0);}}
   .ob-ring::after{content:''; position:absolute; inset:9px; border-radius:50%; background:var(--accent-ink);}
   .ob-ring-label{position:absolute; inset:9px; border-radius:50%; z-index:1; display:flex; flex-direction:column; align-items:center; justify-content:center;}
   .ob-ring-pct{font-size:21px; font-weight:800; color:#fff; line-height:1.1;}
@@ -462,6 +480,8 @@ if ($isOwner) {
   .ob-progress-info p{margin:0; font-size:12.5px; color:rgba(255,255,255,.88);}
   .ob-progress-badge{display:inline-block; margin-top:9px; padding:4px 12px; border-radius:999px; background:rgba(255,255,255,.2);
     font-size:11.5px; font-weight:700; letter-spacing:.02em; color:#fff;}
+  .ob-day-badge{display:inline-block; margin-top:9px; margin-left:8px; padding:4px 12px; border-radius:999px; background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.3); font-size:11.5px; font-weight:600; letter-spacing:.01em; color:rgba(255,255,255,.92);}
 
   .ob-next-card{display:flex; align-items:center; gap:16px; background:linear-gradient(135deg, var(--accent-soft), var(--paper)); border:1px solid var(--accent-line); flex-wrap:wrap; position:relative; overflow:hidden;}
   .ob-next-card::before{content:''; position:absolute; width:150px; height:150px; border-radius:50%; background:var(--accent); opacity:.06; top:-60px; right:-46px; pointer-events:none;}
@@ -481,6 +501,7 @@ if ($isOwner) {
   .oj-dot{fill:var(--paper); stroke:var(--border); stroke-width:2.5; transition:stroke-width .15s ease;}
   .oj-stop:hover .oj-dot{stroke-width:3.5;}
   .oj-dot-label{font-size:13px; font-weight:800; fill:var(--muted);}
+  .oj-dot-label.oj-dot-emoji{font-size:15px;}
   .oj-name{font-size:10.5px; font-weight:600; fill:var(--muted);}
   .oj-stop.status-done .oj-dot{fill:var(--good); stroke:var(--good);}
   .oj-stop.status-done .oj-dot-label{fill:#fff;}
@@ -517,6 +538,8 @@ if ($isOwner) {
   .ob-phase-ring{--pct:0; width:76px; height:76px; border-radius:50%; flex-shrink:0; position:relative; z-index:1;
     background:conic-gradient(var(--accent) calc(var(--pct) * 3.6deg), var(--accent-line) 0deg); transition:background .5s ease, transform .4s ease;}
   .ob-phase-ring.pulse{animation:obRingPulse .55s ease;}
+  .ob-phase-ring.glow{animation:obPhaseRingGlow 1s ease-out;}
+  @keyframes obPhaseRingGlow{0%{box-shadow:0 0 0 0 rgba(79,70,229,.45);}70%{box-shadow:0 0 0 22px rgba(79,70,229,0);}100%{box-shadow:0 0 0 0 rgba(79,70,229,0);}}
   .ob-phase-ring::after{content:''; position:absolute; inset:6px; border-radius:50%; background:var(--paper);}
   .ob-phase-ring-label{position:absolute; inset:6px; z-index:1; display:flex; align-items:center; justify-content:center; font-size:19px; font-weight:800; color:var(--accent-ink);}
   .ob-phase-hero-body{position:relative; z-index:1; min-width:0;}
@@ -629,6 +652,23 @@ if ($isOwner) {
   .ob-team-bar-fill{height:100%; background:var(--accent); border-radius:999px;}
   .ob-team-stalled{display:inline-flex; align-items:center; gap:4px; font-size:10.5px; font-weight:700; color:var(--amber); background:var(--amber-soft); padding:2px 8px; border-radius:999px; margin-top:5px;}
   .ob-grad-badge{font-size:18px; flex-shrink:0;}
+
+  .ob-team-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:12px;}
+  .ob-team-card{border:1px solid var(--border); border-radius:var(--radius-lg); padding:14px; display:flex; flex-direction:column; gap:10px;
+    transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;}
+  .ob-team-card:hover{transform:translateY(-2px); border-color:var(--accent-line); box-shadow:0 8px 20px rgba(0,0,0,.07);}
+  .ob-team-card.is-stalled{border-color:var(--amber-soft);}
+  .ob-team-card-top{display:flex; align-items:center; gap:10px;}
+  .ob-team-ini-lg{width:42px; height:42px; border-radius:50%; color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; flex-shrink:0;}
+  .ob-team-card-name{font-size:14px; font-weight:700; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .ob-team-card-sub{font-size:11px; color:var(--muted); margin-top:1px;}
+  .ob-team-ring{--pct:0; width:38px; height:38px; border-radius:50%; flex-shrink:0; margin-left:auto; position:relative;
+    background:conic-gradient(var(--accent) calc(var(--pct) * 3.6deg), var(--border) 0deg);}
+  .ob-team-ring::after{content:''; position:absolute; inset:4px; border-radius:50%; background:var(--paper);}
+  .ob-team-ring-label{position:absolute; inset:4px; z-index:1; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:var(--accent-ink);}
+  .ob-team-card-bar-track{width:100%; height:5px; border-radius:999px; background:var(--desk); overflow:hidden;}
+  .ob-team-card-bar-fill{height:100%; background:var(--accent); border-radius:999px;}
+  .ob-team-card-foot{margin-top:auto;}
   @media(max-width:720px){ .ob-add-row{grid-template-columns:1fr;} }
 
   .ob-confetti{position:fixed; inset:0; pointer-events:none; z-index:9999; overflow:hidden;}
@@ -659,6 +699,9 @@ if ($isOwner) {
       <h4 id="obProgressHeading"><?= $doneCount ?> z <?= $totalSteps ?> krokov dokončených</h4>
       <p><?php if ($currentPhaseName !== null): ?>Aktuálna fáza: <?= h($currentPhaseName) ?><?php elseif ($totalSteps > 0): ?>Celá osnova je dokončená — skvelá práca!<?php else: ?>Osnova zatiaľ nie je pripravená.<?php endif; ?></p>
       <span class="ob-progress-badge" id="obMotivation"><?= h(obMotivation((int)$pct)) ?></span>
+      <?php if (!empty($me['onboarding_started_at'])): $obDay = (int)floor((time() - strtotime($me['onboarding_started_at'])) / 86400) + 1; ?>
+      <span class="ob-day-badge">📅 Deň <?= $obDay ?> z tvojho onboardingu</span>
+      <?php endif; ?>
     </div>
   </div>
 
@@ -699,11 +742,11 @@ if ($isOwner) {
         <path d="<?= trim($jPathD) ?>" class="oj-track" />
         <path d="<?= trim($jPathD) ?>" class="oj-progress" style="stroke-dasharray:<?= round($jTotalLen, 1) ?>; stroke-dashoffset:<?= round($jTotalLen - $jProgressLen, 1) ?>;" />
         <?php endif; ?>
-        <?php foreach ($jPoints as $jp): $jSt = $jp['st']; ?>
+        <?php foreach ($jPoints as $jp): $jSt = $jp['st']; $jIcon = $OB_PHASE_ICONS[$jp['name']] ?? null; ?>
         <a href="?phase=<?= $jSt['idx'] ?><?= $novicePreview ? '&view=novice' : '' ?>" class="oj-stop status-<?= $jSt['status'] ?>" aria-label="<?= h($jp['name']) ?> (<?= $jSt['done'] ?>/<?= $jSt['total'] ?>)">
           <?php if ($jSt['status'] === 'current'): ?><circle cx="<?= $jp['x'] ?>" cy="<?= $jp['y'] ?>" r="15" class="oj-pulse" /><?php endif; ?>
           <circle cx="<?= $jp['x'] ?>" cy="<?= $jp['y'] ?>" r="15" class="oj-dot" />
-          <text x="<?= $jp['x'] ?>" y="<?= $jp['y'] ?>" class="oj-dot-label" text-anchor="middle" dominant-baseline="central"><?= $jSt['status'] === 'done' ? '✓' : ($jSt['idx'] + 1) ?></text>
+          <text x="<?= $jp['x'] ?>" y="<?= $jp['y'] ?>" class="oj-dot-label<?= ($jSt['status'] !== 'done' && $jIcon) ? ' oj-dot-emoji' : '' ?>" text-anchor="middle" dominant-baseline="central"><?= $jSt['status'] === 'done' ? '✓' : ($jIcon ?? ($jSt['idx'] + 1)) ?></text>
           <text x="<?= $jp['x'] ?>" y="<?= $jp['y'] + 30 ?>" class="oj-name" text-anchor="middle"><?= h($jp['name']) ?></text>
         </a>
         <?php endforeach; ?>
@@ -741,25 +784,37 @@ if ($isOwner) {
         <span class="es-sub">Pridaj poradcu v Admin sekcii, potom mu sem vieš priradiť onboarding.</span>
       </div>
     <?php endif; ?>
+    <?php if ($teamAdvisors): ?>
+    <div class="ob-team-grid">
     <?php foreach ($teamAdvisors as $ta): $assigned = !empty($ta['onboarding_started_at']); $taPct = ($assigned && $totalSteps > 0) ? round((int)($ta['doneCount'] ?? 0) / $totalSteps * 100) : 0; ?>
-    <div class="ob-team-row">
-      <span class="ob-team-ini" style="background:<?= h($ta['color']) ?>;"><?= h(advisorInitials($ta['name'])) ?></span>
-      <div class="ob-team-body">
-        <div class="ob-team-name"><?= h($ta['name']) ?></div>
+    <div class="ob-team-card<?= !empty($ta['stalled']) ? ' is-stalled' : '' ?>">
+      <div class="ob-team-card-top">
+        <span class="ob-team-ini-lg" style="background:<?= h($ta['color']) ?>;"><?= h(advisorInitials($ta['name'])) ?></span>
+        <div style="min-width:0;">
+          <div class="ob-team-card-name"><?= h($ta['name']) ?></div>
+          <div class="ob-team-card-sub"><?= $assigned ? 'Onboarding beží' : 'Zatiaľ nepriradené' ?></div>
+        </div>
         <?php if ($assigned): ?>
-          <div class="ob-team-bar-track"><div class="ob-team-bar-fill" style="width:<?= $taPct ?>%;"></div></div>
-          <div class="ob-team-status"><?= (int)($ta['doneCount'] ?? 0) ?>/<?= $totalSteps ?> · <?= $taPct ?> % · posledná aktivita: <?= h(obRelativeTime($ta['lastDone'] ?? null)) ?></div>
-          <?php if (!empty($ta['stalled'])): ?><span class="ob-team-stalled">⚠️ Bez pohybu</span><?php endif; ?>
-        <?php else: ?>
-          <div class="ob-team-status">Zatiaľ nepriradené</div>
+        <div class="ob-team-ring" style="--pct:<?= (int)$taPct ?>;">
+          <div class="ob-team-ring-label"><?= $taPct ?>%</div>
+        </div>
         <?php endif; ?>
       </div>
-      <form method="post" style="margin:0;">
-        <input type="hidden" name="<?= $assigned ? 'unassign_advisor_id' : 'assign_advisor_id' ?>" value="<?= (int)$ta['id'] ?>">
-        <button type="submit" class="toggle-btn"><?= $assigned ? 'Odobrať' : 'Priradiť' ?></button>
-      </form>
+      <?php if ($assigned): ?>
+      <div class="ob-team-card-bar-track"><div class="ob-team-card-bar-fill" style="width:<?= $taPct ?>%;"></div></div>
+      <div class="ob-team-card-sub"><?= (int)($ta['doneCount'] ?? 0) ?>/<?= $totalSteps ?> krokov · posledná aktivita: <?= h(obRelativeTime($ta['lastDone'] ?? null)) ?></div>
+      <?php if (!empty($ta['stalled'])): ?><span class="ob-team-stalled">⚠️ Bez pohybu</span><?php endif; ?>
+      <?php endif; ?>
+      <div class="ob-team-card-foot">
+        <form method="post" style="margin:0;">
+          <input type="hidden" name="<?= $assigned ? 'unassign_advisor_id' : 'assign_advisor_id' ?>" value="<?= (int)$ta['id'] ?>">
+          <button type="submit" class="toggle-btn"><?= $assigned ? 'Odobrať' : 'Priradiť' ?></button>
+        </form>
+      </div>
     </div>
     <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
   </div>
   <?php endif; ?>
 
@@ -798,7 +853,7 @@ if ($isOwner) {
     <?php foreach ($phases as $phaseName => $phaseSteps): $st = $phaseList[$phaseName]; $phaseOpen = $isOwner || $st['status'] !== 'done'; ?>
       <details class="ob-phase status-<?= $st['status'] ?>" id="ob-phase-<?= $st['idx'] ?>" <?= $phaseOpen ? 'open' : '' ?>>
         <summary class="ob-phase-summary">
-          <span class="ob-phase-badge" id="ob-phase-badge-<?= $st['idx'] ?>"><?= $st['status'] === 'done' ? '✓' : ($st['idx'] + 1) ?></span>
+          <span class="ob-phase-badge" id="ob-phase-badge-<?= $st['idx'] ?>"><?= $st['status'] === 'done' ? '✓' : ($OB_PHASE_ICONS[$phaseName] ?? ($st['idx'] + 1)) ?></span>
           <span class="ob-phase-name"><?= h($phaseName) ?></span>
           <span class="ob-phase-count" id="ob-phase-count-<?= $st['idx'] ?>"><?= $st['done'] ?>/<?= $st['total'] ?></span>
         </summary>
@@ -834,10 +889,10 @@ if ($isOwner) {
     <div class="ob-phase-hero">
       <span class="ob-phase-toast" id="ob-phase-toast-<?= $st['idx'] ?>">🎉 Fáza dokončená!</span>
       <div class="ob-phase-ring" id="ob-phase-ring-<?= $st['idx'] ?>" style="--pct:<?= (int)$phasePct ?>;">
-        <div class="ob-phase-ring-label" id="ob-phase-badge-<?= $st['idx'] ?>"><?= $st['status'] === 'done' ? '✓' : ($st['idx'] + 1) ?></div>
+        <div class="ob-phase-ring-label" id="ob-phase-badge-<?= $st['idx'] ?>"><?= $st['status'] === 'done' ? '✓' : ($OB_PHASE_ICONS[$selectedPhaseName] ?? ($st['idx'] + 1)) ?></div>
       </div>
       <div class="ob-phase-hero-body">
-        <p class="ob-phase-eyebrow">Fáza <?= $st['idx'] + 1 ?> z <?= count($phaseList) ?></p>
+        <p class="ob-phase-eyebrow"><?php if (isset($OB_PHASE_ICONS[$selectedPhaseName])): ?><?= $OB_PHASE_ICONS[$selectedPhaseName] ?> <?php endif; ?>Fáza <?= $st['idx'] + 1 ?> z <?= count($phaseList) ?></p>
         <h3 class="ob-phase-hero-title"><?= h($selectedPhaseName) ?></h3>
         <p class="ob-phase-hero-count"><span id="ob-phase-count-<?= $st['idx'] ?>"><?= $st['done'] ?>/<?= $st['total'] ?></span> krokov hotových</p>
       </div>
@@ -997,13 +1052,25 @@ function obMotivationText(pct) {
   if (pct >= 1) return 'Pekný štart! 🙌';
   return 'Poďme na to! 🚀';
 }
-function obConfetti() {
-  var colors = ['#ffffff', '#fde68a', '#a7f3d0', '#bfdbfe', '#fbcfe8'];
+/**
+ * opts.count — počet kúskov (default 44, celá cesta hotová).
+ * opts.leftVw/opts.widthVw — zúži rozsah pádu na oblasť okolo konkrétneho
+ * prvku (napr. prstenec fázy) namiesto celej šírky obrazovky — použité pri
+ * dokončení jednej fázy, nech vyzerá, že to "vystrelilo" práve odtiaľ.
+ * opts.colors — vlastná farebná paleta (fáza dostáva jednofarebnejšiu, jemnejšiu
+ * ako celá cesta).
+ */
+function obConfetti(opts) {
+  opts = opts || {};
+  var colors = opts.colors || ['#ffffff', '#fde68a', '#a7f3d0', '#bfdbfe', '#fbcfe8'];
+  var count = opts.count || 44;
+  var leftVw = opts.leftVw != null ? opts.leftVw : 0;
+  var widthVw = opts.widthVw != null ? opts.widthVw : 100;
   var wrap = document.createElement('div');
   wrap.className = 'ob-confetti';
-  for (var i = 0; i < 44; i++) {
+  for (var i = 0; i < count; i++) {
     var s = document.createElement('span');
-    s.style.left = (Math.random() * 100) + 'vw';
+    s.style.left = (leftVw + Math.random() * widthVw) + 'vw';
     s.style.background = colors[Math.floor(Math.random() * colors.length)];
     s.style.animationDuration = (2 + Math.random() * 1.5) + 's';
     s.style.animationDelay = (Math.random() * 0.4) + 's';
@@ -1011,6 +1078,24 @@ function obConfetti() {
   }
   document.body.appendChild(wrap);
   setTimeout(function () { wrap.remove(); }, 4000);
+}
+
+/** Menší, jemnejší výbuch konfiet z okolia daného prvku (napr. prstenec fázy). */
+function obConfettiFromElement(el, count, colors) {
+  var rect = el ? el.getBoundingClientRect() : null;
+  if (!rect) { obConfetti({ count: count, colors: colors }); return; }
+  var vw = window.innerWidth || document.documentElement.clientWidth;
+  var centerVw = ((rect.left + rect.width / 2) / vw) * 100;
+  obConfetti({ count: count, leftVw: Math.max(0, centerVw - 8), widthVw: 16, colors: colors });
+}
+
+/** Krátky farebný "glow" pulz okolo prstenca — pri dokončení fázy aj celej cesty. */
+function obRingGlow(el) {
+  if (!el) return;
+  el.classList.remove('glow');
+  void el.offsetWidth;
+  el.classList.add('glow');
+  setTimeout(function () { el.classList.remove('glow'); }, 1000);
 }
 
 function obEscapeHtml(x) { return String(x == null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -1129,7 +1214,7 @@ document.addEventListener('change', function(e){
   var motivation = document.getElementById('obMotivation');
   if (motivation) motivation.textContent = obMotivationText(pct);
 
-  if (done && OB_TOTAL > 0 && doneNow === OB_TOTAL) obConfetti();
+  if (done && OB_TOTAL > 0 && doneNow === OB_TOTAL) { obConfetti(); obRingGlow(ring); }
 
   var phaseIdx = row.dataset.phaseIdx;
   if (phaseIdx !== undefined) {
@@ -1156,6 +1241,8 @@ document.addEventListener('change', function(e){
           toastEl.classList.add('show');
           setTimeout(function () { toastEl.classList.remove('show'); }, 2200);
         }
+        obRingGlow(phaseRing);
+        obConfettiFromElement(phaseRing, 18, ['#4f46e5', '#a5b4fc', '#c7d2fe']);
       }
     }
   }

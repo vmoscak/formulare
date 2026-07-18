@@ -132,6 +132,12 @@ function qs(array $overrides): string {
 <link rel="stylesheet" href="/assets/fonts.css">
 <script src="/assets/theme-init.js"></script>
 <link rel="stylesheet" href="/assets/panel.css?v=28">
+<style>
+  .map-pop-add-btn{font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:999px; border:1px solid var(--accent-line); background:var(--accent-soft); color:var(--accent-ink); cursor:pointer;}
+  .map-pop-add-btn:hover{background:var(--accent); color:#fff;}
+  .map-pop-add-btn:disabled{cursor:default; opacity:.85;}
+  .map-pop-add-btn.is-added{background:var(--good-soft); color:var(--good); border-color:var(--good);}
+</style>
 </head><body>
 <header class="topbar">
   <div class="tb-title">
@@ -313,14 +319,38 @@ function qs(array $overrides): string {
     var cats = (m.cats || []).map(function (c) { return '<span class="map-tag">' + esc(c) + '</span>'; }).join('');
     var sectors = (m.sectors || []).map(function (s) { return '<span class="map-tag alt">' + esc(s) + '</span>'; }).join('');
     var parents = (m.parents || []).map(function (p) { return '<span class="map-tag alt">' + esc(p) + '</span>'; }).join('');
+    var note = esc((m.city || '') + (m.region ? ' · ' + m.region : '') + ' · IČO ' + m.ico);
     return '<div class="map-pop">' +
       '<b>' + esc(m.name) + '</b>' + (m.is_new ? ' <span class="map-tag new">Nové</span>' : '') +
       '<div class="map-pop-sub">' + esc(m.city || '') + (m.region ? ' · ' + esc(m.region) : '') + ' · IČO ' + esc(m.ico) + '</div>' +
       (cats ? '<div class="map-pop-row">' + cats + '</div>' : '') +
       (sectors ? '<div class="map-pop-row">' + sectors + '</div>' : '') +
       (parents ? '<div class="map-pop-row"><span class="map-pop-label">Pod:</span> ' + parents + '</div>' : '') +
+      '<div class="map-pop-row"><button type="button" class="map-pop-add-btn" data-name="' + esc(m.name) + '" data-note="' + note + '" onclick="naborAddCandidate(this)">+ Pridať ako kandidáta</button></div>' +
       '</div>';
   }
+
+  window.naborAddCandidate = function (btn) {
+    btn.disabled = true;
+    var origText = btn.textContent;
+    btn.textContent = 'Pridávam…';
+    fetch('/api/nabor-add-candidate.php', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: btn.dataset.name, note: btn.dataset.note })
+    }).then(function (r) { return r.json(); }).then(function (data) {
+      if (!data.ok) throw new Error(data.error || 'Chyba');
+      btn.textContent = data.duplicate ? '✓ Už evidovaný' : '✓ Pridané';
+      btn.classList.add('is-added');
+      if (window.showToast) {
+        showToast(data.duplicate ? 'Kandidát s týmto menom je už evidovaný.' : 'Pridané do Kandidátov na nábor.', data.duplicate ? 'info' : 'success');
+      }
+    }).catch(function () {
+      btn.disabled = false;
+      btn.textContent = origText;
+      if (window.showToast) showToast('Nepodarilo sa pridať kandidáta.', 'error');
+    });
+  };
 
   var pinIcons = {
     existing: L.divIcon({ className: 'nabor-pin', html: '<span></span>', iconSize: [16, 16], iconAnchor: [8, 8] }),
@@ -354,5 +384,6 @@ function qs(array $overrides): string {
     .catch(function () { countEl.textContent = '· chyba načítania'; });
 })();
 </script>
+<script src="/assets/toast.js"></script>
 <script src="/assets/shell.js?v=21"></script>
 </body></html>
