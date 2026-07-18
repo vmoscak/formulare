@@ -484,6 +484,7 @@ if ($isOwner) {
     border:1px solid rgba(255,255,255,.3); font-size:11.5px; font-weight:600; letter-spacing:.01em; color:rgba(255,255,255,.92);}
 
   .ob-next-card{display:flex; align-items:center; gap:16px; background:linear-gradient(135deg, var(--accent-soft), var(--paper)); border:1px solid var(--accent-line); flex-wrap:wrap; position:relative; overflow:hidden;}
+  .ob-next-card[hidden]{display:none;}
   .ob-next-card::before{content:''; position:absolute; width:150px; height:150px; border-radius:50%; background:var(--accent); opacity:.06; top:-60px; right:-46px; pointer-events:none;}
   .ob-next-icon{font-size:21px; flex-shrink:0; width:46px; height:46px; border-radius:50%; background:var(--paper); border:1px solid var(--accent-line); display:flex; align-items:center; justify-content:center; position:relative; z-index:1;}
   .ob-next-body{flex:1; min-width:160px; position:relative; z-index:1;}
@@ -754,21 +755,19 @@ if ($isOwner) {
     </div>
   </div>
 
-  <?php if ($nextStep): $npIdx = $phaseIndexByName[$nextStep['phase']]; ?>
-  <div class="card ob-next-card">
+  <?php $npIdx = $nextStep ? $phaseIndexByName[$nextStep['phase']] : null; ?>
+  <div class="card ob-next-card" id="obNextCard" <?= $nextStep ? '' : 'hidden' ?>>
     <span class="ob-next-icon">🚀</span>
     <div class="ob-next-body">
       <div class="ob-next-label">Ďalší krok</div>
-      <div class="ob-next-title"><?= h($nextStep['title']) ?></div>
+      <div class="ob-next-title" id="obNextTitle"><?= $nextStep ? h($nextStep['title']) : '' ?></div>
     </div>
-    <button type="button" class="pillbtn solid" onclick="obJumpStep(<?= $npIdx ?>, <?= (int)$nextStep['id'] ?>)">Pokračovať →</button>
+    <button type="button" class="pillbtn solid" id="obNextBtn" data-phase-idx="<?= $nextStep ? $npIdx : '' ?>" data-step-id="<?= $nextStep ? (int)$nextStep['id'] : '' ?>" onclick="obNextBtnClick()">Pokračovať →</button>
   </div>
-  <?php else: ?>
-  <div class="card ob-next-card ob-next-done">
+  <div class="card ob-next-card ob-next-done" id="obNextDoneCard" <?= $nextStep ? 'hidden' : '' ?>>
     <span class="ob-next-title">🎉 Celá cesta nováčika je dokončená — gratulujeme!</span>
     <button type="button" class="pillbtn solid" id="certBtn" data-advisor-name="<?= h($me['name']) ?>" data-total-steps="<?= (int)$totalSteps ?>" data-phase-count="<?= count($phases) ?>">Stiahnuť certifikát</button>
   </div>
-  <?php endif; ?>
   <?php endif; ?>
 
   <?php if ($isOwner): ?>
@@ -1185,6 +1184,36 @@ var certBtnEl = document.getElementById('certBtn');
 if (certBtnEl) certBtnEl.addEventListener('click', obDoCertificate);
 
 var OB_TOTAL = <?= $totalSteps ?>;
+// Poradie krokov naprieč celou osnovou (rovnaké ako PHP $nextStep vyššie) —
+// nech sa dá "Ďalší krok" prepočítať hneď po odškrtnutí, bez reloadu stránky.
+var OB_STEPS = <?= json_encode(array_map(fn($s) => [
+    'id' => (int)$s['id'], 'phaseIdx' => $phaseIndexByName[$s['phase']], 'title' => $s['title'],
+], $steps), JSON_UNESCAPED_UNICODE) ?>;
+function obNextBtnClick() {
+  var btn = document.getElementById('obNextBtn');
+  if (!btn || btn.dataset.stepId === '') return;
+  obJumpStep(+btn.dataset.phaseIdx, +btn.dataset.stepId);
+}
+function obUpdateNextStep() {
+  var doneIds = {};
+  document.querySelectorAll('input[data-toggle-step]:checked').forEach(function (cb) { doneIds[+cb.dataset.toggleStep] = true; });
+  var next = null;
+  for (var i = 0; i < OB_STEPS.length; i++) { if (!doneIds[OB_STEPS[i].id]) { next = OB_STEPS[i]; break; } }
+  var card = document.getElementById('obNextCard');
+  var doneCard = document.getElementById('obNextDoneCard');
+  if (!card || !doneCard) return;
+  if (next) {
+    card.hidden = false;
+    doneCard.hidden = true;
+    var titleEl = document.getElementById('obNextTitle');
+    if (titleEl) titleEl.textContent = next.title;
+    var btn = document.getElementById('obNextBtn');
+    if (btn) { btn.dataset.phaseIdx = next.phaseIdx; btn.dataset.stepId = next.id; }
+  } else {
+    card.hidden = true;
+    doneCard.hidden = false;
+  }
+}
 document.addEventListener('change', function(e){
   if (!e.target.matches('input[type=checkbox][data-toggle-step]')) return;
   var stepId = +e.target.dataset.toggleStep;
@@ -1214,6 +1243,7 @@ document.addEventListener('change', function(e){
   var motivation = document.getElementById('obMotivation');
   if (motivation) motivation.textContent = obMotivationText(pct);
 
+  obUpdateNextStep();
   if (done && OB_TOTAL > 0 && doneNow === OB_TOTAL) { obConfetti(); obRingGlow(ring); }
 
   var phaseIdx = row.dataset.phaseIdx;
