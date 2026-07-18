@@ -260,7 +260,7 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
     </table>
   </div>
 </main>
-<script src="/assets/shell.js?v=20"></script>
+<script src="/assets/shell.js?v=21"></script>
 <script>
 function editAdvisor(id){
   document.getElementById('view-'+id).style.display = 'none';

@@ -55,6 +55,18 @@
     calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
   };
 
+  // Admin režim — skrytý štandardne, nech karta poradcu pôsobí ako bežný
+  // pracovný účet aj vtedy, keď má is_admin/is_owner práva. Zapína sa
+  // ikonou v päte lišty (vedľa tmavý/svetlý режim), stav sa pamätá per
+  // zariadenie/prehliadač (localStorage) — nie je to bezpečnostná hranica,
+  // len skrytie z pohľadu, jednotlivé stránky sú stále gate-nuté server-side.
+  function adminViewOn() {
+    try { return localStorage.getItem('adminView') === '1'; } catch (e) { return false; }
+  }
+  function setAdminView(on) {
+    try { localStorage.setItem('adminView', on ? '1' : '0'); } catch (e) {}
+  }
+
   // Aktuálne účinná téma — explicitný prepínač (data-theme) má prednosť,
   // inak systémová voľba (prefers-color-scheme).
   function effectiveTheme() {
@@ -127,11 +139,14 @@
     // neprehľadna, na desktope sa schovajú za jednu ikonu "Viac" (flyout).
     // Na mobile (vysúvací panel) sa aj tak zobrazujú rovno v zozname (CSS
     // nižšie), tam viac položiek prekáža menej než na úzkej pevnej lište.
+    var canAdminView = !!(adv.is_admin || adv.is_owner);
+    var adminOn = canAdminView && adminViewOn();
+
     var MORE = [];
-    if (adv.is_admin) {
+    if (adminOn && adv.is_admin) {
       MORE.push({ key: 'admin', icon: ICONS.admin, href: '/admin.php', label: 'Admin', active: isAdmin });
     }
-    if (adv.is_owner) {
+    if (adminOn && adv.is_owner) {
       MORE.push({ key: 'nabor', icon: ICONS.nabor, href: '/nabor-kandidati.php', label: 'Nábor', active: isNabor });
       MORE.push({ key: 'kb', icon: ICONS.kb, href: '/znalostna-baza.php', label: 'Znalostná báza', active: isKb });
       MORE.push({ key: 'news', icon: ICONS.news, href: '/novinky.php', label: 'Novinky', active: isNews });
@@ -144,7 +159,8 @@
       MORE.push({ key: 'timPrehlad', icon: ICONS.trending, href: '/tim-prehlad.php', label: 'Tímový prehľad', active: isTimPrehlad });
     } else if (adv.is_onboarding) {
       // Poradca, ktorému owner práve priradil Cestu nováčika — vidí len túto
-      // jednu položku navyše, nič iné z owner-only zoznamu vyššie.
+      // jednu položku navyše, nič iné z owner-only zoznamu vyššie (a nezávisí
+      // od admin režimu — to je vec bežných poradcov, nie riadenia tímu).
       MORE.push({ key: 'cesta', icon: ICONS.target, href: '/cesta-novacika.php', label: 'Cesta nováčika', active: isCesta });
     }
     var moreActive = MORE.some(function (n) { return n.active; });
@@ -243,6 +259,10 @@
         '<a class="rlogo" href="/uvod.php" title="Portál">' + svg(ICONS.logo) + '</a>' +
         '<nav>' + navHtml + moreWrapHtml + '</nav>' +
         '<div class="rbot">' +
+          (canAdminView ?
+            '<button type="button" class="ri' + (adminOn ? ' on' : '') + '" id="adminViewToggle" title="' + (adminOn ? 'Vypnúť admin režim' : 'Zapnúť admin režim') + '">' + svg(ICONS.admin) +
+            '<span class="tip">' + (adminOn ? 'Vypnúť admin režim' : 'Zapnúť admin režim') + '</span></button>'
+          : '') +
           '<button type="button" class="ri" id="themeToggle" title="Prepnúť tmavý/svetlý režim">' + svg(themeIcon) +
           '<span class="tip">Tmavý/svetlý režim</span></button>' +
           '<a class="ravatar" href="/" title="' + esc(adv.name || '') + ' — zmeniť poradcu">' +
@@ -264,6 +284,16 @@
     document.getElementById('themeToggle').addEventListener('click', function () {
       setTheme(effectiveTheme() === 'dark' ? 'light' : 'dark');
     });
+
+    var adminToggleEl = document.getElementById('adminViewToggle');
+    if (adminToggleEl) {
+      adminToggleEl.addEventListener('click', function () {
+        setAdminView(!adminOn);
+        // Zoznam položiek v "Viac" sa mení podľa admin режimu — jednoduchší
+        // a spoľahlivejší je reload namiesto ručného prekresľovania lišty.
+        location.reload();
+      });
+    }
 
     // Mobilné zásuvkové menu — hamburger otvára/zatvára #appRail ako
     // vysúvací panel (na desktope je .rail-toggle skrytý cez CSS, appRail

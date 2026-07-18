@@ -1265,5 +1265,5 @@ document.querySelectorAll('.mz-doplatok[id^="mz-doplatok-"]').forEach(function (
   mzUpdateQuarterDisplay(months[2]);
 });
 </script>
-<script src="/assets/shell.js?v=20"></script>
+<script src="/assets/shell.js?v=21"></script>
 </body></html>

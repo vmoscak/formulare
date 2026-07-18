@@ -357,5 +357,5 @@ $editAssigneeIds = $editEventId ? ($assigneesByEvent[$editEventId] ?? []) : [];
   <?php endif; ?>
 
 </main>
-<script src="/assets/shell.js?v=20"></script>
+<script src="/assets/shell.js?v=21"></script>
 </body></html>
