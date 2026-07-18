@@ -23,7 +23,7 @@
 
 <script src="../assets/theme-init.js"></script>
 <script src="../assets/toast.js?v=1"></script>
-<link rel="stylesheet" href="../assets/ui.css?v=12">
+<link rel="stylesheet" href="../assets/ui.css?v=13">
 <style>
   /* odchýlky tejto stránky od zdieľaného dizajnu (assets/ui.css) */
   .app{max-width:1280px;}
@@ -250,6 +250,7 @@
         <div id="createdLinkBox" style="display:none; margin-top:14px;">
           <div class="field"><label>ODKAZ PRE KLIENTA</label><input id="createdLinkUrl" readonly></div>
           <button class="btn-ghost" id="copyLinkBtn" style="width:100%; margin-top:8px;">Kopírovať odkaz</button>
+          <div id="createdLinkQr" style="display:flex; justify-content:center; margin-top:12px;"></div>
         </div>
       </div>
 
@@ -283,6 +284,7 @@
 </div>
 
 <script src="../assets/advisor-panel.js"></script>
+<script src="../assets/qrcode.js"></script>
 <script>
 /* ===========================================================================
    KONTAKT NA PORADCU (mailto fallback, bez potreby servera)
@@ -815,6 +817,7 @@ function doCreateLink(){
     const fullUrl = location.origin + d.url;
     $('createdLinkUrl').value = fullUrl;
     $('createdLinkBox').style.display = 'block';
+    renderLinkQr('createdLinkQr', fullUrl);
     btn.textContent = orig; btn.disabled = false;
   })
   .catch(e=>{
@@ -1098,11 +1101,7 @@ function generatePdf(mode, btn){
     return r.blob();
   })
   .then(function(blob){
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = filename+'.pdf';
-    document.body.appendChild(a); a.click();
-    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    downloadOrSharePdfBlob(blob, filename);
     btn.textContent = orig; btn.disabled = false;
     logDocument(TOOL_NAME, clientName, state, CLIENT_TOKEN);
   })

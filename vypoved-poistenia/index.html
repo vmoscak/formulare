@@ -23,7 +23,7 @@
 
 <script src="../assets/theme-init.js"></script>
 <script src="../assets/toast.js?v=1"></script>
-<link rel="stylesheet" href="../assets/ui.css?v=12">
+<link rel="stylesheet" href="../assets/ui.css?v=13">
 </head>
 <body>
 
@@ -176,6 +176,7 @@
 
       <div class="actions">
         <button class="btn-primary" id="genBtn">Vygenerovať a stiahnuť PDF</button>
+        <button class="btn-ghost" id="draftBtn">Uložiť rozpracované</button>
         <button class="btn-ghost" id="resetBtn">Vyčistiť</button>
       </div>
     </div>
@@ -661,11 +662,7 @@ function doPDF(){
     return r.blob();
   })
   .then(function(blob){
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url; a.download=filename+'.pdf';
-    document.body.appendChild(a); a.click();
-    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    downloadOrSharePdfBlob(blob, filename);
     btn.textContent='Vygenerovať a stiahnuť PDF'; btn.disabled=false;
     logDocument('vypoved-poistenia', state.name||'Klient', state, undefined);
   })
@@ -750,6 +747,10 @@ function bind(){
   $('street').addEventListener('focus', e=>{ if((state.street||'').trim().length>=3) renderSuggest(); });
 
   $('genBtn').addEventListener('click', doPDF);
+  $('draftBtn').addEventListener('click', function(){
+    logDocument('vypoved-poistenia', state.name||'Klient', state, undefined, true);
+    showToast('Uložené ako rozpracované — nájdeš to v Mojich dokumentoch.', 'success');
+  });
   $('copyBtn').addEventListener('click', doCopy);
   $('resetBtn').addEventListener('click', doReset);
 }

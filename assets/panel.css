@@ -405,6 +405,9 @@ td .strong{font-weight:600; color:var(--ink);}
 .pill{display:inline-flex; align-items:center; padding:3px 10px; border-radius:999px; font-size:11px; font-weight:600; border:1px solid transparent;}
 .pill.submitted{background:var(--good-soft); color:var(--good); border-color:#c7f0dd;}
 .pill.pending{background:var(--amber-soft); color:var(--amber); border-color:#fce7c0;}
+.pill.expired{background:var(--rose-soft); color:var(--rose); border-color:#fecdd3;}
+.expired-text{color:var(--rose); font-weight:600;}
+.expiring-text{color:var(--amber); font-weight:600;}
 
 /* neutrálne chip-y (kategórie/sektory v náborovej zóne) */
 .tag{

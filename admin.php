@@ -223,15 +223,15 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
     <h3>Vygenerované dokumenty · posledných 200</h3>
     <table>
       <tr><th>Poradca</th><th>Klient</th><th>Nástroj</th><th>Zdroj</th><th>Kedy</th><th></th></tr>
-      <?php foreach ($docs as $d): ?>
+      <?php foreach ($docs as $d): $isDraft = !empty($d['is_draft']); ?>
       <tr>
         <td data-label="Poradca"><?= h($d['advisor_name']) ?></td>
-        <td data-label="Klient"><?= h($d['client_label']) ?></td>
+        <td data-label="Klient"><?= h($d['client_label']) ?><?php if ($isDraft): ?> <span class="pill pending">Koncept</span><?php endif; ?></td>
         <td data-label="Nástroj"><?= h(toolLabel($d['tool'])) ?></td>
         <td data-label="Zdroj"><?= $d['source'] === 'client' ? 'klient' : 'poradca' ?></td>
         <td class="date" data-label="Kedy"><?= h($d['generated_at']) ?></td>
         <td style="display:flex; gap:6px; justify-content:flex-start;">
-          <a class="toggle-btn" href="/<?= rawurlencode($d['tool']) ?>/index.html?loadDoc=<?= (int)$d['id'] ?>" target="_blank">PDF</a>
+          <a class="toggle-btn" href="/<?= rawurlencode($d['tool']) ?>/index.html?loadDoc=<?= (int)$d['id'] ?>" target="_blank"><?= $isDraft ? 'Pokračovať' : 'PDF' ?></a>
           <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj zmazať tento dokument?');">
             <input type="hidden" name="delete_doc_id" value="<?= (int)$d['id'] ?>">
             <button type="submit" class="toggle-btn">Zmazať</button>

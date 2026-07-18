@@ -14,7 +14,7 @@ if (!$advisorId) { http_response_code(401); echo '{}'; exit; }
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { http_response_code(400); echo '{}'; exit; }
 
-$stmt = db()->prepare('SELECT id, advisor_id, tool, client_label, form_data FROM formulare_generated_documents WHERE id = ?');
+$stmt = db()->prepare('SELECT id, advisor_id, tool, client_label, form_data, is_draft FROM formulare_generated_documents WHERE id = ?');
 $stmt->execute([$id]);
 $doc = $stmt->fetch();
 if (!$doc) { http_response_code(404); echo '{}'; exit; }
@@ -30,4 +30,5 @@ echo json_encode([
     'tool' => $doc['tool'],
     'client_label' => $doc['client_label'],
     'form_data' => $doc['form_data'],
+    'is_draft' => !empty($doc['is_draft']),
 ]);

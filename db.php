@@ -629,10 +629,12 @@ function dbInitSqlite(PDO $pdo): void {
         tool TEXT NOT NULL,
         client_label TEXT NOT NULL,
         form_data TEXT NOT NULL,
+        is_draft INTEGER NOT NULL DEFAULT 0,
         generated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (advisor_id) REFERENCES formulare_advisors(id),
         FOREIGN KEY (client_link_id) REFERENCES formulare_client_links(id)
     )");
+    try { $pdo->exec("ALTER TABLE formulare_generated_documents ADD COLUMN is_draft INTEGER NOT NULL DEFAULT 0"); } catch (Throwable $e) { /* stĺpec už existuje */ }
     $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_registry_entities (
         ico TEXT PRIMARY KEY,
         name TEXT NOT NULL,

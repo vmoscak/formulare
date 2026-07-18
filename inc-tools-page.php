@@ -108,7 +108,6 @@ $arrow = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="cu
   </div>
   <div class="tb-actions">
     <a class="pillbtn" href="/moje-dokumenty.php">Moje dokumenty</a>
-    <a class="pillbtn amber" href="/budgetove-zlavy/">% Budgetové zľavy</a>
     <span class="who">
       <span class="ini" style="background:<?= htmlspecialchars($me['color']) ?>;"><?= htmlspecialchars(advisorInitials($me['name'])) ?></span>
       <b><?= htmlspecialchars($me['name']) ?></b>

@@ -21,7 +21,7 @@
 
 <script src="../assets/theme-init.js"></script>
 <script src="../assets/toast.js?v=1"></script>
-<link rel="stylesheet" href="../assets/ui.css?v=12">
+<link rel="stylesheet" href="../assets/ui.css?v=13">
 <style>
   #types{grid-template-columns:repeat(2,minmax(0,1fr));}
   .pu-list-head{font-weight:700; font-size:15px; color:var(--ink); margin-bottom:4px;}
@@ -224,11 +224,7 @@ function doPDF(){
     return r.blob();
   })
   .then(function(blob){
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = filename + '.pdf';
-    document.body.appendChild(a); a.click();
-    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    downloadOrSharePdfBlob(blob, filename);
     btn.textContent = orig; btn.disabled = false;
     logDocument('poistenie-uveru-banka-vs-uniqa', state.clientName.trim() || 'Klient', state, undefined);
   })

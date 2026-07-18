@@ -2,9 +2,10 @@
 /**
  * Zaloguje vygenerovaný dokument (poradcovský aj klientsky) do histórie.
  * Verejný (mimo brány) — volá sa aj z klientskej stránky po odoslaní.
- * POST {tool, clientLabel, formData, token?}
+ * POST {tool, clientLabel, formData, token?, isDraft?}
  *   - ak je token platný -> source='client', advisor_id sa odvodí z formulare_client_links
  *   - inak -> source='advisor', advisor_id z cur_advisor cookie
+ *   - isDraft=true -> "Uložiť rozpracované" (bez generovania PDF), viď is_draft nižšie
  */
 require_once __DIR__ . '/../db.php';
 header('Content-Type: application/json; charset=utf-8');
@@ -16,6 +17,7 @@ $tool = (string)($input['tool'] ?? '');
 $clientLabel = (string)($input['clientLabel'] ?? '');
 $formData = $input['formData'] ?? null;
 $token = (string)($input['token'] ?? '');
+$isDraft = !empty($input['isDraft']) ? 1 : 0;
 
 if ($tool === '' || $formData === null) { http_response_code(400); echo '{"ok":false}'; exit; }
 
@@ -39,9 +41,9 @@ if ($advisorId === null) {
 if (!$advisorId) { echo '{"ok":false,"reason":"no_advisor"}'; exit; }
 
 $stmt = db()->prepare(
-    'INSERT INTO formulare_generated_documents (advisor_id, client_link_id, source, tool, client_label, form_data)
-     VALUES (?, ?, ?, ?, ?, ?)'
+    'INSERT INTO formulare_generated_documents (advisor_id, client_link_id, source, tool, client_label, form_data, is_draft)
+     VALUES (?, ?, ?, ?, ?, ?, ?)'
 );
-$stmt->execute([$advisorId, $clientLinkId, $source, $tool, $clientLabel, json_encode($formData)]);
+$stmt->execute([$advisorId, $clientLinkId, $source, $tool, $clientLabel, json_encode($formData), $isDraft]);
 
 echo json_encode(['ok' => true]);

@@ -19,7 +19,7 @@
 
 <script src="../assets/theme-init.js"></script>
 <script src="../assets/toast.js?v=1"></script>
-<link rel="stylesheet" href="../assets/ui.css?v=12">
+<link rel="stylesheet" href="../assets/ui.css?v=13">
 <style>
   .lf-slider-row{display:flex; align-items:center; gap:14px;}
   .lf-slider-row input[type=range]{flex:1; accent-color:var(--accent);}
@@ -313,11 +313,7 @@ function doPDF(){
     return r.blob();
   })
   .then(function(blob){
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = filename + '.pdf';
-    document.body.appendChild(a); a.click();
-    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    downloadOrSharePdfBlob(blob, filename);
     btn.textContent = orig; btn.disabled = false;
     logDocument('latte-faktor', state.clientName.trim() || 'Klient', state, undefined);
   })

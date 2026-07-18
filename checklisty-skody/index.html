@@ -16,7 +16,7 @@
 
 <script src="../assets/theme-init.js"></script>
 <script src="../assets/toast.js?v=1"></script>
-<link rel="stylesheet" href="../assets/ui.css?v=12">
+<link rel="stylesheet" href="../assets/ui.css?v=13">
 </head>
 <body>
 
@@ -255,11 +255,7 @@ function doPDF(){
     return r.blob();
   })
   .then(function(blob){
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url; a.download=filename+'.pdf';
-    document.body.appendChild(a); a.click();
-    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    downloadOrSharePdfBlob(blob, filename);
     btn.textContent='Vygenerovať a stiahnuť PDF'; btn.disabled=false;
     logDocument('checklisty-skody', state.clientName||t.label, state, undefined);
   })

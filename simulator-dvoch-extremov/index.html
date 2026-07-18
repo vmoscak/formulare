@@ -20,7 +20,7 @@
 
 <script src="../assets/theme-init.js"></script>
 <script src="../assets/toast.js?v=1"></script>
-<link rel="stylesheet" href="../assets/ui.css?v=12">
+<link rel="stylesheet" href="../assets/ui.css?v=13">
 <style>
   .ext-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
   .ext-card{border-radius:var(--radius-lg); padding:18px 20px; color:#fff;}
@@ -269,11 +269,7 @@ function doPDF(){
     return r.blob();
   })
   .then(function(blob){
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = filename + '.pdf';
-    document.body.appendChild(a); a.click();
-    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    downloadOrSharePdfBlob(blob, filename);
     btn.textContent = orig; btn.disabled = false;
     logDocument('simulator-dvoch-extremov', state.clientName.trim() || 'Klient', state, undefined);
   })

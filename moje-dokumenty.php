@@ -21,6 +21,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
     exit;
 }
 
+// Predĺženie platnosti klientskeho odkazu o ďalších 60 dní od TERAZ (rovnaká
+// dĺžka ako pri vytvorení v api/client-link-create.php) — poradca to ovláda
+// len pri odkazoch, ktoré klient ešte nevyplnil.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['extend_id'])) {
+    $id = (int)$_POST['extend_id'];
+    $newExpiry = date('Y-m-d H:i:s', time() + 60 * 86400);
+    db()->prepare("UPDATE formulare_client_links SET expires_at = ? WHERE id = ? AND advisor_id = ? AND status != 'submitted'")
+        ->execute([$newExpiry, $id, $advisorId]);
+    header('Location: /moje-dokumenty.php');
+    exit;
+}
+
 $docs = db()->prepare(
     'SELECT * FROM formulare_generated_documents WHERE advisor_id = ? ORDER BY generated_at DESC LIMIT 200'
 );
@@ -88,14 +100,14 @@ function advisorInitials(string $name): string {
     <?php endif; ?>
     <table>
       <tr><th>Klient</th><th>Nástroj</th><th>Zdroj</th><th>Kedy</th><th></th></tr>
-      <?php foreach ($docs as $d): ?>
+      <?php foreach ($docs as $d): $isDraft = !empty($d['is_draft']); ?>
       <tr data-filter="<?= h($d['client_label'] . ' ' . toolLabel($d['tool'])) ?>">
-        <td><span class="strong"><?= h($d['client_label']) ?></span></td>
+        <td><span class="strong"><?= h($d['client_label']) ?></span><?php if ($isDraft): ?> <span class="pill pending">Koncept</span><?php endif; ?></td>
         <td><?= h(toolLabel($d['tool'])) ?></td>
         <td><?= $d['source'] === 'client' ? 'klient' : 'poradca' ?></td>
         <td class="date"><?= h($d['generated_at']) ?></td>
         <td style="display:flex; gap:6px; justify-content:flex-end;">
-          <a class="toggle-btn" href="/<?= rawurlencode($d['tool']) ?>/index.html?loadDoc=<?= (int)$d['id'] ?>" target="_blank">PDF</a>
+          <a class="toggle-btn" href="/<?= rawurlencode($d['tool']) ?>/index.html?loadDoc=<?= (int)$d['id'] ?>" target="_blank"><?= $isDraft ? 'Pokračovať' : 'PDF' ?></a>
           <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj zmazať tento dokument?');">
             <input type="hidden" name="delete_id" value="<?= (int)$d['id'] ?>">
             <button type="submit" class="toggle-btn">Zmazať</button>
@@ -118,16 +130,41 @@ function advisorInitials(string $name): string {
   <div class="card">
     <h3>Klientske odkazy</h3>
     <table>
-      <tr><th>Klient</th><th>Nástroj</th><th>Stav</th><th>Vytvorené</th></tr>
-      <?php foreach ($links as $l): ?>
+      <tr><th>Klient</th><th>Nástroj</th><th>Stav</th><th>Platnosť</th><th></th></tr>
+      <?php foreach ($links as $l):
+          $isSubmitted = $l['status'] === 'submitted';
+          $expiresAt = $l['expires_at'] ? strtotime($l['expires_at']) : null;
+          $isExpired = !$isSubmitted && $expiresAt && $expiresAt < time();
+          $expiresSoon = !$isSubmitted && !$isExpired && $expiresAt && $expiresAt < time() + 7 * 86400;
+      ?>
       <tr>
         <td><span class="strong"><?= h($l['client_label']) ?></span></td>
         <td><?= h(toolLabel($l['tool'])) ?></td>
-        <td><span class="pill <?= h($l['status']) ?>"><?= $l['status']==='submitted' ? 'Vyplnené' : 'Čaká' ?></span></td>
-        <td class="date"><?= h($l['created_at']) ?></td>
+        <td>
+          <span class="pill <?= $isExpired ? 'expired' : h($l['status']) ?>">
+            <?= $isSubmitted ? 'Vyplnené' : ($isExpired ? 'Vypršal' : 'Čaká') ?>
+          </span>
+        </td>
+        <td class="date">
+          <?php if ($isSubmitted): ?>
+            <?= h($l['submitted_at'] ?? $l['created_at']) ?>
+          <?php elseif ($expiresAt): ?>
+            <span class="<?= $isExpired ? 'expired-text' : ($expiresSoon ? 'expiring-text' : '') ?>">
+              <?= $isExpired ? '' : 'platný do ' ?><?= h(date('j.n.Y', $expiresAt)) ?>
+            </span>
+          <?php else: ?>—<?php endif; ?>
+        </td>
+        <td>
+          <?php if (!$isSubmitted): ?>
+          <form method="post" style="margin:0;">
+            <input type="hidden" name="extend_id" value="<?= (int)$l['id'] ?>">
+            <button type="submit" class="toggle-btn">Predĺžiť o 60 dní</button>
+          </form>
+          <?php endif; ?>
+        </td>
       </tr>
       <?php endforeach; ?>
-      <?php if (!$links): ?><tr><td colspan="4"><div class="empty-state">
+      <?php if (!$links): ?><tr><td colspan="5"><div class="empty-state">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
         <span class="es-title">Zatiaľ žiadne odkazy</span>
         <span class="es-sub">Klientske odkazy vytvorené z niektorého nástroja sa tu objavia spolu s ich stavom (čaká/vyplnené).</span>

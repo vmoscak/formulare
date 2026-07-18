@@ -20,7 +20,7 @@
 
 <script src="../assets/theme-init.js"></script>
 <script src="../assets/toast.js?v=1"></script>
-<link rel="stylesheet" href="../assets/ui.css?v=12">
+<link rel="stylesheet" href="../assets/ui.css?v=13">
 <style>
   .zsz-row{border:1px solid var(--border); border-radius:var(--radius-md); padding:12px 14px; margin-bottom:10px; background:var(--desk);}
   .zsz-row-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
@@ -397,11 +397,7 @@ function doPDF(){
     return r.blob();
   })
   .then(function(blob){
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'Zmena_spravcu_zmluvy_' + (state.clientName.trim()||'klient').replace(/\s+/g,'_') + '.pdf';
-    document.body.appendChild(a); a.click();
-    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    downloadOrSharePdfBlob(blob, 'Zmena_spravcu_zmluvy_' + (state.clientName.trim()||'klient').replace(/\s+/g,'_'));
     btn.textContent = orig; btn.disabled = false;
     logDocument('zmena-spravcu-zmluvy', state.clientName.trim() || 'Klient', state, undefined);
   })
