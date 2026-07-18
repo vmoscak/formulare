@@ -385,5 +385,5 @@ function qs(array $overrides): string {
 })();
 </script>
 <script src="/assets/toast.js"></script>
-<script src="/assets/shell.js?v=21"></script>
+<script src="/assets/shell.js?v=22"></script>
 </body></html>

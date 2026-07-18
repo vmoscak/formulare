@@ -388,5 +388,5 @@ if (rateSuggest) {
 $('pdfBtn').addEventListener('click', doPDF);
 compute();
 </script>
-<script src="/assets/shell.js?v=21"></script>
+<script src="/assets/shell.js?v=22"></script>
 </body></html>
