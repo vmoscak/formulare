@@ -465,5 +465,5 @@ function bzUnfavorite(btn) {
   });
 }
 </script>
-<script src="/assets/shell.js?v=21"></script>
+<script src="/assets/shell.js?v=22"></script>
 </body></html>

@@ -186,6 +186,6 @@ function bzToggleFav(btn) {
   }).catch(function () { btn.classList.toggle('is-fav'); });
 }
 </script>
-<script src="/assets/shell.js?v=21"></script>
+<script src="/assets/shell.js?v=22"></script>
 </body>
 </html>

@@ -135,6 +135,13 @@
       { key: 'docs', icon: ICONS.docs, href: '/moje-dokumenty.php', label: 'Moje dokumenty', active: isDocs },
       { key: 'timKalendar', icon: ICONS.calendar, href: '/tim-kalendar.php', label: 'Tímový kalendár', active: isTimKalendar }
     ];
+    // Nábor je na rozdiel od ostatných owner-only nástrojov bežne používaný
+    // (nie len príležitostná administratíva), takže je vždy viditeľný v
+    // hlavnej lište pre ownera — nezávisle od admin režimu nižšie. Samotná
+    // stránka nabor-kandidati.php je aj tak server-side gate-nutá na is_owner.
+    if (adv.is_owner) {
+      NAV.push({ key: 'nabor', icon: ICONS.nabor, href: '/nabor-kandidati.php', label: 'Nábor', active: isNabor });
+    }
     // Admin/owner-only položky pribúdajú len tebe — aby lišta nenarastala do
     // neprehľadna, na desktope sa schovajú za jednu ikonu "Viac" (flyout).
     // Na mobile (vysúvací panel) sa aj tak zobrazujú rovno v zozname (CSS
@@ -147,7 +154,6 @@
       MORE.push({ key: 'admin', icon: ICONS.admin, href: '/admin.php', label: 'Admin', active: isAdmin });
     }
     if (adminOn && adv.is_owner) {
-      MORE.push({ key: 'nabor', icon: ICONS.nabor, href: '/nabor-kandidati.php', label: 'Nábor', active: isNabor });
       MORE.push({ key: 'kb', icon: ICONS.kb, href: '/znalostna-baza.php', label: 'Znalostná báza', active: isKb });
       MORE.push({ key: 'news', icon: ICONS.news, href: '/novinky.php', label: 'Novinky', active: isNews });
       MORE.push({ key: 'refi', icon: ICONS.refi, href: '/refinancny-radar.php', label: 'Refinančný Radar', active: isRefi });
