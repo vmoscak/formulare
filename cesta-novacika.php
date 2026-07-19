@@ -279,8 +279,9 @@ function mzTotalEarned(array $mzStatusMap): int {
  * podmienok, 1.–6. mesiac = podľa produkčných bodov, 7.–24. mesiac = podľa
  * statusu FIT/STD/TOP.
  */
-function obRenderRewards(array $mzStatusMap): void {
+function obRenderRewards(array $mzStatusMap, int $elapsedDays): void {
     $totalEarned = mzTotalEarned($mzStatusMap);
+    $currentMzMonth = min(24, intdiv($elapsedDays, 30));
     ?>
     <div class="mz-summary-bar">
       <div class="mz-summary-icon">💰</div>
@@ -300,11 +301,21 @@ function obRenderRewards(array $mzStatusMap): void {
         <button type="button" class="mz-status-btn mz-status-btn-fit<?= $sel0 === 'fit' ? ' is-selected' : '' ?>" data-status="fit" onclick="mzSelectStatus(this)">✓ Podmienky splnené<span class="mz-status-amt"><?= mzDpAmount(0, 'fit') ?> €</span></button>
       </div>
     </div>
-    <?php foreach (MZ_QUARTERS as $months): $labels = $months[0] <= 6 ? MZ_PB_LABELS : MZ_STATUS_LABELS; ?>
-    <div class="mz-card mz-card-quarter">
-      <div class="mz-card-head">
+    <?php foreach (MZ_QUARTERS as $months):
+        $labels = $months[0] <= 6 ? MZ_PB_LABELS : MZ_STATUS_LABELS;
+        $statuses = array_map(fn($m) => $mzStatusMap[$m] ?? null, $months);
+        $filled = count(array_filter($statuses));
+        $isFuture = $months[0] > $currentMzMonth + 1;
+        $key = implode('-', $months);
+        $hint = $filled === 3 ? 'Uzatvorený ✓' : ($filled > 0 ? $filled . '/3 vyplnené' : ($isFuture ? 'Zatiaľ neaktuálne' : 'Čaká na vyplnenie'));
+        $hintClass = $filled === 3 ? ' mz-quarter-hint-done' : ($filled > 0 ? ' mz-quarter-hint-partial' : '');
+    ?>
+    <details class="mz-card mz-card-quarter" <?= $isFuture ? '' : 'open' ?>>
+      <summary class="mz-card-head">
         <span class="mz-card-month">Kvartál <?= $months[0] ?>.–<?= $months[2] ?>. mesiac</span>
-      </div>
+        <span class="mz-quarter-hint<?= $hintClass ?>" id="mz-quarter-hint-<?= $key ?>"><?= h($hint) ?></span>
+        <span class="mz-quarter-chevron" aria-hidden="true">▾</span>
+      </summary>
       <div class="mz-quarter-months">
         <?php foreach ($months as $i => $m): $isFinal = $i === 2; $selM = $mzStatusMap[$m] ?? null; ?>
         <div class="mz-month-col<?= $isFinal ? ' mz-month-col-final' : '' ?>">
@@ -317,8 +328,8 @@ function obRenderRewards(array $mzStatusMap): void {
         </div>
         <?php endforeach; ?>
       </div>
-      <div class="mz-doplatok" id="mz-doplatok-<?= implode('-', $months) ?>"></div>
-    </div>
+      <div class="mz-doplatok" id="mz-doplatok-<?= $key ?>"></div>
+    </details>
     <?php endforeach; ?>
     <?php
 }
@@ -503,6 +514,19 @@ if ($isOwner) {
   .mz-status-btn-top:hover{border-color:var(--good);}
   .mz-status-btn-top.is-selected{border-color:var(--good); background:var(--good); color:#fff; transform:translateY(-1px) scale(1.02);}
   .mz-status-btn-top.is-selected .mz-status-amt{color:rgba(255,255,255,.85);}
+  .mz-card-quarter{padding:0;}
+  .mz-card-quarter > summary.mz-card-head{list-style:none; cursor:pointer; padding:16px 18px; margin-bottom:0; border-radius:var(--radius-xl);}
+  .mz-card-quarter > summary.mz-card-head::-webkit-details-marker{display:none;}
+  .mz-card-quarter > summary.mz-card-head::marker{content:'';}
+  .mz-card-quarter > summary.mz-card-head:hover{background:var(--paper);}
+  .mz-card-quarter[open] > summary.mz-card-head{border-radius:var(--radius-xl) var(--radius-xl) 0 0;}
+  .mz-quarter-hint{font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:999px; background:var(--paper); color:var(--muted); flex-shrink:0; white-space:nowrap; border:1px solid var(--border);}
+  .mz-quarter-hint-partial{background:var(--amber-soft); color:var(--amber); border-color:var(--amber-soft);}
+  .mz-quarter-hint-done{background:var(--good-soft); color:var(--good); border-color:var(--good-soft);}
+  .mz-quarter-chevron{font-size:11px; color:var(--muted); transition:transform .2s ease; flex-shrink:0;}
+  .mz-card-quarter[open] .mz-quarter-chevron{transform:rotate(180deg);}
+  .mz-card-quarter > .mz-quarter-months{padding:0 18px; margin-top:2px;}
+  .mz-card-quarter > .mz-doplatok{margin:0 18px 16px;}
   .mz-quarter-months{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:12px;}
   .mz-month-label{font-size:10.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.02em; margin-bottom:6px; text-align:center;}
   .mz-month-col-final .mz-month-label{color:var(--accent-ink);}
@@ -699,7 +723,7 @@ if ($isOwner) {
 
   <div class="card">
     <h3 class="mz-tracker-title">💰 Čo za to dostaneš — Model zapracovania</h3>
-    <?php obRenderRewards($mzStatusMap); ?>
+    <?php obRenderRewards($mzStatusMap, $elapsedDays); ?>
   </div>
 
   <?php
@@ -748,14 +772,14 @@ if ($isOwner) {
         <span class="ob-manage-icon"><?= $p['icon'] ?></span>
         <span class="ob-manage-name"><?= h($p['name']) ?></span>
         <span class="ob-manage-duration"><?= $p['is_ongoing'] ? 'priebežná' : $p['duration_days'] . ' dní' ?> · <?= count($pMats) ?> materiálov</span>
-        <span class="ob-manage-actions" onclick="event.preventDefault();">
+        <span class="ob-manage-actions">
           <?php if (!$isFirstPhase): ?>
           <form method="post" style="margin:0; display:inline;"><input type="hidden" name="move_phase_id" value="<?= (int)$p['id'] ?>"><input type="hidden" name="direction" value="up"><button type="submit" class="toggle-btn" title="Posunúť hore">↑</button></form>
           <?php endif; ?>
           <?php if (!$isLastPhase): ?>
           <form method="post" style="margin:0; display:inline;"><input type="hidden" name="move_phase_id" value="<?= (int)$p['id'] ?>"><input type="hidden" name="direction" value="down"><button type="submit" class="toggle-btn" title="Posunúť dole">↓</button></form>
           <?php endif; ?>
-          <button type="button" class="toggle-btn" onclick="obPhaseEdit(<?= (int)$p['id'] ?>)">Upraviť</button>
+          <button type="button" class="toggle-btn" onclick="event.preventDefault(); obPhaseEdit(<?= (int)$p['id'] ?>, this)">Upraviť</button>
           <form method="post" style="margin:0; display:inline;" onsubmit="return confirm('Naozaj zmazať túto fázu aj jej materiály?');"><input type="hidden" name="delete_phase_id" value="<?= (int)$p['id'] ?>"><button type="submit" class="toggle-btn">Zmazať</button></form>
         </span>
       </summary>
@@ -900,7 +924,11 @@ if ($isOwner) {
 
 </main>
 <script>
-function obPhaseEdit(id) { document.getElementById('ob-phase-edit-' + id).style.display = 'flex'; }
+function obPhaseEdit(id, btn) {
+  var details = btn && btn.closest('details');
+  if (details) details.open = true;
+  document.getElementById('ob-phase-edit-' + id).style.display = 'flex';
+}
 function obPhaseCancel(id) { document.getElementById('ob-phase-edit-' + id).style.display = 'none'; }
 function obMatEdit(id) {
   document.getElementById('ob-mat-row-' + id).style.display = 'none';
@@ -993,6 +1021,12 @@ function mzUpdateQuarterDisplay(month, fromClick) {
   var statuses = quarter.map(function (m) { return MZ_STATUS[m]; });
   var filled = statuses.filter(Boolean).length;
   var maxTotal = quarter.reduce(function (s, m) { return s + mzAmount(m, 'top'); }, 0);
+
+  var hintEl = document.getElementById('mz-quarter-hint-' + quarter.join('-'));
+  if (hintEl) {
+    hintEl.textContent = filled === 3 ? 'Uzatvorený ✓' : (filled > 0 ? filled + '/3 vyplnené' : 'Čaká na vyplnenie');
+    hintEl.className = 'mz-quarter-hint' + (filled === 3 ? ' mz-quarter-hint-done' : (filled > 0 ? ' mz-quarter-hint-partial' : ''));
+  }
 
   if (filled < 3) {
     if (filled === 0) {
