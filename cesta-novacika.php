@@ -28,6 +28,7 @@ function obElapsedDays(?string $startedAt): int {
     return max(0, (int)floor((time() - strtotime($startedAt)) / 86400));
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !csrfCheck()) { http_response_code(403); exit('Neplatný CSRF token — obnov stránku a skús to znova.'); }
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($isOwner && isset($_POST['add_phase'])) {
         $name = trim((string)($_POST['name'] ?? ''));
@@ -785,17 +786,17 @@ if ($isOwner) {
         <span class="ob-manage-duration"><?= $p['is_ongoing'] ? 'priebežná' : $p['duration_days'] . ' dní' ?> · <?= count($pMats) ?> materiálov</span>
         <span class="ob-manage-actions">
           <?php if (!$isFirstPhase): ?>
-          <form method="post" style="margin:0; display:inline;"><input type="hidden" name="move_phase_id" value="<?= (int)$p['id'] ?>"><input type="hidden" name="direction" value="up"><button type="submit" class="toggle-btn" title="Posunúť hore">↑</button></form>
+          <form method="post" style="margin:0; display:inline;"><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>"><input type="hidden" name="move_phase_id" value="<?= (int)$p['id'] ?>"><input type="hidden" name="direction" value="up"><button type="submit" class="toggle-btn" title="Posunúť hore">↑</button></form>
           <?php endif; ?>
           <?php if (!$isLastPhase): ?>
-          <form method="post" style="margin:0; display:inline;"><input type="hidden" name="move_phase_id" value="<?= (int)$p['id'] ?>"><input type="hidden" name="direction" value="down"><button type="submit" class="toggle-btn" title="Posunúť dole">↓</button></form>
+          <form method="post" style="margin:0; display:inline;"><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>"><input type="hidden" name="move_phase_id" value="<?= (int)$p['id'] ?>"><input type="hidden" name="direction" value="down"><button type="submit" class="toggle-btn" title="Posunúť dole">↓</button></form>
           <?php endif; ?>
           <button type="button" class="toggle-btn" onclick="event.preventDefault(); obPhaseEdit(<?= (int)$p['id'] ?>, this)">Upraviť</button>
-          <form method="post" style="margin:0; display:inline;" onsubmit="return confirm('Naozaj zmazať túto fázu aj jej materiály?');"><input type="hidden" name="delete_phase_id" value="<?= (int)$p['id'] ?>"><button type="submit" class="toggle-btn">Zmazať</button></form>
+          <form method="post" style="margin:0; display:inline;" onsubmit="return confirm('Naozaj zmazať túto fázu aj jej materiály?');"><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>"><input type="hidden" name="delete_phase_id" value="<?= (int)$p['id'] ?>"><button type="submit" class="toggle-btn">Zmazať</button></form>
         </span>
       </summary>
       <div class="ob-manage-body">
-        <form method="post" class="ob-phase-edit-form" id="ob-phase-edit-<?= (int)$p['id'] ?>">
+        <form method="post" class="ob-phase-edit-form" id="ob-phase-edit-<?= (int)$p['id'] ?><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">">
           <input type="hidden" name="edit_phase_id" value="<?= (int)$p['id'] ?>">
           <div class="ob-phase-add-row">
             <input type="text" name="icon" value="<?= h($p['icon']) ?>" placeholder="Ikona" maxlength="8">
@@ -821,16 +822,16 @@ if ($isOwner) {
           <div class="ob-material-actions">
             <?php if ($m['link_url']): ?><a class="toggle-btn" href="<?= h($m['link_url']) ?>" target="_blank">Otvoriť</a><?php endif; ?>
             <?php if (!$isFirstMat): ?>
-            <form method="post" style="margin:0; display:inline;"><input type="hidden" name="move_material_id" value="<?= (int)$m['id'] ?>"><input type="hidden" name="direction" value="up"><button type="submit" class="toggle-btn" title="Posunúť hore">↑</button></form>
+            <form method="post" style="margin:0; display:inline;"><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>"><input type="hidden" name="move_material_id" value="<?= (int)$m['id'] ?>"><input type="hidden" name="direction" value="up"><button type="submit" class="toggle-btn" title="Posunúť hore">↑</button></form>
             <?php endif; ?>
             <?php if (!$isLastMat): ?>
-            <form method="post" style="margin:0; display:inline;"><input type="hidden" name="move_material_id" value="<?= (int)$m['id'] ?>"><input type="hidden" name="direction" value="down"><button type="submit" class="toggle-btn" title="Posunúť dole">↓</button></form>
+            <form method="post" style="margin:0; display:inline;"><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>"><input type="hidden" name="move_material_id" value="<?= (int)$m['id'] ?>"><input type="hidden" name="direction" value="down"><button type="submit" class="toggle-btn" title="Posunúť dole">↓</button></form>
             <?php endif; ?>
             <button type="button" class="toggle-btn" onclick="obMatEdit(<?= (int)$m['id'] ?>)">Upraviť</button>
-            <form method="post" style="margin:0; display:inline;" onsubmit="return confirm('Naozaj zmazať tento materiál?');"><input type="hidden" name="delete_material_id" value="<?= (int)$m['id'] ?>"><button type="submit" class="toggle-btn">Zmazať</button></form>
+            <form method="post" style="margin:0; display:inline;" onsubmit="return confirm('Naozaj zmazať tento materiál?');"><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>"><input type="hidden" name="delete_material_id" value="<?= (int)$m['id'] ?>"><button type="submit" class="toggle-btn">Zmazať</button></form>
           </div>
         </div>
-        <form method="post" class="ob-material-edit-form" id="ob-mat-edit-<?= (int)$m['id'] ?>">
+        <form method="post" class="ob-material-edit-form" id="ob-mat-edit-<?= (int)$m['id'] ?><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">">
           <input type="hidden" name="edit_material_id" value="<?= (int)$m['id'] ?>">
           <input type="hidden" name="phase_id" value="<?= (int)$p['id'] ?>">
           <input type="text" name="title" value="<?= h($m['title']) ?>" placeholder="Názov materiálu" required>
@@ -843,7 +844,7 @@ if ($isOwner) {
         </form>
         <?php endforeach; ?>
 
-        <form method="post" class="ob-material-add-row" style="margin-top:12px;">
+        <form method="post" class="ob-material-add-row" style="margin-top:12px;"><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
           <input type="hidden" name="add_material" value="1">
           <input type="hidden" name="phase_id" value="<?= (int)$p['id'] ?>">
           <input type="text" name="title" placeholder="Nový materiál — názov" required>
@@ -857,7 +858,7 @@ if ($isOwner) {
 
     <div style="margin-top:18px; padding-top:16px; border-top:1px solid var(--border);">
       <h4 style="margin:0 0 10px; font-size:13.5px;">Pridať fázu</h4>
-      <form method="post" style="display:flex; flex-direction:column; gap:10px;">
+      <form method="post" style="display:flex; flex-direction:column; gap:10px;"><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
         <input type="hidden" name="add_phase" value="1">
         <div class="ob-phase-add-row">
           <input type="text" name="icon" placeholder="📍" maxlength="8">
@@ -901,7 +902,7 @@ if ($isOwner) {
         </div>
       </div>
       <div class="ob-team-card-foot">
-        <form method="post" style="margin:0;">
+        <form method="post" style="margin:0;"><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
           <input type="hidden" name="<?= $assigned ? 'unassign_advisor_id' : 'assign_advisor_id' ?>" value="<?= (int)$ta['id'] ?>">
           <button type="submit" class="toggle-btn"><?= $assigned ? 'Odobrať' : 'Priradiť' ?></button>
         </form>

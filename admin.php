@@ -48,6 +48,7 @@ function runMigrationFile(string $path): true|string {
 }
 
 // --- akcie: pridanie / deaktivácia poradcu ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !csrfCheck()) { http_response_code(403); exit('Neplatný CSRF token — obnov stránku a skús to znova.'); }
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['add_name'])) {
         $name = trim((string)$_POST['add_name']);
@@ -192,7 +193,7 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
       ?>
       <tr id="view-<?= (int)$a['id'] ?>" class="<?= $a['active'] ? '' : 'inactive' ?>">
         <td data-label="Farba">
-          <form method="post" class="color-form">
+          <form method="post" class="color-form"><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
             <input type="hidden" name="color_id" value="<?= (int)$a['id'] ?>">
             <input type="color" name="color" value="<?= h($a['color']) ?>" onchange="this.form.requestSubmit()" title="Farba poradcu">
           </form>
@@ -208,7 +209,7 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
           <button type="button" class="toggle-btn" onclick="editAdvisor(<?= (int)$a['id'] ?>)">Upraviť</button>
           <button type="button" class="toggle-btn" onclick="editPin(<?= (int)$a['id'] ?>)">PIN</button>
           <button type="button" class="toggle-btn" onclick="editTools(<?= (int)$a['id'] ?>)">Nástroje</button>
-          <form method="post" style="display:contents;">
+          <form method="post" style="display:contents;"><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
             <input type="hidden" name="toggle_id" value="<?= (int)$a['id'] ?>">
             <button type="submit" class="toggle-btn" style="width:100%;"><?= $a['active'] ? 'Deaktivovať' : 'Aktivovať' ?></button>
           </form>
@@ -216,7 +217,7 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
       </tr>
       <tr id="edit-<?= (int)$a['id'] ?>" style="display:none;">
         <td colspan="9">
-          <form method="post" class="add-form" style="display:flex; flex-wrap:wrap; gap:10px;">
+          <form method="post" class="add-form" style="display:flex; flex-wrap:wrap; gap:10px;"><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
             <input type="hidden" name="edit_id" value="<?= (int)$a['id'] ?>">
             <input name="edit_name" value="<?= h($a['name']) ?>" placeholder="Meno" required>
             <input name="edit_org" value="<?= h($a['org']) ?>" placeholder="Organizácia">
@@ -232,7 +233,7 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
       </tr>
       <tr id="pin-<?= (int)$a['id'] ?>" style="display:none;">
         <td colspan="9">
-          <form method="post" class="add-form" style="display:flex; flex-wrap:wrap; gap:10px; max-width:340px;">
+          <form method="post" class="add-form" style="display:flex; flex-wrap:wrap; gap:10px; max-width:340px;"><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
             <input type="hidden" name="pin_id" value="<?= (int)$a['id'] ?>">
             <input name="pin" inputmode="numeric" pattern="\d{4}" maxlength="4" placeholder="Nový 4-miestny PIN"
                    style="text-align:center; letter-spacing:.3em;" required>
@@ -243,7 +244,7 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
       </tr>
       <tr id="tools-<?= (int)$a['id'] ?>" style="display:none;">
         <td colspan="9">
-          <form method="post" style="max-width:640px;">
+          <form method="post" style="max-width:640px;"><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
             <input type="hidden" name="tools_id" value="<?= (int)$a['id'] ?>">
             <div style="display:flex; gap:8px; margin-bottom:10px;">
               <button type="button" class="toggle-btn" onclick="setAllTools(<?= (int)$a['id'] ?>, true)">Zapnúť všetko</button>
@@ -271,7 +272,7 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
       </tr>
       <?php endforeach; ?>
     </table>
-    <form method="post" class="add-form">
+    <form method="post" class="add-form"><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
       <input name="add_name" placeholder="Meno" required>
       <input name="add_org" placeholder="Organizácia">
       <input name="add_email" type="email" placeholder="E-mail" required>
@@ -296,7 +297,7 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
         <td class="date" data-label="Kedy"><?= h($d['generated_at']) ?></td>
         <td style="display:flex; gap:6px; justify-content:flex-start;">
           <a class="toggle-btn" href="/<?= rawurlencode($d['tool']) ?>/index.html?loadDoc=<?= (int)$d['id'] ?>" target="_blank"><?= $isDraft ? 'Pokračovať' : 'PDF' ?></a>
-          <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj zmazať tento dokument?');">
+          <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj zmazať tento dokument?');"><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
             <input type="hidden" name="delete_doc_id" value="<?= (int)$d['id'] ?>">
             <button type="submit" class="toggle-btn">Zmazať</button>
           </form>
@@ -351,11 +352,11 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
         </td>
         <td style="display:flex; gap:6px;">
           <?php if (!$applied): ?>
-          <form method="post" style="margin:0;" onsubmit="return confirm('Spustiť <?= h($mf) ?> priamo na produkčnej DB?');">
+          <form method="post" style="margin:0;" onsubmit="return confirm('Spustiť <?= h($mf) ?><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>"> priamo na produkčnej DB?');">
             <input type="hidden" name="run_migration_file" value="<?= h($mf) ?>">
             <button type="submit" class="toggle-btn">▶ Spustiť</button>
           </form>
-          <form method="post" style="margin:0;" onsubmit="return confirm('Označiť <?= h($mf) ?> ako už spustenú BEZ jej reálneho behu? Použi len ak si ju už spustil ručne v phpMyAdmin.');">
+          <form method="post" style="margin:0;" onsubmit="return confirm('Označiť <?= h($mf) ?><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>"> ako už spustenú BEZ jej reálneho behu? Použi len ak si ju už spustil ručne v phpMyAdmin.');">
             <input type="hidden" name="mark_applied_file" value="<?= h($mf) ?>">
             <button type="submit" class="toggle-btn">✓ Označiť ako už spustené</button>
           </form>

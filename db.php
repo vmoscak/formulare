@@ -66,6 +66,20 @@ function curAdvisorId(): int {
 }
 
 /**
+ * Bezstavový CSRF token (HMAC z GATE_TOKEN + aktuálneho poradcu) — zámerne
+ * bez PHP session (appka doteraz žiadnu nepoužíva, netreba ju kvôli tomuto
+ * zavádzať). Útočník na cudzej stránke token nevie vypočítať bez GATE_TOKEN,
+ * aj keby vedel prinútiť prihlásený prehliadač odoslať POST na admin.php.
+ * Použitie: skrytý input vo formulári + csrfCheck() na začiatku POST vetvy.
+ */
+function csrfToken(): string {
+    return hash_hmac('sha256', 'csrf:' . curAdvisorId(), GATE_TOKEN);
+}
+function csrfCheck(): bool {
+    return hash_equals(csrfToken(), (string)($_POST['csrf'] ?? ''));
+}
+
+/**
  * Ľudsky čitateľný názov nástroja podľa slugu priečinka — používa sa v tabuľkách
  * histórie dokumentov (admin.php, moje-dokumenty.php), kde sa inak zobrazoval
  * surový slug ako "nahrada-skody-zodpovednost".
