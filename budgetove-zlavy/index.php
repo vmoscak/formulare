@@ -14,8 +14,6 @@ $me = $stmt->fetch();
 if (!$me) { header('Location: /'); exit; }
 $isOwner = !empty($me['is_owner']);
 
-function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
-
 const BZ_CATEGORIES = ['auto' => 'Autopoistenie', 'majetok' => 'Majetok'];
 const BZ_BADGE_LABELS = ['none' => 'Bez odznaku', 'asist' => 'Asistentka (zelený)', 'daniel' => 'Daniel Jurčík (ružový)', 'both' => 'Oba/kombinácia (jantárový)'];
 
@@ -142,8 +140,8 @@ function bzBadge(array $r): string {
 <meta name="robots" content="noindex,nofollow">
 <title>Budgetové zľavy</title>
 
-<script src="../assets/theme-init.js"></script>
-<link rel="stylesheet" href="../assets/ui.css?v=12">
+<script src="<?= asset('theme-init.js') ?>"></script>
+<link rel="stylesheet" href="<?= asset('ui.css') ?>">
 <style>
   .bz-updated{font-size:12px; color:var(--muted); margin:-6px 0 22px;}
   .bz-section-title{display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0 0 14px;}
@@ -440,5 +438,5 @@ function bzCancelTip() {
   document.getElementById('tip-edit').style.display = 'none';
 }
 </script>
-<script src="../assets/shell.js?v=22"></script>
+<script src="<?= asset('shell.js') ?>"></script>
 </body></html>

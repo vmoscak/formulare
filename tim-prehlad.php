@@ -17,14 +17,6 @@ $stmt->execute([$advisorId]);
 $me = $stmt->fetch();
 if (!$me) { header('Location: /'); exit; }
 
-function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
-function advisorInitials(string $name): string {
-    $parts = preg_split('/\s+/', trim($name));
-    $first = mb_substr($parts[0] ?? '', 0, 1);
-    $last = count($parts) > 1 ? mb_substr($parts[count($parts) - 1], 0, 1) : '';
-    return mb_strtoupper($first . $last);
-}
-
 $totalToolsAvailable = 0;
 foreach ($TOOL_CATEGORIES as $cat) { $totalToolsAvailable += count($cat['tools']); }
 
@@ -50,9 +42,9 @@ function daysAgo(?string $dt, DateTimeImmutable $now): ?int {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
 <title>Tímový prehľad</title>
-<link rel="stylesheet" href="/assets/fonts.css">
-<script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=28">
+<link rel="stylesheet" href="<?= asset('fonts.css') ?>">
+<script src="<?= asset('theme-init.js') ?>"></script>
+<link rel="stylesheet" href="<?= asset('panel.css') ?>">
 <style>
   .tp-who{display:flex; align-items:center; gap:10px;}
   .tp-ini{width:32px; height:32px; border-radius:50%; color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; flex-shrink:0;}
@@ -111,5 +103,5 @@ function daysAgo(?string $dt, DateTimeImmutable $now): ?int {
   </div>
 
 </main>
-<script src="/assets/shell.js?v=22"></script>
+<script src="<?= asset('shell.js') ?>"></script>
 </body></html>

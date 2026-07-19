@@ -15,8 +15,6 @@ $stmt->execute([$advisorId]);
 $me = $stmt->fetch();
 if (!$me) { header('Location: /'); exit; }
 
-function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
-
 const RK_STATUSES = [
     'novy'       => ['Nový kontakt', 'neutral'],
     'oslovene'   => ['Oslovený/á', 'warn'],
@@ -154,9 +152,9 @@ function rkQs(array $overrides): string {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
 <title>Kandidáti na nábor</title>
-<link rel="stylesheet" href="/assets/fonts.css">
-<script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=28">
+<link rel="stylesheet" href="<?= asset('fonts.css') ?>">
+<script src="<?= asset('theme-init.js') ?>"></script>
+<link rel="stylesheet" href="<?= asset('panel.css') ?>">
 <style>
   .rk-status{display:inline-flex; align-items:center; font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px;}
   .rk-status.neutral{background:var(--desk); color:var(--muted);}
@@ -449,6 +447,6 @@ function rkMoveCard(sel) {
   if (card) card.style.opacity = '.5';
 }
 </script>
-<script src="/assets/toast.js"></script>
-<script src="/assets/shell.js?v=22"></script>
+<script src="<?= asset('toast.js') ?>"></script>
+<script src="<?= asset('shell.js') ?>"></script>
 </body></html>

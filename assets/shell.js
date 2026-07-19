@@ -150,11 +150,14 @@
     var adminOn = canAdminView && adminViewOn();
 
     var MORE = [];
+    // Znalostná báza je zdieľaný tímový obsah na čítanie pre každého poradcu
+    // (editovať vie len owner, rieši server-side gating v znalostna-baza.php)
+    // — preto tu na rozdiel od zvyšku MORE nezávisí od admin režimu/role.
+    MORE.push({ key: 'kb', icon: ICONS.kb, href: '/znalostna-baza.php', label: 'Znalostná báza', active: isKb });
     if (adminOn && adv.is_admin) {
       MORE.push({ key: 'admin', icon: ICONS.admin, href: '/admin.php', label: 'Admin', active: isAdmin });
     }
     if (adminOn && adv.is_owner) {
-      MORE.push({ key: 'kb', icon: ICONS.kb, href: '/znalostna-baza.php', label: 'Znalostná báza', active: isKb });
       MORE.push({ key: 'news', icon: ICONS.news, href: '/novinky.php', label: 'Novinky', active: isNews });
       MORE.push({ key: 'refi', icon: ICONS.refi, href: '/refinancny-radar.php', label: 'Refinančný Radar', active: isRefi });
       MORE.push({ key: 'refiCalc', icon: ICONS.refiCalc, href: '/oplati-sa-refinancovat.php', label: 'Oplatí sa refinancovať?', active: isRefiCalc });

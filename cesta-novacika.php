@@ -22,14 +22,6 @@ $isOwner = $me && !empty($me['is_owner']);
 $isOnboarding = $me && !empty($me['onboarding_started_at']);
 if (!$me || (!$isOwner && !$isOnboarding)) { header('Location: /'); exit; }
 
-function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
-function advisorInitials(string $name): string {
-    $parts = preg_split('/\s+/', trim($name));
-    $first = mb_substr($parts[0] ?? '', 0, 1);
-    $last = count($parts) > 1 ? mb_substr($parts[count($parts) - 1], 0, 1) : '';
-    return mb_strtoupper($first . $last);
-}
-
 /** Počet celých dní od nástupu (0 = deň nástupu). Bez nástupu = 0. */
 function obElapsedDays(?string $startedAt): int {
     if (!$startedAt) return 0;
@@ -413,9 +405,9 @@ if ($isOwner) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
 <title>Cesta nováčika</title>
-<link rel="stylesheet" href="/assets/fonts.css">
-<script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=28">
+<link rel="stylesheet" href="<?= asset('fonts.css') ?>">
+<script src="<?= asset('theme-init.js') ?>"></script>
+<link rel="stylesheet" href="<?= asset('panel.css') ?>">
 <style>
   /* ============================================================
      Cesta nováčika — späť vo farbách portálu (štandardné tokeny appky:
@@ -1135,5 +1127,5 @@ document.querySelectorAll('.mz-doplatok[id^="mz-doplatok-"]').forEach(function (
   mzUpdateQuarterDisplay(months[2]);
 });
 </script>
-<script src="/assets/shell.js?v=22"></script>
+<script src="<?= asset('shell.js') ?>"></script>
 </body></html>

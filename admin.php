@@ -83,8 +83,6 @@ $links = db()->query(
      JOIN formulare_advisors a ON a.id = l.advisor_id ORDER BY l.created_at DESC LIMIT 200'
 )->fetchAll();
 
-function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
-
 $allToolSlugs = [];
 foreach ($TOOL_CATEGORIES as $cat) foreach ($cat['tools'] as $t) $allToolSlugs[] = toolSlug($t['href']);
 $totalToolCount = count($allToolSlugs);
@@ -101,9 +99,9 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
 <title>Prehľad pre majiteľa</title>
-<link rel="stylesheet" href="/assets/fonts.css">
-<script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=28">
+<link rel="stylesheet" href="<?= asset('fonts.css') ?>">
+<script src="<?= asset('theme-init.js') ?>"></script>
+<link rel="stylesheet" href="<?= asset('panel.css') ?>">
 </head><body>
 <header class="topbar">
   <div class="tb-title">
@@ -260,7 +258,7 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
     </table>
   </div>
 </main>
-<script src="/assets/shell.js?v=22"></script>
+<script src="<?= asset('shell.js') ?>"></script>
 <script>
 function editAdvisor(id){
   document.getElementById('view-'+id).style.display = 'none';

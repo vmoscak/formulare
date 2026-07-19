@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $lockedSeconds === 0) {
 <meta name="robots" content="noindex,nofollow">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <title>Vstup pre poradcov</title>
-<link rel="stylesheet" href="/assets/fonts.css">
+<link rel="stylesheet" href="<?= asset('fonts.css') ?>">
 <style>
   /* Svetlý „Clean SaaS" vzhľad — zhodné tokeny s assets/ui.css */
   :root{

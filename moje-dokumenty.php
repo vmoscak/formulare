@@ -51,14 +51,6 @@ try {
     db()->prepare("UPDATE formulare_client_links SET claimed_at = ? WHERE advisor_id = ? AND status = 'submitted' AND claimed_at IS NULL")
         ->execute([date('Y-m-d H:i:s'), $advisorId]);
 } catch (Throwable $e) { /* nie je kritické */ }
-
-function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
-function advisorInitials(string $name): string {
-    $parts = preg_split('/\s+/', trim($name));
-    $first = mb_substr($parts[0] ?? '', 0, 1);
-    $last = count($parts) > 1 ? mb_substr($parts[count($parts) - 1], 0, 1) : '';
-    return mb_strtoupper($first . $last);
-}
 ?>
 <!DOCTYPE html><html lang="sk"><head>
 <meta charset="UTF-8">
@@ -69,9 +61,9 @@ function advisorInitials(string $name): string {
 <link rel="manifest" href="/assets/manifest.json">
 <meta name="theme-color" content="#4f46e5">
 <title>Moje dokumenty</title>
-<link rel="stylesheet" href="/assets/fonts.css">
-<script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=28">
+<link rel="stylesheet" href="<?= asset('fonts.css') ?>">
+<script src="<?= asset('theme-init.js') ?>"></script>
+<link rel="stylesheet" href="<?= asset('panel.css') ?>">
 </head><body>
 
 <header class="topbar">
@@ -195,5 +187,5 @@ function advisorInitials(string $name): string {
   });
 })();
 </script>
-<script src="/assets/shell.js?v=22"></script>
+<script src="<?= asset('shell.js') ?>"></script>
 </body></html>

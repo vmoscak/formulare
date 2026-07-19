@@ -15,14 +15,6 @@ $stmt->execute([$advisorId]);
 $me = $stmt->fetch();
 if (!$me) { header('Location: /'); exit; }
 $isOwner = !empty($me['is_owner']);
-
-function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
-function advisorInitials(string $name): string {
-    $parts = preg_split('/\s+/', trim($name));
-    $first = mb_substr($parts[0] ?? '', 0, 1);
-    $last = count($parts) > 1 ? mb_substr($parts[count($parts) - 1], 0, 1) : '';
-    return mb_strtoupper($first . $last);
-}
 $SK_MONTHS = ['', 'január','február','marec','apríl','máj','jún','júl','august','september','október','november','december'];
 $SK_DOW = ['Po','Ut','St','Št','Pi','So','Ne'];
 $SK_DOW_LONG = ['', 'Pondelok','Utorok','Streda','Štvrtok','Piatok','Sobota','Nedeľa'];
@@ -139,9 +131,9 @@ $editAssigneeIds = $editEventId ? ($assigneesByEvent[$editEventId] ?? []) : [];
 <link rel="manifest" href="/assets/manifest.json">
 <meta name="theme-color" content="#4f46e5">
 <title>Tímový kalendár</title>
-<link rel="stylesheet" href="/assets/fonts.css">
-<script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=28">
+<link rel="stylesheet" href="<?= asset('fonts.css') ?>">
+<script src="<?= asset('theme-init.js') ?>"></script>
+<link rel="stylesheet" href="<?= asset('panel.css') ?>">
 <style>
   .cal-nav{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
   .cal-nav h3{margin:0; font-size:16px; text-transform:capitalize;}
@@ -357,5 +349,5 @@ $editAssigneeIds = $editEventId ? ($assigneesByEvent[$editEventId] ?? []) : [];
   <?php endif; ?>
 
 </main>
-<script src="/assets/shell.js?v=22"></script>
+<script src="<?= asset('shell.js') ?>"></script>
 </body></html>

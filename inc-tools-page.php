@@ -20,13 +20,6 @@ try {
 } catch (Throwable $e) { $me = null; }
 if (!$me) { header('Location: /'); exit; }
 
-function advisorInitials(string $name): string {
-    $parts = preg_split('/\s+/', trim($name));
-    $first = mb_substr($parts[0] ?? '', 0, 1);
-    $last = count($parts) > 1 ? mb_substr($parts[count($parts) - 1], 0, 1) : '';
-    return mb_strtoupper($first . $last);
-}
-
 // Nástroje vypnuté adminom pre tohto poradcu (viď admin.php) — chýbajúci/prázdny
 // stĺpec znamená "nič nie je vypnuté", takže nový nástroj automaticky vidí každý.
 $disabledSlugs = [];
@@ -95,9 +88,9 @@ $arrow = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="cu
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Portál">
 <title>Portál — <?= htmlspecialchars($groupMeta['label']) ?></title>
-<link rel="stylesheet" href="/assets/fonts.css">
-<script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=28">
+<link rel="stylesheet" href="<?= asset('fonts.css') ?>">
+<script src="<?= asset('theme-init.js') ?>"></script>
+<link rel="stylesheet" href="<?= asset('panel.css') ?>">
 </head>
 <body>
 
@@ -186,6 +179,6 @@ function bzToggleFav(btn) {
   }).catch(function () { btn.classList.toggle('is-fav'); });
 }
 </script>
-<script src="/assets/shell.js?v=22"></script>
+<script src="<?= asset('shell.js') ?>"></script>
 </body>
 </html>

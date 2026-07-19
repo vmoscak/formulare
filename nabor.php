@@ -17,8 +17,6 @@ $stmt->execute([$advisorId]);
 $me = $stmt->fetch();
 if (!$me) { header('Location: /'); exit; }
 
-function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
-
 $importMessage = '';
 $importError = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['import'])) {
@@ -129,9 +127,9 @@ function qs(array $overrides): string {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
 <title>Register a mapa (NBS) — Nábor</title>
-<link rel="stylesheet" href="/assets/fonts.css">
-<script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=28">
+<link rel="stylesheet" href="<?= asset('fonts.css') ?>">
+<script src="<?= asset('theme-init.js') ?>"></script>
+<link rel="stylesheet" href="<?= asset('panel.css') ?>">
 <style>
   .map-pop-add-btn{font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:999px; border:1px solid var(--accent-line); background:var(--accent-soft); color:var(--accent-ink); cursor:pointer;}
   .map-pop-add-btn:hover{background:var(--accent); color:#fff;}
@@ -384,6 +382,6 @@ function qs(array $overrides): string {
     .catch(function () { countEl.textContent = '· chyba načítania'; });
 })();
 </script>
-<script src="/assets/toast.js"></script>
-<script src="/assets/shell.js?v=22"></script>
+<script src="<?= asset('toast.js') ?>"></script>
+<script src="<?= asset('shell.js') ?>"></script>
 </body></html>

@@ -17,8 +17,6 @@ $stmt->execute([$advisorId]);
 $me = $stmt->fetch();
 if (!$me) { header('Location: /'); exit; }
 
-function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
-
 $rates = [];
 try {
     $rates = db()->query('SELECT * FROM formulare_refi_rates ORDER BY fixation, rate ASC')->fetchAll();
@@ -29,10 +27,10 @@ try {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
 <title>Oplatí sa mi refinancovať?</title>
-<link rel="stylesheet" href="/assets/fonts.css">
-<script src="/assets/theme-init.js"></script>
-<script src="/assets/toast.js?v=1"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=28">
+<link rel="stylesheet" href="<?= asset('fonts.css') ?>">
+<script src="<?= asset('theme-init.js') ?>"></script>
+<script src="<?= asset('toast.js') ?>"></script>
+<link rel="stylesheet" href="<?= asset('panel.css') ?>">
 <style>
   .rf-verdict{margin-top:16px; padding:16px 18px; border-radius:var(--radius-lg); font-weight:700; font-size:14.5px;}
   .rf-verdict.good{background:var(--good-soft,#ecfdf5); color:var(--good,#059669);}
@@ -388,5 +386,5 @@ if (rateSuggest) {
 $('pdfBtn').addEventListener('click', doPDF);
 compute();
 </script>
-<script src="/assets/shell.js?v=22"></script>
+<script src="<?= asset('shell.js') ?>"></script>
 </body></html>

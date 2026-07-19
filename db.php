@@ -15,6 +15,29 @@ if (!str_starts_with(DB_DSN, 'sqlite:')) {
     error_reporting(E_ALL);
 }
 
+/** HTML-escapovanie — spoločné pre všetky stránky (bývalo duplikované v 14 súboroch). */
+function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
+
+/** Iniciály poradcu pre okrúhle avatary (bývalo duplikované v 7 súboroch). */
+function advisorInitials(string $name): string {
+    $parts = preg_split('/\s+/', trim($name));
+    $first = mb_substr($parts[0] ?? '', 0, 1);
+    $last = count($parts) > 1 ? mb_substr($parts[count($parts) - 1], 0, 1) : '';
+    return mb_strtoupper($first . $last);
+}
+
+/**
+ * URL statického súboru z /assets s automatickým cache-busting parametrom
+ * podľa času poslednej zmeny súboru (namiesto ručne udržiavaného ?v=NN,
+ * ktoré sa v praxi rozchádzalo medzi stránkami — napr. budgetove-zlavy/
+ * dlho ťahalo starú verziu ui.css, kým si to niekto nevšimol).
+ */
+function asset(string $relPath): string {
+    $file = __DIR__ . '/assets/' . $relPath;
+    $v = @filemtime($file) ?: '1';
+    return '/assets/' . $relPath . '?v=' . $v;
+}
+
 /**
  * Podpísaná hodnota cur_advisor cookie ("id.podpis") — HMAC kľúčom GATE_TOKEN.
  * Bráni tomu, aby si poradca len zmenou cookie v prehliadači vydával za iného
@@ -635,6 +658,8 @@ function dbInitSqlite(PDO $pdo): void {
         FOREIGN KEY (client_link_id) REFERENCES formulare_client_links(id)
     )");
     try { $pdo->exec("ALTER TABLE formulare_generated_documents ADD COLUMN is_draft INTEGER NOT NULL DEFAULT 0"); } catch (Throwable $e) { /* stĺpec už existuje */ }
+    $pdo->exec("CREATE INDEX IF NOT EXISTS idx_gendocs_advisor_date ON formulare_generated_documents (advisor_id, generated_at)");
+    $pdo->exec("CREATE INDEX IF NOT EXISTS idx_clientlinks_advisor_date ON formulare_client_links (advisor_id, created_at)");
     $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_registry_entities (
         ico TEXT PRIMARY KEY,
         name TEXT NOT NULL,

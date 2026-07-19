@@ -18,15 +18,6 @@ try {
 } catch (Throwable $e) { $me = null; }
 if (!$me) { header('Location: /'); exit; }
 
-function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
-
-function advisorInitials(string $name): string {
-    $parts = preg_split('/\s+/', trim($name));
-    $first = mb_substr($parts[0] ?? '', 0, 1);
-    $last = count($parts) > 1 ? mb_substr($parts[count($parts) - 1], 0, 1) : '';
-    return mb_strtoupper($first . $last);
-}
-
 $disabledSlugs = [];
 if (!empty($me['disabled_tools'])) {
     $decoded = json_decode($me['disabled_tools'], true);
@@ -99,7 +90,6 @@ if (!$favoriteTools) {
         }
     }
 }
-
 
 $news = [];
 try {
@@ -203,9 +193,9 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Portál">
 <title>Portál — Domov</title>
-<link rel="stylesheet" href="/assets/fonts.css">
-<script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=28">
+<link rel="stylesheet" href="<?= asset('fonts.css') ?>">
+<script src="<?= asset('theme-init.js') ?>"></script>
+<link rel="stylesheet" href="<?= asset('panel.css') ?>">
 <style>
   .fav-draggable{cursor:grab;}
   .fav-draggable.is-dragging{opacity:.4;}
@@ -535,5 +525,5 @@ function bzUnfavorite(btn) {
   });
 })();
 </script>
-<script src="/assets/shell.js?v=22"></script>
+<script src="<?= asset('shell.js') ?>"></script>
 </body></html>

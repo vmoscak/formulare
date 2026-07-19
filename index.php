@@ -1,13 +1,6 @@
 <?php
 require_once __DIR__ . '/db.php';
 
-function advisorInitials(string $name): string {
-    $parts = preg_split('/\s+/', trim($name));
-    $first = mb_substr($parts[0] ?? '', 0, 1);
-    $last = count($parts) > 1 ? mb_substr($parts[count($parts) - 1], 0, 1) : '';
-    return mb_strtoupper($first . $last);
-}
-
 function fetchActiveAdvisor(int $id): ?array {
     try {
         $stmt = db()->prepare('SELECT id, name, org, color, pin_hash FROM formulare_advisors WHERE id = ? AND active = 1');
@@ -101,7 +94,7 @@ $curAdvisorId = curAdvisorId() ?: null;
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Portál">
 <title>Portál — výber poradcu</title>
-<link rel="stylesheet" href="/assets/fonts.css">
+<link rel="stylesheet" href="<?= asset('fonts.css') ?>">
 <style>
   :root{
     --bg:#f5f6f8; --paper:#fff; --border:#eef0f3; --line-strong:#e2e6ec;

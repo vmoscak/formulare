@@ -1,20 +1,19 @@
 <?php
 /**
- * Znalostná báza — interné FAQ / rýchle texty. Prístup VÝHRADNE pre poradcu
- * s is_owner=1 (rovnaký vzor ako nabor.php) — kým sa nerozhodne, ako/či sa
- * sprístupní aj ostatným poradcom na čítanie.
+ * Znalostná báza — interné FAQ / rýchle texty. Čítanie majú všetci aktívni
+ * poradcovia (zdieľaný tímový obsah) — pridávať, upravovať a mazať záznamy
+ * môže len owner (is_owner=1), rovnako ako v nabor.php.
  */
 require_once __DIR__ . '/db.php';
 
 $advisorId = curAdvisorId();
-$stmt = db()->prepare('SELECT * FROM formulare_advisors WHERE id = ? AND is_owner = 1 AND active = 1');
+$stmt = db()->prepare('SELECT * FROM formulare_advisors WHERE id = ? AND active = 1');
 $stmt->execute([$advisorId]);
 $me = $stmt->fetch();
 if (!$me) { header('Location: /'); exit; }
+$isOwner = !empty($me['is_owner']);
 
-function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isOwner) {
     if (isset($_POST['add'])) {
         $title = trim((string)($_POST['title'] ?? ''));
         $body = trim((string)($_POST['body'] ?? ''));
@@ -55,14 +54,14 @@ try {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
 <title>Znalostná báza</title>
-<link rel="stylesheet" href="/assets/fonts.css">
-<script src="/assets/theme-init.js"></script>
-<link rel="stylesheet" href="/assets/panel.css?v=28">
+<link rel="stylesheet" href="<?= asset('fonts.css') ?>">
+<script src="<?= asset('theme-init.js') ?>"></script>
+<link rel="stylesheet" href="<?= asset('panel.css') ?>">
 </head><body>
 <header class="topbar">
   <div class="tb-title">
     <h1>Znalostná báza</h1>
-    <p>Interné FAQ a rýchle texty · viditeľné len tebe</p>
+    <p>Interné FAQ a rýchle texty · zdieľané pre celý tím</p>
   </div>
   <div class="tb-actions">
     <a class="pillbtn" href="/nastroje.php">← Späť na nástroje</a>
@@ -89,6 +88,7 @@ try {
     </form>
   </div>
 
+  <?php if ($isOwner): ?>
   <div class="card">
     <h3>Pridať nový záznam</h3>
     <form method="post" class="kb-form">
@@ -98,6 +98,7 @@ try {
       <button type="submit" class="pillbtn solid" style="align-self:flex-start;">Pridať</button>
     </form>
   </div>
+  <?php endif; ?>
 
   <div class="card">
     <h3>Záznamy · <?= count($entries) ?></h3>
@@ -109,16 +110,19 @@ try {
             <h4><?= h($e['title']) ?></h4>
             <div class="kb-actions">
               <button type="button" class="toggle-btn" onclick="kbCopy(<?= (int)$e['id'] ?>)">Kopírovať</button>
+              <?php if ($isOwner): ?>
               <button type="button" class="toggle-btn" onclick="kbEdit(<?= (int)$e['id'] ?>)">Upraviť</button>
               <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj zmazať tento záznam?');">
                 <input type="hidden" name="delete_id" value="<?= (int)$e['id'] ?>">
                 <button type="submit" class="toggle-btn">Zmazať</button>
               </form>
+              <?php endif; ?>
             </div>
           </div>
           <p class="kb-body" data-raw="<?= h($e['body']) ?>"><?= nl2br(h($e['body'])) ?></p>
           <div class="kb-meta">Pridal <?= h($e['advisor_name']) ?> · <span class="date"><?= h($e['created_at']) ?></span></div>
         </div>
+        <?php if ($isOwner): ?>
         <form method="post" class="kb-edit" style="display:none;">
           <input type="hidden" name="edit_id" value="<?= (int)$e['id'] ?>">
           <input type="text" name="title" value="<?= h($e['title']) ?>" required>
@@ -128,6 +132,7 @@ try {
             <button type="button" class="pillbtn" onclick="kbCancel(<?= (int)$e['id'] ?>)">Zrušiť</button>
           </div>
         </form>
+        <?php endif; ?>
       </div>
       <?php endforeach; ?>
       <?php if (!$entries): ?><div class="empty-state">
@@ -156,5 +161,5 @@ function kbCopy(id) {
   navigator.clipboard.writeText(text).catch(function () {});
 }
 </script>
-<script src="/assets/shell.js?v=22"></script>
+<script src="<?= asset('shell.js') ?>"></script>
 </body></html>
