@@ -147,7 +147,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // -- Fázy a ich materiály --
-$allPhases = db()->query('SELECT * FROM formulare_onboarding_phases ORDER BY sort_order, id')->fetchAll();
+// try/catch: formulare_onboarding_phases je nová tabuľka (koncept "Mapa cesty
+// a odmeny") — kým sa na produkcii nespustí sql/033_onboarding_roadmap_concept.sql
+// (RUČNE v phpMyAdmin), radšej zobrazí prázdnu osnovu než tvrdú chybu.
+$migrationPending = false;
+$allPhases = [];
+try {
+    $allPhases = db()->query('SELECT * FROM formulare_onboarding_phases ORDER BY sort_order, id')->fetchAll();
+} catch (Throwable $e) { $migrationPending = true; }
 $phases = array_values(array_filter($allPhases, fn($p) => empty($p['is_ongoing'])));
 $ongoingPhases = array_values(array_filter($allPhases, fn($p) => !empty($p['is_ongoing'])));
 
@@ -161,10 +168,13 @@ foreach ($phases as &$p) {
 unset($p);
 $totalDurationDays = $cumDay;
 
-$allMaterials = db()->query('SELECT * FROM formulare_onboarding_steps ORDER BY sort_order, id')->fetchAll();
+$allMaterials = [];
+try {
+    $allMaterials = db()->query('SELECT * FROM formulare_onboarding_steps ORDER BY sort_order, id')->fetchAll();
+} catch (Throwable $e) { $migrationPending = true; }
 $materialsByPhase = [];
 foreach ($allMaterials as $m) {
-    if ($m['phase_id']) $materialsByPhase[(int)$m['phase_id']][] = $m;
+    if (!empty($m['phase_id'])) $materialsByPhase[(int)$m['phase_id']][] = $m;
 }
 
 /** Doplní 'status' (done/current/upcoming) do zoznamu fáz podľa uplynutých dní. */
@@ -520,6 +530,17 @@ if ($isOwner) {
 </header>
 
 <main class="content">
+
+  <?php if ($migrationPending): ?>
+  <div class="section">
+    <div class="card" style="background:var(--rose-soft); border-color:#fbd0d5;">
+      <h3 style="margin-top:0;">⚠️ Chýba databázová migrácia</h3>
+      <p style="margin:0; font-size:13px; color:var(--ink-2);">
+        Táto stránka potrebuje novú tabuľku <code>formulare_onboarding_phases</code> — spusti <code>sql/033_onboarding_roadmap_concept.sql</code> ručne v phpMyAdmin, potom stránku obnov.
+      </p>
+    </div>
+  </div>
+  <?php endif; ?>
 
   <?php if ($novicePreview): ?>
   <div class="section">
