@@ -251,18 +251,37 @@ function mzDpAmount(int $month, string $status): int {
 // fit/std/top — mení sa len zobrazený popisok tlačidla.
 const MZ_STATUS_LABELS = ['fit' => 'FIT', 'std' => '⭐ STD', 'top' => '🏆 TOP'];
 const MZ_PB_LABELS = ['fit' => '1 200 PB', 'std' => '2 400 PB', 'top' => '3 600 PB'];
+const MZ_PB_POINTS = ['fit' => 1200, 'std' => 2400, 'top' => 3600];
+// Kumulatívne prahy za CELÝ kvartál (súčet PB za 3 mesiace) — presne 3×
+// mesačný prah (3×1200/2400/3600). Používa sa len pri kvartáloch 1.–6.
+// mesiaca na určenie doplatku (mesiace 7.–24. sa dopočítavajú podľa
+// statusu dosiahnutého v 3. mesiaci, nie podľa súčtu).
+const MZ_QUARTER_PB_THRESHOLDS = ['fit' => 3600, 'std' => 7200, 'top' => 10800];
 const MZ_QUARTERS = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15], [16, 17, 18], [19, 20, 21], [22, 23, 24]];
+
+/** Status, na ktorý sa dopočíta celý uzatvorený kvartál. Mesiace 1.–6.
+ * (PB): podľa súčtu bodov za celý kvartál vs. MZ_QUARTER_PB_THRESHOLDS.
+ * Mesiace 7.–24. (FIT/STD/TOP): podľa statusu dosiahnutého v 3. mesiaci. */
+function mzQuarterFinalStatus(array $q, array $statuses): string {
+    if ($q[0] <= 6) {
+        $sum = array_sum(array_map(fn($s) => MZ_PB_POINTS[$s] ?? 0, $statuses));
+        if ($sum >= MZ_QUARTER_PB_THRESHOLDS['top']) return 'top';
+        if ($sum >= MZ_QUARTER_PB_THRESHOLDS['std']) return 'std';
+        return 'fit';
+    }
+    return $statuses[2];
+}
 
 /** Súčet DP, ktoré poradca doteraz reálne získal. 0. mesiac je samostatný
  * flat bonus (500 €, mimo kvartálov). Pri uzatvorených kvartáloch (všetky
- * 3 mesiace vyplnené) počíta s doplatkom na výsledok 3. mesiaca. */
+ * 3 mesiace vyplnené) počíta s doplatkom podľa mzQuarterFinalStatus(). */
 function mzTotalEarned(array $mzStatusMap): int {
     $total = 0;
     if (!empty($mzStatusMap[0])) $total += mzDpAmount(0, $mzStatusMap[0]);
     foreach (MZ_QUARTERS as $q) {
         $statuses = array_map(fn($m) => $mzStatusMap[$m] ?? null, $q);
         if (!in_array(null, $statuses, true)) {
-            $final = $statuses[2];
+            $final = mzQuarterFinalStatus($q, $statuses);
             foreach ($q as $m) $total += mzDpAmount($m, $final);
         } else {
             foreach ($q as $i => $m) { if ($statuses[$i]) $total += mzDpAmount($m, $statuses[$i]); }
@@ -980,17 +999,29 @@ document.addEventListener('change', function (e) {
 
 var MZ_STATUS = <?= json_encode($mzStatusMap, JSON_UNESCAPED_UNICODE) ?>;
 var MZ_QUARTERS = [[1,2,3],[4,5,6],[7,8,9],[10,11,12],[13,14,15],[16,17,18],[19,20,21],[22,23,24]];
+var MZ_PB_POINTS = { fit: 1200, std: 2400, top: 3600 };
+var MZ_PB_LABELS = { fit: '1 200 PB', std: '2 400 PB', top: '3 600 PB' };
+var MZ_QUARTER_PB_THRESHOLDS = { fit: 3600, std: 7200, top: 10800 };
 function mzAmount(month, status) {
   if (!status) return 0;
   var table = month <= 12 ? { fit: 500, std: 750, top: 1000 } : { fit: 300, std: 500, top: 700 };
   return table[status] || 0;
+}
+function mzQuarterFinalStatus(quarter, statuses) {
+  if (quarter[0] <= 6) {
+    var sum = statuses.reduce(function (s, st) { return s + (MZ_PB_POINTS[st] || 0); }, 0);
+    if (sum >= MZ_QUARTER_PB_THRESHOLDS.top) return 'top';
+    if (sum >= MZ_QUARTER_PB_THRESHOLDS.std) return 'std';
+    return 'fit';
+  }
+  return statuses[2];
 }
 function mzComputeTotal() {
   var total = MZ_STATUS[0] ? mzAmount(0, MZ_STATUS[0]) : 0;
   MZ_QUARTERS.forEach(function (q) {
     var statuses = q.map(function (m) { return MZ_STATUS[m]; });
     if (statuses.every(Boolean)) {
-      var finalStatus = statuses[2];
+      var finalStatus = mzQuarterFinalStatus(q, statuses);
       q.forEach(function (m) { total += mzAmount(m, finalStatus); });
     } else {
       q.forEach(function (m, i) { total += mzAmount(m, statuses[i]); });
@@ -1028,6 +1059,8 @@ function mzUpdateQuarterDisplay(month, fromClick) {
     hintEl.className = 'mz-quarter-hint' + (filled === 3 ? ' mz-quarter-hint-done' : (filled > 0 ? ' mz-quarter-hint-partial' : ''));
   }
 
+  var isPbQuarter = quarter[0] <= 6;
+
   if (filled < 3) {
     if (filled === 0) {
       el.className = 'mz-doplatok mz-doplatok-hint';
@@ -1039,28 +1072,42 @@ function mzUpdateQuarterDisplay(month, fromClick) {
     var potential = maxTotal - partialTotal;
     el.className = 'mz-doplatok mz-doplatok-hint';
     if (potential > 0) {
-      el.innerHTML = 'Zatiaľ za kvartál: <strong>' + partialTotal + ' €</strong> · pri statuse TOP až <strong>' + maxTotal + ' €</strong> (potenciál +' + potential + ' € 🚀)';
+      var potentialHint = isPbQuarter
+        ? 'pri súčte nad ' + MZ_QUARTER_PB_THRESHOLDS.top.toLocaleString('sk-SK') + ' b za celý kvartál'
+        : 'pri statuse TOP';
+      el.innerHTML = 'Zatiaľ za kvartál: <strong>' + partialTotal + ' €</strong> · ' + potentialHint + ' až <strong>' + maxTotal + ' €</strong> (potenciál +' + potential + ' € 🚀)';
     } else {
       el.innerHTML = 'Zatiaľ za kvartál: <strong>' + partialTotal + ' €</strong> — už si na maxime, drž to! 🏆';
     }
     return;
   }
 
-  var finalStatus = statuses[2];
-  var actualTotal = 0, upgradedTotal = 0;
+  var finalStatus = mzQuarterFinalStatus(quarter, statuses);
+  var actualTotal = 0, finalTotal = 0;
   for (var j = 0; j < quarter.length; j++) {
     actualTotal += mzAmount(quarter[j], statuses[j]);
-    upgradedTotal += mzAmount(quarter[j], finalStatus);
+    finalTotal += mzAmount(quarter[j], finalStatus);
   }
-  var diff = upgradedTotal - actualTotal;
+  var diff = finalTotal - actualTotal;
+  var pbSum = isPbQuarter ? statuses.reduce(function (s, st) { return s + (MZ_PB_POINTS[st] || 0); }, 0) : 0;
 
   if (diff > 0) {
     el.className = 'mz-doplatok mz-doplatok-win';
-    el.innerHTML = '🎉 Doplatok DP za kvartál: <strong>+' + diff + ' €</strong> (za 3. mesiac si dosiahol status ' + finalStatus.toUpperCase() + ', doplatia ti rozdiel za celý kvartál).';
+    var winReason = isPbQuarter
+      ? 'spolu si za kvartál dosiahol ' + pbSum.toLocaleString('sk-SK') + ' b, doplatia ti rozdiel na pásmo ' + MZ_PB_LABELS[finalStatus] + '/mesiac za celý kvartál'
+      : 'za 3. mesiac si dosiahol status ' + finalStatus.toUpperCase() + ', doplatia ti rozdiel za celý kvartál';
+    el.innerHTML = '🎉 Doplatok DP za kvartál: <strong>+' + diff + ' €</strong> (' + winReason + ').';
     if (fromClick) obConfetti();
+  } else if (diff < 0) {
+    el.className = 'mz-doplatok mz-doplatok-flat';
+    var downReason = isPbQuarter
+      ? 'spolu si za kvartál dosiahol len ' + pbSum.toLocaleString('sk-SK') + ' b, čo stačí len na pásmo ' + MZ_PB_LABELS[finalStatus] + '/mesiac za celý kvartál'
+      : 'za 3. mesiac si dosiahol status ' + finalStatus.toUpperCase() + ', ktorý platí spätne za celý kvartál';
+    el.innerHTML = 'Kvartál uzatvorený nižšie, než jednotlivé mesiace naznačovali (' + downReason + ') — spolu <strong>' + finalTotal + ' €</strong> DP.';
   } else {
     el.className = 'mz-doplatok mz-doplatok-flat';
-    el.innerHTML = 'Kvartál uzatvorený na statuse ' + finalStatus.toUpperCase() + ' — spolu <strong>' + actualTotal + ' €</strong> DP.';
+    var closedLabel = isPbQuarter ? ('na pásme ' + MZ_PB_LABELS[finalStatus] + '/mesiac') : ('na statuse ' + finalStatus.toUpperCase());
+    el.innerHTML = 'Kvartál uzatvorený ' + closedLabel + ' — spolu <strong>' + finalTotal + ' €</strong> DP.';
   }
 }
 function mzSelectStatus(btn) {
