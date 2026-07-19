@@ -263,15 +263,16 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
 
   <?php if ($news): ?>
   <div class="section">
-    <div class="section-head"><h3>Novinky</h3></div>
-    <div class="news-wrap">
+    <div class="section-head"><h3>Novinky <span id="newsUnreadPill" class="news-unread-pill" hidden></span></h3></div>
+    <div class="news-wrap" id="newsWrap">
       <?php $idx = 0; foreach ($news as $n): ?>
       <?php
       if ($n['important']) { $accent = '#e11d48'; }
       else { $accent = $newsPalette[$idx % count($newsPalette)]; $idx++; }
       ?>
-      <div class="news-item<?= $n['important'] ? ' important' : '' ?>" style="--news-accent:<?= $accent ?>; animation-delay:<?= .06 + $idx * .07 ?>s;">
+      <div class="news-item<?= $n['important'] ? ' important' : '' ?>" data-created="<?= h($n['created_at']) ?>" style="--news-accent:<?= $accent ?>; animation-delay:<?= .06 + $idx * .07 ?>s;">
         <?php if ($n['important']): ?><span class="news-badge">Dôležité</span><?php endif; ?>
+        <span class="news-new-badge" hidden>Nové</span>
         <div>
           <h4><?= h($n['title']) ?></h4>
           <p><?= h($n['body']) ?></p>
@@ -280,6 +281,29 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
       <?php endforeach; ?>
     </div>
   </div>
+  <script>
+  (function () {
+    var key = 'newsSeenAt_<?= (int)$curAdvisorId ?>';
+    var seenAt = localStorage.getItem(key) || '';
+    var items = document.querySelectorAll('#newsWrap .news-item');
+    var newest = seenAt;
+    var unreadCount = 0;
+    items.forEach(function (el) {
+      var created = el.dataset.created || '';
+      if (created > newest) newest = created;
+      if (seenAt && created > seenAt) {
+        el.querySelector('.news-new-badge').hidden = false;
+        unreadCount++;
+      }
+    });
+    if (unreadCount > 0) {
+      var pill = document.getElementById('newsUnreadPill');
+      pill.textContent = unreadCount === 1 ? '1 nová' : unreadCount + ' nové';
+      pill.hidden = false;
+    }
+    if (newest) localStorage.setItem(key, newest);
+  })();
+  </script>
   <?php endif; ?>
 
   <div class="domov-layout<?= $upcomingEvents ? ' has-sidebar' : '' ?>">

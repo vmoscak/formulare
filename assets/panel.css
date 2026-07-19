@@ -337,6 +337,14 @@ body.rail-scrolled .topbar{box-shadow:var(--shadow-md);}
 .news-item h4{margin:0 0 3px; font-size:13.5px; font-weight:700; color:var(--ink);}
 .news-item p{margin:0; font-size:12.5px; color:var(--muted); line-height:1.5; white-space:pre-wrap;}
 @media(prefers-reduced-motion:reduce){ .news-item{animation:none; opacity:1; transform:none;} }
+.news-new-badge{
+  flex-shrink:0; margin-top:2px; font-size:10px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+  color:var(--good); background:var(--good-soft); border:1px solid var(--good); border-radius:999px; padding:3px 9px;
+}
+.news-unread-pill:not([hidden]){
+  display:inline-block; margin-left:8px; font-size:11px; font-weight:700; color:var(--good);
+  background:var(--good-soft); border-radius:999px; padding:2px 9px; vertical-align:middle;
+}
 
 /* ── Domov — animované pozadie (uvod.php) ─────────────────────────────────
    Jemné, pomaly plávajúce farebné „aurora" škvrny za obsahom. Obsah stránky
