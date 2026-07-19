@@ -13,6 +13,15 @@ require_once __DIR__ . '/config.local.php';
 if (!str_starts_with(DB_DSN, 'sqlite:')) {
     ini_set('display_errors', '0');
     error_reporting(E_ALL);
+    // Chyby sa doteraz nikam neukladali (len potlačili) — bez logu nebolo
+    // ako zistiť, že niečo zlyhalo, kým si nesťažil poradca. tmp/ je jediný
+    // priečinok mimo git deploy synchronizácie (viď .github/workflows/deploy.yml
+    // --exclude ^tmp/) a zároveň zablokovaný pre priamy HTTP prístup (.htaccess),
+    // takže log tu prežije medzi nasadeniami a nie je verejne čitateľný.
+    $errLogDir = __DIR__ . '/tmp';
+    if (!is_dir($errLogDir)) { @mkdir($errLogDir, 0755, true); }
+    ini_set('log_errors', '1');
+    ini_set('error_log', $errLogDir . '/php-error.log');
 }
 
 /** HTML-escapovanie — spoločné pre všetky stránky (bývalo duplikované v 14 súboroch). */
@@ -883,6 +892,12 @@ function dbInitSqlite(PDO $pdo): void {
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(advisor_id, month_number),
         FOREIGN KEY (advisor_id) REFERENCES formulare_advisors(id)
+    )");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_schema_migrations (
+        filename TEXT PRIMARY KEY,
+        applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        applied_by TEXT NOT NULL DEFAULT '',
+        note TEXT NOT NULL DEFAULT ''
     )");
 }
 

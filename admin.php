@@ -13,6 +13,40 @@ $stmt->execute([$advisorId]);
 $me = $stmt->fetch();
 if (!$me) { header('Location: /'); exit; }
 
+/**
+ * Spustí jeden sql/*.sql súbor — rozdelí na jednotlivé príkazy podľa ";"
+ * (migrácie v tomto projekte neobsahujú uložené procedúry ani bodkočiarky
+ * v reťazcoch, overené pri zavedení tejto funkcie) a vykoná ich postupne.
+ * Vráti true pri úplnom úspechu, inak textový popis chyby vrátane toho,
+ * koľko príkazov pred zlyhaním prebehlo — DDL príkazy (CREATE/ALTER TABLE)
+ * v MySQL aj tak commitujú samé osebe, takže transakcia by čiastočný
+ * priebeh nezachránila; radšej sa to úprimne prizná než by appka predstierala
+ * atomickosť, ktorú nemá.
+ */
+function runMigrationFile(string $path): true|string {
+    $sql = file_get_contents($path);
+    if ($sql === false) return 'súbor sa nedá prečítať';
+    $statements = array_values(array_filter(array_map('trim', explode(';', $sql)), function ($s) {
+        // Vynechať prázdne úseky a úseky, čo sú len komentáre (žiadny riadok neobsahuje reálny príkaz).
+        foreach (explode("\n", $s) as $line) {
+            $line = trim($line);
+            if ($line !== '' && !str_starts_with($line, '--')) return true;
+        }
+        return false;
+    }));
+    if (!$statements) return 'súbor neobsahuje žiadny príkaz';
+    $pdo = db();
+    foreach ($statements as $i => $stmt) {
+        try {
+            $pdo->exec($stmt);
+        } catch (Throwable $e) {
+            $done = $i;
+            return "príkaz č. " . ($i + 1) . "/" . count($statements) . " zlyhal ($done predchádzajúcich prebehlo): " . $e->getMessage();
+        }
+    }
+    return true;
+}
+
 // --- akcie: pridanie / deaktivácia poradcu ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['add_name'])) {
@@ -68,9 +102,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $disabledSlugs = array_values(array_diff($allSlugs, $enabledSlugs));
         db()->prepare('UPDATE formulare_advisors SET disabled_tools = ? WHERE id = ?')
             ->execute([json_encode($disabledSlugs), $id]);
+    } elseif (isset($_POST['mark_applied_file'])) {
+        $file = basename((string)$_POST['mark_applied_file']);
+        if (preg_match('/^\d{3}_[\w.-]+\.sql$/', $file) && is_file(__DIR__ . '/sql/' . $file)) {
+            try {
+                db()->prepare('INSERT INTO formulare_schema_migrations (filename, applied_by, note) VALUES (?, ?, ?)')
+                    ->execute([$file, $me['name'], 'Označené ako už spustené (bez automatického behu)']);
+            } catch (Throwable $e) { $migrationRunError = 'Tabuľka formulare_schema_migrations ešte neexistuje — spusti najprv sql/036_schema_migrations_tracking.sql ručne v phpMyAdmin.'; }
+        }
+    } elseif (isset($_POST['run_migration_file'])) {
+        $file = basename((string)$_POST['run_migration_file']);
+        if (preg_match('/^\d{3}_[\w.-]+\.sql$/', $file) && is_file(__DIR__ . '/sql/' . $file)) {
+            $result = runMigrationFile(__DIR__ . '/sql/' . $file);
+            if ($result === true) {
+                try {
+                    db()->prepare('INSERT INTO formulare_schema_migrations (filename, applied_by, note) VALUES (?, ?, ?)')
+                        ->execute([$file, $me['name'], 'Spustené z admin panela']);
+                } catch (Throwable $e) { $migrationRunError = 'Migrácia prebehla, ale nepodarilo sa ju zapísať do formulare_schema_migrations: ' . $e->getMessage(); }
+            } else {
+                $migrationRunError = "Migrácia $file zlyhala: $result";
+            }
+        }
     }
-    header('Location: /admin.php');
-    exit;
+    if (empty($migrationRunError)) { header('Location: /admin.php'); exit; }
 }
 
 $advisors = db()->query('SELECT * FROM formulare_advisors ORDER BY active DESC, name')->fetchAll();
@@ -86,6 +140,18 @@ $links = db()->query(
 $allToolSlugs = [];
 foreach ($TOOL_CATEGORIES as $cat) foreach ($cat['tools'] as $t) $allToolSlugs[] = toolSlug($t['href']);
 $totalToolCount = count($allToolSlugs);
+
+// --- databázové migrácie: porovnanie sql/*.sql so záznamami v DB ---
+$migrationFiles = glob(__DIR__ . '/sql/*.sql') ?: [];
+sort($migrationFiles);
+$migrationFiles = array_map('basename', $migrationFiles);
+$appliedMigrations = [];
+$migrationsTrackingMissing = false;
+try {
+    foreach (db()->query('SELECT filename, applied_at, applied_by, note FROM formulare_schema_migrations') as $row) {
+        $appliedMigrations[$row['filename']] = $row;
+    }
+} catch (Throwable $e) { $migrationsTrackingMissing = true; }
 
 function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
     if (empty($a['disabled_tools'])) return [];
@@ -256,6 +322,49 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
       <?php endforeach; ?>
       <?php if (!$links): ?><tr><td colspan="5" style="color:var(--muted);">Zatiaľ žiadne odkazy.</td></tr><?php endif; ?>
     </table>
+  </div>
+
+  <div class="card">
+    <h3>Databázové migrácie</h3>
+    <?php if (!empty($migrationRunError)): ?>
+    <div class="pill" style="background:#fee2e2; color:#b91c1c; display:block; padding:10px 14px; margin-bottom:14px; white-space:pre-wrap;"><?= h($migrationRunError) ?></div>
+    <?php endif; ?>
+    <?php if ($migrationsTrackingMissing): ?>
+    <p style="margin:-6px 0 16px; font-size:12.5px; color:var(--muted);">
+      Sledovanie migrácií ešte nie je zapnuté — spusti ručne v phpMyAdmin <code>sql/036_schema_migrations_tracking.sql</code>, potom sa tu objaví zoznam so stavom každej migrácie.
+    </p>
+    <?php else: ?>
+    <p style="margin:-6px 0 16px; font-size:12.5px; color:var(--muted);">
+      Súbory 001–036 si už (podľa histórie appky) pravdepodobne spustil ručne v phpMyAdmin — potvrď to tlačidlom „Označiť ako už spustené" (appka to nevie zistiť sama). Od ďalšej novej migrácie stačí „Spustiť".
+    </p>
+    <table>
+      <tr><th>Súbor</th><th>Stav</th><th></th></tr>
+      <?php foreach ($migrationFiles as $mf): $applied = $appliedMigrations[$mf] ?? null; ?>
+      <tr>
+        <td data-label="Súbor"><code><?= h($mf) ?></code></td>
+        <td data-label="Stav">
+          <?php if ($applied): ?>
+          <span class="pill submitted">Spustená <?= h($applied['applied_at']) ?><?= $applied['applied_by'] ? ' · ' . h($applied['applied_by']) : '' ?></span>
+          <?php else: ?>
+          <span class="pill pending">Čaká</span>
+          <?php endif; ?>
+        </td>
+        <td style="display:flex; gap:6px;">
+          <?php if (!$applied): ?>
+          <form method="post" style="margin:0;" onsubmit="return confirm('Spustiť <?= h($mf) ?> priamo na produkčnej DB?');">
+            <input type="hidden" name="run_migration_file" value="<?= h($mf) ?>">
+            <button type="submit" class="toggle-btn">▶ Spustiť</button>
+          </form>
+          <form method="post" style="margin:0;" onsubmit="return confirm('Označiť <?= h($mf) ?> ako už spustenú BEZ jej reálneho behu? Použi len ak si ju už spustil ručne v phpMyAdmin.');">
+            <input type="hidden" name="mark_applied_file" value="<?= h($mf) ?>">
+            <button type="submit" class="toggle-btn">✓ Označiť ako už spustené</button>
+          </form>
+          <?php endif; ?>
+        </td>
+      </tr>
+      <?php endforeach; ?>
+    </table>
+    <?php endif; ?>
   </div>
 </main>
 <script src="<?= asset('shell.js') ?>"></script>
