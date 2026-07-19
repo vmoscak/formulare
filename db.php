@@ -727,6 +727,17 @@ function dbInitSqlite(PDO $pdo): void {
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )");
     try { $pdo->exec("ALTER TABLE formulare_onboarding_steps ADD COLUMN phase_id INTEGER NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
+    // Osobné odškrtávanie materiálov nováčikom (nie pre kontrolu ownerom —
+    // nikde sa nezobrazuje súhrnne, len ako vlastný checklist poradcu).
+    $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_onboarding_progress (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        advisor_id INTEGER NOT NULL,
+        step_id INTEGER NOT NULL,
+        done_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(advisor_id, step_id),
+        FOREIGN KEY (advisor_id) REFERENCES formulare_advisors(id),
+        FOREIGN KEY (step_id) REFERENCES formulare_onboarding_steps(id)
+    )");
     $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_team_events (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         event_date TEXT NOT NULL,

@@ -325,6 +325,19 @@ if ($viewerIsNovice) {
     } catch (Throwable $e) { /* tabuľka ešte nemusí existovať */ }
 }
 
+// Osobné odškrtávanie materiálov — čisto pre nováčika samotného, nech si vie
+// značiť, čo už spravil. NIE je to nástroj na kontrolu ownerom: nikde sa
+// nezobrazuje súhrnne za tím, neovplyvňuje postup fázou (ten ide ďalej len
+// podľa uplynutého času).
+$doneStepIds = [];
+if ($viewerIsNovice) {
+    try {
+        $doneStmt = db()->prepare('SELECT step_id FROM formulare_onboarding_progress WHERE advisor_id = ?');
+        $doneStmt->execute([$advisorId]);
+        $doneStepIds = array_map('intval', array_column($doneStmt->fetchAll(), 'step_id'));
+    } catch (Throwable $e) { /* tabuľka ešte nemusí existovať */ }
+}
+
 // -- Pre ownera: tím a história absolventov --
 $teamAdvisors = [];
 $graduates = [];
@@ -368,100 +381,68 @@ if ($isOwner) {
 <link rel="stylesheet" href="/assets/panel.css?v=28">
 <style>
   /* ============================================================
-     "Letecká mapa" — vlastná vizuálna identita Cesty nováčika, zámerne
-     odlišná od zvyšku appky (biele karty / gradient banner). Fixný tmavý
-     motív nezávislý od svetlého/tmavého režimu appky — je to vedomé
-     rozhodnutie, nie opomenutie (rovnaká "cesta" ako predtým si používateľ
-     vypýtal zachovať, len úplne inak stvárnenú).
+     Cesta nováčika — späť vo farbách portálu (štandardné tokeny appky:
+     --paper/--accent/--ink..., svetlý/tmavý režim podľa appky). Zmenilo sa
+     len rozloženie (jeden stĺpec namiesto rozdelených okien) a materiály
+     majú opäť checkbox — čisto pre osobný prehľad nováčika, nie pre
+     sledovanie ownerom (žiadny report z toho nikam nejde).
+  ============================================================ */
+  .ob-hero{position:relative; overflow:hidden; display:flex; align-items:center; gap:22px; flex-wrap:wrap;
+    background:linear-gradient(135deg, var(--accent) 0%, var(--accent-ink) 100%); border:none; color:#fff;}
+  .ob-hero::before,.ob-hero::after{content:''; position:absolute; border-radius:50%; background:#fff; opacity:.14; pointer-events:none;}
+  .ob-hero::before{width:240px; height:240px; top:-110px; right:-70px;}
+  .ob-hero::after{width:130px; height:130px; bottom:-80px; right:140px;}
+  .ob-ring{--pct:0; width:96px; height:96px; border-radius:50%; flex-shrink:0; position:relative; z-index:1;
+    background:conic-gradient(#fff calc(var(--pct) * 3.6deg), rgba(255,255,255,.28) 0deg);}
+  .ob-ring::after{content:''; position:absolute; inset:9px; border-radius:50%; background:var(--accent-ink);}
+  .ob-ring-label{position:absolute; inset:9px; border-radius:50%; z-index:1; display:flex; align-items:center; justify-content:center;}
+  .ob-ring-icon{font-size:28px; line-height:1;}
+  .ob-progress-info{flex:1; min-width:180px; position:relative; z-index:1;}
+  .ob-progress-info h4{margin:0 0 4px; font-size:16px; color:#fff;}
+  .ob-progress-info p{margin:0; font-size:12.5px; color:rgba(255,255,255,.88);}
+  .ob-day-badge{display:inline-block; margin-top:9px; padding:4px 12px; border-radius:999px; background:rgba(255,255,255,.2);
+    font-size:11.5px; font-weight:700; letter-spacing:.02em; color:#fff;}
 
-     .ob-theme prekryje zdieľané dizajnové tokeny appky (--paper, --accent,
-     --ink...) len vo svojom podstrome — vďaka tomu sa .card, .pillbtn,
-     .toggle-btn aj celý Model zapracovania nižšie prefarbia automaticky,
-     bez duplikovania ich CSS. */
-  .ob-theme{
-    --bg:#071c33; --paper:#0e2a47; --desk:#123458; --border:#1f4060; --line-strong:#2a527a;
-    --ink:#eaf3fc; --ink-2:#c4dcf2; --muted:#5a7ca3; --label:#4c6788;
-    --accent:#1976d2; --accent-ink:#4fc3e8; --accent-soft:rgba(25,118,210,.18); --accent-line:rgba(25,118,210,.45);
-    --good:#34d399; --good-soft:rgba(52,211,153,.14);
-    --rose:#fb7185; --rose-soft:rgba(251,113,133,.14);
-    --amber:#fbbf24; --amber-soft:rgba(251,191,36,.14);
-    --shadow-sm:0 1px 2px rgba(0,0,0,.3); --shadow-md:0 16px 34px -14px rgba(0,0,0,.6);
-    --tooltip-bg:#02101f;
-    background:var(--bg); border-radius:var(--radius-2xl); padding:30px 28px 34px; margin-bottom:22px;
-    color:var(--ink);
-  }
-  .ob-theme .card{background:var(--paper); box-shadow:none; border:1px solid var(--border);}
-  .obt-serif{font-family:Georgia,'Iowan Old Style','Times New Roman',serif;}
-
-  /* ---- Palubný lístok (hero) ---- */
-  .obt-ticket{display:grid; grid-template-columns:1fr 220px; background:#eaf2fb; border-radius:14px; overflow:hidden;
-    box-shadow:var(--shadow-md); margin-bottom:28px;}
-  .obt-ticket-main{padding:30px 28px; position:relative; color:#0e2237;}
-  .obt-ticket-main::after{content:''; position:absolute; right:0; top:14px; bottom:14px; width:1px;
-    background-image:repeating-linear-gradient(to bottom,#0e2237 0 8px, transparent 8px 16px); opacity:.16;}
-  .obt-eyebrow{font-size:10.5px; text-transform:uppercase; letter-spacing:.16em; color:#4c6788; font-weight:700;}
-  .obt-title{font-size:27px; margin:8px 0 3px; font-weight:400; color:#0e2237;}
-  .obt-sub{font-size:12.5px; color:#4c6788;}
-  .obt-route{display:flex; align-items:center; gap:12px; margin-top:24px;}
-  .obt-route-pt{font-family:var(--mono); font-size:18px; font-weight:700; color:#0e2237;}
-  .obt-route-line{flex:1; height:1px; background:#bbd2ea; position:relative;}
-  .obt-route-line::after{content:'✈'; position:absolute; left:38%; top:50%; transform:translate(-50%,-50%) rotate(90deg);
-    font-size:12px; color:#1976d2; background:#eaf2fb; padding:0 4px;}
-  .obt-route-label{font-size:9.5px; letter-spacing:.06em; color:#4c6788; margin-top:6px;}
-  .obt-ticket-stub{background:#d7e5f5; padding:26px 22px; display:flex; flex-direction:column; justify-content:space-between;}
-  .obt-stub-label{font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:#4c6788; font-weight:700;}
-  .obt-stub-day{font-family:var(--mono); font-size:42px; color:#0e2237; line-height:1;}
-  .obt-stub-of{font-size:10.5px; color:#4c6788; margin-top:2px;}
-  .obt-stub-gate{margin-top:16px; padding-top:12px; border-top:1px dashed #bbd2ea;}
-  .obt-stub-gate-label{font-size:9.5px; letter-spacing:.12em; text-transform:uppercase; color:#4c6788;}
-  .obt-stub-gate-val{font-size:14px; color:#0e2237; font-weight:700; margin-top:2px;}
-  @media(max-width:600px){.obt-ticket{grid-template-columns:1fr;} .obt-ticket-main::after{display:none;}
-    .obt-ticket-stub{flex-direction:row; gap:26px; border-top:1px dashed #bbd2ea;}}
-
-  /* ---- Absolvovanie ---- */
-  .obt-grad{text-align:center; padding:40px 20px; background:var(--paper); border-radius:14px; border:1px solid var(--border); margin-bottom:28px;}
+  .obt-grad{text-align:center; padding:36px 20px;}
   .obt-grad-emoji{font-size:44px; margin-bottom:10px;}
-  .obt-grad-title{font-size:21px; color:var(--ink); margin-bottom:6px;}
+  .obt-grad-title{font-size:19px; font-weight:800; color:var(--ink); margin-bottom:6px;}
   .obt-grad-sub{font-size:13px; color:var(--muted);}
 
-  /* ---- Letová trasa ---- */
-  .obt-map{margin-bottom:28px;}
-  .obt-map-title{font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:16px;}
+  /* ---- Cesta (trasa) ---- */
+  .obt-map-title{font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:16px;}
   .obt-route-svg{width:100%; height:auto; display:block; overflow:visible;}
   .obr-track{stroke:var(--border); stroke-width:2;}
-  .obr-progress{stroke:var(--accent-ink); stroke-width:2.5; filter:drop-shadow(0 0 5px rgba(79,195,232,.55));}
+  .obr-progress{stroke:var(--accent); stroke-width:2.5;}
   .obr-stop{cursor:pointer; text-decoration:none; outline-offset:5px;}
-  .obr-dot{fill:var(--bg); stroke:var(--muted); stroke-width:2; transition:stroke-width .15s ease;}
+  .obr-dot{fill:var(--paper); stroke:var(--muted); stroke-width:2; transition:stroke-width .15s ease;}
   .obr-stop:hover .obr-dot{stroke-width:3;}
-  .obr-stop.status-done .obr-dot{fill:var(--accent-ink); stroke:var(--accent-ink);}
-  .obr-stop.status-current .obr-dot{fill:var(--bg); stroke:var(--accent); stroke-width:3;}
+  .obr-stop.status-done .obr-dot{fill:var(--accent); stroke:var(--accent);}
+  .obr-stop.status-current .obr-dot{fill:var(--paper); stroke:var(--accent); stroke-width:3;}
   .obr-stop.status-upcoming .obr-dot{stroke-dasharray:2.5 2.5;}
-  .obr-name{font-size:10px; fill:var(--muted); font-family:-apple-system,sans-serif;}
+  .obr-name{font-size:10px; fill:var(--muted);}
   .obr-name.current{fill:var(--ink); font-weight:700;}
-  .obr-plane{font-size:12px; fill:var(--accent-ink);}
+  .obr-plane{font-size:12px; fill:var(--accent);}
   .obr-pulse{fill:none; stroke:var(--accent); stroke-width:2; opacity:.55; transform-box:fill-box; transform-origin:center;
     animation:obrPulseRing 2.2s ease-out infinite;}
   @keyframes obrPulseRing{0%{transform:scale(1); opacity:.55;}100%{transform:scale(1.8); opacity:0;}}
 
-  /* ---- Detail fázy ---- */
+  /* ---- Detail fázy (jeden stĺpec) ---- */
   .obt-phase-nav{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:14px;}
-  .obt-detail{display:grid; grid-template-columns:1.3fr 1fr; gap:18px; margin-bottom:28px; align-items:start;}
-  @media(max-width:640px){.obt-detail{grid-template-columns:1fr;}}
-  .obt-panel{background:var(--paper); border:1px solid var(--border); border-radius:12px; padding:24px;}
-  .obt-panel h3{margin:0 0 10px; font-size:19px; font-weight:400; color:var(--ink);}
   .obt-eyebrow-sm{font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--accent-ink); margin:0 0 6px;}
   .obt-panel-count{font-size:12.5px; color:var(--muted); margin:0 0 16px;}
   .obt-support{display:flex; gap:8px; font-size:12.5px; color:var(--ink-2); line-height:1.6; background:var(--desk);
     border-radius:9px; padding:10px 12px; margin:0 0 14px;}
-  .obt-list-item{display:flex; gap:10px; padding:10px 0; border-bottom:1px solid var(--border); font-size:13px; color:var(--ink-2);}
-  .obt-list-item:last-child{border:none;}
-  .obt-list-item::before{content:'—'; color:var(--accent-ink); flex-shrink:0;}
-  .obt-reward{background:var(--accent-soft); border-color:var(--accent-line);}
-  .obt-reward-label{font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent-ink); font-weight:700; margin-bottom:8px;}
-  .obt-reward-amt{font-family:var(--mono); font-size:20px; color:var(--ink); margin-bottom:6px;}
-  .obt-reward-note{font-size:12px; color:var(--ink-2); line-height:1.6;}
+  .obt-reward-inline{display:flex; gap:8px; font-size:12.5px; color:var(--accent-ink); line-height:1.6; background:var(--accent-soft);
+    border:1px solid var(--accent-line); border-radius:9px; padding:10px 12px; margin:0 0 14px; font-weight:600;}
 
-  .ob-material{display:flex; align-items:flex-start; gap:12px; padding:12px 4px; border-bottom:1px solid var(--border);}
+  .ob-material{display:flex; align-items:flex-start; gap:12px; padding:11px 4px; border-bottom:1px solid var(--border);}
+  .ob-material input[type=checkbox]{appearance:none; -webkit-appearance:none; width:20px; height:20px; margin-top:1px; flex-shrink:0;
+    border:2px solid var(--line-strong); border-radius:50%; cursor:pointer; position:relative; transition:background .2s ease, border-color .2s ease;}
+  .ob-material input[type=checkbox]:hover{border-color:var(--accent);}
+  .ob-material input[type=checkbox]:checked{background:var(--good); border-color:var(--good);}
+  .ob-material input[type=checkbox]:checked::after{content:''; position:absolute; left:5px; top:1px; width:5px; height:9px;
+    border:solid #fff; border-width:0 2px 2px 0; transform:rotate(45deg);}
+  .ob-material.done .ob-material-title{color:var(--muted); text-decoration:line-through;}
   .ob-material:last-child{border-bottom:none;}
   .ob-material-dot{width:8px; height:8px; border-radius:50%; background:var(--accent); margin-top:6px; flex-shrink:0;}
   .ob-material-body{flex:1; min-width:0;}
@@ -474,9 +455,9 @@ if ($isOwner) {
     margin-left:6px; flex-shrink:0; border:1px solid var(--accent-line); vertical-align:middle;}
   .ob-info:hover, .ob-info:focus{background:var(--accent); color:#fff; border-color:var(--accent); outline:none;}
   .ob-info-bubble{position:absolute; left:50%; bottom:calc(100% + 8px); transform:translateX(-50%) translateY(4px);
-    width:240px; max-width:min(240px, 78vw); background:var(--tooltip-bg, var(--ink)); color:#fff; font-size:11.5px; font-weight:400; line-height:1.5;
+    width:240px; max-width:min(240px, 78vw); background:var(--ink); color:#fff; font-size:11.5px; font-weight:400; line-height:1.5;
     padding:8px 10px; border-radius:8px; text-align:left; opacity:0; pointer-events:none; transition:opacity .15s ease, transform .15s ease; z-index:20; box-shadow:var(--shadow-md);}
-  .ob-info-bubble::after{content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:var(--tooltip-bg, var(--ink));}
+  .ob-info-bubble::after{content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:var(--ink);}
   .ob-info:hover .ob-info-bubble, .ob-info:focus .ob-info-bubble{opacity:1; transform:translateX(-50%) translateY(0);}
 
   .mz-tracker-title{font-size:14.5px; font-weight:700; color:var(--ink); margin:0 0 12px;}
@@ -592,44 +573,29 @@ if ($isOwner) {
   <?php endif; ?>
 
   <?php if ($viewerIsNovice): ?>
-  <div class="ob-theme">
 
   <?php if ($isGraduated): ?>
-  <div class="obt-grad" id="obGradCard" data-graduated="1" data-advisor-id="<?= (int)$advisorId ?>">
+  <div class="card obt-grad" id="obGradCard" data-graduated="1" data-advisor-id="<?= (int)$advisorId ?>">
     <div class="obt-grad-emoji">🎉</div>
-    <div class="obt-grad-title obt-serif">Prešiel/-la si celou Cestou nováčika!</div>
+    <div class="obt-grad-title">Prešiel/-la si celou Cestou nováčika!</div>
     <div class="obt-grad-sub">Model zapracovania a odmeny nižšie ostávajú naďalej k dispozícii.</div>
   </div>
   <?php else: ?>
-  <div class="obt-ticket">
-    <div class="obt-ticket-main">
-      <div class="obt-eyebrow">Palubný lístok · Onboarding</div>
-      <div class="obt-title obt-serif">Cesta nováčika</div>
-      <div class="obt-sub"><?= h($me['name']) ?><?= !empty($me['org']) ? ' · ' . h($me['org']) : '' ?></div>
-      <div class="obt-route">
-        <span class="obt-route-pt">DEŇ 0</span>
-        <span class="obt-route-line"></span>
-        <span class="obt-route-pt"><?= $totalDurationDays > 0 ? 'MES. ' . ceil($totalDurationDays / 30) : '?' ?></span>
-      </div>
-      <div class="obt-route-label"><?= $phasesWithStatus ? h($phasesWithStatus[0]['name']) . ' → ' . h(end($phasesWithStatus)['name']) : '' ?></div>
+  <div class="card ob-hero">
+    <div class="ob-ring" style="--pct:<?= $totalDurationDays > 0 ? min(100, round($elapsedDays / $totalDurationDays * 100)) : 0 ?>;">
+      <div class="ob-ring-label"><span class="ob-ring-icon"><?= $currentPhase['icon'] ?? '📍' ?></span></div>
     </div>
-    <div class="obt-ticket-stub">
-      <div>
-        <div class="obt-stub-label">Deň</div>
-        <div class="obt-stub-day"><?= $elapsedDays + 1 ?></div>
-        <div class="obt-stub-of">z <?= $totalDurationDays ?> · <?= $totalDurationDays > 0 ? min(100, round($elapsedDays / $totalDurationDays * 100)) : 0 ?> %</div>
-      </div>
-      <div class="obt-stub-gate">
-        <div class="obt-stub-gate-label">Aktuálna fáza</div>
-        <div class="obt-stub-gate-val"><?= $currentPhase ? $currentPhase['icon'] . ' ' . h($currentPhase['name']) : '—' ?></div>
-      </div>
+    <div class="ob-progress-info">
+      <h4>Deň <?= $elapsedDays + 1 ?> z tvojho onboardingu</h4>
+      <p><?= $currentPhase ? 'Aktuálna fáza: ' . h($currentPhase['name']) : 'Osnova zatiaľ nie je pripravená.' ?></p>
+      <span class="ob-day-badge"><?= $totalDurationDays > 0 ? min(100, round($elapsedDays / $totalDurationDays * 100)) : 0 ?> % cesty za sebou</span>
     </div>
   </div>
   <?php endif; ?>
 
   <?php if ($phasesWithStatus): ?>
-  <div class="obt-map">
-    <div class="obt-map-title">Letová trasa</div>
+  <div class="card">
+    <div class="obt-map-title">Cesta</div>
     <?php
       $jSpacing = 96; $jPad = 62; $jY = 30;
       $jN = count($phasesWithStatus);
@@ -680,41 +646,36 @@ if ($isOwner) {
     <?php if ($spPos > 0): ?><a class="pillbtn" href="?phase=<?= (int)$phasesWithStatus[$spPos - 1]['id'] ?><?= $vp ?>">← Predchádzajúca</a><?php else: ?><span></span><?php endif; ?>
     <?php if ($spPos !== false && $spPos < count($phasesWithStatus) - 1): ?><a class="pillbtn" href="?phase=<?= (int)$phasesWithStatus[$spPos + 1]['id'] ?><?= $vp ?>">Ďalšia fáza →</a><?php else: ?><span></span><?php endif; ?>
   </div>
-  <div class="obt-detail">
-    <div class="obt-panel">
-      <p class="obt-eyebrow-sm">Fáza <?= ($spPos !== false ? $spPos + 1 : '?') ?> z <?= count($phasesWithStatus) ?><?= $sp['status'] === 'current' ? ' · práve tu si' : ($sp['status'] === 'done' ? ' · za tebou' : ' · príde neskôr') ?></p>
-      <h3 class="obt-serif"><?= $sp['status'] === 'done' ? '✓ ' : $sp['icon'] . ' ' ?><?= h($sp['name']) ?></h3>
-      <p class="obt-panel-count">
-        <?php if ($sp['status'] === 'current'): ?>Deň <?= $elapsedDays - $sp['start_day'] + 1 ?> z <?= $sp['duration_days'] ?> v tejto fáze
-        <?php elseif ($sp['status'] === 'done'): ?>Táto fáza trvala <?= $sp['duration_days'] ?> dní
-        <?php else: ?>Začína sa o <?= $sp['start_day'] - $elapsedDays ?> dní
-        <?php endif; ?>
-      </p>
-      <?php if ($sp['support_text']): ?>
-      <div class="obt-support"><span>🤝</span><span><?= h($sp['support_text']) ?></span></div>
+  <div class="card">
+    <p class="obt-eyebrow-sm">Fáza <?= ($spPos !== false ? $spPos + 1 : '?') ?> z <?= count($phasesWithStatus) ?><?= $sp['status'] === 'current' ? ' · práve tu si' : ($sp['status'] === 'done' ? ' · za tebou' : ' · príde neskôr') ?></p>
+    <h3><?= $sp['status'] === 'done' ? '✓ ' : $sp['icon'] . ' ' ?><?= h($sp['name']) ?></h3>
+    <p class="obt-panel-count">
+      <?php if ($sp['status'] === 'current'): ?>Deň <?= $elapsedDays - $sp['start_day'] + 1 ?> z <?= $sp['duration_days'] ?> v tejto fáze
+      <?php elseif ($sp['status'] === 'done'): ?>Táto fáza trvala <?= $sp['duration_days'] ?> dní
+      <?php else: ?>Začína sa o <?= $sp['start_day'] - $elapsedDays ?> dní
       <?php endif; ?>
-      <?php $mats = $materialsByPhase[(int)$sp['id']] ?? []; ?>
-      <?php if ($mats): ?>
-      <?php foreach ($mats as $m): $tip = $OB_TOOLTIPS[$m['title']] ?? null; ?>
-      <div class="obt-list-item">
-        <div>
-          <?= h($m['title']) ?><?php if ($tip): ?><span class="ob-info" tabindex="0">i<span class="ob-info-bubble"><?= h($tip) ?></span></span><?php endif; ?>
-          <?php if ($m['link_url']): ?> · <a href="<?= h($m['link_url']) ?>" target="_blank" style="color:var(--accent-ink);">Otvoriť</a><?php endif; ?>
-        </div>
+    </p>
+    <?php if ($sp['support_text']): ?>
+    <div class="obt-support"><span>🤝</span><span><?= h($sp['support_text']) ?></span></div>
+    <?php endif; ?>
+    <?php if ($sp['reward_text']): ?>
+    <div class="obt-reward-inline"><span>💰</span><span><?= h($sp['reward_text']) ?></span></div>
+    <?php endif; ?>
+    <?php $mats = $materialsByPhase[(int)$sp['id']] ?? []; ?>
+    <?php if ($mats): ?>
+    <?php foreach ($mats as $m): $tip = $OB_TOOLTIPS[$m['title']] ?? null; $isDone = in_array((int)$m['id'], $doneStepIds, true); ?>
+    <div class="ob-material<?= $isDone ? ' done' : '' ?>" id="ob-mat-<?= (int)$m['id'] ?>">
+      <input type="checkbox" <?= $isDone ? 'checked' : '' ?> data-toggle-step="<?= (int)$m['id'] ?>" aria-label="Označiť ako splnené">
+      <div class="ob-material-body">
+        <div class="ob-material-title"><?= h($m['title']) ?><?php if ($tip): ?><span class="ob-info" tabindex="0">i<span class="ob-info-bubble"><?= h($tip) ?></span></span><?php endif; ?></div>
+        <?php if ($m['description']): ?><div class="ob-material-desc"><?= h($m['description']) ?></div><?php endif; ?>
       </div>
-      <?php endforeach; ?>
-      <?php else: ?>
-      <p style="font-size:12.5px; color:var(--muted);">K tejto fáze zatiaľ nie sú žiadne materiály.</p>
-      <?php endif; ?>
+      <?php if ($m['link_url']): ?><a class="toggle-btn" href="<?= h($m['link_url']) ?>" target="_blank">Otvoriť</a><?php endif; ?>
     </div>
-    <div class="obt-panel obt-reward">
-      <div class="obt-reward-label">Čo za to dostaneš</div>
-      <?php if ($sp['reward_text']): ?>
-      <div class="obt-reward-note"><?= h($sp['reward_text']) ?></div>
-      <?php else: ?>
-      <div class="obt-reward-note">Táto fáza je o učení a príprave — odmeny podľa Modelu zapracovania nájdeš nižšie, začínajú od 6. mesiaca.</div>
-      <?php endif; ?>
-    </div>
+    <?php endforeach; ?>
+    <?php else: ?>
+    <p style="font-size:12.5px; color:var(--muted);">K tejto fáze zatiaľ nie sú žiadne materiály.</p>
+    <?php endif; ?>
   </div>
   <?php endif; ?>
   <?php endif; ?>
@@ -745,7 +706,6 @@ if ($isOwner) {
   </div>
   <?php endif; ?>
 
-  </div>
   <?php endif; // $viewerIsNovice ?>
 
   <?php if ($isOwner && !$novicePreview): ?>
@@ -957,6 +917,21 @@ function obConfetti() {
   localStorage.setItem(key, '1');
   obConfetti();
 })();
+
+// Osobné odškrtávanie materiálov — len vizuálny/osobný stav pre nováčika,
+// neovplyvňuje postup fázou ani sa nikde nezobrazuje ownerovi súhrnne.
+document.addEventListener('change', function (e) {
+  if (!e.target.matches('input[type=checkbox][data-toggle-step]')) return;
+  var stepId = +e.target.dataset.toggleStep;
+  var done = e.target.checked;
+  var row = document.getElementById('ob-mat-' + stepId);
+  if (row) row.classList.toggle('done', done);
+  fetch('/api/onboarding-toggle.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ stepId: stepId, done: done })
+  }).catch(function () {});
+});
 
 var MZ_STATUS = <?= json_encode($mzStatusMap, JSON_UNESCAPED_UNICODE) ?>;
 var MZ_QUARTERS = [[7,8,9],[10,11,12],[13,14,15],[16,17,18],[19,20,21],[22,23,24]];
