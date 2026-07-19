@@ -108,18 +108,17 @@ try {
 
 $newsPalette = ['#4f46e5', '#059669', '#0d9488', '#7c3aed', '#0284c7', '#d97706'];
 
-// Ak ti owner priradil onboarding, ukáž nápadnú pripomienku hore na Domov,
-// nech vieš, že máš s Cestou nováčika pracovať — s vlastným postupom.
+// Ak ti owner priradil onboarding, ukáž nápadnú pripomienku hore na Domov —
+// Cesta nováčika je koncept "Mapa cesty a odmeny": postup je automatický
+// podľa uplynutého času od nástupu, nie podľa odškrtnutých krokov.
 $onboarding = null;
 if (!empty($me['onboarding_started_at'])) {
     try {
-        $totalObSteps = (int)db()->query('SELECT COUNT(*) FROM formulare_onboarding_steps')->fetchColumn();
-        $doneObStmt = db()->prepare('SELECT COUNT(*) FROM formulare_onboarding_progress WHERE advisor_id = ?');
-        $doneObStmt->execute([$curAdvisorId]);
-        $doneObSteps = (int)$doneObStmt->fetchColumn();
+        $totalDurationDays = (int)db()->query('SELECT COALESCE(SUM(duration_days), 0) FROM formulare_onboarding_phases WHERE is_ongoing = 0')->fetchColumn();
+        $elapsedDays = max(0, (int)floor((time() - strtotime($me['onboarding_started_at'])) / 86400));
         $onboarding = [
-            'total' => $totalObSteps, 'done' => $doneObSteps,
-            'pct' => $totalObSteps > 0 ? round($doneObSteps / $totalObSteps * 100) : 0,
+            'day' => $elapsedDays + 1,
+            'pct' => $totalDurationDays > 0 ? min(100, round($elapsedDays / $totalDurationDays * 100)) : 0,
         ];
     } catch (Throwable $e) { /* tabuľka ešte nemusí existovať */ }
 }
@@ -239,7 +238,7 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.3"/></svg>
       </span>
       <div class="ob-banner-body">
-        <div class="ob-banner-title">Tvoja Cesta nováčika · <?= (int)$onboarding['done'] ?>/<?= (int)$onboarding['total'] ?> dokončené</div>
+        <div class="ob-banner-title">Tvoja Cesta nováčika · Deň <?= (int)$onboarding['day'] ?></div>
         <div class="ob-banner-bar-track"><div class="ob-banner-bar-fill" style="width:<?= (int)$onboarding['pct'] ?>%;"></div></div>
       </div>
       <span class="ob-banner-go">Pokračovať

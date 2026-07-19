@@ -700,24 +700,33 @@ function dbInitSqlite(PDO $pdo): void {
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )");
+    // Cesta nováčika — koncept "Mapa cesty a odmeny": fázy sú samostatné
+    // entity s dĺžkou trvania (dni), postup je automatický podľa uplynutého
+    // času od formulare_advisors.onboarding_started_at (žiadne ručné
+    // odškrtávanie jednotlivých krokov). formulare_onboarding_steps teraz
+    // slúži ako zoznam referenčných materiálov (odkazy/popisy) per fáza.
+    $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_onboarding_phases (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE,
+        icon TEXT NOT NULL DEFAULT '📍',
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        duration_days INTEGER NOT NULL DEFAULT 30,
+        is_ongoing INTEGER NOT NULL DEFAULT 0,
+        reward_text TEXT NOT NULL DEFAULT '',
+        support_text TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )");
     $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_onboarding_steps (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         phase TEXT NOT NULL,
+        phase_id INTEGER NULL,
         title TEXT NOT NULL,
         description TEXT NOT NULL DEFAULT '',
         link_url TEXT NULL,
         sort_order INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )");
-    $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_onboarding_progress (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        advisor_id INTEGER NOT NULL,
-        step_id INTEGER NOT NULL,
-        done_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(advisor_id, step_id),
-        FOREIGN KEY (advisor_id) REFERENCES formulare_advisors(id),
-        FOREIGN KEY (step_id) REFERENCES formulare_onboarding_steps(id)
-    )");
+    try { $pdo->exec("ALTER TABLE formulare_onboarding_steps ADD COLUMN phase_id INTEGER NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
     $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_team_events (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         event_date TEXT NOT NULL,
@@ -748,15 +757,26 @@ function dbInitSqlite(PDO $pdo): void {
                      SELECT id, assigned_advisor_id FROM formulare_team_events WHERE assigned_advisor_id IS NOT NULL");
     } catch (Throwable $e) { /* jednorazový presun starých dát, bezpečné spustiť opakovane (OR IGNORE) */ }
 
-    // Predvolená osnova pre Cestu nováčika — len ak je tabuľka ešte prázdna
-    // (aby sa neduplikovala pri každom reštarte lokálneho servera). Owner si
-    // vie kroky kedykoľvek upraviť/zmazať/pridať vlastné cez samotnú stránku.
+    // Predvolené fázy + materiály pre Cestu nováčika — len ak sú tabuľky
+    // ešte prázdne (aby sa neduplikovali pri každom reštarte lokálneho
+    // servera). Owner si ich kedykoľvek upraví/zmaže/pridá vlastné cez
+    // samotnú stránku.
+    $phaseCount = (int)$pdo->query('SELECT COUNT(*) FROM formulare_onboarding_phases')->fetchColumn();
+    if ($phaseCount === 0) {
+        $seedPhases = dbOnboardingSeedPhases();
+        $insP = $pdo->prepare('INSERT INTO formulare_onboarding_phases (name, icon, sort_order, duration_days, is_ongoing, reward_text, support_text) VALUES (?, ?, ?, ?, ?, ?, ?)');
+        foreach ($seedPhases as $i => $p) {
+            $insP->execute([$p['name'], $p['icon'], $i, $p['duration_days'], $p['is_ongoing'] ? 1 : 0, $p['reward_text'], $p['support_text']]);
+        }
+    }
     $stepCount = (int)$pdo->query('SELECT COUNT(*) FROM formulare_onboarding_steps')->fetchColumn();
     if ($stepCount === 0) {
+        $phaseIdByName = [];
+        foreach ($pdo->query('SELECT id, name FROM formulare_onboarding_phases') as $row) { $phaseIdByName[$row['name']] = $row['id']; }
         $seedSteps = dbOnboardingSeedSteps();
-        $ins = $pdo->prepare('INSERT INTO formulare_onboarding_steps (phase, title, description, link_url, sort_order) VALUES (?, ?, ?, ?, ?)');
+        $ins = $pdo->prepare('INSERT INTO formulare_onboarding_steps (phase, phase_id, title, description, link_url, sort_order) VALUES (?, ?, ?, ?, ?, ?)');
         foreach ($seedSteps as $i => $s) {
-            $ins->execute([$s['phase'], $s['title'], $s['description'], $s['link_url'], $i]);
+            $ins->execute([$s['phase'], $phaseIdByName[$s['phase']] ?? null, $s['title'], $s['description'], $s['link_url'], $i]);
         }
     }
 
@@ -831,9 +851,34 @@ function dbInitSqlite(PDO $pdo): void {
 }
 
 /**
- * Predvolená osnova Cesty nováčika — zdieľaná medzi lokálnym SQLite seedom
- * (dbInitSqlite) aj produkčnou migráciou (sql/017_onboarding_and_events.sql
- * má rovnaký zoznam natvrdo v SQL, keďže produkcia sa nemigruje z PHP kódu).
+ * Predvolené fázy Cesty nováčika (koncept "Mapa cesty a odmeny") — zdieľané
+ * medzi lokálnym SQLite seedom (dbInitSqlite) aj produkčnou migráciou
+ * (sql/033_onboarding_roadmap_concept.sql má rovnaký zoznam natvrdo v SQL).
+ * `duration_days` je dĺžka fázy v dňoch od nástupu — určuje, kedy sa fáza
+ * automaticky považuje za dokončenú (žiadne ručné odškrtávanie).
+ * `is_ongoing` (napr. "Priebežne") je mimo časovej osi — nemá pevné trvanie.
+ */
+function dbOnboardingSeedPhases(): array {
+    return [
+        ['name' => 'Pred nástupom', 'icon' => '📋', 'duration_days' => 7, 'is_ongoing' => false, 'reward_text' => '', 'support_text' => 'Papierovanie a školenia na začiatku vyzerajú ako veľa — a naozaj toho je veľa. Netreba to zvládnuť dokonale na prvýkrát. Ak si niečím neistý, opýtaj sa — presne na to sú tu kolegovia aj tvoj manažér.'],
+        ['name' => '0. mesiac', 'icon' => '🌱', 'duration_days' => 30, 'is_ongoing' => false, 'reward_text' => '', 'support_text' => 'Prvý mesiac je o učení sa veľa nového naraz. Je úplne normálne, že si na začiatku neistý — nikto od teba nečaká, že to vieš hneď. Manažér aj skúsenejší kolegovia ti radi pomôžu, stačí sa ozvať.'],
+        ['name' => 'I. mesiac', 'icon' => '🧭', 'duration_days' => 30, 'is_ongoing' => false, 'reward_text' => '', 'support_text' => 'Ak máš pocit, že iní to majú jednoduchšie, nemajú — každý si prešiel rovnakou krivkou učenia. Pýtaj sa toľko, koľko potrebuješ, nie je to znak slabosti.'],
+        ['name' => 'II. mesiac', 'icon' => '💬', 'duration_days' => 30, 'is_ongoing' => false, 'reward_text' => '', 'support_text' => 'Blok Predaj je o skutočnom rozhovore s klientom — analýza potrieb, argumentácia, zvládanie námietok, uzatváracie techniky. Netreba to zvládnuť dokonale hneď, tieto zručnosti sa budujú praxou. Ak chceš niečo nacvičiť nanečisto, kolegovia aj manažér radi pomôžu.'],
+        ['name' => 'III. mesiac', 'icon' => '❤️', 'duration_days' => 30, 'is_ongoing' => false, 'reward_text' => '', 'support_text' => 'Životné poistenie je srdcom tejto práce a je úplne prirodzené, že práve pri ňom máš najviac otázok. Nie si v tom sám — kolegovia aj manažér ťa podržia.'],
+        ['name' => 'IV. mesiac', 'icon' => '🏠', 'duration_days' => 30, 'is_ongoing' => false, 'reward_text' => '', 'support_text' => 'Majetkové poistenie je technickejšia oblasť a prvé ponuky bývajú pomalšie — to je v poriadku. Radšej sa spýtaj vopred, než aby si sa s tým trápil sám.'],
+        ['name' => 'V. mesiac', 'icon' => '🎓', 'duration_days' => 30, 'is_ongoing' => false, 'reward_text' => '', 'support_text' => 'Posledný krok pred maturitou. Ver si — dostal si sa sem vlastnou prácou. A ak sa niečo nepodarí na prvý pokus, nie je to koniec sveta.'],
+        ['name' => 'VI.–XII. mesiac', 'icon' => '📈', 'duration_days' => 210, 'is_ongoing' => false, 'reward_text' => 'DP podľa statusu: FIT 500 € · STD 750 € · TOP 1 000 € mesačne.', 'support_text' => 'Školenia sú za tebou — teraz ide hlavne o pravidelnosť. Status FIT/STD/TOP sa vyhodnocuje priebežne, takže sa oplatí sledovať ho každý mesiac.'],
+        ['name' => 'XIII.–XXIV. mesiac', 'icon' => '🏆', 'duration_days' => 360, 'is_ongoing' => false, 'reward_text' => 'DP podľa statusu: FIT 300 € · STD 500 € · TOP 700 € mesačne.', 'support_text' => 'Posledná časť Modelu zapracovania. Drž si svoj status a dodatková provízia ide s ním — nič nové sa už neučíš, len pokračuješ v tom, čo už vieš.'],
+        ['name' => 'Priebežne', 'icon' => '♾️', 'duration_days' => 0, 'is_ongoing' => true, 'reward_text' => '', 'support_text' => 'Bežná práca poradcu, ktorá pokračuje stále, nezávisle od času vo fáze.'],
+    ];
+}
+
+/**
+ * Predvolené materiály (referenčné kroky) Cesty nováčika — zdieľané medzi
+ * lokálnym SQLite seedom (dbInitSqlite) aj produkčnou migráciou
+ * (sql/017_onboarding_and_events.sql má rovnaký zoznam natvrdo v SQL, keďže
+ * produkcia sa nemigruje z PHP kódu). Odkedy koncept nemá per-krokové
+ * odškrtávanie, ide už len o referenčný obsah k danej fáze.
  */
 function dbOnboardingSeedSteps(): array {
     return [
