@@ -26,6 +26,47 @@ jobs:
         run: |
           find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 -P4 php -l
 
+      - name: Smoke test (SQLite, kľúčové stránky bez fatal chyby)
+        run: |
+          php -r '
+            $out = "<?php\n";
+            $out .= "define(\"DB_DSN\", \"sqlite:\" . __DIR__ . \"/tmp/ci-test.sqlite\");\n";
+            $out .= "define(\"DB_USER\", \"\");\ndefine(\"DB_PASS\", \"\");\n";
+            $out .= "define(\"GATE_TOKEN\", \"ci-test-token\");\n";
+            $out .= "define(\"GATE_PASSPHRASE\", \"0000\");\n";
+            $out .= "define(\"LOCATIONIQ_TOKEN\", \"\");\n";
+            file_put_contents("config.local.php", $out);
+          '
+          mkdir -p tmp
+          php -S 127.0.0.1:8899 >/tmp/php-smoke.log 2>&1 &
+          sleep 2
+          php -r '
+            require "config.local.php"; require "db.php";
+            dbInitSqlite(db());
+            $pdo = db();
+            $pdo->exec("DELETE FROM formulare_advisors");
+            $pdo->prepare("INSERT INTO formulare_advisors (id, name, email, is_owner, is_admin) VALUES (1, ?, ?, 1, 1)")
+                ->execute(["CI Owner", "ci@test.local"]);
+            file_put_contents("/tmp/ci-cookie.txt", signAdvisorId(1));
+          '
+          COOKIE="gate_auth=ci-test-token; cur_advisor=$(cat /tmp/ci-cookie.txt)"
+          PAGES="uvod.php admin.php nabor.php nabor-kandidati.php tim-kalendar.php tim-prehlad.php moje-dokumenty.php novinky.php znalostna-baza.php cesta-novacika.php copy-paste.php refinancny-radar.php oplati-sa-refinancovat.php nastroje.php formulare.php pomocky.php uniqa-tlaciva.php index.php"
+          FAIL=0
+          for page in $PAGES; do
+            CODE=$(curl -s -o /tmp/resp.html -w "%{http_code}" -b "$COOKIE" "http://127.0.0.1:8899/$page")
+            FATAL=$(grep -c "Fatal error\|Cannot redeclare\|Parse error" /tmp/resp.html || true)
+            if [ "$FATAL" != "0" ] || { [ "$CODE" != "200" ] && [ "$CODE" != "302" ]; }; then
+              echo "FAIL: $page -> HTTP $CODE, fatal riadkov=$FATAL"
+              cat /tmp/resp.html
+              FAIL=1
+            else
+              echo "OK: $page -> HTTP $CODE"
+            fi
+          done
+          kill %1 2>/dev/null || true
+          rm -f config.local.php tmp/ci-test.sqlite
+          if [ "$FAIL" = "1" ]; then exit 1; fi
+
       - name: Vygenerovanie config.local.php a doplnenie GATE_TOKEN do .htaccess
         env:
           DB_DSN: ${{ secrets.DB_DSN }}
