@@ -1,9 +1,11 @@
 <?php
 /**
- * Uloženie dosiahnutého statusu (FIT/STD/TOP) za jeden mesiac Modelu
- * zapracovania pre aktuálne prihláseného poradcu. Bez gatovania na
- * is_owner — každý si sleduje vlastný postup. POST {month, status}
- * status='' zmaže záznam (návrat na "zatiaľ nevybraté").
+ * Uloženie dosiahnutého statusu za jeden mesiac Modelu zapracovania pre
+ * aktuálne prihláseného poradcu (0. mesiac = flat podmienka, 1.–6. mesiac =
+ * podľa produkčných bodov, 7.–24. mesiac = podľa statusu FIT/STD/TOP —
+ * ukladajú sa pod rovnaké kľúče fit/std/top, líši sa len popisok v UI).
+ * Bez gatovania na is_owner — každý si sleduje vlastný postup.
+ * POST {month, status}, status='' zmaže záznam (návrat na "zatiaľ nevybraté").
  */
 require_once __DIR__ . '/../db.php';
 header('Content-Type: application/json; charset=utf-8');
@@ -17,7 +19,7 @@ $input = json_decode(file_get_contents('php://input'), true) ?: [];
 $month = (int)($input['month'] ?? 0);
 $status = (string)($input['status'] ?? '');
 
-if ($month < 6 || $month > 24) { http_response_code(400); echo '{"ok":false}'; exit; }
+if ($month < 0 || $month > 24) { http_response_code(400); echo '{"ok":false}'; exit; }
 if ($status !== '' && !in_array($status, ['fit', 'std', 'top'], true)) { http_response_code(400); echo '{"ok":false}'; exit; }
 
 if ($status === '') {

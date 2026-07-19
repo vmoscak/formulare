@@ -245,14 +245,20 @@ function mzDpAmount(int $month, string $status): int {
     return $table[$status] ?? 0;
 }
 
+// Mesiace 1.–6. sa hodnotia podľa mesačnej produkcie (PB), nie podľa statusu
+// FIT/STD/TOP — ten platí až od 7. mesiaca. Sumy sa zhodou okolností
+// zhodujú (500/750/1000 €), preto sa interne ukladajú pod rovnaké kľúče
+// fit/std/top — mení sa len zobrazený popisok tlačidla.
 const MZ_STATUS_LABELS = ['fit' => 'FIT', 'std' => '⭐ STD', 'top' => '🏆 TOP'];
-const MZ_QUARTERS = [[7, 8, 9], [10, 11, 12], [13, 14, 15], [16, 17, 18], [19, 20, 21], [22, 23, 24]];
+const MZ_PB_LABELS = ['fit' => '1 200 PB', 'std' => '2 400 PB', 'top' => '3 600 PB'];
+const MZ_QUARTERS = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15], [16, 17, 18], [19, 20, 21], [22, 23, 24]];
 
-/** Súčet DP, ktoré poradca doteraz reálne získal — pri uzatvorených kvartáloch
- * (všetky 3 mesiace vyplnené) počíta s doplatkom na status 3. mesiaca. */
+/** Súčet DP, ktoré poradca doteraz reálne získal. 0. mesiac je samostatný
+ * flat bonus (500 €, mimo kvartálov). Pri uzatvorených kvartáloch (všetky
+ * 3 mesiace vyplnené) počíta s doplatkom na výsledok 3. mesiaca. */
 function mzTotalEarned(array $mzStatusMap): int {
     $total = 0;
-    if (!empty($mzStatusMap[6])) $total += mzDpAmount(6, $mzStatusMap[6]);
+    if (!empty($mzStatusMap[0])) $total += mzDpAmount(0, $mzStatusMap[0]);
     foreach (MZ_QUARTERS as $q) {
         $statuses = array_map(fn($m) => $mzStatusMap[$m] ?? null, $q);
         if (!in_array(null, $statuses, true)) {
@@ -266,9 +272,12 @@ function mzTotalEarned(array $mzStatusMap): int {
 }
 
 /**
- * "Čo za to dostaneš" — Model zapracovania, vždy celý naraz (6.–24. mesiac),
+ * "Čo za to dostaneš" — celý Model zapracovania naraz (0.–24. mesiac),
  * nezávisle od aktuálne prezeranej fázy. Ukazuje sa ako náhľad odmien od
- * prvého dňa, nielen keď už na ne prišiel rad.
+ * prvého dňa, nielen keď už na ne prišiel rad. Podľa oficiálneho dokumentu
+ * "Model zapracovania 2026": 0. mesiac = flat 500 € pri splnení vstupných
+ * podmienok, 1.–6. mesiac = podľa produkčných bodov, 7.–24. mesiac = podľa
+ * statusu FIT/STD/TOP.
  */
 function obRenderRewards(array $mzStatusMap): void {
     $totalEarned = mzTotalEarned($mzStatusMap);
@@ -280,20 +289,18 @@ function obRenderRewards(array $mzStatusMap): void {
         <div class="mz-summary-value mz-total-value"><?= number_format($totalEarned, 0, ',', ' ') ?> €</div>
       </div>
     </div>
-    <?php $sel6 = $mzStatusMap[6] ?? null; ?>
+    <?php $sel0 = $mzStatusMap[0] ?? null; ?>
     <div class="mz-card mz-card-single">
       <div class="mz-card-head">
-        <span class="mz-card-month">6. mesiac</span>
-        <span class="mz-card-badge">Koniec kvartálu</span>
+        <span class="mz-card-month">0. mesiac</span>
+        <span class="mz-card-badge">Vstupné podmienky</span>
       </div>
-      <p class="mz-card-note">Mesiace 4.–5. nie sú súčasťou trackera, doplatok preto tu nevieme dopočítať — sleduj si ho v CRM.</p>
-      <div class="mz-status-picker" data-month="6">
-        <?php foreach (MZ_STATUS_LABELS as $sKey => $sLabel): $amt = mzDpAmount(6, $sKey); ?>
-        <button type="button" class="mz-status-btn mz-status-btn-<?= $sKey ?><?= $sel6 === $sKey ? ' is-selected' : '' ?>" data-status="<?= $sKey ?>" onclick="mzSelectStatus(this)"><?= $sLabel ?><span class="mz-status-amt"><?= $amt ?> €</span></button>
-        <?php endforeach; ?>
+      <p class="mz-card-note">Registrácia v NBS, e-learning, základné školenia, 100 kontaktov v CRM+ a min. 15 ponúk v Unipoint — jednorazovo 500 €.</p>
+      <div class="mz-status-picker" data-month="0">
+        <button type="button" class="mz-status-btn mz-status-btn-fit<?= $sel0 === 'fit' ? ' is-selected' : '' ?>" data-status="fit" onclick="mzSelectStatus(this)">✓ Podmienky splnené<span class="mz-status-amt"><?= mzDpAmount(0, 'fit') ?> €</span></button>
       </div>
     </div>
-    <?php foreach (MZ_QUARTERS as $months): ?>
+    <?php foreach (MZ_QUARTERS as $months): $labels = $months[0] <= 6 ? MZ_PB_LABELS : MZ_STATUS_LABELS; ?>
     <div class="mz-card mz-card-quarter">
       <div class="mz-card-head">
         <span class="mz-card-month">Kvartál <?= $months[0] ?>.–<?= $months[2] ?>. mesiac</span>
@@ -303,7 +310,7 @@ function obRenderRewards(array $mzStatusMap): void {
         <div class="mz-month-col<?= $isFinal ? ' mz-month-col-final' : '' ?>">
           <div class="mz-month-label"><?= $m ?>. mesiac<?= $isFinal ? ' 🎯' : '' ?></div>
           <div class="mz-status-picker" data-month="<?= $m ?>">
-            <?php foreach (MZ_STATUS_LABELS as $sKey => $sLabel): $amt = mzDpAmount($m, $sKey); ?>
+            <?php foreach ($labels as $sKey => $sLabel): $amt = mzDpAmount($m, $sKey); ?>
             <button type="button" class="mz-status-btn mz-status-btn-<?= $sKey ?><?= $selM === $sKey ? ' is-selected' : '' ?>" data-status="<?= $sKey ?>" onclick="mzSelectStatus(this)"><?= $sLabel ?><span class="mz-status-amt"><?= $amt ?> €</span></button>
             <?php endforeach; ?>
           </div>
@@ -426,14 +433,17 @@ if ($isOwner) {
     animation:obrPulseRing 2.2s ease-out infinite;}
   @keyframes obrPulseRing{0%{transform:scale(1); opacity:.55;}100%{transform:scale(1.8); opacity:0;}}
 
-  /* ---- Detail fázy (jeden stĺpec) ---- */
+  /* ---- Detail fázy (dva stĺpce: materiály + odmena) ---- */
   .obt-phase-nav{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:14px;}
+  .obt-detail{display:grid; grid-template-columns:1.3fr 1fr; gap:18px; align-items:start;}
+  @media(max-width:720px){.obt-detail{grid-template-columns:1fr;}}
   .obt-eyebrow-sm{font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--accent-ink); margin:0 0 6px;}
   .obt-panel-count{font-size:12.5px; color:var(--muted); margin:0 0 16px;}
   .obt-support{display:flex; gap:8px; font-size:12.5px; color:var(--ink-2); line-height:1.6; background:var(--desk);
     border-radius:9px; padding:10px 12px; margin:0 0 14px;}
-  .obt-reward-inline{display:flex; gap:8px; font-size:12.5px; color:var(--accent-ink); line-height:1.6; background:var(--accent-soft);
-    border:1px solid var(--accent-line); border-radius:9px; padding:10px 12px; margin:0 0 14px; font-weight:600;}
+  .obt-reward{background:var(--accent-soft); border-color:var(--accent-line);}
+  .obt-reward-label{font-size:13px; font-weight:700; color:var(--accent-ink); margin-bottom:10px;}
+  .obt-reward-note{font-size:13px; color:var(--ink-2); line-height:1.6;}
 
   .ob-material{display:flex; align-items:flex-start; gap:12px; padding:11px 4px; border-bottom:1px solid var(--border);}
   .ob-material input[type=checkbox]{appearance:none; -webkit-appearance:none; width:20px; height:20px; margin-top:1px; flex-shrink:0;
@@ -646,36 +656,43 @@ if ($isOwner) {
     <?php if ($spPos > 0): ?><a class="pillbtn" href="?phase=<?= (int)$phasesWithStatus[$spPos - 1]['id'] ?><?= $vp ?>">← Predchádzajúca</a><?php else: ?><span></span><?php endif; ?>
     <?php if ($spPos !== false && $spPos < count($phasesWithStatus) - 1): ?><a class="pillbtn" href="?phase=<?= (int)$phasesWithStatus[$spPos + 1]['id'] ?><?= $vp ?>">Ďalšia fáza →</a><?php else: ?><span></span><?php endif; ?>
   </div>
-  <div class="card">
-    <p class="obt-eyebrow-sm">Fáza <?= ($spPos !== false ? $spPos + 1 : '?') ?> z <?= count($phasesWithStatus) ?><?= $sp['status'] === 'current' ? ' · práve tu si' : ($sp['status'] === 'done' ? ' · za tebou' : ' · príde neskôr') ?></p>
-    <h3><?= $sp['status'] === 'done' ? '✓ ' : $sp['icon'] . ' ' ?><?= h($sp['name']) ?></h3>
-    <p class="obt-panel-count">
-      <?php if ($sp['status'] === 'current'): ?>Deň <?= $elapsedDays - $sp['start_day'] + 1 ?> z <?= $sp['duration_days'] ?> v tejto fáze
-      <?php elseif ($sp['status'] === 'done'): ?>Táto fáza trvala <?= $sp['duration_days'] ?> dní
-      <?php else: ?>Začína sa o <?= $sp['start_day'] - $elapsedDays ?> dní
+  <div class="obt-detail">
+    <div class="card">
+      <p class="obt-eyebrow-sm">Fáza <?= ($spPos !== false ? $spPos + 1 : '?') ?> z <?= count($phasesWithStatus) ?><?= $sp['status'] === 'current' ? ' · práve tu si' : ($sp['status'] === 'done' ? ' · za tebou' : ' · príde neskôr') ?></p>
+      <h3><?= $sp['status'] === 'done' ? '✓ ' : $sp['icon'] . ' ' ?><?= h($sp['name']) ?></h3>
+      <p class="obt-panel-count">
+        <?php if ($sp['status'] === 'current'): ?>Deň <?= $elapsedDays - $sp['start_day'] + 1 ?> z <?= $sp['duration_days'] ?> v tejto fáze
+        <?php elseif ($sp['status'] === 'done'): ?>Táto fáza trvala <?= $sp['duration_days'] ?> dní
+        <?php else: ?>Začína sa o <?= $sp['start_day'] - $elapsedDays ?> dní
+        <?php endif; ?>
+      </p>
+      <?php if ($sp['support_text']): ?>
+      <div class="obt-support"><span>🤝</span><span><?= h($sp['support_text']) ?></span></div>
       <?php endif; ?>
-    </p>
-    <?php if ($sp['support_text']): ?>
-    <div class="obt-support"><span>🤝</span><span><?= h($sp['support_text']) ?></span></div>
-    <?php endif; ?>
-    <?php if ($sp['reward_text']): ?>
-    <div class="obt-reward-inline"><span>💰</span><span><?= h($sp['reward_text']) ?></span></div>
-    <?php endif; ?>
-    <?php $mats = $materialsByPhase[(int)$sp['id']] ?? []; ?>
-    <?php if ($mats): ?>
-    <?php foreach ($mats as $m): $tip = $OB_TOOLTIPS[$m['title']] ?? null; $isDone = in_array((int)$m['id'], $doneStepIds, true); ?>
-    <div class="ob-material<?= $isDone ? ' done' : '' ?>" id="ob-mat-<?= (int)$m['id'] ?>">
-      <input type="checkbox" <?= $isDone ? 'checked' : '' ?> data-toggle-step="<?= (int)$m['id'] ?>" aria-label="Označiť ako splnené">
-      <div class="ob-material-body">
-        <div class="ob-material-title"><?= h($m['title']) ?><?php if ($tip): ?><span class="ob-info" tabindex="0">i<span class="ob-info-bubble"><?= h($tip) ?></span></span><?php endif; ?></div>
-        <?php if ($m['description']): ?><div class="ob-material-desc"><?= h($m['description']) ?></div><?php endif; ?>
+      <?php $mats = $materialsByPhase[(int)$sp['id']] ?? []; ?>
+      <?php if ($mats): ?>
+      <?php foreach ($mats as $m): $tip = $OB_TOOLTIPS[$m['title']] ?? null; $isDone = in_array((int)$m['id'], $doneStepIds, true); ?>
+      <div class="ob-material<?= $isDone ? ' done' : '' ?>" id="ob-mat-<?= (int)$m['id'] ?>">
+        <input type="checkbox" <?= $isDone ? 'checked' : '' ?> data-toggle-step="<?= (int)$m['id'] ?>" aria-label="Označiť ako splnené">
+        <div class="ob-material-body">
+          <div class="ob-material-title"><?= h($m['title']) ?><?php if ($tip): ?><span class="ob-info" tabindex="0">i<span class="ob-info-bubble"><?= h($tip) ?></span></span><?php endif; ?></div>
+          <?php if ($m['description']): ?><div class="ob-material-desc"><?= h($m['description']) ?></div><?php endif; ?>
+        </div>
+        <?php if ($m['link_url']): ?><a class="toggle-btn" href="<?= h($m['link_url']) ?>" target="_blank">Otvoriť</a><?php endif; ?>
       </div>
-      <?php if ($m['link_url']): ?><a class="toggle-btn" href="<?= h($m['link_url']) ?>" target="_blank">Otvoriť</a><?php endif; ?>
+      <?php endforeach; ?>
+      <?php else: ?>
+      <p style="font-size:12.5px; color:var(--muted);">K tejto fáze zatiaľ nie sú žiadne materiály.</p>
+      <?php endif; ?>
     </div>
-    <?php endforeach; ?>
-    <?php else: ?>
-    <p style="font-size:12.5px; color:var(--muted);">K tejto fáze zatiaľ nie sú žiadne materiály.</p>
-    <?php endif; ?>
+    <div class="card obt-reward">
+      <div class="obt-reward-label">💰 Čo za to dostaneš</div>
+      <?php if ($sp['reward_text']): ?>
+      <div class="obt-reward-note"><?= h($sp['reward_text']) ?></div>
+      <?php else: ?>
+      <div class="obt-reward-note">Text sa ešte dopĺňa.</div>
+      <?php endif; ?>
+    </div>
   </div>
   <?php endif; ?>
   <?php endif; ?>
@@ -934,14 +951,14 @@ document.addEventListener('change', function (e) {
 });
 
 var MZ_STATUS = <?= json_encode($mzStatusMap, JSON_UNESCAPED_UNICODE) ?>;
-var MZ_QUARTERS = [[7,8,9],[10,11,12],[13,14,15],[16,17,18],[19,20,21],[22,23,24]];
+var MZ_QUARTERS = [[1,2,3],[4,5,6],[7,8,9],[10,11,12],[13,14,15],[16,17,18],[19,20,21],[22,23,24]];
 function mzAmount(month, status) {
   if (!status) return 0;
   var table = month <= 12 ? { fit: 500, std: 750, top: 1000 } : { fit: 300, std: 500, top: 700 };
   return table[status] || 0;
 }
 function mzComputeTotal() {
-  var total = MZ_STATUS[6] ? mzAmount(6, MZ_STATUS[6]) : 0;
+  var total = MZ_STATUS[0] ? mzAmount(0, MZ_STATUS[0]) : 0;
   MZ_QUARTERS.forEach(function (q) {
     var statuses = q.map(function (m) { return MZ_STATUS[m]; });
     if (statuses.every(Boolean)) {
