@@ -121,6 +121,39 @@ $today = date('Y-m-d');
 $selectedEvents = $selectedDay ? ($eventsByDate[$selectedDay] ?? []) : [];
 $editEventId = (int)($_GET['edit'] ?? 0);
 $editAssigneeIds = $editEventId ? ($assigneesByEvent[$editEventId] ?? []) : [];
+
+// --- Zoznam úloh — filtrovateľný podľa priradeného kolegu, nezávislý od
+// mesačnej mriežky vyššie (tá ukazuje len aktuálny mesiac). Predvolene len
+// nadchádzajúce, prepínačom "aj uplynulé" sa dá zobraziť celá história.
+$listFilter = (string)($_GET['filter'] ?? 'all'); // 'all' | 'unassigned' | id poradcu
+$listShowPast = isset($_GET['past']);
+$listStmt = $listShowPast
+    ? db()->prepare('SELECT * FROM formulare_team_events ORDER BY event_date ASC, id')
+    : db()->prepare('SELECT * FROM formulare_team_events WHERE event_date >= ? ORDER BY event_date ASC, id');
+$listShowPast ? $listStmt->execute() : $listStmt->execute([$today]);
+$allEventsForList = $listStmt->fetchAll();
+
+$listAssigneesByEvent = [];
+if ($allEventsForList) {
+    $listEventIds = array_column($allEventsForList, 'id');
+    $listPlaceholders = implode(',', array_fill(0, count($listEventIds), '?'));
+    $listAsStmt = db()->prepare("SELECT event_id, advisor_id FROM formulare_team_event_assignees WHERE event_id IN ($listPlaceholders)");
+    $listAsStmt->execute($listEventIds);
+    foreach ($listAsStmt->fetchAll() as $row) { $listAssigneesByEvent[$row['event_id']][] = (int)$row['advisor_id']; }
+}
+
+$filteredEvents = array_values(array_filter($allEventsForList, function ($e) use ($listFilter, $listAssigneesByEvent) {
+    if ($listFilter === 'all') return true;
+    $ids = $listAssigneesByEvent[$e['id']] ?? [];
+    if ($listFilter === 'unassigned') return !$ids;
+    return in_array((int)$listFilter, $ids, true);
+}));
+
+function tkListFilterUrl(string $monthParam, string $filter, bool $showPast): string {
+    $qs = ['month' => $monthParam, 'filter' => $filter];
+    if ($showPast) $qs['past'] = '1';
+    return '/tim-kalendar.php?' . http_build_query($qs) . '#zoznam-uloh';
+}
 ?>
 <!DOCTYPE html><html lang="sk"><head>
 <meta charset="UTF-8">
@@ -180,6 +213,14 @@ $editAssigneeIds = $editEventId ? ($assigneesByEvent[$editEventId] ?? []) : [];
     font-size:9px; font-weight:700; flex-shrink:0;}
   .tk-chip:has(input:checked){border-color:var(--accent); background:var(--accent-soft); color:var(--accent);}
   .tk-assignee-hint{font-size:11.5px; color:var(--muted); margin-top:-2px;}
+  .tk-filter-row{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:6px;}
+  .tk-filter-chip{display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border:1px solid var(--line-strong);
+    border-radius:999px; background:var(--paper); font-size:12.5px; font-weight:600; color:var(--ink-2); text-decoration:none;
+    transition:border-color .15s, background .15s, color .15s;}
+  .tk-filter-chip:hover{border-color:var(--accent);}
+  .tk-filter-chip.is-active{border-color:var(--accent); background:var(--accent-soft); color:var(--accent-ink);}
+  .tk-filter-dot{width:9px; height:9px; border-radius:50%; flex-shrink:0;}
+  .tew-row:hover{background:var(--desk);}
   @media(max-width:720px){ .tk-add-row{grid-template-columns:1fr;} .cal-day-num{font-size:11px;} }
 </style>
 </head><body>
@@ -249,6 +290,51 @@ $editAssigneeIds = $editEventId ? ($assigneesByEvent[$editEventId] ?? []) : [];
       <span class="cal-legend-item"><span class="cal-legend-dot" style="background:<?= h($a['color']) ?>;"></span><?= h($a['name']) ?></span>
       <?php endforeach; ?>
     </div>
+  </div>
+
+  <div class="card" id="zoznam-uloh">
+    <div class="section-head-inline">
+      <h3>Zoznam úloh<?= $listFilter !== 'all' ? ' · ' . count($filteredEvents) : '' ?></h3>
+      <a class="pillbtn" href="<?= tkListFilterUrl($monthParam, $listFilter, !$listShowPast) ?>"><?= $listShowPast ? 'Len nadchádzajúce' : 'Zobraziť aj uplynulé' ?></a>
+    </div>
+    <div class="tk-filter-row">
+      <a class="tk-filter-chip<?= $listFilter === 'all' ? ' is-active' : '' ?>" href="<?= tkListFilterUrl($monthParam, 'all', $listShowPast) ?>">Všetci</a>
+      <a class="tk-filter-chip<?= $listFilter === 'unassigned' ? ' is-active' : '' ?>" href="<?= tkListFilterUrl($monthParam, 'unassigned', $listShowPast) ?>">
+        <span class="tk-filter-dot" style="background:<?= $UNASSIGNED_COLOR ?>;"></span>Celý tím
+      </a>
+      <?php foreach ($assignableAdvisors as $a): ?>
+      <a class="tk-filter-chip<?= $listFilter === (string)$a['id'] ? ' is-active' : '' ?>" href="<?= tkListFilterUrl($monthParam, (string)$a['id'], $listShowPast) ?>">
+        <span class="tk-filter-dot" style="background:<?= h($a['color']) ?>;"></span><?= h($a['name']) ?>
+      </a>
+      <?php endforeach; ?>
+    </div>
+    <?php if (!$filteredEvents): ?>
+    <div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span class="es-title">Žiadne úlohy</span>
+      <span class="es-sub"><?= $listFilter !== 'all' ? 'Skús iný filter alebo zobraz aj uplynulé.' : ($listShowPast ? 'Zatiaľ tu nič nie je.' : 'Nič nadchádzajúce — skús zobraziť aj uplynulé.') ?></span>
+    </div>
+    <?php else: ?>
+    <?php foreach ($filteredEvents as $e):
+      $evAssignees = eventAssigneeAdvisors($e, $listAssigneesByEvent, $advisorsById);
+      $ts = strtotime($e['event_date']);
+    ?>
+    <a class="tew-row" href="?month=<?= substr($e['event_date'], 0, 7) ?>&day=<?= h($e['event_date']) ?>" style="text-decoration:none; color:inherit;">
+      <div class="tew-badge"><span class="d"><?= (int)date('j', $ts) ?></span><span class="m"><?= mb_strtoupper(mb_substr($SK_MONTHS[(int)date('n', $ts)], 0, 3)) ?></span></div>
+      <div class="tew-body">
+        <div class="tew-title"><?= h($e['title']) ?></div>
+        <div class="tew-who"><?= $evAssignees ? h(implode(', ', array_column($evAssignees, 'name'))) : 'Celý tím' ?></div>
+      </div>
+      <div class="tew-avatars">
+        <?php if (!$evAssignees): ?>
+        <span class="tew-avatar" style="background:<?= $UNASSIGNED_COLOR ?>;">⚑</span>
+        <?php else: foreach (array_slice($evAssignees, 0, 3) as $a): ?>
+        <span class="tew-avatar" style="background:<?= h($a['color']) ?>;" title="<?= h($a['name']) ?>"><?= h(advisorInitials($a['name'])) ?></span>
+        <?php endforeach; endif; ?>
+      </div>
+    </a>
+    <?php endforeach; ?>
+    <?php endif; ?>
   </div>
 
   <?php if ($selectedDay): ?>

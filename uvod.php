@@ -159,17 +159,20 @@ function timeAgoSk(string $dt): string {
 
 // Náhľad najbližších udalostí z Tímového kalendára — viditeľný pre celý tím.
 // Udalosť môže byť priradená viacerým kolegom naraz (napr. obchodníci + owner).
+// Načíta sa ich viac, než sa naraz zobrazí (viď .dom-events-list max-height +
+// "Zobraziť všetky") a filter podľa mena rieši JS na klientovi bez reloadu.
 $upcomingEvents = [];
+$eventFilterAdvisors = [];
 try {
     $today = date('Y-m-d');
-    $evStmt = db()->prepare('SELECT * FROM formulare_team_events WHERE event_date >= ? ORDER BY event_date ASC LIMIT 4');
+    $evStmt = db()->prepare('SELECT * FROM formulare_team_events WHERE event_date >= ? ORDER BY event_date ASC LIMIT 50');
     $evStmt->execute([$today]);
     $upcomingEvents = $evStmt->fetchAll();
     if ($upcomingEvents) {
         $eventIds = array_column($upcomingEvents, 'id');
         $placeholders = implode(',', array_fill(0, count($eventIds), '?'));
         $asStmt = db()->prepare(
-            "SELECT ea.event_id, a.name, a.color FROM formulare_team_event_assignees ea
+            "SELECT ea.event_id, a.id AS advisor_id, a.name, a.color FROM formulare_team_event_assignees ea
              JOIN formulare_advisors a ON a.id = ea.advisor_id WHERE ea.event_id IN ($placeholders)"
         );
         $asStmt->execute($eventIds);
@@ -178,6 +181,7 @@ try {
         foreach ($upcomingEvents as &$ev) { $ev['assignees'] = $assigneesByEvent[$ev['id']] ?? []; }
         unset($ev);
     }
+    $eventFilterAdvisors = db()->query('SELECT id, name FROM formulare_advisors WHERE active = 1 ORDER BY name')->fetchAll();
 } catch (Throwable $e) { /* tabuľka ešte nemusí existovať */ }
 $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 'AUG', 'SEP', 'OKT', 'NOV', 'DEC'];
 ?>
@@ -382,24 +386,38 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
           <h3>Najbližšie udalosti</h3>
           <a class="pillbtn" href="/tim-kalendar.php">Otvoriť kalendár</a>
         </div>
-        <?php foreach ($upcomingEvents as $e): $ts = strtotime($e['event_date']); $assignees = $e['assignees'] ?? []; ?>
-        <div class="tew-row">
-          <div class="tew-badge"><span class="d"><?= (int)date('j', $ts) ?></span><span class="m"><?= $EVT_SK_MONTHS_SHORT[(int)date('n', $ts)] ?></span></div>
-          <div class="tew-body">
-            <div class="tew-title"><?= h($e['title']) ?></div>
-            <?php if ($assignees): ?><div class="tew-who"><?= h(implode(', ', array_column($assignees, 'name'))) ?></div><?php endif; ?>
+        <?php if (count($eventFilterAdvisors) > 1): ?>
+        <select id="domEventFilter" class="dom-event-filter">
+          <option value="all">Všetci</option>
+          <option value="unassigned">Celý tím</option>
+          <?php foreach ($eventFilterAdvisors as $a): ?>
+          <option value="<?= (int)$a['id'] ?>"><?= h($a['name']) ?></option>
+          <?php endforeach; ?>
+        </select>
+        <?php endif; ?>
+        <div class="dom-events-list" id="domEventsList">
+          <?php foreach ($upcomingEvents as $e): $ts = strtotime($e['event_date']); $assignees = $e['assignees'] ?? []; $assigneeIds = implode(',', array_column($assignees, 'advisor_id')); ?>
+          <div class="tew-row" data-assignees="<?= h($assigneeIds) ?>">
+            <div class="tew-badge"><span class="d"><?= (int)date('j', $ts) ?></span><span class="m"><?= $EVT_SK_MONTHS_SHORT[(int)date('n', $ts)] ?></span></div>
+            <div class="tew-body">
+              <div class="tew-title"><?= h($e['title']) ?></div>
+              <?php if ($assignees): ?><div class="tew-who"><?= h(implode(', ', array_column($assignees, 'name'))) ?></div><?php endif; ?>
+            </div>
+            <div class="tew-avatars">
+              <?php if (!$assignees): ?>
+              <span class="tew-avatar" style="background:#94a3b8;" title="Celý tím">⚑</span>
+              <?php else: foreach (array_slice($assignees, 0, 3) as $a): ?>
+              <span class="tew-avatar" style="background:<?= h($a['color']) ?>;" title="<?= h($a['name']) ?>">
+                <?= h(mb_strtoupper(mb_substr($a['name'], 0, 1))) ?>
+              </span>
+              <?php endforeach; endif; ?>
+            </div>
           </div>
-          <div class="tew-avatars">
-            <?php if (!$assignees): ?>
-            <span class="tew-avatar" style="background:#94a3b8;" title="Celý tím">⚑</span>
-            <?php else: foreach (array_slice($assignees, 0, 3) as $a): ?>
-            <span class="tew-avatar" style="background:<?= h($a['color']) ?>;" title="<?= h($a['name']) ?>">
-              <?= h(mb_strtoupper(mb_substr($a['name'], 0, 1))) ?>
-            </span>
-            <?php endforeach; endif; ?>
+          <?php endforeach; ?>
+          <div class="empty-state" id="domEventsEmpty" hidden>
+            <span class="es-sub">Žiadne udalosti pre tento filter.</span>
           </div>
         </div>
-        <?php endforeach; ?>
       </div>
     </aside>
     <?php endif; ?>
@@ -546,6 +564,24 @@ function bzUnfavorite(btn) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ slugs: slugs })
     }).catch(function () {});
+  });
+})();
+
+(function () {
+  var filterSel = document.getElementById('domEventFilter');
+  if (!filterSel) return;
+  var rows = Array.prototype.slice.call(document.querySelectorAll('#domEventsList .tew-row'));
+  var emptyState = document.getElementById('domEventsEmpty');
+  filterSel.addEventListener('change', function () {
+    var v = filterSel.value;
+    var visible = 0;
+    rows.forEach(function (row) {
+      var ids = (row.dataset.assignees || '').split(',').filter(Boolean);
+      var show = v === 'all' || (v === 'unassigned' ? ids.length === 0 : ids.indexOf(v) !== -1);
+      row.hidden = !show;
+      if (show) visible++;
+    });
+    emptyState.hidden = visible > 0;
   });
 })();
 </script>
