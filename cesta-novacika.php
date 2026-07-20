@@ -815,7 +815,8 @@ if ($isOwner) {
         </span>
       </summary>
       <div class="ob-manage-body">
-        <form method="post" class="ob-phase-edit-form" id="ob-phase-edit-<?= (int)$p['id'] ?><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">">
+        <form method="post" class="ob-phase-edit-form" id="ob-phase-edit-<?= (int)$p['id'] ?>">
+          <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
           <input type="hidden" name="edit_phase_id" value="<?= (int)$p['id'] ?>">
           <div class="ob-phase-add-row">
             <input type="text" name="icon" value="<?= h($p['icon']) ?>" placeholder="Ikona" maxlength="8">
@@ -850,7 +851,8 @@ if ($isOwner) {
             <form method="post" style="margin:0; display:inline;" onsubmit="return confirm('Naozaj zmazať tento materiál?');"><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>"><input type="hidden" name="delete_material_id" value="<?= (int)$m['id'] ?>"><button type="submit" class="toggle-btn">Zmazať</button></form>
           </div>
         </div>
-        <form method="post" class="ob-material-edit-form" id="ob-mat-edit-<?= (int)$m['id'] ?><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">">
+        <form method="post" class="ob-material-edit-form" id="ob-mat-edit-<?= (int)$m['id'] ?>">
+          <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
           <input type="hidden" name="edit_material_id" value="<?= (int)$m['id'] ?>">
           <input type="hidden" name="phase_id" value="<?= (int)$p['id'] ?>">
           <input type="text" name="title" value="<?= h($m['title']) ?>" placeholder="Názov materiálu" required>

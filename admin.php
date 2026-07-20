@@ -355,11 +355,13 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
         </td>
         <td style="display:flex; gap:6px;">
           <?php if (!$applied): ?>
-          <form method="post" style="margin:0;" onsubmit="return confirm('Spustiť <?= h($mf) ?><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>"> priamo na produkčnej DB?');">
+          <form method="post" style="margin:0;" onsubmit="return confirm('Spustiť <?= h($mf) ?> priamo na produkčnej DB?');">
+            <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
             <input type="hidden" name="run_migration_file" value="<?= h($mf) ?>">
             <button type="submit" class="toggle-btn">▶ Spustiť</button>
           </form>
-          <form method="post" style="margin:0;" onsubmit="return confirm('Označiť <?= h($mf) ?><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>"> ako už spustenú BEZ jej reálneho behu? Použi len ak si ju už spustil ručne v phpMyAdmin.');">
+          <form method="post" style="margin:0;" onsubmit="return confirm('Označiť <?= h($mf) ?> ako už spustenú BEZ jej reálneho behu? Použi len ak si ju už spustil ručne v phpMyAdmin.');">
+            <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
             <input type="hidden" name="mark_applied_file" value="<?= h($mf) ?>">
             <button type="submit" class="toggle-btn">✓ Označiť ako už spustené</button>
           </form>
