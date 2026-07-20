@@ -781,6 +781,8 @@ function dbInitSqlite(PDO $pdo): void {
         FOREIGN KEY (advisor_id) REFERENCES formulare_advisors(id)
     )");
     $pdo->exec("CREATE INDEX IF NOT EXISTS idx_fa_clients_advisor ON formulare_fa_clients (advisor_id, updated_at)");
+    try { $pdo->exec("ALTER TABLE formulare_fa_clients ADD COLUMN followup_date TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
+    $pdo->exec("CREATE INDEX IF NOT EXISTS idx_fa_clients_followup ON formulare_fa_clients (advisor_id, followup_date)");
     // Cesta nováčika — koncept "Mapa cesty a odmeny": fázy sú samostatné
     // entity s dĺžkou trvania (dni), postup je automatický podľa uplynutého
     // času od formulare_advisors.onboarding_started_at (žiadne ručné

@@ -135,6 +135,32 @@ try {
     if ($ld && strtotime($ld['generated_at']) > time() - 14 * 86400) $lastDoc = $ld;
 } catch (Throwable $e) { /* tabuľka ešte nemusí existovať */ }
 
+// Nadchádzajúce/omeškané termíny kontroly z Finančnej analýzy (sekcia 12 —
+// "Termín ďalšieho stretnutia"), nech ich poradca nemusí sledovať ručne.
+// followup_date je novší stĺpec (sql/042) — try/catch, kým sa migrácia
+// prípadne nespustí na produkcii.
+$upcomingFollowups = [];
+try {
+    $fuStmt = db()->prepare(
+        "SELECT client_id, case_name, a_name, b_name, followup_date FROM formulare_fa_clients
+         WHERE advisor_id = ? AND followup_date IS NOT NULL AND followup_date != ''
+         AND followup_date <= ?
+         ORDER BY followup_date ASC LIMIT 3"
+    );
+    $fuStmt->execute([$curAdvisorId, date('Y-m-d', strtotime('+14 days'))]);
+    $upcomingFollowups = $fuStmt->fetchAll();
+} catch (Throwable $e) { /* stĺpec ešte nemusí existovať */ }
+
+/** "o 3 dni" / "dnes" / "pred 2 dňami" pre termín kontroly. */
+function followupPhraseSk(string $dateStr): string {
+    $days = (int)round((strtotime($dateStr) - strtotime(date('Y-m-d'))) / 86400);
+    if ($days === 0) return 'dnes';
+    if ($days === 1) return 'zajtra';
+    if ($days > 1) return "o $days dní";
+    if ($days === -1) return 'včera';
+    return 'pred ' . abs($days) . ' dňami';
+}
+
 // Vyplnené klientske odkazy, ktoré poradca ešte nevidel (claimed_at sa
 // nastaví pri otvorení Mojich dokumentov) — nech sa o vyplnení dozvie
 // hneď na Domove a nemusí nikam preklikávať naslepo.
@@ -297,8 +323,17 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
       </script>
       <?php endif; ?>
 
-      <?php if ($newSubmitted > 0 || $lastDoc): ?>
+      <?php if ($newSubmitted > 0 || $lastDoc || $upcomingFollowups): ?>
       <div class="section dom-quick-banners">
+        <?php foreach ($upcomingFollowups as $fu): $fuOverdue = strtotime($fu['followup_date']) < strtotime(date('Y-m-d')); ?>
+        <a class="dom-banner<?= $fuOverdue ? ' dom-banner-overdue' : '' ?>" href="/financna-analyza/index.html?openClient=<?= h(rawurlencode($fu['client_id'])) ?>">
+          <span class="dom-banner-ic"><?= $fuOverdue ? '⚠️' : '📅' ?></span>
+          <span class="dom-banner-text">Kontrola <?= h(followupPhraseSk($fu['followup_date'])) ?>: <b><?= h($fu['case_name'] ?: (trim($fu['a_name'] . ' / ' . $fu['b_name']) ?: 'Klient')) ?></b></span>
+          <span class="dom-banner-go">Otvoriť
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </span>
+        </a>
+        <?php endforeach; ?>
         <?php if ($newSubmitted > 0): ?>
         <a class="dom-banner dom-banner-submitted" href="/moje-dokumenty.php">
           <span class="dom-banner-ic">📥</span>

@@ -1171,6 +1171,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       <div class="toolbar">
         <button id="newClientBtn" class="btn primary">➕ Nový klient</button>
         <input id="searchClient" placeholder="Hľadať..." style="max-width:220px">
+        <select id="sortClients" style="max-width:200px" title="Zoradenie zoznamu klientov">
+          <option value="updated">Zoradiť: posledná zmena</option>
+          <option value="followup">Zoradiť: termín kontroly</option>
+        </select>
         <button id="connectFolderBtn" class="btn light" title="Prepojiť priečinok na disku pre ukladanie súborov">📁 Pripojiť priečinok</button>
         <button id="importBtn" class="btn light">📥 Importovať</button>
         <button id="backupBtn" class="btn light">📤 Záloha</button>
@@ -1188,7 +1192,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       </div>
       <div class="table card">
         <table>
-          <thead><tr><th>Meno domácnosti</th><th>Klient A</th><th>Klient B</th><th>Stav</th><th>Posledná zmena</th><th>Akcie</th></tr></thead>
+          <thead><tr><th>Meno domácnosti</th><th>Klient A</th><th>Klient B</th><th>Stav</th><th>Posledná zmena</th><th>Termín kontroly</th><th>Akcie</th></tr></thead>
           <tbody id="clientsBody"></tbody>
         </table>
         <div id="emptyState" class="empty-state" style="display:none">
@@ -1311,12 +1315,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         </div>
 
         <div class="sec">
-          <button type="button" class="sec-h" id="secHead4">4) Príjmy (Klient A / Klient B / Spoločné)</button>
+          <button type="button" class="sec-h" id="secHead4"><span class="sec-h-text">4) Príjmy (Klient A / Klient B / Spoločné)</span></button>
           <div class="sec-b table"><div class="toolbar" style="justify-content:flex-end;margin:0 0 8px"><button type="button" class="add-row-btn" data-add="income">+ Pridať riadok</button></div><table><thead><tr><th>Vlastník</th><th>Typ</th><th>Suma</th><th>Frekvencia</th><th>Mesačný ekv.</th><th>Akcia</th></tr></thead><tbody id="incomeBody"></tbody></table></div>
         </div>
 
         <div class="sec">
-          <button type="button" class="sec-h" id="secHead5">5) Výdavky (Klient A / Klient B / Spoločné)</button>
+          <button type="button" class="sec-h" id="secHead5"><span class="sec-h-text">5) Výdavky (Klient A / Klient B / Spoločné)</span></button>
           <div class="sec-b table"><div class="toolbar" style="justify-content:flex-end;margin:0 0 8px"><button type="button" class="add-row-btn" data-add="expense">+ Pridať riadok</button></div><table><thead><tr><th>Vlastník</th><th>Kategória</th><th>Suma</th><th>Frekvencia</th><th>Mesačný ekv.</th><th>Akcia</th></tr></thead><tbody id="expenseBody"></tbody></table></div>
         </div>
 
@@ -1326,7 +1330,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         </div>
 
         <div class="sec">
-          <button type="button" class="sec-h" id="secHead7">7) Poistenie (rizikové + majetkové)</button>
+          <button type="button" class="sec-h" id="secHead7"><span class="sec-h-text">7) Poistenie (rizikové + majetkové)</span></button>
           <div class="sec-b ins-layout">
             <div class="card" id="coverageRecoCard" style="padding:12px;">
               <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
@@ -1359,7 +1363,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         </div>
 
         <div class="sec">
-          <button type="button" class="sec-h" id="secHead8">8) Ciele (Klient A / Klient B / Spoločné)</button>
+          <button type="button" class="sec-h" id="secHead8"><span class="sec-h-text">8) Ciele (Klient A / Klient B / Spoločné)</span></button>
           <div class="sec-b table"><div class="toolbar" style="justify-content:flex-end;margin:0 0 8px"><button type="button" class="add-row-btn" data-add="goals">+ Pridať riadok</button></div><table><thead><tr><th>Vlastník</th><th>Cieľ</th><th>Suma</th><th>Termín</th><th>Akcia</th></tr></thead><tbody id="goalsBody"></tbody></table></div>
         </div>
 
@@ -1418,7 +1422,14 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
             <div><label>Stav realizácie odporúčaní</label><select class="track" name="impl_status"><option value="">Vyberte</option><option value="nova">Nová</option><option value="rozpracovana">Rozpracovaná</option><option value="hotova">Hotová</option></select></div>
             <div><label>Termín ďalšieho stretnutia / kontroly</label><input type="date" class="track" name="followup_date"></div>
             <div><label>Zodpovedná osoba za ďalší krok</label><select class="track" name="followup_owner"><option value="">Vyberte</option><option>poradca</option><option>klient A</option><option>klient B</option><option>spoločne</option></select></div>
-            <div style="grid-column:1/-1"><label>Konkrétne úlohy a poznámka k realizácii</label><textarea class="track" name="impl_note" placeholder="Napr.: Klient dodá podklady do 7 dní, poradca pripraví porovnanie do ďalšieho stretnutia."></textarea></div>
+            <div class="table" style="grid-column:1/-1">
+              <div class="toolbar" style="display:block;margin:0 0 8px">
+                <strong>Konkrétne úlohy</strong>
+                <div style="display:flex;justify-content:flex-end;margin-top:6px"><button type="button" class="add-row-btn" data-add="tasks">+ Pridať úlohu</button></div>
+              </div>
+              <table><thead><tr><th>Hotovo</th><th>Úloha</th><th>Zodpovedný</th><th>Termín</th><th>Akcia</th></tr></thead><tbody id="tasksBody"></tbody></table>
+            </div>
+            <div style="grid-column:1/-1"><label>Ďalšia poznámka k realizácii (nepovinné)</label><textarea class="track" name="impl_note" placeholder="Čokoľvek, čo sa nezmestí do úloh vyššie."></textarea></div>
           </div>
         </div>
 
@@ -1852,7 +1863,8 @@ const INDEX_KEY = "fa2_clients_index";
         invcal:[["Rekonštrukcia","","","","",""]],
         cmpLife:[["Smrť","","","","",""]],
         cmpProperty:[["Nehnuteľnosť","","","","",""]],
-        cmpCar:[["PZP","","","","",""]]
+        cmpCar:[["PZP","","","","",""]],
+        tasks:[["","poradca","","0"]]
       };
     }
     const rows = defaultRowsTemplate();
@@ -1860,7 +1872,10 @@ const INDEX_KEY = "fa2_clients_index";
 
     function freqToMonthly(v,f){const n=Number(String(v).replace(",", "."))||0;return f==="annual"?n/12:n}
     function money(v){return `${(Number(v)||0).toLocaleString("sk-SK",{maximumFractionDigits:0})} €`}
-    function toNum(v){return Number(String(v ?? "").replace(",", "."))||0}
+    // Odstráni medzery/pevné medzery (oddeľovač tisícov pri formátovanom
+    // zobrazení, viď formatMoneyDisplay/isMoneyFormattable nižšie) a zamení
+    // desatinnú čiarku za bodku, kým sa hodnota parsuje na číslo.
+    function toNum(v){return Number(String(v ?? "").replace(/[\s ]/g,"").replace(",", "."))||0}
     function normText(v){return String(v ?? "").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase()}
     function safeParseJSON(raw, fallback = null){
       if(raw === null || raw === undefined || raw === "") return fallback;
@@ -2108,10 +2123,13 @@ function getOwnerLabel(val){
       const sec5 = document.getElementById("secHead5");
       const sec7 = document.getElementById("secHead7");
       const sec8 = document.getElementById("secHead8");
-      if(sec4) sec4.textContent = `4) Príjmy (${nameA} / ${nameB} / Spoločné)`;
-      if(sec5) sec5.textContent = `5) Výdavky (${nameA} / ${nameB} / Spoločné)`;
-      if(sec7) sec7.textContent = `7) Poistenie (${nameA} / ${nameB})`;
-      if(sec8) sec8.textContent = `8) Ciele (${nameA} / ${nameB} / Spoločné)`;
+      // .sec-h-text (nie priamo tlačidlo) — inak by .textContent zmazal aj
+      // odznak vyplnenosti (.sec-badge-dot), ktorý si updateSectionBadges()
+      // pridáva ako ďalšie dieťa tlačidla.
+      if(sec4) sec4.querySelector(".sec-h-text").textContent = `4) Príjmy (${nameA} / ${nameB} / Spoločné)`;
+      if(sec5) sec5.querySelector(".sec-h-text").textContent = `5) Výdavky (${nameA} / ${nameB} / Spoločné)`;
+      if(sec7) sec7.querySelector(".sec-h-text").textContent = `7) Poistenie (${nameA} / ${nameB})`;
+      if(sec8) sec8.querySelector(".sec-h-text").textContent = `8) Ciele (${nameA} / ${nameB} / Spoločné)`;
       const insLabel = document.getElementById("insRizLabel");
       if(insLabel) insLabel.textContent = `Rizikové poistenie ${nameA} / ${nameB}`;
       // KPI labels
@@ -2258,6 +2276,13 @@ function getOwnerLabel(val){
           <td><input class="track num" name="cmpc_new_pay_${i}" value="${r[4]}"></td>
           <td><input class="track" name="cmpc_reason_${i}" value="${r[5]}"></td>`);
       }
+      if($("#tasksBody")){
+        $("#tasksBody").innerHTML = mk("tasks", rows.tasks, (r,i)=>`
+          <td style="text-align:center;"><input type="checkbox" class="track" name="task_done_${i}" ${r[3]==="1"?"checked":""}></td>
+          <td><input class="track" name="task_text_${i}" value="${r[0]}" placeholder="napr. Poslať porovnanie ponúk"></td>
+          <td>${buildSelect(`task_owner_${i}`, r[1]||"poradca", ["poradca","klient A","klient B","spoločne"])}</td>
+          <td><input type="date" class="track" name="task_due_${i}" value="${r[2]}"></td>`);
+      }
     }
 
     function serialize(){
@@ -2296,6 +2321,30 @@ function getOwnerLabel(val){
       refreshDebtRowUi();
       updateWizardProgress();
       updateOwnerLabels();
+      formatAllMoneyDisplays();
+    }
+
+    // Sumy sa pri opustení poľa zobrazia s oddeľovačom tisícov (napr.
+    // "150 000"), nech sa dá na prvý pohľad skontrolovať počet núl. Polia
+    // s type="number" (percentá, roky, počty) nedokážu takýto text vôbec
+    // zobraziť (prehliadač ho odmietne) — tam sa formátovanie automaticky
+    // preskočí. Percentuálne polia bez type="number" (napr. výnos produktu)
+    // sú vylúčené menovite, nech sa im pri zaokrúhľovaní nestratia desatiny.
+    const MONEY_FMT_EXCLUDE = /^(debt_rate_\d+|prod_return_\d+|invc_return_\d+)$/;
+    function isMoneyFormattable(el){
+      return !!el && el.classList && el.classList.contains("track") && el.classList.contains("num")
+        && el.type !== "number" && !MONEY_FMT_EXCLUDE.test(el.name||"");
+    }
+    function formatMoneyDisplay(raw){
+      return raw.toLocaleString("sk-SK", { minimumFractionDigits:0, maximumFractionDigits:2 });
+    }
+    function formatAllMoneyDisplays(){
+      $$("input.track.num").forEach(el=>{
+        if(!isMoneyFormattable(el)) return;
+        if(document.activeElement===el) return;
+        const raw = toNum(el.value);
+        el.value = raw ? formatMoneyDisplay(raw) : el.value;
+      });
     }
 
     // Predvolené orientačné zhodnotenie p.a. podľa zvoleného rizikového profilu
@@ -2330,6 +2379,7 @@ function getOwnerLabel(val){
       if(type==="cmpLife") return ["Riziko","","","","",""];
       if(type==="cmpProperty") return ["Oblasť","","","","",""];
       if(type==="cmpCar") return ["Typ","","","","",""];
+      if(type==="tasks") return ["","poradca","","0"];
       return [];
     }
 
@@ -2348,6 +2398,7 @@ function getOwnerLabel(val){
         {type:"cmpLife", pattern:/^cmpl_(risk|curr_cover|curr_pay|new_cover|new_pay|reason)_(\d+)$/},
         {type:"cmpProperty", pattern:/^cmpp_(area|curr_cover|curr_pay|new_cover|new_pay|reason)_(\d+)$/},
         {type:"cmpCar", pattern:/^cmpc_(type|curr_cover|curr_pay|new_cover|new_pay|reason)_(\d+)$/},
+        {type:"tasks", pattern:/^task_(text|owner|due|done)_(\d+)$/},
       ];
       defs.forEach(({type,pattern})=>{
         const needed = Object.keys(d).reduce((max,k)=>{
@@ -2432,7 +2483,11 @@ function getOwnerLabel(val){
       currentWizardStep = Math.max(0, Math.min(stepIndex, headers.length - 1));
       const holder = $("#wizardProg");
       if(holder && !holder.children.length){
-        holder.innerHTML = headers.map((_,i)=>`<div class="prog-dot" data-step-dot="${i}"></div>`).join("");
+        holder.innerHTML = headers.map((_,i)=>`<div class="prog-dot" data-step-dot="${i}" title="${headers[i].textContent.trim()}"></div>`).join("");
+        holder.addEventListener("click", e=>{
+          const dot = e.target.closest("[data-step-dot]");
+          if(dot) jumpToSection(Number(dot.dataset.stepDot));
+        });
       }
       $$(".prog-dot", holder).forEach((dot,i)=>{
         dot.classList.toggle("done", i < currentWizardStep);
@@ -2444,6 +2499,19 @@ function getOwnerLabel(val){
       const pct = Math.round(((currentWizardStep + 1) / total) * 100);
       if($("#wizardLabel")) $("#wizardLabel").textContent = `Krok ${currentWizardStep + 1} z ${total} — ${title}`;
       if($("#wizardPct")) $("#wizardPct").textContent = `${pct} %`;
+    }
+
+    /* Otvorí danú sekciu (podľa poradia hlavičiek), zatvorí ostatné a scrollne
+       na ňu — použité kliknutím na bodku progresu aj tlačidlom "Ďalej ▸". */
+    function jumpToSection(idx){
+      const headers = $$(".sec-h", $("#analysisForm"));
+      if(!headers[idx]) return;
+      headers.forEach((h,i)=>{
+        const sec = h.closest(".sec");
+        if(sec) sec.classList.toggle("open", i===idx);
+      });
+      updateWizardProgress(idx);
+      headers[idx].scrollIntoView({ behavior:"smooth", block:"start" });
     }
 
     function scoreLevel(score){
@@ -2458,9 +2526,9 @@ function getOwnerLabel(val){
        poistného krytia), zámerne skopírovaná sem samostatne (nie prepojená
        cez API/odkaz) — obe appky majú fungovať nezávisle. Ak sa metodika
        niekedy zmení, treba upraviť na OBOCH miestach.
-       Na rozdiel od Kalkulačky tu nemáme štruktúrované "existujúce krytie"
-       na osobu (v tabuľke Poistenie je riziko voľný text) — táto sekcia preto
-       ukazuje len ODPORÚČANÚ SUMU (koľko poistiť), nie gap voči už zadanému.
+       Riziko v tabuľke Poistenie je pevný výber (nie voľný text), takže sa dá
+       spárovať s vypočítanou potrebou — pozri renderCoverageReco() nižšie,
+       ktorá k tomu ukazuje aj reálne kryté/chýba, nielen odporúčanú sumu.
     =========================================================================== */
     const COV_FUNERAL_COST = 3000;
     const COV_DEATH_DEBT_MONTHS = 12;
@@ -2636,8 +2704,8 @@ function getOwnerLabel(val){
       },0);
       const mortAvgTerm = mortBalance>0 ? Math.round(mortTermWeighted/mortBalance) : 0;
       const mortAvgRate = mortBalance>0 ? (mortRateWeighted/mortBalance) : 0;
-      const productsValue=[...Array(rows.products.length).keys()].reduce((s,i)=>s+(Number(d[`prod_value_${i}`])||0),0);
-      const hardAssetsValue=[...Array(rows.assets.length).keys()].reduce((s,i)=>s+(Number(d[`asset_value_${i}`])||0),0);
+      const productsValue=[...Array(rows.products.length).keys()].reduce((s,i)=>s+toNum(d[`prod_value_${i}`]),0);
+      const hardAssetsValue=[...Array(rows.assets.length).keys()].reduce((s,i)=>s+toNum(d[`asset_value_${i}`]),0);
       const liquidReserve = toNum(d.reserve_amount_exact);
       const assets = productsValue + hardAssetsValue + liquidReserve;
       const liabilities = debtBalance;
@@ -2966,6 +3034,32 @@ function getOwnerLabel(val){
       });
       $("#advisorGoalMatchOut").innerHTML = goalMatchRows.length ? goalMatchRows.join("") : `<tr><td colspan="6">Ciele zatiaľ nevyplnené.</td></tr>`;
 
+      updateSectionBadges();
+    }
+
+    /* Malá bodka pri hlavičke každej sekcie — zelená, ak sekcia obsahuje
+       aspoň jeden vyplnený údaj, sivá ak je prázdna. Rýchly prehľad, kde ešte
+       chýbajú dáta, bez nutnosti otvárať každú sekciu alebo scrollovať na súhrn. */
+    function updateSectionBadges(){
+      $$(".sec", $("#analysisForm")).forEach(sec=>{
+        const head = sec.querySelector(".sec-h");
+        if(!head) return;
+        const fields = $$(".track", sec);
+        const hasData = fields.some(el=>{
+          if(el.type==="checkbox") return el.checked;
+          if(el.type==="radio") return el.checked;
+          return String(el.value||"").trim()!=="";
+        });
+        let dot = head.querySelector(".sec-badge-dot");
+        if(!dot){
+          dot = document.createElement("span");
+          dot.className = "sec-badge-dot";
+          dot.style.cssText = "display:inline-block;width:8px;height:8px;border-radius:50%;margin-left:8px;vertical-align:middle;";
+          head.appendChild(dot);
+        }
+        dot.style.background = hasData ? "#1d8f3a" : "#c8ccd4";
+        dot.title = hasData ? "Sekcia obsahuje dáta" : "Sekcia je zatiaľ prázdna";
+      });
     }
 
     function getDataQuality(d){
@@ -3078,7 +3172,7 @@ function getOwnerLabel(val){
       if(!activeId){ activeId="c_"+Date.now(); localStorage.setItem(ACTIVE_KEY,activeId); }
       const meta={
         name:d.case_name||"Nový prípad", a:d.a_name||"-", b:d.b_name||"-",
-        updated:new Date().toLocaleString("sk-SK"), status:d.case_status||"nova"
+        updated:new Date().toLocaleString("sk-SK"), status:d.case_status||"nova", followup:d.followup_date||""
       };
       const synced = await storageSaveClient(activeId, meta, d);
       showSaveIndicator("Uložené", synced, !!_fsDir);
@@ -3093,7 +3187,7 @@ function getOwnerLabel(val){
       if(!activeId){ activeId="c_"+Date.now(); localStorage.setItem(ACTIVE_KEY,activeId); }
       const meta={
         name:d.case_name||"Nový prípad", a:d.a_name||"-", b:d.b_name||"-",
-        updated:new Date().toLocaleString("sk-SK"), status:d.case_status||"nova"
+        updated:new Date().toLocaleString("sk-SK"), status:d.case_status||"nova", followup:d.followup_date||""
       };
       storageSaveClient(activeId, meta, d).then(synced => showSaveIndicator("Auto uložené", synced, !!_fsDir));
       $("#activeLabel").textContent=`Aktívny: ${d.case_name||activeId}`;
@@ -3136,18 +3230,24 @@ function getOwnerLabel(val){
       return `<span class="state-badge ${cls}">${label}</span>`;
     }
     function buildClientRow(c){
-      const followup = getClientFollowupDate(c.id);
+      // c.followup prichádza zo servera (zdieľaná DB, viď syncIndexFromServer) —
+      // spoľahlivejšie než pôvodný getClientFollowupDate() nižšie, ktorý čítal
+      // len z localStorage tohto konkrétneho prehliadača (na inom počítači by
+      // teda odznak vôbec neukázal, aj keby dátum bol v zdieľanej DB uložený).
+      const followup = c.followup || getClientFollowupDate(c.id);
       const badge = followupBadge(followup);
       const safeName = escHtml(c.name || "-");
       const safeA = escHtml(c.a || "-");
       const safeB = escHtml(c.b || "-");
       const safeUpdated = escHtml(c.updated || "-");
+      const safeFollowup = followup ? escHtml(new Date(followup).toLocaleDateString("sk-SK")) : "—";
       const safeId = escHtml(c.id || "");
       return `<tr>
         <td>${safeName}${badge}</td>
         <td>${safeA}</td><td>${safeB}</td>
         <td>${buildStatusBadge(c.status)}</td>
         <td>${safeUpdated}</td>
+        <td>${safeFollowup}</td>
         <td class="actions-cell">
           <button class="btn light" data-open="${safeId}">Otvoriť</button>
           <button class="btn light" data-duplicate="${safeId}" title="Duplikovať">⎘</button>
@@ -3171,6 +3271,20 @@ function getOwnerLabel(val){
         const matchF = !activeFilter || (x.status||'').toLowerCase() === activeFilter.toLowerCase();
         return matchQ && matchF;
       });
+      const sortMode = $("#sortClients")?.value || "updated";
+      if(sortMode==="followup"){
+        // Klienti s termínom skôr, zoradení podľa termínu vzostupne; klienti
+        // bez termínu na koniec zoznamu (nie sú "najbližšie", sú neurčené).
+        all.sort((a,b)=>{
+          if(!a.followup && !b.followup) return 0;
+          if(!a.followup) return 1;
+          if(!b.followup) return -1;
+          return new Date(a.followup) - new Date(b.followup);
+        });
+      }
+      // "updated" (predvolené): bez ďalšieho triedenia — poradie zo servera
+      // (ORDER BY updated_at DESC) sa zachováva, keďže "updated" je len
+      // lokalizovaný text (sk-SK), nie parsovateľný na Date bez rizika chyby.
       const emptyState = document.getElementById('emptyState');
       const tbody = $("#clientsBody");
       if(!all.length){
@@ -4281,18 +4395,37 @@ function getOwnerLabel(val){
       fill({household_type:"couple",case_status:"nova"});
       refreshDebtRowUi();
       updateWizardProgress(0);
-      $$(".sec-h", $("#analysisForm")).forEach((head, idx)=>{
+      const secHeaders = $$(".sec-h", $("#analysisForm"));
+      secHeaders.forEach((head, idx)=>{
         head.addEventListener("click", e=>{
           e.preventDefault();
           const sec = head.closest(".sec");
           if(sec) sec.classList.toggle("open");
           updateWizardProgress(idx);
         });
+        // "Ďalej ▸" na konci každej sekcie okrem poslednej — rýchly presun na
+        // ďalšiu sekciu bez nutnosti scrollovať a hľadať jej hlavičku.
+        if(idx < secHeaders.length - 1){
+          const nextTitle = secHeaders[idx+1].textContent.replace(/^\d+\)\s*/,"").trim();
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "btn light sec-next-btn";
+          btn.style.cssText = "margin-top:10px;";
+          btn.textContent = `Ďalej ▸ ${nextTitle}`;
+          btn.addEventListener("click", ()=>jumpToSection(idx+1));
+          head.nextElementSibling?.appendChild(btn);
+        }
       });
       renderClients();
       initFilterTabs();
       safeCompute();
-      syncIndexFromServer().then(()=>renderClients($("#searchClient")?.value || ""));
+      syncIndexFromServer().then(()=>{
+        renderClients($("#searchClient")?.value || "");
+        // ?openClient=<id> — priamy odkaz z Domova (nadchádzajúce kontroly),
+        // nech sa poradca nemusí sám hľadať v zozname klientov.
+        const openId = new URLSearchParams(location.search).get("openClient");
+        if(openId) openClient(openId);
+      });
       $$(".add-row-btn").forEach(b=>b.addEventListener("click",(e)=>{e.stopPropagation(); addRow(b.dataset.add);}));
       document.addEventListener("click",e=>{
         const btn=e.target.closest("[data-del]");
@@ -4316,12 +4449,25 @@ function getOwnerLabel(val){
         if(!e.target.classList.contains("track")) return;
         safeCompute();
       });
+      // Formátovanie súm: pri kliknutí do poľa ukáž holé číslo (nech sa dá
+      // normálne editovať), pri opustení poľa naformátuj s oddeľovačom tisícov.
+      document.addEventListener("focusin",e=>{
+        if(!isMoneyFormattable(e.target)) return;
+        const raw = toNum(e.target.value);
+        e.target.value = raw ? String(raw) : "";
+      });
+      document.addEventListener("focusout",e=>{
+        if(!isMoneyFormattable(e.target)) return;
+        const raw = toNum(e.target.value);
+        e.target.value = raw ? formatMoneyDisplay(raw) : e.target.value;
+      });
       $("#saveBtn").addEventListener("click",async ()=>{ await saveClient(); });
       $("#darkToggle").addEventListener("click", toggleDarkMode);
       $("#newClientBtn").addEventListener("click", openInputWithoutForcingNewClient);
       $("#emptyStateCreateBtn")?.addEventListener("click", openInputWithoutForcingNewClient);
       $("#goClientsBtn").addEventListener("click",()=>switchTab("clients"));
       $("#searchClient").addEventListener("input",e=>renderClients(e.target.value));
+      $("#sortClients").addEventListener("change",()=>renderClients($("#searchClient")?.value || ""));
       $("#clientsBody").addEventListener("click", handleClientsTableClick);
       $("#backupBtn").addEventListener("click", async ()=>{
         const ix = getIndex();
