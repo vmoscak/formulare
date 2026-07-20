@@ -161,13 +161,12 @@
     }
     if (adminOn && adv.is_owner) {
       MORE.push({ key: 'news', icon: ICONS.news, href: '/novinky.php', label: 'Novinky', active: isNews });
-      MORE.push({ key: 'refi', icon: ICONS.refi, href: '/refinancny-radar.php', label: 'Refinančný Radar', active: isRefi });
-      MORE.push({ key: 'refiCalc', icon: ICONS.refiCalc, href: '/oplati-sa-refinancovat.php', label: 'Oplatí sa refinancovať?', active: isRefiCalc });
-      // Copy-Paste zóna: zatiaľ len pre teba, kým sa overí užitočnosť (potom
-      // presunúť späť do základnej NAV, viditeľnej pre každého poradcu).
-      MORE.push({ key: 'copy', icon: ICONS.copy, href: '/copy-paste.php', label: 'Copy-Paste zóna', active: isCopy });
+      // Refinančný Radar, "Oplatí sa refinancovať?" a Copy-Paste zóna dočasne
+      // schované z navigácie — zatiaľ sa nevyužívajú. Stránky ostávajú funkčné
+      // na priamom odkaze, len bez položky v ráli.
       MORE.push({ key: 'cesta', icon: ICONS.target, href: '/cesta-novacika.php', label: 'Cesta nováčika', active: isCesta });
-      MORE.push({ key: 'timPrehlad', icon: ICONS.trending, href: '/tim-prehlad.php', label: 'Tímový prehľad', active: isTimPrehlad });
+      // Tímový prehľad presunutý do Admin panela (tlačidlo) - používa sa
+      // minimálne, netreba mu samostatnú položku v hlavnej lište.
     } else if (adv.is_onboarding) {
       // Poradca, ktorému owner práve priradil Cestu nováčika — vidí len túto
       // jednu položku navyše, nič iné z owner-only zoznamu vyššie (a nezávisí

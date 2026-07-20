@@ -176,6 +176,9 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
     <p>Administrácia · poradcovia, dokumenty a klientske odkazy</p>
   </div>
   <div class="tb-actions">
+    <?php if (!empty($me['is_owner'])): ?>
+    <a class="pillbtn" href="/tim-prehlad.php">📈 Tímový prehľad</a>
+    <?php endif; ?>
     <a class="pillbtn" href="/nastroje.php">← Späť na nástroje</a>
   </div>
 </header>
