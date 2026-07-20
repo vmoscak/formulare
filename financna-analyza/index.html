@@ -1173,7 +1173,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         <span class="status" id="saveStatus">Pripravené</span>
       </div>
       <div style="padding:6px 0 2px;display:flex;align-items:center;gap:8px">
-        <span id="folderStatus" style="font-size:.78rem;color:var(--warn);font-weight:500">⚠ Priečinok nie je prepojený – dáta sa ukladajú v prehliadači</span>
+        <span id="folderStatus" style="font-size:.78rem;color:var(--muted);font-weight:500">☁ Klienti sa ukladajú do zdieľanej databázy · lokálny priečinok (voliteľná záloha) nepripojený</span>
       </div>
       <div class="filter-tabs" id="filterTabs">
         <button class="filter-tab active" data-filter="">Všetci</button>
@@ -1641,11 +1641,11 @@ const INDEX_KEY = "fa2_clients_index";
       const el = document.getElementById("folderStatus");
       if(el){
         if(name){
-          el.textContent = "📁 " + name + "/klienti";
+          el.textContent = "📁 " + name + "/klienti (lokálna záloha navyše)";
           el.style.color = "var(--ok)";
         } else {
-          el.textContent = "⚠ Priečinok nie je prepojený – dáta v prehliadači";
-          el.style.color = "var(--warn)";
+          el.textContent = "☁ Klienti sa ukladajú do zdieľanej databázy · lokálny priečinok (voliteľná záloha) nepripojený";
+          el.style.color = "var(--muted)";
         }
       }
     }
@@ -1772,7 +1772,7 @@ const INDEX_KEY = "fa2_clients_index";
       saveIndex(ix);
       if(_fsDir) await fsWriteFile("_index.json", ix);
 
-      await dbSaveClient(id, meta, data);
+      return await dbSaveClient(id, meta, data);
     }
 
     async function storageLoadClient(id){
@@ -1941,10 +1941,12 @@ const INDEX_KEY = "fa2_clients_index";
     }
 
     // ===== AUTOSAVE VISUAL INDICATOR =====
-    function showSaveIndicator(msg, isFile){
+    function showSaveIndicator(msg, synced, isFile){
       const el = document.getElementById('saveStatus');
       if(!el) return;
-      el.textContent = (isFile ? '📁 ' : '💾 ') + msg + ': ' + new Date().toLocaleTimeString('sk-SK');
+      const icon = synced ? '☁' : (isFile ? '📁' : '⚠');
+      const suffix = synced ? '' : ' (len lokálne, sieť nedostupná)';
+      el.textContent = icon + ' ' + msg + suffix + ': ' + new Date().toLocaleTimeString('sk-SK');
       el.classList.add('saved');
       el.closest ? el.closest('.toolbar')?.classList.add('save-pulse') : null;
       const wrap = document.getElementById('stickyKpi');
@@ -1983,9 +1985,9 @@ const INDEX_KEY = "fa2_clients_index";
       const newId = 'c_' + Date.now();
       const data = { ...(p.data || {}), case_name: (orig?.name || 'Kópia') + ' – kópia', case_status: 'nova' };
       const meta = { name: data.case_name, a: orig?.a || '-', b: orig?.b || '-', updated: new Date().toLocaleString('sk-SK'), status: 'nova' };
-      await storageSaveClient(newId, meta, data);
+      const synced = await storageSaveClient(newId, meta, data);
       renderClients();
-      showSaveIndicator('Duplikát vytvorený', !!_fsDir);
+      showSaveIndicator('Duplikát vytvorený', synced, !!_fsDir);
     }
 
     // ===== SCENARIO BAR CHART (inline HTML) =====
@@ -2911,8 +2913,8 @@ function getOwnerLabel(val){
         name:d.case_name||"Nový prípad", a:d.a_name||"-", b:d.b_name||"-",
         updated:new Date().toLocaleString("sk-SK"), status:d.case_status||"nova"
       };
-      await storageSaveClient(activeId, meta, d);
-      showSaveIndicator("Uložené", !!_fsDir);
+      const synced = await storageSaveClient(activeId, meta, d);
+      showSaveIndicator("Uložené", synced, !!_fsDir);
       $("#activeLabel").textContent=`Aktívny: ${d.case_name||activeId}`;
       renderClients();
     }
@@ -2926,8 +2928,7 @@ function getOwnerLabel(val){
         name:d.case_name||"Nový prípad", a:d.a_name||"-", b:d.b_name||"-",
         updated:new Date().toLocaleString("sk-SK"), status:d.case_status||"nova"
       };
-      storageSaveClient(activeId, meta, d);
-      showSaveIndicator("Auto uložené", !!_fsDir);
+      storageSaveClient(activeId, meta, d).then(synced => showSaveIndicator("Auto uložené", synced, !!_fsDir));
       $("#activeLabel").textContent=`Aktívny: ${d.case_name||activeId}`;
       renderClients();
     }
