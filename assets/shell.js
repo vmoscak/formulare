@@ -151,10 +151,11 @@
     var adminOn = canAdminView && adminViewOn();
 
     var MORE = [];
-    // Znalostná báza je zdieľaný tímový obsah na čítanie pre každého poradcu
-    // (editovať vie len owner, rieši server-side gating v znalostna-baza.php)
-    // — preto tu na rozdiel od zvyšku MORE nezávisí od admin režimu/role.
-    MORE.push({ key: 'kb', icon: ICONS.kb, href: '/znalostna-baza.php', label: 'Znalostná báza', active: isKb });
+    // Znalostná báza dočasne schovaná z navigácie — zatiaľ prázdna a dlhšie
+    // tak aj ostane, netreba tam lákať kliknutia. Stránka aj gating (čítanie
+    // pre všetkých, edit len owner) ostávajú funkčné, len bez odkazu v ráli;
+    // owner sa vie dostať priamo na /znalostna-baza.php, keď bude chcieť
+    // začať dopĺňať obsah.
     if (adminOn && adv.is_admin) {
       MORE.push({ key: 'admin', icon: ICONS.admin, href: '/admin.php', label: 'Admin', active: isAdmin });
     }
