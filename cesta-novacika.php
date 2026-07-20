@@ -642,7 +642,7 @@ if ($isOwner) {
   <?php if ($novicePreview): ?>
   <div class="section">
     <div class="ob-preview-banner">
-      <span>👀 <?= $previewAdvisor ? 'Presne to, čo teraz vidí ' . h($previewAdvisor['name']) . '.' : 'Náhľad všeobecnej šablóny' . (isset($_GET['day']) ? ' (deň ' . (int)$_GET['day'] . ')' : '') . ' — nie je naviazaný na konkrétneho nováčika.' ?></span>
+      <span>👀 <?= $previewAdvisor ? 'Presne to, čo teraz vidí ' . h($previewAdvisor['name']) . '.' : 'Náhľad všeobecnej šablóny' . (isset($_GET['day']) ? ' (deň ' . (int)$_GET['day'] . ')' : '') . ' — nie je naviazaný na konkrétneho nováčika.' ?> <strong>Len na čítanie — checkboxy a MZ tlačidlá tu nejdú označiť.</strong></span>
       <a class="pillbtn" href="/cesta-novacika.php">← Späť na správu</a>
     </div>
   </div>
