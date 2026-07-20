@@ -284,16 +284,12 @@ function mzTotalEarned(array $mzStatusMap): int {
 }
 
 /**
- * "Čo za to dostaneš" — celý Model zapracovania naraz (0.–24. mesiac),
- * nezávisle od aktuálne prezeranej fázy. Ukazuje sa ako náhľad odmien od
- * prvého dňa, nielen keď už na ne prišiel rad. Podľa oficiálneho dokumentu
- * "Model zapracovania 2026": 0. mesiac = flat 500 € pri splnení vstupných
- * podmienok, 1.–6. mesiac = podľa produkčných bodov, 7.–24. mesiac = podľa
- * statusu FIT/STD/TOP.
+ * Súhrnná lišta s celkovým doteraz získaným DP — samostatná, aby sa dala
+ * zobraziť staticky pri každej fáze (napr. v karte "Čo za to dostaneš"),
+ * nezávisle od toho, kde sa nachádza plný tracker Modelu zapracovania.
  */
-function obRenderRewards(array $mzStatusMap, int $elapsedDays): void {
+function obRenderMzTotalBar(array $mzStatusMap): void {
     $totalEarned = mzTotalEarned($mzStatusMap);
-    $currentMzMonth = min(24, intdiv($elapsedDays, 30));
     ?>
     <div class="mz-summary-bar">
       <div class="mz-summary-icon">💰</div>
@@ -302,7 +298,21 @@ function obRenderRewards(array $mzStatusMap, int $elapsedDays): void {
         <div class="mz-summary-value mz-total-value"><?= number_format($totalEarned, 0, ',', ' ') ?> €</div>
       </div>
     </div>
-    <?php $sel0 = $mzStatusMap[0] ?? null; ?>
+    <?php
+}
+
+/**
+ * "Čo za to dostaneš" — celý Model zapracovania naraz (0.–24. mesiac),
+ * nezávisle od aktuálne prezeranej fázy. Ukazuje sa ako náhľad odmien od
+ * prvého dňa, nielen keď už na ne prišiel rad. Podľa oficiálneho dokumentu
+ * "Model zapracovania 2026": 0. mesiac = flat 500 € pri splnení vstupných
+ * podmienok, 1.–6. mesiac = podľa produkčných bodov, 7.–24. mesiac = podľa
+ * statusu FIT/STD/TOP.
+ */
+function obRenderRewards(array $mzStatusMap, int $elapsedDays): void {
+    $currentMzMonth = min(24, intdiv($elapsedDays, 30));
+    $sel0 = $mzStatusMap[0] ?? null;
+    ?>
     <div class="mz-card mz-card-single">
       <div class="mz-card-head">
         <span class="mz-card-month">0. mesiac</span>
@@ -495,7 +505,7 @@ if ($isOwner) {
 
   .mz-tracker-title{font-size:14.5px; font-weight:700; color:var(--ink); margin:0 0 12px;}
   .mz-summary-bar{display:flex; align-items:center; gap:12px; background:linear-gradient(135deg, var(--accent-soft), var(--good-soft));
-    border:1px solid var(--accent-line); border-radius:var(--radius-xl); padding:14px 18px; margin-bottom:16px;}
+    border:1px solid var(--accent-line); border-radius:var(--radius-xl); padding:14px 18px; margin-top:14px; margin-bottom:16px;}
   .mz-summary-icon{font-size:26px; line-height:1; flex-shrink:0;}
   .mz-summary-label{font-size:11.5px; font-weight:600; color:var(--ink-2); text-transform:uppercase; letter-spacing:.03em;}
   .mz-summary-value{font-size:22px; font-weight:800; color:var(--accent-ink); letter-spacing:-.01em; margin-top:1px; transition:transform .25s ease;}
@@ -728,6 +738,7 @@ if ($isOwner) {
       <?php else: ?>
       <div class="obt-reward-note">Text sa ešte dopĺňa.</div>
       <?php endif; ?>
+      <?php obRenderMzTotalBar($mzStatusMap); ?>
     </div>
   </div>
   <?php endif; ?>
