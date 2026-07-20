@@ -181,18 +181,34 @@ $OB_TOOLTIPS = [
 
 // -- Kto a čo sa má zobraziť: novicova "cesta" (mapa + odmeny) vs. ownerova
 // administrácia (fázy, materiály, tím). Owner si vie cestu vždy prezrieť
-// cez ?view=novice, voliteľne aj s ?day=N na simuláciu iného dňa.
+// cez ?view=novice — buď generickú šablónu (voliteľne s ?day=N na simuláciu
+// iného dňa), alebo priamo pohľad konkrétneho priradeného nováčika (?as=ID),
+// so všetkými jeho reálnymi dátumami a stavom Modelu zapracovania.
 $novicePreview = $isOwner && isset($_GET['view']) && $_GET['view'] === 'novice';
+$previewAdvisor = null;
+if ($novicePreview && isset($_GET['as'])) {
+    $pStmt = db()->prepare('SELECT * FROM formulare_advisors WHERE id = ? AND is_owner = 0 AND active = 1 AND onboarding_started_at IS NOT NULL');
+    $pStmt->execute([(int)$_GET['as']]);
+    $previewAdvisor = $pStmt->fetch() ?: null;
+}
 $viewerIsNovice = $isOnboarding || $novicePreview;
+// V "preview as" móde sa všetky nováčikove dáta (fázy, MZ, checklist) čítajú
+// pod jeho ID, nie pod ID prihláseného ownera.
+$viewerAdvisorId = $previewAdvisor ? (int)$previewAdvisor['id'] : $advisorId;
 
-// Kalendárový režim (fázy naviazané na reálne mesiace) sa použije len pre
-// skutočne prihláseného nováčika s nastaveným dátumom nástupu — ownerov
-// generický náhľad "?view=novice&day=N" ostáva na starom (deň-based) móde,
-// lebo nie je naviazaný na konkrétny reálny záznam poradcu.
+// Kalendárový režim (fázy naviazané na reálne mesiace) sa použije pre
+// skutočne prihláseného nováčika ALEBO pre "preview as" konkrétneho
+// priradeného nováčika — obaja majú nastavený dátum nástupu. Generický
+// náhľad "?view=novice&day=N" (bez ?as=) ostáva na starom (deň-based) móde,
+// lebo nie je naviazaný na žiadny reálny záznam poradcu.
 if ($isOnboarding) {
     $elapsedDays = obElapsedDays($me['onboarding_started_at']);
     $scheduledPhases = obScheduleFor($phases, $me['onboarding_started_at'], $me['onboarding_start_date'] ?? null);
     $currentMzMonth = obCalendarMzMonth($me['onboarding_start_date'] ?? null) ?? min(24, intdiv($elapsedDays, 30));
+} elseif ($previewAdvisor) {
+    $elapsedDays = obElapsedDays($previewAdvisor['onboarding_started_at']);
+    $scheduledPhases = obScheduleFor($phases, $previewAdvisor['onboarding_started_at'], $previewAdvisor['onboarding_start_date'] ?? null);
+    $currentMzMonth = obCalendarMzMonth($previewAdvisor['onboarding_start_date'] ?? null) ?? min(24, intdiv($elapsedDays, 30));
 } elseif ($novicePreview) {
     $elapsedDays = isset($_GET['day']) ? max(0, (int)$_GET['day']) : 0;
     $scheduledPhases = obLegacySchedule($phases);
@@ -308,7 +324,8 @@ function obRenderMzTotalBar(array $mzStatusMap): void {
  * podmienok, 1.–6. mesiac = podľa produkčných bodov, 7.–24. mesiac = podľa
  * statusu FIT/STD/TOP.
  */
-function obRenderRewards(array $mzStatusMap, int $currentMzMonth): void {
+function obRenderRewards(array $mzStatusMap, int $currentMzMonth, bool $readOnly = false): void {
+    $ro = $readOnly ? 'disabled title="Náhľad je len na čítanie"' : '';
     $sel0 = $mzStatusMap[0] ?? null;
     ?>
     <div class="mz-card mz-card-single">
@@ -318,7 +335,7 @@ function obRenderRewards(array $mzStatusMap, int $currentMzMonth): void {
       </div>
       <p class="mz-card-note">Registrácia v NBS, e-learning, základné školenia, 100 kontaktov v CRM+ a min. 15 ponúk v Unipoint — jednorazovo 500 €.</p>
       <div class="mz-status-picker" data-month="0">
-        <button type="button" class="mz-status-btn mz-status-btn-fit<?= $sel0 === 'fit' ? ' is-selected' : '' ?>" data-status="fit" onclick="mzSelectStatus(this)">✓ Podmienky splnené<span class="mz-status-amt"><?= mzDpAmount(0, 'fit') ?> €</span></button>
+        <button type="button" class="mz-status-btn mz-status-btn-fit<?= $sel0 === 'fit' ? ' is-selected' : '' ?>" data-status="fit" onclick="mzSelectStatus(this)" <?= $ro ?>>✓ Podmienky splnené<span class="mz-status-amt"><?= mzDpAmount(0, 'fit') ?> €</span></button>
       </div>
     </div>
     <?php foreach (MZ_QUARTERS as $months):
@@ -342,7 +359,7 @@ function obRenderRewards(array $mzStatusMap, int $currentMzMonth): void {
           <div class="mz-month-label"><?= $m ?>. mesiac<?= $isFinal ? ' 🎯' : '' ?></div>
           <div class="mz-status-picker" data-month="<?= $m ?>">
             <?php foreach ($labels as $sKey => $sLabel): $amt = mzDpAmount($m, $sKey); ?>
-            <button type="button" class="mz-status-btn mz-status-btn-<?= $sKey ?><?= $selM === $sKey ? ' is-selected' : '' ?>" data-status="<?= $sKey ?>" onclick="mzSelectStatus(this)"><?= $sLabel ?><span class="mz-status-amt"><?= $amt ?> €</span></button>
+            <button type="button" class="mz-status-btn mz-status-btn-<?= $sKey ?><?= $selM === $sKey ? ' is-selected' : '' ?>" data-status="<?= $sKey ?>" onclick="mzSelectStatus(this)" <?= $ro ?>><?= $sLabel ?><span class="mz-status-amt"><?= $amt ?> €</span></button>
             <?php endforeach; ?>
           </div>
         </div>
@@ -358,7 +375,7 @@ $mzStatusMap = [];
 if ($viewerIsNovice) {
     try {
         $mzStmt = db()->prepare('SELECT month_number, status FROM formulare_mz_status WHERE advisor_id = ?');
-        $mzStmt->execute([$advisorId]);
+        $mzStmt->execute([$viewerAdvisorId]);
         foreach ($mzStmt->fetchAll() as $row) { $mzStatusMap[(int)$row['month_number']] = $row['status']; }
     } catch (Throwable $e) { /* tabuľka ešte nemusí existovať */ }
 }
@@ -366,12 +383,13 @@ if ($viewerIsNovice) {
 // Osobné odškrtávanie materiálov — čisto pre nováčika samotného, nech si vie
 // značiť, čo už spravil. NIE je to nástroj na kontrolu ownerom: nikde sa
 // nezobrazuje súhrnne za tím, neovplyvňuje postup fázou (ten ide ďalej len
-// podľa uplynutého času).
+// podľa uplynutého času). V "preview as" móde sa zobrazí presne to, čo má
+// odškrtnuté reálny nováčik — owner si tak vie overiť jeho pohľad.
 $doneStepIds = [];
 if ($viewerIsNovice) {
     try {
         $doneStmt = db()->prepare('SELECT step_id FROM formulare_onboarding_progress WHERE advisor_id = ?');
-        $doneStmt->execute([$advisorId]);
+        $doneStmt->execute([$viewerAdvisorId]);
         $doneStepIds = array_map('intval', array_column($doneStmt->fetchAll(), 'step_id'));
     } catch (Throwable $e) { /* tabuľka ešte nemusí existovať */ }
 }
@@ -624,7 +642,7 @@ if ($isOwner) {
   <?php if ($novicePreview): ?>
   <div class="section">
     <div class="ob-preview-banner">
-      <span>👀 Náhľad pohľadu, aký vidí priradený nováčik<?= isset($_GET['day']) ? ' (deň ' . (int)$_GET['day'] . ')' : '' ?>.</span>
+      <span>👀 <?= $previewAdvisor ? 'Presne to, čo teraz vidí ' . h($previewAdvisor['name']) . '.' : 'Náhľad všeobecnej šablóny' . (isset($_GET['day']) ? ' (deň ' . (int)$_GET['day'] . ')' : '') . ' — nie je naviazaný na konkrétneho nováčika.' ?></span>
       <a class="pillbtn" href="/cesta-novacika.php">← Späť na správu</a>
     </div>
   </div>
@@ -676,7 +694,7 @@ if ($isOwner) {
               break;
           } else { break; }
       }
-      $vp = $novicePreview ? '&view=novice' . (isset($_GET['day']) ? '&day=' . (int)$_GET['day'] : '') : '';
+      $vp = $novicePreview ? '&view=novice' . ($previewAdvisor ? '&as=' . (int)$previewAdvisor['id'] : (isset($_GET['day']) ? '&day=' . (int)$_GET['day'] : '')) : '';
     ?>
     <div class="ob-journey-scroll">
       <svg viewBox="0 0 <?= $jWidth ?> <?= $jHeight ?>" width="<?= $jWidth ?>" height="<?= $jHeight ?>" class="obt-route-svg" role="img" aria-label="Letová trasa naprieč fázami onboardingu">
@@ -721,7 +739,7 @@ if ($isOwner) {
       <?php if ($mats): ?>
       <?php foreach ($mats as $m): $tip = $OB_TOOLTIPS[$m['title']] ?? null; $isDone = in_array((int)$m['id'], $doneStepIds, true); ?>
       <div class="ob-material<?= $isDone ? ' done' : '' ?>" id="ob-mat-<?= (int)$m['id'] ?>">
-        <input type="checkbox" <?= $isDone ? 'checked' : '' ?> data-toggle-step="<?= (int)$m['id'] ?>" aria-label="Označiť ako splnené">
+        <input type="checkbox" <?= $isDone ? 'checked' : '' ?> data-toggle-step="<?= (int)$m['id'] ?>" aria-label="Označiť ako splnené" <?= $novicePreview ? 'disabled title="Náhľad je len na čítanie"' : '' ?>>
         <div class="ob-material-body">
           <div class="ob-material-title"><?= h($m['title']) ?><?php if ($tip): ?><span class="ob-info" tabindex="0">i<span class="ob-info-bubble"><?= h($tip) ?></span></span><?php endif; ?></div>
           <?php if ($m['description']): ?><div class="ob-material-desc"><?= h($m['description']) ?></div><?php endif; ?>
@@ -748,7 +766,7 @@ if ($isOwner) {
 
   <div class="card">
     <h3 class="mz-tracker-title">💰 Čo za to dostaneš — Model zapracovania</h3>
-    <?php obRenderRewards($mzStatusMap, $currentMzMonth); ?>
+    <?php obRenderRewards($mzStatusMap, $currentMzMonth, $novicePreview); ?>
   </div>
 
   <?php
@@ -926,6 +944,9 @@ if ($isOwner) {
           <input type="hidden" name="<?= $assigned ? 'unassign_advisor_id' : 'assign_advisor_id' ?>" value="<?= (int)$ta['id'] ?>">
           <?php if (!$assigned): ?>
           <input type="date" name="start_date" value="<?= h(date('Y-m-01', strtotime('first day of next month'))) ?>" title="Dátum nástupu (1. v mesiaci) — nepovinné, bez neho pôjdu fázy po starom (pevný počet dní)">
+          <?php endif; ?>
+          <?php if ($assigned): ?>
+          <a class="toggle-btn" href="?view=novice&as=<?= (int)$ta['id'] ?>" title="Zobraziť presne to, čo teraz vidí <?= h($ta['name']) ?>">👀 Zobraziť ako</a>
           <?php endif; ?>
           <button type="submit" class="toggle-btn"><?= $assigned ? 'Odobrať' : 'Priradiť' ?></button>
         </form>
