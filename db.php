@@ -789,6 +789,7 @@ function dbInitSqlite(PDO $pdo): void {
     $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_team_events (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         event_date TEXT NOT NULL,
+        end_date TEXT NULL,
         title TEXT NOT NULL,
         note TEXT NOT NULL DEFAULT '',
         assigned_advisor_id INTEGER NULL,
@@ -799,6 +800,8 @@ function dbInitSqlite(PDO $pdo): void {
     )");
     $pdo->exec("CREATE INDEX IF NOT EXISTS idx_team_events_date ON formulare_team_events(event_date)");
     try { $pdo->exec("ALTER TABLE formulare_team_events ADD COLUMN assigned_advisor_id INTEGER NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
+    try { $pdo->exec("ALTER TABLE formulare_team_events ADD COLUMN end_date TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
+    $pdo->exec("UPDATE formulare_team_events SET end_date = event_date WHERE end_date IS NULL");
     // Viacnásobné priradenie udalosti (2-3 kolegom naraz) — nahrádza pôvodný
     // jediný assigned_advisor_id stĺpec, ktorý ostáva v DB len kvôli starým
     // riadkom (nečíta sa už nikde v kóde). Prázdna množina priradení = celý tím.

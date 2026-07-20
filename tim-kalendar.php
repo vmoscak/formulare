@@ -29,6 +29,17 @@ function setEventAssignees(int $eventId, array $advisorIds): void {
     $ins = db()->prepare('INSERT INTO formulare_team_event_assignees (event_id, advisor_id) VALUES (?, ?)');
     foreach (array_unique(array_filter($advisorIds)) as $aid) { $ins->execute([$eventId, $aid]); }
 }
+/** "22. – 24. júl" pre viacdňovú udalosť, alebo prázdny reťazec pre jednodňovú. */
+function eventRangeLabel(array $e, array $skMonths): string {
+    $end = $e['end_date'] ?: $e['event_date'];
+    if ($end === $e['event_date']) return '';
+    $start = new DateTime($e['event_date']);
+    $endD = new DateTime($end);
+    if ($start->format('Y-m') === $endD->format('Y-m')) {
+        return (int)$start->format('j') . '. – ' . (int)$endD->format('j') . '. ' . $skMonths[(int)$endD->format('n')];
+    }
+    return (int)$start->format('j') . '. ' . $skMonths[(int)$start->format('n')] . ' – ' . (int)$endD->format('j') . '. ' . $skMonths[(int)$endD->format('n')];
+}
 
 $monthParam = preg_match('/^\d{4}-\d{2}$/', (string)($_GET['month'] ?? '')) ? $_GET['month'] : date('Y-m');
 $selectedDay = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)($_GET['day'] ?? '')) ? $_GET['day'] : null;
@@ -40,11 +51,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $assigneeIds = array_map('intval', (array)($_POST['assignee_ids'] ?? []));
         if (isset($_POST['add'])) {
             $eventDate = trim((string)($_POST['event_date'] ?? ''));
+            $endDate = trim((string)($_POST['end_date'] ?? '')) ?: $eventDate;
+            if ($endDate < $eventDate) $endDate = $eventDate; // obrátený rozsah - berieme len začiatok
             $title = trim((string)($_POST['title'] ?? ''));
             $note = trim((string)($_POST['note'] ?? ''));
             if ($eventDate !== '' && $title !== '') {
-                db()->prepare('INSERT INTO formulare_team_events (event_date, title, note, created_by) VALUES (?, ?, ?, ?)')
-                    ->execute([$eventDate, $title, $note, $advisorId]);
+                db()->prepare('INSERT INTO formulare_team_events (event_date, end_date, title, note, created_by) VALUES (?, ?, ?, ?, ?)')
+                    ->execute([$eventDate, $endDate, $title, $note, $advisorId]);
                 setEventAssignees((int)db()->lastInsertId(), $assigneeIds);
                 $backMonth = substr($eventDate, 0, 7);
                 $backDay = $eventDate;
@@ -52,11 +65,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif (isset($_POST['edit_id'])) {
             $id = (int)$_POST['edit_id'];
             $eventDate = trim((string)($_POST['event_date'] ?? ''));
+            $endDate = trim((string)($_POST['end_date'] ?? '')) ?: $eventDate;
+            if ($endDate < $eventDate) $endDate = $eventDate;
             $title = trim((string)($_POST['title'] ?? ''));
             $note = trim((string)($_POST['note'] ?? ''));
             if ($id && $eventDate !== '' && $title !== '') {
-                db()->prepare('UPDATE formulare_team_events SET event_date = ?, title = ?, note = ? WHERE id = ?')
-                    ->execute([$eventDate, $title, $note, $id]);
+                db()->prepare('UPDATE formulare_team_events SET event_date = ?, end_date = ?, title = ?, note = ? WHERE id = ?')
+                    ->execute([$eventDate, $endDate, $title, $note, $id]);
                 setEventAssignees($id, $assigneeIds);
                 $backMonth = substr($eventDate, 0, 7);
                 $backDay = $eventDate;
@@ -87,11 +102,22 @@ for ($i = 0; $i < 42; $i++) { $gridDays[] = clone $cursor; $cursor->modify('+1 d
 $rangeStart = $gridDays[0]->format('Y-m-d');
 $rangeEnd = end($gridDays)->format('Y-m-d');
 
-$evStmt = db()->prepare('SELECT * FROM formulare_team_events WHERE event_date BETWEEN ? AND ? ORDER BY event_date, id');
-$evStmt->execute([$rangeStart, $rangeEnd]);
+// Viacdňová udalosť patrí do mriežky, ak sa jej rozsah [event_date, end_date]
+// prekrýva s viditeľným rozsahom dní (nielen keď v ňom začína).
+$evStmt = db()->prepare('SELECT * FROM formulare_team_events WHERE event_date <= ? AND COALESCE(end_date, event_date) >= ? ORDER BY event_date, id');
+$evStmt->execute([$rangeEnd, $rangeStart]);
 $eventsInRange = $evStmt->fetchAll();
 $eventsByDate = [];
-foreach ($eventsInRange as $e) { $eventsByDate[$e['event_date']][] = $e; }
+foreach ($eventsInRange as $e) {
+    $rangeFrom = max($e['event_date'], $rangeStart);
+    $rangeTo = min($e['end_date'] ?: $e['event_date'], $rangeEnd);
+    $cursorDate = new DateTime($rangeFrom);
+    $endDateObj = new DateTime($rangeTo);
+    while ($cursorDate <= $endDateObj) {
+        $eventsByDate[$cursorDate->format('Y-m-d')][] = $e;
+        $cursorDate->modify('+1 day');
+    }
+}
 
 $advisorsById = [];
 $assignableAdvisors = [];
@@ -127,9 +153,11 @@ $editAssigneeIds = $editEventId ? ($assigneesByEvent[$editEventId] ?? []) : [];
 // nadchádzajúce, prepínačom "aj uplynulé" sa dá zobraziť celá história.
 $listFilter = (string)($_GET['filter'] ?? 'all'); // 'all' | 'unassigned' | id poradcu
 $listShowPast = isset($_GET['past']);
+// Viacdňová udalosť, čo ešte prebieha (začala v minulosti, končí dnes/neskôr),
+// sa aj bez "aj uplynulé" počíta ako nadchádzajúca/prebiehajúca.
 $listStmt = $listShowPast
     ? db()->prepare('SELECT * FROM formulare_team_events ORDER BY event_date ASC, id')
-    : db()->prepare('SELECT * FROM formulare_team_events WHERE event_date >= ? ORDER BY event_date ASC, id');
+    : db()->prepare('SELECT * FROM formulare_team_events WHERE COALESCE(end_date, event_date) >= ? ORDER BY event_date ASC, id');
 $listShowPast ? $listStmt->execute() : $listStmt->execute([$today]);
 $allEventsForList = $listStmt->fetchAll();
 
@@ -204,6 +232,7 @@ function tkListFilterUrl(string $monthParam, string $filter, bool $showPast): st
   .tk-actions{display:flex; gap:6px; flex-shrink:0;}
   .tk-add-form{display:flex; flex-direction:column; gap:10px;}
   .tk-add-row{display:grid; grid-template-columns:160px 1fr; gap:10px;}
+  .tk-add-row-3{grid-template-columns:150px 150px 1fr;}
   .tk-assignee-picker{display:flex; flex-wrap:wrap; gap:8px;}
   .tk-chip{display:inline-flex; align-items:center; gap:7px; padding:7px 12px 7px 8px; border:1px solid var(--line-strong);
     border-radius:999px; background:var(--paper); font-size:12.5px; font-weight:600; color:var(--ink-2); cursor:pointer;
@@ -220,6 +249,8 @@ function tkListFilterUrl(string $monthParam, string $filter, bool $showPast): st
   .tk-filter-chip:hover{border-color:var(--accent);}
   .tk-filter-chip.is-active{border-color:var(--accent); background:var(--accent-soft); color:var(--accent-ink);}
   .tk-filter-dot{width:9px; height:9px; border-radius:50%; flex-shrink:0;}
+  .tew-range{font-weight:600; color:var(--accent-ink);}
+  .tk-multiday-badge{font-size:11px; font-weight:700; color:var(--accent-ink); background:var(--accent-soft); border-radius:999px; padding:2px 9px; margin-left:8px;}
   .tew-row:hover{background:var(--desk);}
   @media(max-width:720px){ .tk-add-row{grid-template-columns:1fr;} .cal-day-num{font-size:11px;} }
 </style>
@@ -319,10 +350,11 @@ function tkListFilterUrl(string $monthParam, string $filter, bool $showPast): st
       $evAssignees = eventAssigneeAdvisors($e, $listAssigneesByEvent, $advisorsById);
       $ts = strtotime($e['event_date']);
     ?>
+    <?php $rangeLabel = eventRangeLabel($e, $SK_MONTHS); ?>
     <a class="tew-row" href="?month=<?= substr($e['event_date'], 0, 7) ?>&day=<?= h($e['event_date']) ?>" style="text-decoration:none; color:inherit;">
       <div class="tew-badge"><span class="d"><?= (int)date('j', $ts) ?></span><span class="m"><?= mb_strtoupper(mb_substr($SK_MONTHS[(int)date('n', $ts)], 0, 3)) ?></span></div>
       <div class="tew-body">
-        <div class="tew-title"><?= h($e['title']) ?></div>
+        <div class="tew-title"><?= h($e['title']) ?><?php if ($rangeLabel): ?> <span class="tew-range">· <?= h($rangeLabel) ?></span><?php endif; ?></div>
         <div class="tew-who"><?= $evAssignees ? h(implode(', ', array_column($evAssignees, 'name'))) : 'Celý tím' ?></div>
       </div>
       <div class="tew-avatars">
@@ -356,11 +388,12 @@ function tkListFilterUrl(string $monthParam, string $filter, bool $showPast): st
       <input type="hidden" name="edit_id" value="<?= (int)$e['id'] ?>">
       <input type="hidden" name="_month" value="<?= h($monthParam) ?>">
       <input type="hidden" name="_day" value="<?= h($selectedDay) ?>">
-      <div class="tk-add-row">
+      <div class="tk-add-row tk-add-row-3">
         <input type="date" name="event_date" value="<?= h($e['event_date']) ?>" required>
+        <input type="date" name="end_date" value="<?= h($e['end_date'] ?: $e['event_date']) ?>" title="Do (voliteľné, pre viacdňovú udalosť)">
         <input type="text" name="title" value="<?= h($e['title']) ?>" placeholder="Názov" required>
       </div>
-      <div class="tk-assignee-hint">Prázdne = celý tím. Zaškrtni 1 alebo viac kolegov, ktorých sa to týka.</div>
+      <div class="tk-assignee-hint">Druhý dátum = "do" pre viacdňovú udalosť (prázdne/rovnaké = jeden deň). Prázdni priradení = celý tím.</div>
       <div class="tk-assignee-picker">
         <?php foreach ($assignableAdvisors as $a): ?>
         <label class="tk-chip">
@@ -386,7 +419,7 @@ function tkListFilterUrl(string $monthParam, string $filter, bool $showPast): st
         <?php endforeach; endif; ?>
       </div>
       <div class="tk-body">
-        <div class="tk-title"><?= h($e['title']) ?></div>
+        <div class="tk-title"><?= h($e['title']) ?><?php $rangeLabel = eventRangeLabel($e, $SK_MONTHS); if ($rangeLabel): ?><span class="tk-multiday-badge">📅 <?= h($rangeLabel) ?></span><?php endif; ?></div>
         <div class="tk-who"><?= $evAssignees ? h(implode(', ', array_column($evAssignees, 'name'))) : 'Celý tím' ?></div>
         <?php if ($e['note']): ?><div class="tk-note"><?= nl2br(h($e['note'])) ?></div><?php endif; ?>
       </div>
@@ -414,11 +447,12 @@ function tkListFilterUrl(string $monthParam, string $filter, bool $showPast): st
       <input type="hidden" name="add" value="1">
       <input type="hidden" name="_month" value="<?= h($monthParam) ?>">
       <input type="hidden" name="_day" value="<?= h((string)$selectedDay) ?>">
-      <div class="tk-add-row">
+      <div class="tk-add-row tk-add-row-3">
         <input type="date" name="event_date" value="<?= h($selectedDay ?: $today) ?>" required>
+        <input type="date" name="end_date" title="Do (voliteľné, pre viacdňovú udalosť)">
         <input type="text" name="title" placeholder="Názov (napr. Uzávierka provízií)" required>
       </div>
-      <div class="tk-assignee-hint">Prázdne = celý tím. Zaškrtni 1 alebo viac kolegov, ktorých sa to týka (napr. obchodníkov + seba).</div>
+      <div class="tk-assignee-hint">Druhý dátum = "do" pre viacdňovú udalosť (napr. dovolenka, výjazd) — nechaj prázdny pre jednodňovú. Prázdni priradení = celý tím.</div>
       <div class="tk-assignee-picker">
         <?php foreach ($assignableAdvisors as $a): ?>
         <label class="tk-chip">
