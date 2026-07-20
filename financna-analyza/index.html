@@ -430,11 +430,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
     <style>
 :root{
-      --blue:#253877; --orange:#ff691e; --bg:#f0f2f7; --card:#fff; --text:#444546; --muted:#7b7b7b; --line:#e4e8f0;
+      --blue:#4338ca; --orange:#4f46e5; --bg:#f0f2f7; --card:#fff; --text:#444546; --muted:#7b7b7b; --line:#e4e8f0;
       --ok:#1d8f3a; --warn:#d4600a; --bad:#cc2a2a;
-      --shadow-soft:0 2px 12px rgba(37,56,119,.07);
-      --shadow-card:0 4px 18px rgba(37,56,119,.09);
-      --shadow-strong:0 12px 32px rgba(37,56,119,.13);
+      --shadow-soft:0 2px 12px rgba(67,56,202,.07);
+      --shadow-card:0 4px 18px rgba(67,56,202,.09);
+      --shadow-strong:0 12px 32px rgba(67,56,202,.13);
       --radius:8px;
     }
     *{box-sizing:border-box}
@@ -462,7 +462,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     .header::after{
       content:"";position:absolute;right:-30px;top:-30px;
       width:200px;height:200px;
-      border:40px solid rgba(255,105,30,.12);
+      border:40px solid rgba(79,70,229,.12);
       border-radius:50%;pointer-events:none;z-index:0;
     }
     .wrap{max-width:1360px;margin:18px auto;padding:0 14px 34px}
@@ -472,7 +472,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       border-radius:7px;font-weight:600;cursor:pointer;transition:.15s ease;font-size:.85rem;letter-spacing:.01em;
     }
     .tab:hover{background:rgba(255,255,255,.7);color:var(--blue)}
-    .tab.active{background:#fff;color:var(--blue);box-shadow:0 1px 6px rgba(37,56,119,.12)}
+    .tab.active{background:#fff;color:var(--blue);box-shadow:0 1px 6px rgba(67,56,202,.12)}
     .panel{display:none}
     .panel.active{display:block}
     .card{
@@ -489,16 +489,16 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       background:#fff;transition:border-color .15s ease, box-shadow .15s ease
     }
     input:focus,select:focus,textarea:focus{
-      outline:0;border-color:#9db0e6;box-shadow:0 0 0 3px rgba(37,56,119,.08)
+      outline:0;border-color:#c7d2fe;box-shadow:0 0 0 3px rgba(67,56,202,.08)
     }
     textarea{min-height:78px;resize:vertical}
     .btn{
       border:1px solid transparent;border-radius:6px;padding:10px 12px;font-weight:700;cursor:pointer;
       transition:.15s ease;letter-spacing:.01em
     }
-    .btn.primary{background:var(--orange);color:#fff;box-shadow:0 4px 14px rgba(255,105,30,.28);font-weight:700}
+    .btn.primary{background:var(--orange);color:#fff;box-shadow:0 4px 14px rgba(79,70,229,.28);font-weight:700}
     .btn.primary:hover{filter:brightness(.96);transform:translateY(-1px)}
-    .btn.secondary{background:var(--blue);color:#fff;box-shadow:0 4px 14px rgba(37,56,119,.22);font-weight:700}
+    .btn.secondary{background:var(--blue);color:#fff;box-shadow:0 4px 14px rgba(67,56,202,.22);font-weight:700}
     .btn.secondary:hover{filter:brightness(.95);transform:translateY(-1px)}
     .btn.light{background:#fff;color:var(--blue);border-color:#d1d8ea}
     .btn.light:hover{background:#f6f8ff;border-color:#bcc8e8}
@@ -590,7 +590,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     .choice input{width:auto;min-height:auto;margin-top:2px}
     .choice .ct{font-weight:600;color:var(--blue)}
     .choice .cs{font-size:.8rem;color:var(--muted)}
-    .score-card{border:1px solid #ffd9c6;background:linear-gradient(120deg,#fff7f3 0%,#fff 60%);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow-card);border-left:4px solid var(--orange)}
+    .score-card{border:1px solid #c7d2fe;background:linear-gradient(120deg,#eef2ff 0%,#fff 60%);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow-card);border-left:4px solid var(--orange)}
     .brand-surface{position:relative;overflow:hidden}
     .brand-surface::before{
       content:"";
@@ -599,7 +599,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       top:18px;
       width:190px;
       height:190px;
-      background:linear-gradient(135deg, rgba(37,56,119,.09), rgba(37,56,119,.03));
+      background:linear-gradient(135deg, rgba(67,56,202,.09), rgba(67,56,202,.03));
       clip-path:polygon(0 50%, 70% 0, 100% 0, 30% 50%, 100% 100%, 70% 100%);
       transform:rotate(6deg);
       pointer-events:none;
@@ -612,7 +612,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       bottom:-58px;
       width:140px;
       height:140px;
-      background:linear-gradient(135deg, rgba(255,105,30,.12), rgba(255,105,30,.04));
+      background:linear-gradient(135deg, rgba(79,70,229,.12), rgba(79,70,229,.04));
       clip-path:polygon(0 50%, 70% 0, 100% 0, 30% 50%, 100% 100%, 70% 100%);
       transform:rotate(-12deg);
       pointer-events:none;
@@ -641,7 +641,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     }
     .score-big{font-size:2rem;font-weight:800;color:var(--blue);line-height:1}
     /* ===== PDF OVERLAY ===== */
-    .pdf-overlay{display:none;position:fixed;inset:0;background:rgba(37,56,119,.5);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+    .pdf-overlay{display:none;position:fixed;inset:0;background:rgba(67,56,202,.5);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
     .pdf-overlay.show{display:flex}
     .pdf-box{background:#fff;border-radius:12px;padding:20px 28px;border-top:4px solid var(--orange);text-align:center;min-width:280px;color:var(--blue);box-shadow:0 20px 60px rgba(0,0,0,.2)}
     .pdf-spinner{width:36px;height:36px;border:3px solid #e7ecfb;border-top-color:var(--orange);border-radius:50%;margin:0 auto 10px;animation:spin .8s linear infinite}
@@ -671,7 +671,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     .pdf-cover::after{
       content:"";position:absolute;right:-20px;top:-20px;
       width:160px;height:160px;
-      border:32px solid rgba(255,105,30,.14);
+      border:32px solid rgba(79,70,229,.14);
       border-radius:50%;pointer-events:none;
     }
 
@@ -729,8 +729,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     /* PDF – Score box */
     .pdf-score-box{
       display:flex;align-items:center;gap:16px;
-      background:linear-gradient(120deg,#fff7f3,#fff);
-      border:1px solid #ffd9c6;
+      background:linear-gradient(120deg,#eef2ff,#fff);
+      border:1px solid #c7d2fe;
       border-left:4px solid var(--orange);
       padding:12px 16px;
       margin:10px 0;
@@ -773,7 +773,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
     /* Client PDF extras */
     .pdf-client-hero{
-      background:linear-gradient(120deg,var(--blue) 0%,#2e4895 100%);
+      background:linear-gradient(120deg,var(--blue) 0%,#6366f1 100%);
       color:#fff;padding:24px 30px;border-bottom:4px solid var(--orange);
       position:relative;overflow:hidden;
     }
@@ -831,7 +831,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     .sec{margin-bottom:8px;border:1px solid var(--line);border-radius:var(--radius);background:#fff;overflow:hidden;box-shadow:var(--shadow-soft)}
     /* Input focus ring */
     input:focus,select:focus,textarea:focus{
-      outline:0;border-color:#253877;box-shadow:0 0 0 3px rgba(37,56,119,.10)
+      outline:0;border-color:#4338ca;box-shadow:0 0 0 3px rgba(67,56,202,.10)
     }
     /* Table header rows */
     tr:hover td{background:#f8f9ff}
@@ -856,7 +856,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     .sem{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:.73rem;font-weight:700;gap:4px}
     .sem.g::before{content:"●";font-size:.55rem}.sem.y::before{content:"●";font-size:.55rem}.sem.r::before{content:"●";font-size:.55rem}
     /* Inv chart fill */
-    .inv-chart-fill{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#253877,#3a57a8)}
+    .inv-chart-fill{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#4338ca,#6366f1)}
     .inv-chart-fill.good{background:linear-gradient(90deg,#1d8f3a,#2aa54d)}
     /* Clients tab table */
     #clients .card{padding:0;overflow:hidden}
@@ -870,7 +870,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   
     /* ===== DARK MODE ===== */
     body.dark-mode {
-      --blue:#90adff; --orange:#f0b27a; --bg:#0f1726; --card:#162238;
+      --blue:#a5b4fc; --orange:#818cf8; --bg:#0f1726; --card:#162238;
       --text:#e6ecfb; --muted:#a8b7d1; --line:#2b3a57;
       --ok:#5dd6a1; --warn:#efc87f; --bad:#ef8d93;
       --shadow-soft:0 4px 14px rgba(0,0,0,.42);
@@ -953,7 +953,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       position:sticky; top:0; z-index:100;
       background:var(--bg); padding:6px 0 4px;
       margin-bottom:6px;
-      box-shadow:0 2px 8px rgba(37,56,119,.08);
+      box-shadow:0 2px 8px rgba(67,56,202,.08);
     }
 
     /* ===== AUTOSAVE PULSE ===== */
@@ -1005,7 +1005,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     /* ===== NOTES FIELD ===== */
     .notes-card {
       background:linear-gradient(120deg,#fff7f0,#fff);
-      border:1px solid #ffd0b0; border-left:4px solid var(--orange);
+      border:1px solid #c7d2fe; border-left:4px solid var(--orange);
       border-radius:var(--radius); padding:14px;
       margin-top:10px; box-shadow:var(--shadow-soft);
     }
@@ -1033,7 +1033,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     .scenario-bar-fill { height:100%; border-radius:4px; display:flex; align-items:center; padding-left:8px; font-size:.75rem; font-weight:700; color:#fff; white-space:nowrap; transition:width .6s ease; }
     .scenario-bar-val { font-size:.8rem; font-weight:700; color:var(--blue); text-align:right; }
     .bar-cons { background:linear-gradient(90deg,#5b7de8,#7b9cf0); }
-    .bar-real { background:linear-gradient(90deg,var(--blue),#3a57a8); }
+    .bar-real { background:linear-gradient(90deg,var(--blue),#6366f1); }
     .bar-dyn  { background:linear-gradient(90deg,var(--ok),#25a850); }
     body.dark-mode .scenario-bar-val { color:var(--blue); }
 
@@ -1089,7 +1089,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
     /* ===== PREZENTÁCIA ===== */
     .present-stage{
-      background:linear-gradient(135deg,var(--blue) 0%,#2e4895 100%);
+      background:linear-gradient(135deg,var(--blue) 0%,#6366f1 100%);
       border-radius:12px;overflow:hidden;box-shadow:var(--shadow-strong);
       display:flex;flex-direction:column;
     }
@@ -1106,7 +1106,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     .present-stat .v.neg{color:#ff9c9c}
     .slide-card{background:#fff;color:#444546;border-radius:12px;padding:20px 22px;margin-top:8px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
     .slide-card table{width:100%;border-collapse:collapse;background:#fff}
-    .slide-card th{background:#f0f4fc;color:#253877;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em}
+    .slide-card th{background:#f0f4fc;color:#4338ca;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em}
     .slide-card th,.slide-card td{border:1px solid #e2e6f2;padding:9px 10px;font-size:.95rem;text-align:left}
     .slide-card tr:hover td{background:#fff}
     .present-steps{display:grid;gap:14px;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:8px}
@@ -1599,7 +1599,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     </section>
 
   </div>
-  <div class="pdf-overlay" id="pdfOverlay"><div class="pdf-box"><div class="pdf-spinner"></div><div style="font-weight:600;color:#253877;margin-bottom:3px">Generujem PDF...</div><div style="font-size:.78rem;color:#7b7b7b">Prosím, čakajte</div></div></div>
+  <div class="pdf-overlay" id="pdfOverlay"><div class="pdf-box"><div class="pdf-spinner"></div><div style="font-weight:600;color:#4338ca;margin-bottom:3px">Generujem PDF...</div><div style="font-size:.78rem;color:#7b7b7b">Prosím, čakajte</div></div></div>
 
     <script>
 const INDEX_KEY = "fa2_clients_index";
@@ -1983,7 +1983,7 @@ const INDEX_KEY = "fa2_clients_index";
         ${slice(expPct, 0, '#e85d1a')}
         ${slice(savPct, expPct, '#1d8f3a')}
         <circle cx="${cx}" cy="${cy}" r="28" fill="white"/>
-        <text x="${cx}" y="${cy-6}" text-anchor="middle" font-size="11" font-weight="700" fill="#253877">${savPct}%</text>
+        <text x="${cx}" y="${cy-6}" text-anchor="middle" font-size="11" font-weight="700" fill="#4338ca">${savPct}%</text>
         <text x="${cx}" y="${cy+8}" text-anchor="middle" font-size="9" fill="#7b7b7b">úspory</text>
       </svg>`;
       return `<div class="budget-pie-wrap">
@@ -1991,7 +1991,7 @@ const INDEX_KEY = "fa2_clients_index";
         <div class="budget-legend">
           <div class="budget-legend-item"><div class="budget-legend-dot" style="background:#e85d1a"></div><span>Výdavky: <b>${expAmt.toLocaleString('sk-SK')} €</b> (${expPct}%)</span></div>
           <div class="budget-legend-item"><div class="budget-legend-dot" style="background:#1d8f3a"></div><span>Prebytok: <b>${savAmt.toLocaleString('sk-SK')} €</b> (${savPct}%)</span></div>
-          <div class="budget-legend-item"><div class="budget-legend-dot" style="background:#253877"></div><span>Príjem: <b>${income.toLocaleString('sk-SK')} €</b></span></div>
+          <div class="budget-legend-item"><div class="budget-legend-dot" style="background:#4338ca"></div><span>Príjem: <b>${income.toLocaleString('sk-SK')} €</b></span></div>
         </div>
       </div>`;
     }
@@ -3628,7 +3628,7 @@ function getOwnerLabel(val){
 
       const wrapper = document.createElement("div");
       wrapper.className = "pdf-pages";
-      wrapper.style.cssText = "width:1100px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;background:#eef1f8;padding:12px 0;--blue:#253877;--orange:#ff691e;--ok:#1d8f3a;--warn:#d4600a;--bad:#cc2a2a;--text:#444546;--muted:#7b7b7b;--line:#e4e8f0;--card:#fff;";
+      wrapper.style.cssText = "width:1100px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;background:#eef1f8;padding:12px 0;--blue:#4338ca;--orange:#4f46e5;--ok:#1d8f3a;--warn:#d4600a;--bad:#cc2a2a;--text:#444546;--muted:#7b7b7b;--line:#e4e8f0;--card:#fff;";
 
       wrapper.innerHTML = `
         <style>
@@ -3639,7 +3639,7 @@ function getOwnerLabel(val){
           .pdf-block{break-inside:avoid;margin-bottom:10px}
           .pdf-block ul{list-style:none;padding-left:0;margin:0}
           .pdf-block ul li{position:relative;padding-left:14px}
-          .pdf-block ul li:before{content:"•";position:absolute;left:0;color:#253877;font-weight:700}
+          .pdf-block ul li:before{content:"•";position:absolute;left:0;color:#4338ca;font-weight:700}
           .pdf-cover-head{display:grid;grid-template-columns:1fr 1.2fr 280px;gap:18px;align-items:start;position:relative;z-index:1;width:100%}
           .pdf-cover-head .pdf-cover-center{align-self:center}
           .pdf-cover-head .pdf-cover-meta{justify-self:end;text-align:right;min-width:240px;margin-left:auto}
@@ -3689,7 +3689,7 @@ function getOwnerLabel(val){
           <div class="pdf-block"><div class="pdf-section-bar">Zhrnutie stavu domácnosti</div><div class="pdf-summary-box">${summaryText}</div></div>
           ${(dataQualityText || dataQualityDetail) ? `<div class="pdf-block">
             <div style="background:#f8f9fd;border:1px solid #e2e6f2;border-radius:6px;padding:8px 10px;font-size:.8rem;color:#4d5672">
-              ${dataQualityText ? `<div style="font-weight:700;color:#253877;margin-bottom:4px">${dataQualityText}</div>` : ""}
+              ${dataQualityText ? `<div style="font-weight:700;color:#4338ca;margin-bottom:4px">${dataQualityText}</div>` : ""}
               ${dataQualityDetail ? `<div>${dataQualityDetail}</div>` : ""}
             </div>
           </div>` : ""}
@@ -3701,7 +3701,7 @@ function getOwnerLabel(val){
               <div class="pdf-score-box">
                 <div class="pdf-score-num">${scoreText}</div>
                 <div>
-                  <div style="font-weight:700;color:#253877;font-size:.9rem">${scoreLevelText}</div>
+                  <div style="font-weight:700;color:#4338ca;font-size:.9rem">${scoreLevelText}</div>
                   <div class="pdf-score-label">Celkové hodnotenie plánu</div>
                 </div>
               </div>
@@ -3798,7 +3798,7 @@ function getOwnerLabel(val){
           ${implNote ? `<div style="margin-top:8px;background:#fff;border:1px solid #e2e6f2;padding:10px 12px;font-size:.82rem;color:#444;line-height:1.6"><strong>Poznámka k realizácii:</strong><br>${escHtml(implNote).replace(/\n/g,"<br>")}</div>` : ""}
           </div>
 
-          ${d.advisor_notes ? `<div class="pdf-block" style="margin-top:14px;padding:12px 14px;background:#f8f9fd;border:1px solid #e2e6f2;border-left:4px solid var(--orange);border-radius:6px;font-size:.82rem;color:#444;line-height:1.6"><strong style="color:#253877">Poznámky poradcu:</strong><br>${escHtml(d.advisor_notes).replace(/\n/g,'<br>')}</div>` : ''}
+          ${d.advisor_notes ? `<div class="pdf-block" style="margin-top:14px;padding:12px 14px;background:#f8f9fd;border:1px solid #e2e6f2;border-left:4px solid var(--orange);border-radius:6px;font-size:.82rem;color:#444;line-height:1.6"><strong style="color:#4338ca">Poznámky poradcu:</strong><br>${escHtml(d.advisor_notes).replace(/\n/g,'<br>')}</div>` : ''}
 
             </div>
           </div>
@@ -3841,7 +3841,7 @@ function getOwnerLabel(val){
 
       const wrapper = document.createElement("div");
       wrapper.className = "pdf-pages";
-      wrapper.style.cssText = "width:1100px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;background:#eef1f8;padding:12px 0;--blue:#253877;--orange:#ff691e;--ok:#1d8f3a;--warn:#d4600a;--bad:#cc2a2a;--text:#444546;--muted:#7b7b7b;--line:#e4e8f0;--card:#fff;";
+      wrapper.style.cssText = "width:1100px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;background:#eef1f8;padding:12px 0;--blue:#4338ca;--orange:#4f46e5;--ok:#1d8f3a;--warn:#d4600a;--bad:#cc2a2a;--text:#444546;--muted:#7b7b7b;--line:#e4e8f0;--card:#fff;";
 
       wrapper.innerHTML = `
         <style>
@@ -3852,7 +3852,7 @@ function getOwnerLabel(val){
           .pdf-block{break-inside:avoid;margin-bottom:10px}
           .pdf-block ul{list-style:none;padding-left:0;margin:0}
           .pdf-block ul li{position:relative;padding-left:14px}
-          .pdf-block ul li:before{content:"•";position:absolute;left:0;color:#253877;font-weight:700}
+          .pdf-block ul li:before{content:"•";position:absolute;left:0;color:#4338ca;font-weight:700}
           .pdf-client-head-grid{display:grid;grid-template-columns:1fr 240px;gap:20px;align-items:start;position:relative;z-index:1}
           .pdf-client-meta{text-align:right;font-size:.8rem;color:rgba(255,255,255,.78);line-height:1.45}
           .pdf-client-meta .meta-brand{font-size:.76rem;text-transform:uppercase;letter-spacing:.1em;font-weight:300;margin-bottom:4px}
@@ -4032,7 +4032,7 @@ function getOwnerLabel(val){
           <div class="present-stat"><div class="t">Ďalšie stretnutie</div><div class="v" style="font-size:1.3rem">${followupDate || "Dohodneme spoločne"}</div></div>
           <div class="present-stat"><div class="t">Váš poradca</div><div class="v" style="font-size:1.3rem">${ADVISOR.name}</div><div class="t" style="margin-top:8px;text-transform:none;letter-spacing:0">${ADVISOR.tel} · ${ADVISOR.email}</div></div>
         </div>
-        ${implNote ? `<div class="slide-card" style="font-size:.95rem;line-height:1.6"><b style="color:#253877">Dohodnuté úlohy:</b><br>${escHtml(implNote).replace(/\n/g,"<br>")}</div>` : ""}`);
+        ${implNote ? `<div class="slide-card" style="font-size:.95rem;line-height:1.6"><b style="color:#4338ca">Dohodnuté úlohy:</b><br>${escHtml(implNote).replace(/\n/g,"<br>")}</div>` : ""}`);
       holder.innerHTML = slides.map(s=>`<div class="present-slide">${s}</div>`).join("");
       const dots = document.getElementById("presentDots");
       if(dots){
