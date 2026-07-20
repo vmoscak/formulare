@@ -1709,7 +1709,56 @@ const INDEX_KEY = "fa2_clients_index";
       if(migrated > 0) setStatus(`Migrovaných ${migrated} klientov do priečinka`);
     }
 
-    // --- Unified storage API (FS-first, localStorage fallback) ---
+    // --- Server (portal DB) sync layer ---
+    // Klienti sa teraz zdieľajú cez portálovú databázu (nie len localStorage
+    // na jednom PC) — dostupní z ktoréhokoľvek zariadenia po prihlásení.
+    // Best-effort: zlyhanie siete/servera nič nezablokuje, localStorage/FS
+    // zostávajú ako okamžitá lokálna kópia.
+    async function dbSaveClient(id, meta, data){
+      try{
+        const r = await fetch("/api/fa-clients.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, meta, data })
+        });
+        return r.ok;
+      } catch(e){ console.error("dbSaveClient:", e); return false; }
+    }
+    async function dbLoadClient(id){
+      try{
+        const r = await fetch("/api/fa-clients.php?id=" + encodeURIComponent(id));
+        if(!r.ok) return null;
+        return await r.json();
+      } catch(e){ console.error("dbLoadClient:", e); return null; }
+    }
+    async function dbDeleteClient(id){
+      try{
+        await fetch("/api/fa-clients.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "delete", id })
+        });
+      } catch(e){ console.error("dbDeleteClient:", e); }
+    }
+    async function dbLoadIndex(){
+      try{
+        const r = await fetch("/api/fa-clients.php?action=list");
+        if(!r.ok) return null;
+        return await r.json();
+      } catch(e){ console.error("dbLoadIndex:", e); return null; }
+    }
+    async function syncIndexFromServer(){
+      const rows = await dbLoadIndex();
+      if(!Array.isArray(rows)) return; // offline / chyba servera -> lokálny index nedotknutý
+      // Merge namiesto prepísania: server je autoritatívny pre klientov, ktorých
+      // pozná, ale lokálne záznamy, ktoré sa ešte nestihli zosynchronizovať
+      // (napr. uložené offline), sa nezahodia.
+      const byId = new Map(getIndex().map(x => [x.id, x]));
+      for(const r of rows) byId.set(r.id, r);
+      saveIndex([...byId.values()]);
+    }
+
+    // --- Unified storage API (server DB-first, FS/localStorage fallback+backup) ---
     async function storageSaveClient(id, meta, data){
       // Always keep localStorage as backup
       localStorage.setItem(PREFIX + id, JSON.stringify({ savedAt: new Date().toISOString(), data }));
@@ -1722,9 +1771,13 @@ const INDEX_KEY = "fa2_clients_index";
       else ix.push({ id, ...meta });
       saveIndex(ix);
       if(_fsDir) await fsWriteFile("_index.json", ix);
+
+      await dbSaveClient(id, meta, data);
     }
 
     async function storageLoadClient(id){
+      const fromDb = await dbLoadClient(id);
+      if(fromDb) return fromDb;
       if(_fsDir){
         const data = await fsReadFile(id + ".json");
         if(data) return data;
@@ -1736,6 +1789,7 @@ const INDEX_KEY = "fa2_clients_index";
     async function storageDeleteClient(id){
       localStorage.removeItem(PREFIX + id);
       if(_fsDir) await fsDeleteFile(id + ".json");
+      await dbDeleteClient(id);
     }
 
     async function storageSaveIndex(ix){
@@ -4070,6 +4124,7 @@ function getOwnerLabel(val){
       renderClients();
       initFilterTabs();
       safeCompute();
+      syncIndexFromServer().then(()=>renderClients($("#searchClient")?.value || ""));
       $$(".add-row-btn").forEach(b=>b.addEventListener("click",(e)=>{e.stopPropagation(); addRow(b.dataset.add);}));
       document.addEventListener("click",e=>{
         const btn=e.target.closest("[data-del]");

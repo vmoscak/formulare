@@ -748,6 +748,21 @@ function dbInitSqlite(PDO $pdo): void {
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_fa_clients (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        advisor_id INTEGER NOT NULL,
+        client_id TEXT NOT NULL,
+        case_name TEXT NOT NULL DEFAULT '',
+        a_name TEXT NOT NULL DEFAULT '',
+        b_name TEXT NOT NULL DEFAULT '',
+        status TEXT NOT NULL DEFAULT '',
+        data TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (advisor_id, client_id),
+        FOREIGN KEY (advisor_id) REFERENCES formulare_advisors(id)
+    )");
+    $pdo->exec("CREATE INDEX IF NOT EXISTS idx_fa_clients_advisor ON formulare_fa_clients (advisor_id, updated_at)");
     // Cesta nováčika — koncept "Mapa cesty a odmeny": fázy sú samostatné
     // entity s dĺžkou trvania (dni), postup je automatický podľa uplynutého
     // času od formulare_advisors.onboarding_started_at (žiadne ručné
