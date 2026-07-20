@@ -2298,6 +2298,24 @@ function getOwnerLabel(val){
       updateOwnerLabels();
     }
 
+    // Predvolené orientačné zhodnotenie p.a. podľa zvoleného rizikového profilu
+    // klienta — rovnaké čísla ako scenáre konzervatívny/reálny/dynamický
+    // v scenarioFv() nižšie, nech je to naprieč appkou konzistentné. Len
+    // navrhne hodnotu pri novom produkte / zmene profilu, nikdy neprepíše to,
+    // čo si poradca už sám zadal.
+    const RISK_PROFILE_DEFAULT_RETURN = { 'konzervatívny':3, 'vyvážený':6, 'dynamický':9 };
+    function riskProfileDefaultReturn(){
+      const profile = ($(`[name="invest_risk_profile"]`)||{}).value || "";
+      return RISK_PROFILE_DEFAULT_RETURN[profile] || "";
+    }
+    function applyRiskProfileDefaults(profile){
+      const def = RISK_PROFILE_DEFAULT_RETURN[profile];
+      if(!def) return;
+      for(let i=0;i<rows.products.length;i++){
+        const el = $(`[name="prod_return_${i}"]`);
+        if(el && !el.value.trim()) el.value = def;
+      }
+    }
     function defaultRowFor(type){
       if(type==="accounts") return ["spoločný","","","",""];
       if(type==="income") return ["spoločný","Iný príjem","","monthly"];
@@ -2306,7 +2324,7 @@ function getOwnerLabel(val){
       if(type==="insurance") return ["A","Iné riziko","","","monthly",""];
       if(type==="propins") return ["spoločný","Nehnuteľnosť (byt/dom)","","","monthly",""];
       if(type==="goals") return ["spoločný","","",""];
-      if(type==="products") return ["spoločný","Iný produkt","","","","","","","","Nezaradené"];
+      if(type==="products") return ["spoločný","Iný produkt","","","","","",riskProfileDefaultReturn(),"","Nezaradené"];
       if(type==="assets") return ["spoločný","Iné aktívum","","",""];
       if(type==="invcal") return ["Nový cieľ","","","","",""];
       if(type==="cmpLife") return ["Riziko","","","","",""];
@@ -4287,6 +4305,7 @@ function getOwnerLabel(val){
       document.addEventListener("input",e=>{
         if(!e.target.classList.contains("track")) return;
         if(e.target.name==="household_type") $("#bCard").style.display=e.target.value==="single"?"none":"block";
+        if(e.target.name==="invest_risk_profile") applyRiskProfileDefaults(e.target.value);
         if(/^debt_type_\d+$/.test(e.target.name)) refreshDebtRowUi();
         // Live update owner labels when names are typed
         if(e.target.name==="a_name" || e.target.name==="b_name") updateOwnerLabels();
