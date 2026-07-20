@@ -30,6 +30,7 @@ const RK_INITIATORS = [
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!csrfCheck()) { http_response_code(403); exit('Neplatný CSRF token — obnov stránku a skús to znova.'); }
     if (isset($_POST['add'])) {
         $name = trim((string)($_POST['name'] ?? ''));
         $phone = trim((string)($_POST['phone'] ?? ''));
@@ -355,12 +356,14 @@ function rkQs(array $overrides): string {
       <div class="rk-actions">
         <button type="button" class="toggle-btn" onclick="rkEdit(<?= (int)$c['id'] ?>)">Upraviť</button>
         <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj zmazať tohto kandidáta?');">
+          <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
           <input type="hidden" name="delete_id" value="<?= (int)$c['id'] ?>">
           <button type="submit" class="toggle-btn">Zmazať</button>
         </form>
       </div>
     </div>
     <form method="post" class="rk-edit-form" id="rk-edit-<?= (int)$c['id'] ?>">
+      <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
       <input type="hidden" name="edit_id" value="<?= (int)$c['id'] ?>">
       <div class="rk-add-row">
         <input type="text" name="name" value="<?= h($c['name']) ?>" placeholder="Meno a priezvisko" required>
@@ -393,6 +396,7 @@ function rkQs(array $overrides): string {
   <div class="card">
     <h3>Pridať kandidáta</h3>
     <form method="post" style="display:flex; flex-direction:column; gap:10px;">
+      <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
       <input type="hidden" name="add" value="1">
       <div class="rk-add-row">
         <input type="text" name="name" placeholder="Meno a priezvisko" required>

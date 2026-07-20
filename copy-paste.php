@@ -17,6 +17,7 @@ $me = $stmt->fetch();
 if (!$me) { header('Location: /'); exit; }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!csrfCheck()) { http_response_code(403); exit('Neplatný CSRF token — obnov stránku a skús to znova.'); }
     if (isset($_POST['add'])) {
         $title = trim((string)($_POST['title'] ?? ''));
         $body = trim((string)($_POST['body'] ?? ''));
@@ -93,6 +94,7 @@ $entries = $stmt->fetchAll();
   <div class="card">
     <h3>Pridať nový text</h3>
     <form method="post" class="kb-form">
+      <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
       <input type="hidden" name="add" value="1">
       <input type="text" name="title" placeholder="Názov (napr. „Potvrdenie termínu schôdzky“)" required>
       <textarea name="body" rows="4" placeholder="Text, ktorý sa dá skopírovať a poslať/vložiť..." required></textarea>
@@ -112,6 +114,7 @@ $entries = $stmt->fetchAll();
               <button type="button" class="toggle-btn" onclick="kbCopy(<?= (int)$e['id'] ?>)">Kopírovať</button>
               <button type="button" class="toggle-btn" onclick="kbEdit(<?= (int)$e['id'] ?>)">Upraviť</button>
               <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj zmazať tento text?');">
+                <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
                 <input type="hidden" name="delete_id" value="<?= (int)$e['id'] ?>">
                 <button type="submit" class="toggle-btn">Zmazať</button>
               </form>
@@ -120,6 +123,7 @@ $entries = $stmt->fetchAll();
           <p class="kb-body" data-raw="<?= h($e['body']) ?>"><?= nl2br(h($e['body'])) ?></p>
         </div>
         <form method="post" class="kb-edit" style="display:none;">
+          <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
           <input type="hidden" name="edit_id" value="<?= (int)$e['id'] ?>">
           <input type="text" name="title" value="<?= h($e['title']) ?>" required>
           <textarea name="body" rows="4" required><?= h($e['body']) ?></textarea>

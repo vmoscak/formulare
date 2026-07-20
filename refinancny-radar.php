@@ -16,6 +16,7 @@ $me = $stmt->fetch();
 if (!$me) { header('Location: /'); exit; }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!csrfCheck()) { http_response_code(403); exit('Neplatný CSRF token — obnov stránku a skús to znova.'); }
     if (isset($_POST['add'])) {
         $bank = trim((string)($_POST['bank'] ?? ''));
         $fixation = trim((string)($_POST['fixation'] ?? ''));
@@ -81,6 +82,7 @@ function refiDaysOld(string $updatedAt): int {
       Žiadne dáta sa nesťahujú automaticky — zadávaš len ty, keď si sadzbu overíš. Pri každom zázname vidno, ako dávno bol aktualizovaný.
     </p>
     <form method="post" class="add-form">
+      <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
       <input type="hidden" name="add" value="1">
       <input name="bank" placeholder="Banka (napr. VÚB)" required>
       <input name="fixation" placeholder="Fixácia (napr. 3 roky)" required>
@@ -108,6 +110,7 @@ function refiDaysOld(string $updatedAt): int {
         <td style="display:flex; gap:6px;">
           <button type="button" class="toggle-btn" onclick="editRate(<?= (int)$r['id'] ?>)">Upraviť</button>
           <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj zmazať tento záznam?');">
+            <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
             <input type="hidden" name="delete_id" value="<?= (int)$r['id'] ?>">
             <button type="submit" class="toggle-btn">Zmazať</button>
           </form>
@@ -116,6 +119,7 @@ function refiDaysOld(string $updatedAt): int {
       <tr id="edit-<?= (int)$r['id'] ?>" style="display:none;">
         <td colspan="6">
           <form method="post" class="add-form" style="display:flex; flex-wrap:wrap; gap:10px;">
+            <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
             <input type="hidden" name="edit_id" value="<?= (int)$r['id'] ?>">
             <input name="bank" value="<?= h($r['bank']) ?>" placeholder="Banka" required>
             <input name="fixation" value="<?= h($r['fixation']) ?>" placeholder="Fixácia" required>

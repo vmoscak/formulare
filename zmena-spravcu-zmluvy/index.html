@@ -275,7 +275,7 @@ function validate(){
    VYKRESLENIE
 =========================================================================== */
 const $ = id => document.getElementById(id);
-function escapeHtml(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escapeHtml(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 function renderRows(){
   $('rowsWrap').innerHTML = state.rows.map(function(row, i){

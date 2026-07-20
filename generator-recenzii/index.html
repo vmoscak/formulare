@@ -253,7 +253,7 @@ function buildPreviewText(){
   return state.channel === 'email' ? ('Predmet: ' + buildSubject() + '\n\n' + buildMessage()) : buildMessage();
 }
 
-function escapeHtml(x){ return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escapeHtml(x){ return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 function linkLabel(link){
   if (/g\.page|google/i.test(link)) return 'Google recenzia';

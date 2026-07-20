@@ -17,6 +17,10 @@ $stmt->execute([$advisorId]);
 $me = $stmt->fetch();
 if (!$me) { header('Location: /'); exit; }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !csrfCheck()) {
+    http_response_code(403); exit('Neplatný CSRF token — obnov stránku a skús to znova.');
+}
+
 $importMessage = '';
 $importError = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['import'])) {
@@ -181,6 +185,7 @@ function qs(array $overrides): string {
       </div>
       <?php endif; ?>
       <form method="post" style="margin-left:auto;">
+        <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
         <input type="hidden" name="import" value="1">
         <button type="submit" class="pillbtn solid">Importovať / obnoviť dáta</button>
       </form>
@@ -210,10 +215,12 @@ function qs(array $overrides): string {
         <div style="font-size:20px; font-weight:700; color:var(--muted);"><?= number_format($geoStats['not_found'], 0, ',', ' ') ?></div>
       </div>
       <form method="post" style="margin-left:auto;">
+        <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
         <input type="hidden" name="geocode_batch" value="1">
         <button type="submit" class="pillbtn">Spustiť dávku teraz (~50, ručne)</button>
       </form>
       <form method="post">
+        <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
         <input type="hidden" name="fix_outliers" value="1">
         <button type="submit" class="pillbtn" title="Nájde a opraví presné súradnice, ktoré sú príliš ďaleko od PSČ (napr. omylom v Bratislave namiesto Košíc) — nahradí ich približnou polohou obce.">Opraviť podozrivé súradnice</button>
       </form>

@@ -13,6 +13,7 @@ $me = $stmt->fetch();
 if (!$me) { header('Location: /'); exit; }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!csrfCheck()) { http_response_code(403); exit('Neplatný CSRF token — obnov stránku a skús to znova.'); }
     if (isset($_POST['add'])) {
         $title = trim((string)($_POST['title'] ?? ''));
         $body = trim((string)($_POST['body'] ?? ''));
@@ -67,6 +68,7 @@ try {
   <div class="card">
     <h3>Pridať novinku</h3>
     <form method="post" class="kb-form">
+      <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
       <input type="hidden" name="add" value="1">
       <input type="text" name="title" placeholder="Nadpis (napr. „Nový nástroj: Ťahák čo pýtať od klienta")" required>
       <textarea name="body" rows="4" placeholder="Text novinky..." required></textarea>
@@ -88,6 +90,7 @@ try {
             <div class="kb-actions">
               <button type="button" class="toggle-btn" onclick="newsEdit(<?= (int)$e['id'] ?>)">Upraviť</button>
               <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj zmazať túto novinku?');">
+                <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
                 <input type="hidden" name="delete_id" value="<?= (int)$e['id'] ?>">
                 <button type="submit" class="toggle-btn">Zmazať</button>
               </form>
@@ -97,6 +100,7 @@ try {
           <div class="kb-meta"><span class="date"><?= h($e['created_at']) ?></span></div>
         </div>
         <form method="post" class="kb-edit" style="display:none;">
+          <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
           <input type="hidden" name="edit_id" value="<?= (int)$e['id'] ?>">
           <input type="text" name="title" value="<?= h($e['title']) ?>" required>
           <textarea name="body" rows="4" required><?= h($e['body']) ?></textarea>

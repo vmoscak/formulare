@@ -14,6 +14,7 @@ if (!$me) { header('Location: /'); exit; }
 $isOwner = !empty($me['is_owner']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isOwner) {
+    if (!csrfCheck()) { http_response_code(403); exit('Neplatný CSRF token — obnov stránku a skús to znova.'); }
     if (isset($_POST['add'])) {
         $title = trim((string)($_POST['title'] ?? ''));
         $body = trim((string)($_POST['body'] ?? ''));
@@ -92,6 +93,7 @@ try {
   <div class="card">
     <h3>Pridať nový záznam</h3>
     <form method="post" class="kb-form">
+      <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
       <input type="hidden" name="add" value="1">
       <input type="text" name="title" placeholder="Názov (napr. „ČSOB – čo pýtať pri zaseknutej likvidácii“)" required>
       <textarea name="body" rows="4" placeholder="Text, ktorý sa dá skopírovať a poslať/vložiť..." required></textarea>
@@ -113,6 +115,7 @@ try {
               <?php if ($isOwner): ?>
               <button type="button" class="toggle-btn" onclick="kbEdit(<?= (int)$e['id'] ?>)">Upraviť</button>
               <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj zmazať tento záznam?');">
+                <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
                 <input type="hidden" name="delete_id" value="<?= (int)$e['id'] ?>">
                 <button type="submit" class="toggle-btn">Zmazať</button>
               </form>
@@ -124,6 +127,7 @@ try {
         </div>
         <?php if ($isOwner): ?>
         <form method="post" class="kb-edit" style="display:none;">
+          <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
           <input type="hidden" name="edit_id" value="<?= (int)$e['id'] ?>">
           <input type="text" name="title" value="<?= h($e['title']) ?>" required>
           <textarea name="body" rows="4" required><?= h($e['body']) ?></textarea>

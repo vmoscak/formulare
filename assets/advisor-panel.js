@@ -5,7 +5,7 @@
  * načítava aj klientska stránka otvorená cez jedinečný token.
  */
 
-function escapeHtml(x){ return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escapeHtml(x){ return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 /* Zaloguje vygenerovaný dokument (poradcovský aj klientsky) — fire-and-forget,
    nesmie nikdy zablokovať samotné stiahnutie PDF pri zlyhaní.

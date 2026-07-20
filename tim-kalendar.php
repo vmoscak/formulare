@@ -45,6 +45,7 @@ $monthParam = preg_match('/^\d{4}-\d{2}$/', (string)($_GET['month'] ?? '')) ? $_
 $selectedDay = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)($_GET['day'] ?? '')) ? $_GET['day'] : null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!csrfCheck()) { http_response_code(403); exit('Neplatný CSRF token — obnov stránku a skús to znova.'); }
     $backMonth = (string)($_POST['_month'] ?? $monthParam);
     $backDay = (string)($_POST['_day'] ?? '') ?: null;
     if ($isOwner) {
@@ -385,6 +386,7 @@ function tkListFilterUrl(string $monthParam, string $filter, bool $showPast): st
     ?>
     <?php if ($editEventId === (int)$e['id']): ?>
     <form method="post" class="kb-edit" style="margin-bottom:12px;">
+      <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
       <input type="hidden" name="edit_id" value="<?= (int)$e['id'] ?>">
       <input type="hidden" name="_month" value="<?= h($monthParam) ?>">
       <input type="hidden" name="_day" value="<?= h($selectedDay) ?>">
@@ -427,6 +429,7 @@ function tkListFilterUrl(string $monthParam, string $filter, bool $showPast): st
       <div class="tk-actions">
         <a class="toggle-btn" href="?month=<?= $monthParam ?>&day=<?= $selectedDay ?>&edit=<?= (int)$e['id'] ?>">Upraviť</a>
         <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj zmazať túto udalosť?');">
+          <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
           <input type="hidden" name="delete_id" value="<?= (int)$e['id'] ?>">
           <input type="hidden" name="_month" value="<?= h($monthParam) ?>">
           <input type="hidden" name="_day" value="<?= h($selectedDay) ?>">
@@ -444,6 +447,7 @@ function tkListFilterUrl(string $monthParam, string $filter, bool $showPast): st
   <div class="card">
     <h3>Pridať udalosť</h3>
     <form method="post" class="tk-add-form">
+      <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
       <input type="hidden" name="add" value="1">
       <input type="hidden" name="_month" value="<?= h($monthParam) ?>">
       <input type="hidden" name="_day" value="<?= h((string)$selectedDay) ?>">

@@ -226,7 +226,7 @@ function renderItems(){
       + '<select data-act="owner">'
         + Object.keys(OWNERS).map(function(k){ return '<option value="'+k+'"'+(k===it.owner?' selected':'')+'>'+OWNERS[k]+'</option>'; }).join('')
       + '</select>'
-      + '<input type="date" value="'+it.due+'" data-act="due">'
+      + '<input type="date" value="'+escapeHtml(it.due)+'" data-act="due">'
       + '</div></div>'
       + '<div class="item-del" data-act="del" title="Odstrániť úlohu">✕</div>'
       + '</div></div>';
@@ -252,7 +252,7 @@ function render(){
   refreshPreview();
 }
 
-function escapeHtml(x){ return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escapeHtml(x){ return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 let _previewTimer=null;
 function refreshPreview(){

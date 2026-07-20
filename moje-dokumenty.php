@@ -14,6 +14,10 @@ $stmt->execute([$advisorId]);
 $me = $stmt->fetch();
 if (!$me) { header('Location: /'); exit; }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !csrfCheck()) {
+    http_response_code(403); exit('Neplatný CSRF token — obnov stránku a skús to znova.');
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
     $id = (int)$_POST['delete_id'];
     db()->prepare('DELETE FROM formulare_generated_documents WHERE id = ? AND advisor_id = ?')->execute([$id, $advisorId]);
@@ -101,6 +105,7 @@ try {
         <td style="display:flex; gap:6px; justify-content:flex-end;">
           <a class="toggle-btn" href="/<?= rawurlencode($d['tool']) ?>/index.html?loadDoc=<?= (int)$d['id'] ?>" target="_blank"><?= $isDraft ? 'Pokračovať' : 'PDF' ?></a>
           <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj zmazať tento dokument?');">
+            <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
             <input type="hidden" name="delete_id" value="<?= (int)$d['id'] ?>">
             <button type="submit" class="toggle-btn">Zmazať</button>
           </form>
@@ -149,6 +154,7 @@ try {
         <td>
           <?php if (!$isSubmitted): ?>
           <form method="post" style="margin:0;">
+            <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
             <input type="hidden" name="extend_id" value="<?= (int)$l['id'] ?>">
             <button type="submit" class="toggle-btn">Predĺžiť o 60 dní</button>
           </form>

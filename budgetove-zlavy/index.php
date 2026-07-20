@@ -18,6 +18,7 @@ const BZ_CATEGORIES = ['auto' => 'Autopoistenie', 'majetok' => 'Majetok'];
 const BZ_BADGE_LABELS = ['none' => 'Bez odznaku', 'asist' => 'Asistentka (zelený)', 'daniel' => 'Daniel Jurčík (ružový)', 'both' => 'Oba/kombinácia (jantárový)'];
 
 if ($isOwner && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!csrfCheck()) { http_response_code(403); exit('Neplatný CSRF token — obnov stránku a skús to znova.'); }
     if (isset($_POST['add_rule'])) {
         $category = (string)($_POST['category'] ?? '');
         $title = trim((string)($_POST['title'] ?? ''));
@@ -256,18 +257,19 @@ function bzBadge(array $r): string {
       <?php if ($isOwner): ?>
       <div class="bz-rc-actions">
         <?php if (!$isFirst): ?>
-        <form method="post" style="margin:0;"><input type="hidden" name="move_rule_id" value="<?= (int)$r['id'] ?>"><input type="hidden" name="direction" value="up"><button type="submit" class="toggle-btn" title="Posunúť hore">↑</button></form>
+        <form method="post" style="margin:0;"><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>"><input type="hidden" name="move_rule_id" value="<?= (int)$r['id'] ?>"><input type="hidden" name="direction" value="up"><button type="submit" class="toggle-btn" title="Posunúť hore">↑</button></form>
         <?php endif; ?>
         <?php if (!$isLast): ?>
-        <form method="post" style="margin:0;"><input type="hidden" name="move_rule_id" value="<?= (int)$r['id'] ?>"><input type="hidden" name="direction" value="down"><button type="submit" class="toggle-btn" title="Posunúť dole">↓</button></form>
+        <form method="post" style="margin:0;"><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>"><input type="hidden" name="move_rule_id" value="<?= (int)$r['id'] ?>"><input type="hidden" name="direction" value="down"><button type="submit" class="toggle-btn" title="Posunúť dole">↓</button></form>
         <?php endif; ?>
         <button type="button" class="toggle-btn" onclick="bzEditRule(<?= (int)$r['id'] ?>)">Upraviť</button>
-        <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj zmazať toto pravidlo?');"><input type="hidden" name="delete_rule_id" value="<?= (int)$r['id'] ?>"><button type="submit" class="toggle-btn">Zmazať</button></form>
+        <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj zmazať toto pravidlo?');"><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>"><input type="hidden" name="delete_rule_id" value="<?= (int)$r['id'] ?>"><button type="submit" class="toggle-btn">Zmazať</button></form>
       </div>
       <?php endif; ?>
     </div>
     <?php if ($isOwner): ?>
     <form method="post" class="bz-edit-form" id="rule-edit-<?= (int)$r['id'] ?>">
+      <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
       <input type="hidden" name="edit_rule_id" value="<?= (int)$r['id'] ?>">
       <input type="text" name="title" value="<?= h($r['title']) ?>" placeholder="Názov pravidla" required>
       <textarea name="body" rows="3" placeholder="Text pravidla" required><?= h($r['body']) ?></textarea>
@@ -295,6 +297,7 @@ function bzBadge(array $r): string {
 
   <?php if ($isOwner): ?>
   <form method="post" class="bz-add-form">
+    <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
     <input type="hidden" name="add_rule" value="1">
     <input type="hidden" name="category" value="<?= h($catKey) ?>">
     <input type="text" name="title" placeholder="Názov pravidla" required>
@@ -333,10 +336,10 @@ function bzBadge(array $r): string {
             <?php if ($isOwner): ?>
             <td class="bz-owner-cell">
               <div class="bz-row-actions">
-                <?php if (!$isFirst): ?><form method="post" style="margin:0;"><input type="hidden" name="move_row_id" value="<?= (int)$row['id'] ?>"><input type="hidden" name="direction" value="up"><button type="submit" class="toggle-btn" title="Hore">↑</button></form><?php endif; ?>
-                <?php if (!$isLast): ?><form method="post" style="margin:0;"><input type="hidden" name="move_row_id" value="<?= (int)$row['id'] ?>"><input type="hidden" name="direction" value="down"><button type="submit" class="toggle-btn" title="Dole">↓</button></form><?php endif; ?>
+                <?php if (!$isFirst): ?><form method="post" style="margin:0;"><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>"><input type="hidden" name="move_row_id" value="<?= (int)$row['id'] ?>"><input type="hidden" name="direction" value="up"><button type="submit" class="toggle-btn" title="Hore">↑</button></form><?php endif; ?>
+                <?php if (!$isLast): ?><form method="post" style="margin:0;"><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>"><input type="hidden" name="move_row_id" value="<?= (int)$row['id'] ?>"><input type="hidden" name="direction" value="down"><button type="submit" class="toggle-btn" title="Dole">↓</button></form><?php endif; ?>
                 <button type="button" class="toggle-btn" onclick="bzEditRow(<?= (int)$row['id'] ?>)">Upraviť</button>
-                <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj zmazať tento riadok?');"><input type="hidden" name="delete_row_id" value="<?= (int)$row['id'] ?>"><button type="submit" class="toggle-btn">Zmazať</button></form>
+                <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj zmazať tento riadok?');"><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>"><input type="hidden" name="delete_row_id" value="<?= (int)$row['id'] ?>"><button type="submit" class="toggle-btn">Zmazať</button></form>
               </div>
             </td>
             <?php endif; ?>
@@ -345,6 +348,7 @@ function bzBadge(array $r): string {
           <tr class="bz-row-edit" id="row-edit-<?= (int)$row['id'] ?>">
             <td colspan="3">
               <form method="post" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
                 <input type="hidden" name="edit_row_id" value="<?= (int)$row['id'] ?>">
                 <input type="text" name="label" value="<?= h($row['label']) ?>" placeholder="Spoluúčasť" style="flex:1 1 160px;" required>
                 <input type="text" name="effect_text" value="<?= h($row['effect_text']) ?>" placeholder="Vplyv na poistné" style="flex:1 1 200px;" required>
@@ -365,6 +369,7 @@ function bzBadge(array $r): string {
 
     <?php if ($isOwner): ?>
     <form method="post" class="bz-add-form" style="flex-direction:row; flex-wrap:wrap; align-items:center; margin-bottom:16px;">
+      <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
       <input type="hidden" name="add_row" value="1">
       <input type="text" name="label" placeholder="Spoluúčasť" style="flex:1 1 160px;" required>
       <input type="text" name="effect_text" placeholder="Vplyv na poistné" style="flex:1 1 200px;" required>
@@ -384,6 +389,7 @@ function bzBadge(array $r): string {
     </div>
     <?php if ($isOwner): ?>
     <form method="post" class="bz-tip-edit" id="tip-edit">
+      <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
       <input type="hidden" name="edit_tip" value="1">
       <textarea name="tip_text" rows="3"><?= h($tipText) ?></textarea>
       <div style="display:flex; gap:8px;">

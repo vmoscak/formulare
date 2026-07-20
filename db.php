@@ -72,10 +72,11 @@ function curAdvisorId(): int {
     $expected = substr(hash_hmac('sha256', $payload, GATE_TOKEN), 0, 20);
     if (!hash_equals($expected, $sig)) return 0;
     try {
-        $stmt = db()->prepare('SELECT session_version FROM formulare_advisors WHERE id = ?');
+        $stmt = db()->prepare('SELECT session_version, active FROM formulare_advisors WHERE id = ?');
         $stmt->execute([(int)$id]);
         $row = $stmt->fetch();
         if (!$row || (int)$row['session_version'] !== (int)$ver) return 0;
+        if (isset($row['active']) && (int)$row['active'] !== 1) return 0;
     } catch (Throwable $e) { return 0; }
     return (int)$id;
 }
