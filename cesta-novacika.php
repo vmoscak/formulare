@@ -324,8 +324,7 @@ function obRenderMzTotalBar(array $mzStatusMap): void {
  * podmienok, 1.–6. mesiac = podľa produkčných bodov, 7.–24. mesiac = podľa
  * statusu FIT/STD/TOP.
  */
-function obRenderRewards(array $mzStatusMap, int $currentMzMonth, bool $readOnly = false): void {
-    $ro = $readOnly ? 'disabled title="Náhľad je len na čítanie"' : '';
+function obRenderRewards(array $mzStatusMap, int $currentMzMonth): void {
     $sel0 = $mzStatusMap[0] ?? null;
     ?>
     <div class="mz-card mz-card-single">
@@ -335,7 +334,7 @@ function obRenderRewards(array $mzStatusMap, int $currentMzMonth, bool $readOnly
       </div>
       <p class="mz-card-note">Registrácia v NBS, e-learning, základné školenia, 100 kontaktov v CRM+ a min. 15 ponúk v Unipoint — jednorazovo 500 €.</p>
       <div class="mz-status-picker" data-month="0">
-        <button type="button" class="mz-status-btn mz-status-btn-fit<?= $sel0 === 'fit' ? ' is-selected' : '' ?>" data-status="fit" onclick="mzSelectStatus(this)" <?= $ro ?>>✓ Podmienky splnené<span class="mz-status-amt"><?= mzDpAmount(0, 'fit') ?> €</span></button>
+        <button type="button" class="mz-status-btn mz-status-btn-fit<?= $sel0 === 'fit' ? ' is-selected' : '' ?>" data-status="fit" onclick="mzSelectStatus(this)">✓ Podmienky splnené<span class="mz-status-amt"><?= mzDpAmount(0, 'fit') ?> €</span></button>
       </div>
     </div>
     <?php foreach (MZ_QUARTERS as $months):
@@ -359,7 +358,7 @@ function obRenderRewards(array $mzStatusMap, int $currentMzMonth, bool $readOnly
           <div class="mz-month-label"><?= $m ?>. mesiac<?= $isFinal ? ' 🎯' : '' ?></div>
           <div class="mz-status-picker" data-month="<?= $m ?>">
             <?php foreach ($labels as $sKey => $sLabel): $amt = mzDpAmount($m, $sKey); ?>
-            <button type="button" class="mz-status-btn mz-status-btn-<?= $sKey ?><?= $selM === $sKey ? ' is-selected' : '' ?>" data-status="<?= $sKey ?>" onclick="mzSelectStatus(this)" <?= $ro ?>><?= $sLabel ?><span class="mz-status-amt"><?= $amt ?> €</span></button>
+            <button type="button" class="mz-status-btn mz-status-btn-<?= $sKey ?><?= $selM === $sKey ? ' is-selected' : '' ?>" data-status="<?= $sKey ?>" onclick="mzSelectStatus(this)"><?= $sLabel ?><span class="mz-status-amt"><?= $amt ?> €</span></button>
             <?php endforeach; ?>
           </div>
         </div>
@@ -642,7 +641,7 @@ if ($isOwner) {
   <?php if ($novicePreview): ?>
   <div class="section">
     <div class="ob-preview-banner">
-      <span>👀 <?= $previewAdvisor ? 'Presne to, čo teraz vidí ' . h($previewAdvisor['name']) . '.' : 'Náhľad všeobecnej šablóny' . (isset($_GET['day']) ? ' (deň ' . (int)$_GET['day'] . ')' : '') . ' — nie je naviazaný na konkrétneho nováčika.' ?> <strong>Len na čítanie — checkboxy a MZ tlačidlá tu nejdú označiť.</strong></span>
+      <span>👀 <?= $previewAdvisor ? 'Presne to, čo teraz vidí ' . h($previewAdvisor['name']) . '.' : 'Náhľad všeobecnej šablóny' . (isset($_GET['day']) ? ' (deň ' . (int)$_GET['day'] . ')' : '') . ' — nie je naviazaný na konkrétneho nováčika.' ?> Klik na checkbox/MZ tlačidlo tu neovplyvní jeho účet — zapíše sa len pod teba.</span>
       <a class="pillbtn" href="/cesta-novacika.php">← Späť na správu</a>
     </div>
   </div>
@@ -739,7 +738,7 @@ if ($isOwner) {
       <?php if ($mats): ?>
       <?php foreach ($mats as $m): $tip = $OB_TOOLTIPS[$m['title']] ?? null; $isDone = in_array((int)$m['id'], $doneStepIds, true); ?>
       <div class="ob-material<?= $isDone ? ' done' : '' ?>" id="ob-mat-<?= (int)$m['id'] ?>">
-        <input type="checkbox" <?= $isDone ? 'checked' : '' ?> data-toggle-step="<?= (int)$m['id'] ?>" aria-label="Označiť ako splnené" <?= $novicePreview ? 'disabled title="Náhľad je len na čítanie"' : '' ?>>
+        <input type="checkbox" <?= $isDone ? 'checked' : '' ?> data-toggle-step="<?= (int)$m['id'] ?>" aria-label="Označiť ako splnené">
         <div class="ob-material-body">
           <div class="ob-material-title"><?= h($m['title']) ?><?php if ($tip): ?><span class="ob-info" tabindex="0">i<span class="ob-info-bubble"><?= h($tip) ?></span></span><?php endif; ?></div>
           <?php if ($m['description']): ?><div class="ob-material-desc"><?= h($m['description']) ?></div><?php endif; ?>
@@ -766,7 +765,7 @@ if ($isOwner) {
 
   <div class="card">
     <h3 class="mz-tracker-title">💰 Čo za to dostaneš — Model zapracovania</h3>
-    <?php obRenderRewards($mzStatusMap, $currentMzMonth, $novicePreview); ?>
+    <?php obRenderRewards($mzStatusMap, $currentMzMonth); ?>
   </div>
 
   <?php
