@@ -524,6 +524,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     }
     .field-dim{opacity:.45;background:#fafbff}
     .field-focus{background:#f2f7ff;box-shadow:inset 0 0 0 1px #d8e5ff}
+    .debt-cards{display:flex;flex-direction:column;gap:12px}
+    .debt-card{position:relative;background:#fff;border:1px solid #e2e6f2;border-radius:var(--radius);padding:14px 46px 14px 14px;box-shadow:var(--shadow-card)}
+    .debt-card-del{position:absolute;top:10px;right:10px;padding:6px 8px;font-size:.78rem}
+    .debt-field{border-radius:6px;padding:2px 4px;transition:background .15s ease}
     /* .table moved to ADDITIONAL POLISH */
     /* .sec moved to ADDITIONAL POLISH */
     .sec-h{
@@ -893,7 +897,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     body.dark-mode .tabs { background:#111d31; border-color:#2e3f5f; }
     body.dark-mode .live-box, body.dark-mode .kpi, body.dark-mode .card,
     body.dark-mode .prog, body.dark-mode .hero, body.dark-mode .score-card,
-    body.dark-mode .sec, body.dark-mode .road .i { background:var(--card); border-color:var(--line); }
+    body.dark-mode .sec, body.dark-mode .road .i, body.dark-mode .debt-card { background:var(--card); border-color:var(--line); }
     body.dark-mode .choice { background:var(--card); border-color:var(--line); }
     body.dark-mode .choice:hover { background:#20324f; border-color:#48618a; }
     body.dark-mode .btn.light { background:#1a2a43; color:#dce6fb; border-color:#3a4f73; }
@@ -1318,7 +1322,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
         <div class="sec">
           <button type="button" class="sec-h">6) Úvery, splátky, kreditné karty</button>
-          <div class="sec-b table"><div class="toolbar" style="justify-content:flex-end;margin:0 0 8px"><button type="button" class="add-row-btn" data-add="debt">+ Pridať riadok</button></div><table><thead><tr><th>Dlžník</th><th>Typ</th><th>Banka</th><th>Zmluva</th><th>Zostatok</th><th>Splátka/mes</th><th>Úrok %</th><th>Kredit limit</th><th>Čerpanie</th><th>Fixácia do</th><th>Mimoriadna splátka</th><th>Sankcia predčasne</th><th>Splatnosť (mesiace)</th><th>Akcia</th></tr></thead><tbody id="debtBody"></tbody></table></div>
+          <div class="sec-b"><div class="toolbar" style="justify-content:flex-end;margin:0 0 8px"><button type="button" class="add-row-btn" data-add="debt">+ Pridať riadok</button></div><div class="debt-cards" id="debtBody"></div></div>
         </div>
 
         <div class="sec">
@@ -2141,24 +2145,29 @@ function getOwnerLabel(val){
         <td><input class="track num" name="exp_amount_${i}" value="${r[2]}"></td>
         <td>${buildSelect(`exp_freq_${i}`, r[3]||"monthly", [{value:"monthly",label:"Mesačne"},{value:"annual",label:"Ročne"}])}</td>
         <td id="exp_month_${i}">0 €</td>`);
-      $("#debtBody").innerHTML = mk("debt", rows.debt, (r,i)=>`
-        <td>${buildSelect(`debt_owner_${i}`, r[0], ["A","B","spoločný"])}</td>
-        <td>${buildSelect(`debt_type_${i}`, r[1], ["","Hypotéka","Spotrebný úver","Kreditná karta","Povolené prečerpanie","Lízing","Iný záväzok"])}</td>
-        <td>${buildSelect(`debt_bank_${i}`, r[2], ["","Tatra banka","Slovenská sporiteľňa","VÚB","ČSOB","Fio banka","mBank","Prima banka","UniCredit","Raiffeisen","365.bank","Poštová banka","Iná"])}</td>
-        <td><input class="track" name="debt_contract_${i}" value="${r[3]}"></td>
-        <td><input class="track num" data-debt-field="balance" name="debt_balance_${i}" value="${r[4]}"></td>
-        <td><input class="track num" data-debt-field="month" name="debt_month_${i}" value="${r[5]}"></td>
-        <td><input class="track num" data-debt-field="rate" name="debt_rate_${i}" value="${r[6]}"></td>
-        <td><input class="track num" data-debt-field="limit" name="debt_limit_${i}" value="${r[7]}"></td>
-        <td><input class="track num" data-debt-field="used" name="debt_used_${i}" value="${r[8]}"></td>
-        <td><input class="track" type="date" name="debt_fix_end_${i}" value="${r[9]||""}"></td>
-        <td>${buildSelect(`debt_prepay_${i}`, r[10]||"ano", [
-          { value:"ano", label:"Áno" },
-          { value:"nie", label:"Nie" },
-          { value:"neviem", label:"Neviem" }
-        ])}</td>
-        <td><input class="track" name="debt_penalty_${i}" value="${r[11]||""}" placeholder="napr. 1% alebo bez sankcie"></td>
-        <td><input class="track num" name="debt_term_${i}" value="${r[12]||""}" placeholder="napr. 240"></td>`);
+      $("#debtBody").innerHTML = rows.debt.map((r,i)=>`
+        <div class="debt-card">
+          <button type="button" class="btn light debt-card-del" data-del="debt" data-idx="${i}" title="Vymazať záväzok">🗑️</button>
+          <div class="grid g4 debt-card-grid">
+            <div><label>Dlžník</label>${buildSelect(`debt_owner_${i}`, r[0], ["A","B","spoločný"])}</div>
+            <div><label>Typ</label>${buildSelect(`debt_type_${i}`, r[1], ["","Hypotéka","Spotrebný úver","Kreditná karta","Povolené prečerpanie","Lízing","Iný záväzok"])}</div>
+            <div><label>Banka</label>${buildSelect(`debt_bank_${i}`, r[2], ["","Tatra banka","Slovenská sporiteľňa","VÚB","ČSOB","Fio banka","mBank","Prima banka","UniCredit","Raiffeisen","365.bank","Poštová banka","Iná"])}</div>
+            <div><label>Zmluva</label><input class="track" name="debt_contract_${i}" value="${r[3]}"></div>
+            <div class="debt-field"><label>Zostatok</label><input class="track num" data-debt-field="balance" name="debt_balance_${i}" value="${r[4]}"></div>
+            <div class="debt-field"><label>Splátka/mes</label><input class="track num" data-debt-field="month" name="debt_month_${i}" value="${r[5]}"></div>
+            <div class="debt-field"><label>Úrok %</label><input class="track num" data-debt-field="rate" name="debt_rate_${i}" value="${r[6]}"></div>
+            <div class="debt-field"><label>Kredit limit</label><input class="track num" data-debt-field="limit" name="debt_limit_${i}" value="${r[7]}"></div>
+            <div class="debt-field"><label>Čerpanie</label><input class="track num" data-debt-field="used" name="debt_used_${i}" value="${r[8]}"></div>
+            <div><label>Fixácia do</label><input class="track" type="date" name="debt_fix_end_${i}" value="${r[9]||""}"></div>
+            <div><label>Mimoriadna splátka</label>${buildSelect(`debt_prepay_${i}`, r[10]||"ano", [
+              { value:"ano", label:"Áno" },
+              { value:"nie", label:"Nie" },
+              { value:"neviem", label:"Neviem" }
+            ])}</div>
+            <div><label>Sankcia predčasne</label><input class="track" name="debt_penalty_${i}" value="${r[11]||""}" placeholder="napr. 1% alebo bez sankcie"></div>
+            <div><label>Splatnosť (mesiace)</label><input class="track num" name="debt_term_${i}" value="${r[12]||""}" placeholder="napr. 240"></div>
+          </div>
+        </div>`).join("");
       $("#insuranceBody").innerHTML = mk("insurance", rows.insurance, (r,i)=>`
         <td>${buildSelect(`ins_owner_${i}`, r[0], ["A","B"])}</td>
         <td>${buildSelect(`ins_risk_${i}`, r[1], ["Smrť","Invalidita","PN","Úraz","Kritické choroby","Hospitalizácia","Iné riziko"])}</td>
@@ -2377,10 +2386,10 @@ function getOwnerLabel(val){
         ["balance","month","rate","limit","used"].forEach(field=>{
           const input = $(`[name="debt_${field}_${i}"]`);
           if(!input) return;
-          const td = input.closest("td");
-          if(!td) return;
-          td.classList.toggle("field-focus", focusFields.includes(field));
-          td.classList.toggle("field-dim", !focusFields.includes(field));
+          const wrap = input.closest(".debt-field");
+          if(!wrap) return;
+          wrap.classList.toggle("field-focus", focusFields.includes(field));
+          wrap.classList.toggle("field-dim", !focusFields.includes(field));
         });
       }
     }
