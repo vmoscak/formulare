@@ -267,7 +267,10 @@ function mzQuarterFinalStatus(array $q, array $statuses): string {
 
 /** Súčet DP, ktoré poradca doteraz reálne získal. 0. mesiac je samostatný
  * flat bonus (500 €, mimo kvartálov). Pri uzatvorených kvartáloch (všetky
- * 3 mesiace vyplnené) počíta s doplatkom podľa mzQuarterFinalStatus(). */
+ * 3 mesiace vyplnené) sa porovná súčet jednotlivých mesačných volieb
+ * s dopočítaným kvartálnym pásmom (mzQuarterFinalStatus) a použije sa VYŠŠIA
+ * hodnota — kvartálne prepočítanie je len bonusový doplatok, nikdy nesmie
+ * znížiť DP pod to, čo už poradca vyplnením jednotlivých mesiacov dosiahol. */
 function mzTotalEarned(array $mzStatusMap): int {
     $total = 0;
     if (!empty($mzStatusMap[0])) $total += mzDpAmount(0, $mzStatusMap[0]);
@@ -275,7 +278,12 @@ function mzTotalEarned(array $mzStatusMap): int {
         $statuses = array_map(fn($m) => $mzStatusMap[$m] ?? null, $q);
         if (!in_array(null, $statuses, true)) {
             $final = mzQuarterFinalStatus($q, $statuses);
-            foreach ($q as $m) $total += mzDpAmount($m, $final);
+            $naive = 0; $blended = 0;
+            foreach ($q as $i => $m) {
+                $naive += mzDpAmount($m, $statuses[$i]);
+                $blended += mzDpAmount($m, $final);
+            }
+            $total += max($naive, $blended);
         } else {
             foreach ($q as $i => $m) { if ($statuses[$i]) $total += mzDpAmount($m, $statuses[$i]); }
         }
@@ -1026,7 +1034,9 @@ function mzComputeTotal() {
     var statuses = q.map(function (m) { return MZ_STATUS[m]; });
     if (statuses.every(Boolean)) {
       var finalStatus = mzQuarterFinalStatus(q, statuses);
-      q.forEach(function (m) { total += mzAmount(m, finalStatus); });
+      var naive = 0, blended = 0;
+      q.forEach(function (m, i) { naive += mzAmount(m, statuses[i]); blended += mzAmount(m, finalStatus); });
+      total += Math.max(naive, blended);
     } else {
       q.forEach(function (m, i) { total += mzAmount(m, statuses[i]); });
     }
@@ -1086,12 +1096,15 @@ function mzUpdateQuarterDisplay(month, fromClick) {
     return;
   }
 
+  // Kvartálne prepočítanie je len bonusový doplatok navyše k tomu, čo už
+  // poradca vyplnením jednotlivých mesiacov dosiahol — nikdy ho nesmie znížiť.
   var finalStatus = mzQuarterFinalStatus(quarter, statuses);
-  var actualTotal = 0, finalTotal = 0;
+  var actualTotal = 0, blendedTotal = 0;
   for (var j = 0; j < quarter.length; j++) {
     actualTotal += mzAmount(quarter[j], statuses[j]);
-    finalTotal += mzAmount(quarter[j], finalStatus);
+    blendedTotal += mzAmount(quarter[j], finalStatus);
   }
+  var finalTotal = Math.max(actualTotal, blendedTotal);
   var diff = finalTotal - actualTotal;
   var pbSum = isPbQuarter ? statuses.reduce(function (s, st) { return s + (MZ_PB_POINTS[st] || 0); }, 0) : 0;
 
@@ -1102,16 +1115,9 @@ function mzUpdateQuarterDisplay(month, fromClick) {
       : 'za 3. mesiac si dosiahol status ' + finalStatus.toUpperCase() + ', doplatia ti rozdiel za celý kvartál';
     el.innerHTML = '🎉 Doplatok DP za kvartál: <strong>+' + diff + ' €</strong> (' + winReason + ').';
     if (fromClick) obConfetti();
-  } else if (diff < 0) {
-    el.className = 'mz-doplatok mz-doplatok-flat';
-    var downReason = isPbQuarter
-      ? 'spolu si za kvartál dosiahol len ' + pbSum.toLocaleString('sk-SK') + ' b, čo stačí len na pásmo ' + MZ_PB_LABELS[finalStatus] + '/mesiac za celý kvartál'
-      : 'za 3. mesiac si dosiahol status ' + finalStatus.toUpperCase() + ', ktorý platí spätne za celý kvartál';
-    el.innerHTML = 'Kvartál uzatvorený nižšie, než jednotlivé mesiace naznačovali (' + downReason + ') — spolu <strong>' + finalTotal + ' €</strong> DP.';
   } else {
     el.className = 'mz-doplatok mz-doplatok-flat';
-    var closedLabel = isPbQuarter ? ('na pásme ' + MZ_PB_LABELS[finalStatus] + '/mesiac') : ('na statuse ' + finalStatus.toUpperCase());
-    el.innerHTML = 'Kvartál uzatvorený ' + closedLabel + ' — spolu <strong>' + finalTotal + ' €</strong> DP.';
+    el.innerHTML = 'Kvartál uzatvorený — spolu <strong>' + finalTotal + ' €</strong> DP (súčet tvojich mesačných volieb).';
   }
 }
 function mzSelectStatus(btn) {
