@@ -108,6 +108,13 @@
             <input id="name" placeholder="Meno a priezvisko">
             <span class="err">Zadaj meno a priezvisko</span>
           </div>
+          <div class="field" data-k="gender">
+            <label>ROD</label>
+            <div class="variant-chips">
+              <div class="chip" id="genderM" data-gender="m">Muž</div>
+              <div class="chip" id="genderZ" data-gender="z">Žena</div>
+            </div>
+          </div>
 
           <div class="field col-full addr-wrap" data-k="street">
             <label>ADRESA · ulica a číslo</label>
@@ -275,7 +282,7 @@ const state = {
   type:'pzp', reason:'anniversary', insurer:'allianz', design:'klasicky',
   ibanOn:true, touched:false, endDateManual:'',
   conclDate:'',
-  name:'', street:'', city:'', zip:'',
+  name:'', gender:'m', street:'', city:'', zip:'',
   contract:'', vehicle:'',
   phone:'', email:'',
   iban:'',
@@ -289,6 +296,8 @@ function parseDate(s){ const p=(s||'').split('-').map(Number); if(p.length!==3||
   const d=new Date(p[0],p[1]-1,p[2]); return isNaN(d)?null:d; }
 function fmt(d){ return d.getDate()+'. '+(d.getMonth()+1)+'. '+d.getFullYear(); }
 function toISO(d){ const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+/** Rodovo správny tvar slova podľa zvoleného rodu ('z' = žena, inak muž). */
+function g(male, female){ return state.gender==='z' ? female : male; }
 function addDays(d,n){ const r=new Date(d); r.setDate(r.getDate()+n); return r; }
 function addMonths(d,n){ const r=new Date(d); r.setMonth(r.getMonth()+n); return r; }
 
@@ -333,7 +342,7 @@ function buildParas(endDate){
       : 'Žiadam o ukončenie poistnej zmluvy a o vrátenie nespotrebovaného poistného.';
     return [
       'týmto Vám oznamujem zánik predmetu poistenia a podávam výpoveď '+subj+' č. '+c+'.',
-      (state.vehicle?'Predmet poistenia ('+state.vehicle+') som dňa '+endDate+' predal/-a.':'Predmet poistenia som dňa '+endDate+' predal/-a.'),
+      (state.vehicle?'Predmet poistenia ('+state.vehicle+') som dňa '+endDate+' '+g('predal','predala')+'.':'Predmet poistenia som dňa '+endDate+' '+g('predal','predala')+'.'),
       refund,
     ];
   }
@@ -346,7 +355,7 @@ function buildParas(endDate){
     ];
   } else if(state.reason==='early'){
     paras = [
-      'týmto Vám'+legal.early+' podávam výpoveď '+subj+' č. '+c+', ktorú som uzavrel/-a pred menej ako dvoma mesiacmi.',
+      'týmto Vám'+legal.early+' podávam výpoveď '+subj+' č. '+c+', ktorú som '+g('uzavrel','uzavrela')+' pred menej ako dvoma mesiacmi.',
       'Žiadam o ukončenie poistnej zmluvy k '+endDate+' a o písomné potvrdenie jej ukončenia.',
     ];
   } else if(state.reason==='premiumChange'){
@@ -439,6 +448,8 @@ function refreshPreview(){
 }
 
 function render(){
+  $('genderM').classList.toggle('sel', state.gender!=='z');
+  $('genderZ').classList.toggle('sel', state.gender==='z');
   // dátumy
   const endAuto = computeEnd();
   const endISO  = state.endDateManual || toISO(endAuto);
@@ -686,7 +697,7 @@ function doReset(){
   Object.assign(state,{
     type:'pzp', reason:'anniversary', insurer:'allianz', design:'klasicky',
     ibanOn:true, touched:false, endDateManual:'', conclDate:'',
-    name:'', street:'', city:'', zip:'', contract:'', vehicle:'', phone:'', email:'', iban:'', note:'',
+    name:'', gender:'m', street:'', city:'', zip:'', contract:'', vehicle:'', phone:'', email:'', iban:'', note:'',
   });
   renderControls(); syncInputs(); render();
 }
@@ -726,6 +737,7 @@ function renderSuggest(){
 function bind(){
   // delegované kliky pre karty
   document.addEventListener('click', e=>{
+    const gd=e.target.closest('[data-gender]');   if(gd){ state.gender=gd.dataset.gender; render(); return; }
     const t=e.target.closest('[data-type]');     if(t){ state.type=t.dataset.type; render(); renderControls(); return; }
     const r=e.target.closest('[data-reason]');    if(r){ state.reason=r.dataset.reason; state.endDateManual=''; render(); renderControls(); return; }
     const dg=e.target.closest('[data-design]');   if(dg){ state.design=dg.dataset.design; render(); renderControls(); return; }

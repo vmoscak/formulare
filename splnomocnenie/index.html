@@ -77,6 +77,13 @@
             <input id="pName" placeholder="Meno a priezvisko">
             <span class="err">Zadaj meno a priezvisko</span>
           </div>
+          <div class="field" data-k="pGender">
+            <label>ROD</label>
+            <div class="variant-chips">
+              <div class="chip" id="pGenderM" data-gender-target="p" data-gender="m">Muž</div>
+              <div class="chip" id="pGenderZ" data-gender-target="p" data-gender="z">Žena</div>
+            </div>
+          </div>
           <div class="field" data-k="pBirth">
             <label>DÁTUM NARODENIA</label>
             <input type="date" id="pBirth">
@@ -114,6 +121,13 @@
             <label>MENO A PRIEZVISKO</label>
             <input id="aName" placeholder="Meno a priezvisko">
             <span class="err">Zadaj meno a priezvisko</span>
+          </div>
+          <div class="field" data-k="aGender">
+            <label>ROD</label>
+            <div class="variant-chips">
+              <div class="chip" id="aGenderM" data-gender-target="a" data-gender="m">Muž</div>
+              <div class="chip" id="aGenderZ" data-gender-target="a" data-gender="z">Žena</div>
+            </div>
           </div>
           <div class="field" data-k="aBirth">
             <label>DÁTUM NARODENIA</label>
@@ -268,8 +282,8 @@ const state = {
   scopeType:'general',
   institution:'', contractNo:'',
   powers:{ documents:true, requests:true, mail:true, changes:true, claims:true },
-  pName:'', pBirth:'', pIdNum:'', pStreet:'', pZip:'', pCity:'',
-  aName:'', aBirth:'', aRole:'', aStreet:'', aZip:'', aCity:'',
+  pName:'', pGender:'m', pBirth:'', pIdNum:'', pStreet:'', pZip:'', pCity:'',
+  aName:'', aGender:'m', aBirth:'', aRole:'', aStreet:'', aZip:'', aCity:'',
   validFrom: toISO(TODAY), validIndef:true, validTo:'',
   place:'', signDate: toISO(TODAY),
   touched:false,
@@ -282,6 +296,8 @@ function parseDate(s){ const p=(s||'').split('-').map(Number); if(p.length!==3||
   const d=new Date(p[0],p[1]-1,p[2]); return isNaN(d)?null:d; }
 function fmt(d){ return d.getDate()+'. '+(d.getMonth()+1)+'. '+d.getFullYear(); }
 function toISO(d){ const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+/** Rodovo správny tvar slova podľa zvoleného rodu ('z' = žena, inak muž). */
+function g(gender, male, female){ return gender==='z' ? female : male; }
 
 /* ===========================================================================
    ZOSTAVENIE TEXTU SPLNOMOCNENIA
@@ -302,14 +318,14 @@ function buildParas(){
   const aRolePart = state.aRole ? (', ' + state.aRole) : '';
   const pIdPart = state.pIdNum ? (', rodné číslo ' + state.pIdNum) : '';
 
-  const intro = 'Ja, dolu podpísaný/á ' + (state.pName||'____________________') + ', nar. ' + pBirth + pIdPart
+  const intro = 'Ja, dolu ' + g(state.pGender,'podpísaný','podpísaná') + ' ' + (state.pName||'____________________') + ', nar. ' + pBirth + pIdPart
     + ', trvale bytom ' + (state.pStreet||'__________') + ', ' + (state.pZip||'__________') + ' ' + (state.pCity||'__________')
-    + ' (ďalej len „splnomocniteľ/-ka“), týmto splnomocňujem ' + (state.aName||'____________________') + ', nar. ' + aBirth
+    + ' (ďalej len „' + g(state.pGender,'splnomocniteľ','splnomocniteľka') + '“), týmto splnomocňujem ' + (state.aName||'____________________') + ', nar. ' + aBirth
     + ', trvale bytom ' + (state.aStreet||'__________') + ', ' + (state.aZip||'__________') + ' ' + (state.aCity||'__________') + aRolePart
-    + ' (ďalej len „splnomocnenec/-kyňa“), aby ma zastupoval/a ' + scopeText();
+    + ' (ďalej len „' + g(state.aGender,'splnomocnenec','splnomocnenkyňa') + '“), aby ma zastupoval' + g(state.aGender,'','a') + ' ' + scopeText();
 
   const powersList = Object.keys(POWERS).filter(k=>state.powers[k]).map(k=>POWERS[k].label);
-  const powersIntro = 'Splnomocnenec/-kyňa je v rámci tohto splnomocnenia oprávnený/-á najmä na:';
+  const powersIntro = g(state.aGender,'Splnomocnenec','Splnomocnenkyňa') + ' je v rámci tohto splnomocnenia ' + g(state.aGender,'oprávnený','oprávnená') + ' najmä na:';
 
   const validEff = parseDate(state.validFrom) ? fmt(parseDate(state.validFrom)) : '__________';
   const validity = state.validIndef
@@ -416,6 +432,10 @@ function refreshPreview(){
 function render(){
   $('validToField').style.display = state.validIndef ? 'none' : 'flex';
   $('indefSwitch').classList.toggle('on', state.validIndef);
+  $('pGenderM').classList.toggle('sel', state.pGender!=='z');
+  $('pGenderZ').classList.toggle('sel', state.pGender==='z');
+  $('aGenderM').classList.toggle('sel', state.aGender!=='z');
+  $('aGenderZ').classList.toggle('sel', state.aGender==='z');
 
   const errors = validate();
   const noPowers = !hasPowers();
@@ -461,12 +481,12 @@ function buildLetterHtml(previewMode){
       <div class="sig-col">
         <div class="sig-line"></div>
         <div class="sig-name">${escapeHtml(state.pName||'____________________')}</div>
-        <div class="sig-role">splnomocniteľ/-ka</div>
+        <div class="sig-role">${g(state.pGender,'splnomocniteľ','splnomocniteľka')}</div>
       </div>
       <div class="sig-col">
         <div class="sig-line"></div>
         <div class="sig-name">${escapeHtml(state.aName||'____________________')}</div>
-        <div class="sig-role">splnomocnenec/-kyňa – splnomocnenie prijímam</div>
+        <div class="sig-role">${g(state.aGender,'splnomocnenec','splnomocnenkyňa')} – splnomocnenie prijímam</div>
       </div>
     </div>
     <div class="footer-bar">
@@ -549,7 +569,7 @@ function doCopy(){
   const placeDate = (state.place||'__________') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '__________');
   const txt=['SPLNOMOCNENIE','',d.intro,'',d.powersIntro]
     .concat(d.powersList.map(p=>'– '+p))
-    .concat(['', d.validity, '', placeDate, '', 'Splnomocniteľ/-ka: '+(state.pName||'____________________'), 'Splnomocnenec/-kyňa: '+(state.aName||'____________________')])
+    .concat(['', d.validity, '', placeDate, '', g(state.pGender,'Splnomocniteľ','Splnomocniteľka')+': '+(state.pName||'____________________'), g(state.aGender,'Splnomocnenec','Splnomocnenkyňa')+': '+(state.aName||'____________________')])
     .join('\n');
   try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
   const b=$('copyBtn'); b.textContent='Skopírované ✓'; setTimeout(()=>b.textContent='Kopírovať text',1600);
@@ -610,6 +630,7 @@ function bindAddressField(prefix){
 =========================================================================== */
 function bind(){
   document.addEventListener('click', e=>{
+    const gc=e.target.closest('[data-gender]'); if(gc){ state[gc.dataset.genderTarget+'Gender']=gc.dataset.gender; render(); return; }
     const sc=e.target.closest('[data-scope]'); if(sc){ state.scopeType=sc.dataset.scope; render(); renderControls(); return; }
     const pw=e.target.closest('[data-power]'); if(pw){ const k=pw.dataset.power; state.powers[k]=!state.powers[k]; render(); renderControls(); return; }
     const sgP=e.target.closest('#pSuggest .row'); if(sgP){ $('pSuggest')._onPick($('pSuggest')._list[+sgP.dataset.i]); return; }

@@ -93,6 +93,13 @@
             <input id="name" placeholder="Meno a priezvisko">
             <span class="err">Zadaj meno a priezvisko</span>
           </div>
+          <div class="field" data-k="gender">
+            <label>ROD</label>
+            <div class="variant-chips">
+              <div class="chip" id="genderM" data-gender="m">Muž</div>
+              <div class="chip" id="genderZ" data-gender="z">Žena</div>
+            </div>
+          </div>
           <div class="field col-full addr-wrap" data-k="street">
             <label>ADRESA · ulica a číslo</label>
             <input id="street" placeholder="Začni písať ulicu…" autocomplete="off">
@@ -253,7 +260,7 @@ async function fetchNominatim(q){
 const state = {
   reasonType:'conduct', institution:'allianz', institutionOtherName:'', institutionOtherAddress:'',
   contractNo:'', eventDate:'',
-  name:'', street:'', zip:'', city:'', phone:'', email:'',
+  name:'', gender:'m', street:'', zip:'', city:'', phone:'', email:'',
   description:'', resolution:'',
   attachments:{ correspondence:false, screenshot:false, other:false },
   signPlace:'', signDate: toISO(TODAY),
@@ -267,6 +274,8 @@ function parseDate(s){ const p=(s||'').split('-').map(Number); if(p.length!==3||
   const d=new Date(p[0],p[1]-1,p[2]); return isNaN(d)?null:d; }
 function fmt(d){ return d.getDate()+'. '+(d.getMonth()+1)+'. '+d.getFullYear(); }
 function toISO(d){ const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+/** Rodovo správny tvar slova podľa zvoleného rodu ('z' = žena, inak muž). */
+function g(male, female){ return state.gender==='z' ? female : male; }
 
 function institutionInfo(){
   if(state.institution==='other'){
@@ -288,7 +297,7 @@ function buildParas(){
   const eventPart = parseDate(state.eventDate) ? (' K uvedenému došlo dňa ' + fmt(parseDate(state.eventDate)) + '.') : '';
 
   const paras = [];
-  paras.push('dolu podpísaný/á ' + (state.name||'____________________') + ' (ďalej len „sťažovateľ/-ka“) si Vás týmto dovoľujem upozorniť na nedostatok vo Vašom postupe: '
+  paras.push('dolu ' + g('podpísaný','podpísaná') + ' ' + (state.name||'____________________') + ' (ďalej len „' + g('sťažovateľ','sťažovateľka') + '“) si Vás týmto dovoľujem upozorniť na nedostatok vo Vašom postupe: '
     + reasonLabel + contractPart + '.' + eventPart);
 
   paras.push('Popis reklamácie: ' + (state.description.trim()||'__________'));
@@ -386,6 +395,8 @@ function refreshPreview(){
 }
 
 function render(){
+  $('genderM').classList.toggle('sel', state.gender!=='z');
+  $('genderZ').classList.toggle('sel', state.gender==='z');
   const errors = validate();
   document.querySelectorAll('.field[data-k]').forEach(f=>{
     const k=f.dataset.k;
@@ -529,7 +540,7 @@ function doReset(){
   Object.assign(state,{
     reasonType:'conduct', institution:'allianz', institutionOtherName:'', institutionOtherAddress:'',
     contractNo:'', eventDate:'',
-    name:'', street:'', zip:'', city:'', phone:'', email:'',
+    name:'', gender:'m', street:'', zip:'', city:'', phone:'', email:'',
     description:'', resolution:'',
     attachments:{ correspondence:false, screenshot:false, other:false },
     signPlace:'', signDate: toISO(TODAY), touched:false,
@@ -570,6 +581,7 @@ function renderSuggest(){
 =========================================================================== */
 function bind(){
   document.addEventListener('click', e=>{
+    const gd=e.target.closest('[data-gender]'); if(gd){ state.gender=gd.dataset.gender; render(); return; }
     const t=e.target.closest('[data-type]'); if(t){ state.reasonType=t.dataset.type; render(); renderControls(); return; }
     const at=e.target.closest('[data-att]');  if(at){ const k=at.dataset.att; state.attachments[k]=!state.attachments[k]; render(); renderControls(); return; }
     const sg=e.target.closest('#suggest .row'); if(sg){ const a=$('suggest')._list[+sg.dataset.i];

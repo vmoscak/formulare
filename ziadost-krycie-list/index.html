@@ -116,6 +116,13 @@
             <input id="name" placeholder="Meno a priezvisko">
             <span class="err">Zadaj meno a priezvisko</span>
           </div>
+          <div class="field" data-k="gender">
+            <label>ROD</label>
+            <div class="variant-chips">
+              <div class="chip" id="genderM" data-gender="m">Muž</div>
+              <div class="chip" id="genderZ" data-gender="z">Žena</div>
+            </div>
+          </div>
           <div class="field" data-k="idNum">
             <label>RODNÉ ČÍSLO <span style="font-weight:500;text-transform:none;">(nepovinné)</span></label>
             <input id="idNum" placeholder="000000/0000">
@@ -275,7 +282,7 @@ const state = {
   brand:'', ecv:'', vin:'', insuranceType:'pzp', validFrom: toISO(TODAY),
   reason:'novazmluva', reasonOther:'',
   insurer:'allianz', insurerOtherName:'', insurerOtherAddress:'',
-  name:'', idNum:'', street:'', zip:'', city:'', phone:'', email:'',
+  name:'', gender:'m', idNum:'', street:'', zip:'', city:'', phone:'', email:'',
   delivery:'email',
   signPlace:'', signDate: toISO(TODAY),
   touched:false,
@@ -288,6 +295,8 @@ function parseDate(s){ const p=(s||'').split('-').map(Number); if(p.length!==3||
   const d=new Date(p[0],p[1]-1,p[2]); return isNaN(d)?null:d; }
 function fmt(d){ return d.getDate()+'. '+(d.getMonth()+1)+'. '+d.getFullYear(); }
 function toISO(d){ const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+/** Rodovo správny tvar slova podľa zvoleného rodu ('z' = žena, inak muž). */
+function g(male, female){ return state.gender==='z' ? female : male; }
 
 function insurerInfo(){
   if(state.insurer==='other'){
@@ -318,7 +327,7 @@ function buildParas(){
   const validFromDate = parseDate(state.validFrom);
 
   const paras = [];
-  paras.push('dolu podpísaný/á ' + (state.name||'____________________') + idPart
+  paras.push('dolu ' + g('podpísaný','podpísaná') + ' ' + (state.name||'____________________') + idPart
     + ', si Vás týmto dovoľujem požiadať o vystavenie krycieho listu (potvrdenia o poistení) pre vozidlo '
     + (state.brand||'__________') + ecvPart + vinPart + ', v súvislosti s ' + insuranceTypeLabel()
     + ', s platnosťou od ' + (validFromDate ? fmt(validFromDate) : '__________') + '.');
@@ -418,6 +427,8 @@ function refreshPreview(){
 }
 
 function render(){
+  $('genderM').classList.toggle('sel', state.gender!=='z');
+  $('genderZ').classList.toggle('sel', state.gender==='z');
   const errors = validate();
   document.querySelectorAll('.field[data-k]').forEach(f=>{
     const k=f.dataset.k;
@@ -562,7 +573,7 @@ function doReset(){
     brand:'', ecv:'', vin:'', insuranceType:'pzp', validFrom: toISO(TODAY),
     reason:'novazmluva', reasonOther:'',
     insurer:'allianz', insurerOtherName:'', insurerOtherAddress:'',
-    name:'', idNum:'', street:'', zip:'', city:'', phone:'', email:'',
+    name:'', gender:'m', idNum:'', street:'', zip:'', city:'', phone:'', email:'',
     delivery:'email',
     signPlace:'', signDate: toISO(TODAY), touched:false,
   });
@@ -602,6 +613,7 @@ function renderSuggest(){
 =========================================================================== */
 function bind(){
   document.addEventListener('click', e=>{
+    const gd=e.target.closest('[data-gender]'); if(gd){ state.gender=gd.dataset.gender; render(); return; }
     const sg=e.target.closest('#suggest .row'); if(sg){ const a=$('suggest')._list[+sg.dataset.i];
         state.street=a.street; state.city=a.city; state.zip=a.zip; $('suggest').style.display='none'; syncInputs(); render(); return; }
     if(!e.target.closest('.addr-wrap')) $('suggest').style.display='none';

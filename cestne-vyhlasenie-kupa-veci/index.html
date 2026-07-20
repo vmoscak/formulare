@@ -117,6 +117,13 @@
             <input id="name" placeholder="Meno a priezvisko">
             <span class="err">Zadaj meno a priezvisko</span>
           </div>
+          <div class="field" data-k="gender">
+            <label>ROD</label>
+            <div class="variant-chips">
+              <div class="chip" id="genderM" data-gender="m">Muž</div>
+              <div class="chip" id="genderZ" data-gender="z">Žena</div>
+            </div>
+          </div>
           <div class="field" data-k="birth">
             <label>DÁTUM NARODENIA</label>
             <input type="date" id="birth">
@@ -244,7 +251,7 @@ const state = {
   insurer:'allianz', insurerOtherName:'', insurerOtherAddress:'',
   incidentDate:'', contractNo:'',
   itemDescription:'', purchaseDate:'', purchasePrice:'', purchasePlace:'', missingReason:'',
-  name:'', birth:'', idNum:'', street:'', zip:'', city:'',
+  name:'', gender:'m', birth:'', idNum:'', street:'', zip:'', city:'',
   place:'', signDate: toISO(TODAY),
   touched:false,
 };
@@ -256,6 +263,8 @@ function parseDate(s){ const p=(s||'').split('-').map(Number); if(p.length!==3||
   const d=new Date(p[0],p[1]-1,p[2]); return isNaN(d)?null:d; }
 function fmt(d){ return d.getDate()+'. '+(d.getMonth()+1)+'. '+d.getFullYear(); }
 function toISO(d){ const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+/** Rodovo správny tvar slova podľa zvoleného rodu ('z' = žena, inak muž). */
+function g(male, female){ return state.gender==='z' ? female : male; }
 function eur(n){ return (Number(n)||0).toLocaleString('sk-SK',{minimumFractionDigits:2, maximumFractionDigits:2}) + ' €'; }
 
 function insurerInfo(){
@@ -275,12 +284,12 @@ function buildParas(){
   const placePart = state.purchasePlace.trim() ? (' u predajcu/na mieste: ' + state.purchasePlace.trim()) : '';
   const pricePart = state.purchasePrice ? (', za kúpnu cenu ' + eur(state.purchasePrice)) : '';
 
-  const intro = 'Ja, dolu podpísaný/á ' + (state.name||'____________________') + ', nar. ' + birth + idPart
+  const intro = 'Ja, dolu ' + g('podpísaný','podpísaná') + ' ' + (state.name||'____________________') + ', nar. ' + birth + idPart
     + ', trvale bytom ' + (state.street||'__________') + ', ' + (state.zip||'__________') + ' ' + (state.city||'__________')
-    + ' (ďalej len „vyhlasujúci/-a“), čestne vyhlasujem, že som vlastníkom/vlastníčkou nasledovnej veci: '
+    + ' (ďalej len „' + g('vyhlasujúci','vyhlasujúca') + '“), čestne vyhlasujem, že som ' + g('vlastníkom','vlastníčkou') + ' nasledovnej veci: '
     + (state.itemDescription.trim()||'__________') + '.';
 
-  const purchasePara = 'Uvedenú vec som nadobudol/la kúpou dňa (aspoň približne) ' + purchaseDate + placePart + pricePart + '.';
+  const purchasePara = 'Uvedenú vec som ' + g('nadobudol','nadobudla') + ' kúpou dňa (aspoň približne) ' + purchaseDate + placePart + pricePart + '.';
 
   const reasonPara = 'Pôvodný doklad o kúpe (pokladničný blok / faktúra) k uvedenej veci nepredkladám z nasledovného dôvodu: '
     + (state.missingReason.trim()||'__________') + '.';
@@ -369,6 +378,8 @@ function refreshPreview(){
 }
 
 function render(){
+  $('genderM').classList.toggle('sel', state.gender!=='z');
+  $('genderZ').classList.toggle('sel', state.gender==='z');
   const errors = validate();
   document.querySelectorAll('.field[data-k]').forEach(f=>{
     const k=f.dataset.k;
@@ -411,7 +422,7 @@ function buildLetterHtml(previewMode){
       <div class="sig-col">
         <div class="sig-line"></div>
         <div class="sig-name">${escapeHtml(state.name||'____________________')}</div>
-        <div class="sig-role">vyhlasujúci/-a</div>
+        <div class="sig-role">${g('vyhlasujúci','vyhlasujúca')}</div>
       </div>
     </div>
     <div class="footer-bar">
@@ -496,7 +507,7 @@ function doCopy(){
   const ins = insurerInfo();
   const txt=['ČESTNÉ PREHLÁSENIE','','Predkladá sa: '+ins.name,'',d.intro,d.purchasePara,d.reasonPara]
     .concat(d.incidentPara?[d.incidentPara]:[])
-    .concat([d.warning,'',placeDate,'','Vyhlasujúci/-a: '+(state.name||'____________________')])
+    .concat([d.warning,'',placeDate,'',g('Vyhlasujúci','Vyhlasujúca')+': '+(state.name||'____________________')])
     .join('\n');
   try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
   const b=$('copyBtn'); b.textContent='Skopírované ✓'; setTimeout(()=>b.textContent='Kopírovať text',1600);
@@ -507,7 +518,7 @@ function doReset(){
     insurer:'allianz', insurerOtherName:'', insurerOtherAddress:'',
     incidentDate:'', contractNo:'',
     itemDescription:'', purchaseDate:'', purchasePrice:'', purchasePlace:'', missingReason:'',
-    name:'', birth:'', idNum:'', street:'', zip:'', city:'',
+    name:'', gender:'m', birth:'', idNum:'', street:'', zip:'', city:'',
     place:'', signDate: toISO(TODAY), touched:false,
   });
   renderControls(); syncInputs(); render();
@@ -546,6 +557,7 @@ function renderSuggest(){
 =========================================================================== */
 function bind(){
   document.addEventListener('click', e=>{
+    const gd=e.target.closest('[data-gender]'); if(gd){ state.gender=gd.dataset.gender; render(); return; }
     const sg=e.target.closest('#suggest .row'); if(sg){ const a=$('suggest')._list[+sg.dataset.i];
         state.street=a.street; state.city=a.city; state.zip=a.zip; $('suggest').style.display='none'; syncInputs(); render(); return; }
     if(!e.target.closest('.addr-wrap')) $('suggest').style.display='none';

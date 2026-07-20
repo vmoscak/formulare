@@ -184,6 +184,13 @@
             <input id="name" placeholder="Meno a priezvisko">
             <span class="err">Zadaj meno a priezvisko</span>
           </div>
+          <div class="field" data-k="gender">
+            <label>ROD</label>
+            <div class="variant-chips">
+              <div class="chip" id="genderM" data-gender="m">Muž</div>
+              <div class="chip" id="genderZ" data-gender="z">Žena</div>
+            </div>
+          </div>
           <div class="field col-full addr-wrap" data-k="street">
             <label>SÚČASNÁ ADRESA · ulica a číslo</label>
             <input id="street" placeholder="Začni písať ulicu…" autocomplete="off">
@@ -321,7 +328,7 @@ const state = {
   newName:'', newIdNum:'', newBirthCert:'',
   addressType:'trvala', newStreet:'', newZip:'', newCity:'',
   beneficiaryName:'', beneficiaryBirth:'', beneficiaryBirthCert:'', beneficiaryRelation:'', beneficiaryShare:'',
-  name:'', street:'', zip:'', city:'', phone:'', email:'',
+  name:'', gender:'m', street:'', zip:'', city:'', phone:'', email:'',
   signPlace:'', signDate: toISO(TODAY),
   touched:false,
 };
@@ -333,6 +340,8 @@ function parseDate(s){ const p=(s||'').split('-').map(Number); if(p.length!==3||
   const d=new Date(p[0],p[1]-1,p[2]); return isNaN(d)?null:d; }
 function fmt(d){ return d.getDate()+'. '+(d.getMonth()+1)+'. '+d.getFullYear(); }
 function toISO(d){ const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+/** Rodovo správny tvar slova podľa zvoleného rodu ('z' = žena, inak muž). */
+function g(male, female){ return state.gender==='z' ? female : male; }
 
 function insurerInfo(){
   if(state.insurer==='other'){
@@ -348,7 +357,7 @@ function anyChangeSelected(){ return state.changes.personal || state.changes.add
 =========================================================================== */
 function buildParas(){
   const paras = [];
-  paras.push('dolu podpísaný/á ' + (state.name||'____________________') + ', poistník/-čka poistnej zmluvy č. ' + (state.contractNo||'__________')
+  paras.push('dolu ' + g('podpísaný','podpísaná') + ' ' + (state.name||'____________________') + ', ' + g('poistník','poistníčka') + ' poistnej zmluvy č. ' + (state.contractNo||'__________')
     + ', žiadam o vykonanie nasledovnej zmeny/zmien v uvedenej poistnej zmluve:');
 
   if(state.changes.personal){
@@ -465,6 +474,8 @@ function refreshPreview(){
 }
 
 function render(){
+  $('genderM').classList.toggle('sel', state.gender!=='z');
+  $('genderZ').classList.toggle('sel', state.gender==='z');
   $('sectionPersonal').style.display = state.changes.personal ? 'block' : 'none';
   $('sectionAddress').style.display = state.changes.address ? 'block' : 'none';
   $('sectionBeneficiary').style.display = state.changes.beneficiary ? 'block' : 'none';
@@ -618,7 +629,7 @@ function doReset(){
     newName:'', newIdNum:'', newBirthCert:'',
     addressType:'trvala', newStreet:'', newZip:'', newCity:'',
     beneficiaryName:'', beneficiaryBirth:'', beneficiaryBirthCert:'', beneficiaryRelation:'', beneficiaryShare:'',
-    name:'', street:'', zip:'', city:'', phone:'', email:'',
+    name:'', gender:'m', street:'', zip:'', city:'', phone:'', email:'',
     signPlace:'', signDate: toISO(TODAY), touched:false,
   });
   renderControls(); syncInputs(); render();
@@ -658,6 +669,7 @@ function renderSuggest(boxId, inputId, streetKey, zipKey, cityKey){
 =========================================================================== */
 function bind(){
   document.addEventListener('click', e=>{
+    const gd=e.target.closest('[data-gender]'); if(gd){ state.gender=gd.dataset.gender; render(); return; }
     const c=e.target.closest('[data-change]'); if(c){ const k=c.dataset.change; state.changes[k]=!state.changes[k]; render(); renderControls(); return; }
 
     const sg1=e.target.closest('#suggest .row'); if(sg1 && $('suggest')._apply){ $('suggest')._apply($('suggest')._list[+sg1.dataset.i]); $('suggest').style.display='none'; return; }

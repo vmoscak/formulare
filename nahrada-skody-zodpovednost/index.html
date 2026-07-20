@@ -98,6 +98,13 @@
             <input id="name" placeholder="Meno a priezvisko">
             <span class="err">Zadaj meno a priezvisko</span>
           </div>
+          <div class="field" data-k="gender">
+            <label>ROD</label>
+            <div class="variant-chips">
+              <div class="chip" id="genderM" data-gender="m">Muž</div>
+              <div class="chip" id="genderZ" data-gender="z">Žena</div>
+            </div>
+          </div>
           <div class="field col-full addr-wrap" data-k="street">
             <label>ADRESA · ulica a číslo</label>
             <input id="street" placeholder="Začni písať ulicu…" autocomplete="off">
@@ -282,7 +289,7 @@ async function fetchNominatim(q){
 const state = {
   damageType:'property', insurer:'allianz', insurerOtherName:'', insurerOtherAddress:'',
   causerName:'', causerAddress:'', causerContract:'',
-  name:'', street:'', zip:'', city:'', phone:'', email:'', iban:'',
+  name:'', gender:'m', street:'', zip:'', city:'', phone:'', email:'', iban:'',
   incidentDate:'', incidentPlace:'', incidentDescription:'', damageDescription:'', amount:'',
   attachments:{ photos:true, invoice:true, expert:false, police:false, medical:false },
   signPlace:'', signDate: toISO(TODAY),
@@ -296,6 +303,8 @@ function parseDate(s){ const p=(s||'').split('-').map(Number); if(p.length!==3||
   const d=new Date(p[0],p[1]-1,p[2]); return isNaN(d)?null:d; }
 function fmt(d){ return d.getDate()+'. '+(d.getMonth()+1)+'. '+d.getFullYear(); }
 function toISO(d){ const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+/** Rodovo správny tvar slova podľa zvoleného rodu ('z' = žena, inak muž). */
+function g(male, female){ return state.gender==='z' ? female : male; }
 
 /* ===========================================================================
    ZOSTAVENIE TEXTU ŽIADOSTI
@@ -309,7 +318,7 @@ function buildParas(){
   const amountFmt = amountNum.toLocaleString('sk-SK',{minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
 
   const paras = [];
-  paras.push('dolu podpísaný/á ' + (state.name||'____________________') + ' (ďalej len „poškodený/-á“) si Vás týmto dovoľujem požiadať o náhradu '
+  paras.push('dolu ' + g('podpísaný','podpísaná') + ' ' + (state.name||'____________________') + ' (ďalej len „' + g('poškodený','poškodená') + '“) si Vás týmto dovoľujem požiadať o náhradu '
     + subj + ', ktorá mi vznikla v dôsledku konania poisteného/-ej ' + (state.causerName||'____________________') + causerAddrPart + causerContractPart + '.');
 
   paras.push('Ku škodovej udalosti došlo dňa ' + incidentDate + ' v/na ' + (state.incidentPlace||'__________') + '.');
@@ -432,6 +441,8 @@ function refreshPreview(){
 }
 
 function render(){
+  $('genderM').classList.toggle('sel', state.gender!=='z');
+  $('genderZ').classList.toggle('sel', state.gender==='z');
   const errors = validate();
   document.querySelectorAll('.field[data-k]').forEach(f=>{
     const k=f.dataset.k;
@@ -574,7 +585,7 @@ function doReset(){
   Object.assign(state,{
     damageType:'property', insurer:'allianz', insurerOtherName:'', insurerOtherAddress:'',
     causerName:'', causerAddress:'', causerContract:'',
-    name:'', street:'', zip:'', city:'', phone:'', email:'', iban:'',
+    name:'', gender:'m', street:'', zip:'', city:'', phone:'', email:'', iban:'',
     incidentDate:'', incidentPlace:'', incidentDescription:'', damageDescription:'', amount:'',
     attachments:{ photos:true, invoice:true, expert:false, police:false, medical:false },
     signPlace:'', signDate: toISO(TODAY), touched:false,
@@ -615,6 +626,7 @@ function renderSuggest(){
 =========================================================================== */
 function bind(){
   document.addEventListener('click', e=>{
+    const gd=e.target.closest('[data-gender]'); if(gd){ state.gender=gd.dataset.gender; render(); return; }
     const t=e.target.closest('[data-type]'); if(t){ state.damageType=t.dataset.type; render(); renderControls(); return; }
     const at=e.target.closest('[data-att]');  if(at){ const k=at.dataset.att; state.attachments[k]=!state.attachments[k]; render(); renderControls(); return; }
     const sg=e.target.closest('#suggest .row'); if(sg){ const a=$('suggest')._list[+sg.dataset.i];
