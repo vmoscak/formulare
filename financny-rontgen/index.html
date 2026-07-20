@@ -497,6 +497,7 @@ function bind(){
 =========================================================================== */
 (function init(){
   bind(); syncPanelWidth(); setSlider(60); render();
+  autoOpenSavedDocument(function(d){ Object.assign(state, d); render(); }, doPDF);
   window.addEventListener('resize', syncPanelWidth);
 })();
 </script>

@@ -472,6 +472,7 @@ function bind(){
     if(ADVISOR.nbs_registration_no) state.newAdminNbsNo = ADVISOR.nbs_registration_no;
   }
   renderRows(); syncInputs(); bind(); render();
+  autoOpenSavedDocument(function(d){ Object.assign(state, d); syncInputs(); render(); }, doPDF);
 })();
 </script>
 

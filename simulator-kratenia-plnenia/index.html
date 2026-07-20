@@ -374,6 +374,7 @@ function bind(){
 =========================================================================== */
 (function init(){
   bind(); render();
+  autoOpenSavedDocument(function(d){ Object.assign(state, d); render(); }, doPDF);
 })();
 </script>
 

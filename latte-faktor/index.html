@@ -345,6 +345,7 @@ function bind(){
   syncInputs();
   bind();
   render();
+  autoOpenSavedDocument(function(d){ Object.assign(state, d); syncInputs(); render(); }, doPDF);
 })();
 </script>
 

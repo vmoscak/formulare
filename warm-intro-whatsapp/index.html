@@ -213,6 +213,7 @@ function bind(){
 
 (function init(){
   renderTones(); syncInputs(); bind(); render();
+  autoOpenSavedDocument(function(d){ Object.assign(state, d); syncInputs(); render(); }, function(){});
   fetch('/api/whoami.php', { credentials:'same-origin' })
     .then(function(r){ return r.ok ? r.json() : {}; })
     .then(function(adv){ if(adv && adv.id){ state.advisorName = adv.name || ''; state.advisorPhone = adv.phone || ''; render(); } })
