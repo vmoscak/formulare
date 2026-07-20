@@ -449,6 +449,7 @@ function bind(){
 =========================================================================== */
 (function init(){
   syncInputs(); bind(); render();
+  wireClientAutocomplete('preberaci-protokol', 'toName');
   autoOpenSavedDocument(function(d){ Object.assign(state, d); state.touched = true; syncInputs(); render(); }, doPDF);
 })();
 </script>

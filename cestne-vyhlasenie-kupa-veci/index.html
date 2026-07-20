@@ -591,6 +591,7 @@ function bind(){
 =========================================================================== */
 (function init(){
   renderControls(); syncInputs(); bind(); render();
+  wireClientAutocomplete('cestne-vyhlasenie-kupa-veci', 'name');
   autoOpenSavedDocument(function(d){ Object.assign(state, d); state.touched = true; syncInputs(); render(); }, doPDF);
 })();
 </script>

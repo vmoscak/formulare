@@ -310,6 +310,7 @@ function bind(){
 =========================================================================== */
 (function init(){
   bind(); render();
+  wireClientAutocomplete('prvych-30-dni', 'clientName');
   autoOpenSavedDocument(function(d){ Object.assign(state, d); render(); }, doPDF);
   fetch('/api/whoami.php', { credentials: 'same-origin' })
     .then(function(r){ return r.ok ? r.json() : {}; })

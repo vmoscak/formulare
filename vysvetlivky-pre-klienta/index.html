@@ -302,6 +302,7 @@ function bind(){
 =========================================================================== */
 (function init(){
   renderTerms(); syncInputs(); bind(); render();
+  wireClientAutocomplete('vysvetlivky-pre-klienta', 'clientName');
   autoOpenSavedDocument(function(d){ Object.assign(state, d); state.touched = true; renderTerms(); syncInputs(); render(); }, doPDF);
 })();
 </script>

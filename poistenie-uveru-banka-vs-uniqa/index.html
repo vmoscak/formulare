@@ -252,6 +252,7 @@ function bind(){
 =========================================================================== */
 (function init(){
   bind(); render();
+  wireClientAutocomplete('poistenie-uveru-banka-vs-uniqa', 'clientName');
   autoOpenSavedDocument(function(d){ Object.assign(state, d); render(); }, doPDF);
 })();
 </script>

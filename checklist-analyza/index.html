@@ -474,6 +474,7 @@ function bind(){
     }catch(e){ /* ticho ignoruj, ostanú predvolené úlohy */ }
   }
   syncInputs(); bind(); render(); updateSeedBanner();
+  wireClientAutocomplete('checklist-analyza', 'clientName');
   autoOpenSavedDocument(function(d){ Object.assign(state, d); state.touched = true; syncInputs(); render(); }, doPDF);
 })();
 </script>

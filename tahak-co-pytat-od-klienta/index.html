@@ -368,6 +368,7 @@ function openHistoryRow(row){
 (function init(){
   renderCategories(); bind(); render();
   loadMyDocuments();
+  wireClientAutocomplete('tahak-co-pytat-od-klienta', 'contactName');
   autoOpenSavedDocument(function(d){ Object.assign(state, d); }, doPDF);
 })();
 </script>

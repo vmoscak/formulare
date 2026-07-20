@@ -286,6 +286,7 @@ function doPDF(){
   $('pdfBtn').addEventListener('click', doPDF);
   render();
 
+  wireClientAutocomplete('rocny-servisny-plan', 'clientName');
   autoOpenSavedDocument(function(d){
     Object.assign(state, d);
     $('clientName').value = state.clientName || '';

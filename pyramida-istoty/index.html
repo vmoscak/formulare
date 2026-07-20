@@ -368,6 +368,7 @@ function bind(){
 =========================================================================== */
 (function init(){
   bind(); render(); setMode(state.mode);
+  wireClientAutocomplete('pyramida-istoty', 'contactName');
   autoOpenSavedDocument(function(d){ Object.assign(state, d); render(); }, doPDF);
 })();
 </script>

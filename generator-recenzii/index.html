@@ -344,6 +344,7 @@ function bind(){
 =========================================================================== */
 (function init(){
   renderReasons(); renderChannels(); renderTones(); syncInputs(); bind(); render();
+  wireClientAutocomplete('generator-recenzii', 'clientName');
   fetch('/api/whoami.php', { credentials:'same-origin' })
     .then(function(r){ return r.ok ? r.json() : {}; })
     .then(function(adv){ if(adv && adv.id){ state.advisorName = adv.name || ''; render(); } })

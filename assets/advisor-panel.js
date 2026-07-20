@@ -27,6 +27,33 @@ function logDocument(tool, clientLabel, formData, clientToken, isDraft){
   }catch(e){}
 }
 
+/* Autocomplete mena klienta z histórie tohto nástroja u tohto poradcu —
+   naviaže <datalist> (vytvorí ho, ak treba) na dané pole podľa jeho id, nech
+   sa meno pri opakovanom vypĺňaní toho istého nástroja nemusí písať odznova.
+   Bez cur_advisor cookie (napr. klientska stránka cez token) endpoint vráti
+   prázdny zoznam — tichý no-op. */
+function wireClientAutocomplete(tool, inputId){
+  var inputEl = document.getElementById(inputId);
+  if (!inputEl) return;
+  try{
+    var dlId = inputId + 'RecentDL';
+    var dl = document.getElementById(dlId);
+    if (!dl) {
+      dl = document.createElement('datalist');
+      dl.id = dlId;
+      document.body.appendChild(dl);
+    }
+    inputEl.setAttribute('list', dlId);
+    fetch('../api/recent-clients.php?tool=' + encodeURIComponent(tool))
+      .then(function(r){ return r.ok ? r.json() : {clients:[]}; })
+      .then(function(data){
+        var clients = (data && data.clients) || [];
+        dl.innerHTML = clients.map(function(c){ return '<option value="' + escapeHtml(c) + '">'; }).join('');
+      })
+      .catch(function(){});
+  }catch(e){}
+}
+
 /* Ak URL obsahuje ?loadDoc=<id> (odkaz z "Moje dokumenty" / prehľadu pre
    majiteľa), načíta uložený dokument a rovno spustí generovanie PDF —
    umožňuje sa k už vygenerovanému dokumentu kedykoľvek vrátiť. Pri koncepte

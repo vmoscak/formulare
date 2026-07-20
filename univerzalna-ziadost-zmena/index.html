@@ -712,6 +712,7 @@ function bind(){
 =========================================================================== */
 (function init(){
   renderControls(); syncInputs(); bind(); render();
+  wireClientAutocomplete('univerzalna-ziadost-zmena', 'name');
   autoOpenSavedDocument(function(d){ Object.assign(state, d); state.touched = true; syncInputs(); render(); }, doPDF);
 })();
 </script>

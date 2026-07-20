@@ -772,6 +772,7 @@ function bind(){
 =========================================================================== */
 (function init(){
   renderControls(); syncInputs(); bind(); render();
+  wireClientAutocomplete('vypoved-poistenia', 'name');
   autoOpenSavedDocument(function(d){ Object.assign(state, d); state.touched = true; syncInputs(); render(); }, doPDF);
 })();
 </script>

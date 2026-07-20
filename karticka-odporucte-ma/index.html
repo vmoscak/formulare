@@ -357,6 +357,7 @@ function bind(){
       }
     })
     .catch(function(){});
+  wireClientAutocomplete('karticka-odporucte-ma', 'clientName');
   autoOpenSavedDocument(function(d){ Object.assign(state, d); state.touched = true; syncInputs(); render(); }, doPDF);
 })();
 </script>

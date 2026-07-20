@@ -302,6 +302,7 @@ function bind(){
 =========================================================================== */
 (function init(){
   renderControls(); syncInputs(); bind(); render();
+  wireClientAutocomplete('checklisty-skody', 'clientName');
   autoOpenSavedDocument(function(d){ Object.assign(state, d); syncInputs(); renderControls(); render(); }, doPDF);
 })();
 </script>

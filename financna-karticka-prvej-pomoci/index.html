@@ -425,6 +425,7 @@ function bind(){
       }
     })
     .catch(function(){});
+  wireClientAutocomplete('financna-karticka-prvej-pomoci', 'clientName');
   autoOpenSavedDocument(function(d){ Object.assign(state, d); state.touched = true; renderPolicies(); renderLines(); syncInputs(); render(); }, doPDF);
 })();
 </script>

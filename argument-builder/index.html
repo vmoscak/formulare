@@ -319,6 +319,7 @@ function bind(){
 =========================================================================== */
 (function init(){
   bind(); render();
+  wireClientAutocomplete('argument-builder', 'contactName');
   autoOpenSavedDocument(function(d){ Object.assign(state, d); render(); }, doPDF);
 })();
 </script>
