@@ -249,7 +249,7 @@ function summaryText(r){
   lines.push('Potrebná hotovosť počas zmrazenia účtov: ' + eur(r.neededCash));
   if (r.hasCoverage) {
     lines.push('Existujúce poistné krytie: ' + eur(r.existingCoverage));
-    lines.push(r.fullyCovered ? 'Krytie potrebnú hotovosť pokrýva.' : 'Chýba: ' + eur(r.gap));
+    lines.push(r.fullyCovered ? 'Krytie pokrýva potrebnú hotovosť.' : 'Chýba: ' + eur(r.gap));
   }
   lines.push('');
   lines.push('Poistné plnenie ide priamo oprávnenej osobe, mimo dedičského konania, typicky do niekoľkých týždňov.');

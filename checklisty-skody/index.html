@@ -196,9 +196,9 @@ function buildLetterHtml(previewMode){
 
   const body = `
     <div class="pdf-topbar"></div><div class="doctitle">Checklist — ${escapeHtml(t.label)}</div>
-    <p class="intro">${greeting} pre rýchle vybavenie škody si prosím priprav nasledovné podklady:</p>
+    <p class="intro">${greeting} pre rýchle vybavenie škody si, prosím, pripravte nasledovné podklady:</p>
     ${itemsHtml}
-    <p class="outro">S vyplnením a odoslaním ti rád/rada pomôžem — stačí mi podklady poslať.</p>
+    <p class="outro">S vyplnením a odoslaním Vám rád/rada pomôžem — stačí mi podklady poslať.</p>
     <div class="footer-bar">
       <table><tr>
         <td class="fl">${escapeHtml(state.clientName||'')}</td>
@@ -269,9 +269,9 @@ function doPDF(){
 function doCopy(){
   const t = DAMAGE_TYPES[state.damageType];
   const greeting = state.clientName ? 'Dobrý deň, ' + state.clientName + ',' : 'Dobrý deň,';
-  const txt=[greeting, 'pre rýchle vybavenie škody si prosím priprav nasledovné podklady:', '']
+  const txt=[greeting, 'pre rýchle vybavenie škody si, prosím, pripravte nasledovné podklady:', '']
     .concat(t.items.map(function(i){ return '– ' + i; }))
-    .concat(['', 'S vyplnením a odoslaním ti rád/rada pomôžem.'])
+    .concat(['', 'S vyplnením a odoslaním Vám rád/rada pomôžem.'])
     .join('\n');
   try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
   const b=$('copyBtn'); b.textContent='Skopírované ✓'; setTimeout(function(){ b.textContent='Kopírovať ako SMS/WhatsApp text'; },1600);

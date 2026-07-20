@@ -101,7 +101,7 @@ let clientLinkLabel = null;
    OTÁZKY
 =========================================================================== */
 const QUESTIONS = [
-  { key:'status', type:'single', title:'Aký je váš pracovný status?', sub:'Vyber možnosť, ktorá ťa najlepšie vystihuje.',
+  { key:'status', type:'single', title:'Aký je váš pracovný status?', sub:'Vyberte možnosť, ktorá vás najlepšie vystihuje.',
     options:[
       { v:'zamestnanec', label:'Zamestnanec/-kyňa' },
       { v:'szco', label:'SZČO' },
@@ -117,7 +117,7 @@ const QUESTIONS = [
       { v:'prenajimam', label:'Áno, prenajímam ju' },
       { v:'nie', label:'Nevlastním nehnuteľnosť' },
     ] },
-  { key:'existingIns', type:'multi', title:'Máte už nejaké poistenie?', sub:'Vyber všetko, čo platí — alebo „Zatiaľ žiadne".',
+  { key:'existingIns', type:'multi', title:'Máte už nejaké poistenie?', sub:'Vyberte všetko, čo platí — alebo „Zatiaľ žiadne“.',
     options:[
       { v:'zivotne', label:'Životné poistenie' },
       { v:'majetkove', label:'Majetkové poistenie' },
@@ -160,14 +160,14 @@ function computeRecommendations(){
 
   if(a.hasDependents==='ano'){
     recs.push({ key:'zivotne', title:'Životné poistenie', why: has('zivotne')
-      ? 'Životné poistenie už máš — odporúčame skontrolovať, či poistná suma a rozsah (invalidita, trvalé následky úrazu, kritické choroby, dlhodobá PN) zodpovedajú aktuálnym záväzkom a počtu detí.'
-      : 'Máš osoby závislé od tvojho príjmu — životné poistenie dnes bežne nekryje len riziko úmrtia, ale aj invaliditu, trvalé následky úrazu, kritické choroby a dlhodobú PN, takže ochráni rodinu pri väčšine vážnych životných situácií, nielen pri tej najhoršej.' });
+      ? 'Životné poistenie už máte — odporúčame skontrolovať, či poistná suma a rozsah (invalidita, trvalé následky úrazu, kritické choroby, dlhodobá PN) zodpovedajú aktuálnym záväzkom a počtu detí.'
+      : 'Máte osoby závislé od vášho príjmu — životné poistenie dnes bežne nekryje len riziko úmrtia, ale aj invaliditu, trvalé následky úrazu, kritické choroby a dlhodobú PN, takže ochráni rodinu pri väčšine vážnych životných situácií, nielen pri tej najhoršej.' });
   }
 
   if(a.property==='obyvam'){
     recs.push({ key:'domacnost', title:'Poistenie majetku a domácnosti', why: has('majetkove')
-      ? 'Majetkové poistenie už máš — odporúčame overiť, či poistná suma zodpovedá aktuálnej hodnote nehnuteľnosti a vybavenia.'
-      : 'Chráni nehnuteľnosť, v ktorej bývaš, a vybavenie domácnosti pred škodami (napr. požiar, voda, krádež).' });
+      ? 'Majetkové poistenie už máte — odporúčame overiť, či poistná suma zodpovedá aktuálnej hodnote nehnuteľnosti a vybavenia.'
+      : 'Chráni nehnuteľnosť, v ktorej bývate, a vybavenie domácnosti pred škodami (napr. požiar, voda, krádež).' });
   }
   if(a.property==='prenajimam'){
     recs.push({ key:'prenajom', title:'Poistenie prenajímanej nehnuteľnosti',
@@ -176,28 +176,28 @@ function computeRecommendations(){
 
   if(a.status==='szco' || a.concern==='vypadok'){
     recs.push({ key:'pn', title:'Poistenie príjmu pri PN / práceneschopnosti', why: a.status==='szco'
-      ? 'Ako SZČO nemáš nárok na náhradu príjmu od zamestnávateľa počas PN — štátne nemocenské pokryje len časť príjmu.'
+      ? 'Ako SZČO nemáte nárok na náhradu príjmu od zamestnávateľa počas PN — štátne nemocenské pokryje len časť príjmu.'
       : 'Štátne nemocenské dávky pokrývajú len časť príjmu — poistenie doplní rozdiel počas dlhšej PN.' });
   }
 
   if(a.status==='majitel'){
     recs.push({ key:'zodpovednost', title:'Poistenie zodpovednosti podnikateľa/firmy',
-      why:'Ako majiteľ/-ka firmy nesieš podnikateľské riziká a zodpovednosť za škody spôsobené pri činnosti firmy.' });
+      why:'Ako majiteľ/-ka firmy nesiete podnikateľské riziká a zodpovednosť za škody spôsobené pri činnosti firmy.' });
   }
 
   if(a.status==='zamestnanec'){
     recs.push({ key:'zodpovednostZamestnanca', title:'Zodpovednosť zamestnanca voči zamestnávateľovi',
-      why:'Podľa povahy tvojej práce (napr. práca s vozidlom, hotovosťou, drahým vybavením alebo citlivými dokumentmi) zváž poistenie zodpovednosti za škodu, ktorú by si mohol/-la spôsobiť zamestnávateľovi.' });
+      why:'Podľa povahy vašej práce (napr. práca s vozidlom, hotovosťou, drahým vybavením alebo citlivými dokumentmi) zvážte poistenie zodpovednosti za škodu, ktorú by ste mohli spôsobiť zamestnávateľovi.' });
   }
 
   if(a.carIns==='pzp'){
     recs.push({ key:'auto', title:'Doplnkové poistenie auta',
-      why:'Samotné PZP kryje len škodu, ktorú spôsobíš inému vodičovi — vlastné auto pri požiari, krupobití, rozbitom skle alebo krádeži zostáva nepoistené. Zváž aspoň doplnenie o živel a sklo, pri novšom alebo úverovanom aute aj havarijné poistenie.' });
+      why:'Samotné PZP kryje len škodu, ktorú spôsobíte inému vodičovi — vlastné auto pri požiari, krupobití, rozbitom skle alebo krádeži zostáva nepoistené. Zváž aspoň doplnenie o živel a sklo, pri novšom alebo úverovanom aute aj havarijné poistenie.' });
   }
 
   if(a.travel==='ano'){
     recs.push({ key:'cestovne', title:'Cestovné poistenie',
-      why:'Cestovné poistenie kryje liečebné náklady v zahraničí (verejné zdravotné poistenie ich mimo SR/EÚ nepokryje alebo len čiastočne) aj náklady horskej záchrannej služby na Slovensku, ktoré si bez poistenia hradíš sám/-a a môžu dosiahnuť tisíce eur.' });
+      why:'Cestovné poistenie kryje liečebné náklady v zahraničí (verejné zdravotné poistenie ich mimo SR/EÚ nepokryje alebo len čiastočne) aj náklady horskej záchrannej služby na Slovensku, ktoré bez poistenia hradíte sami a môžu dosiahnuť tisíce eur.' });
   }
 
   const seen = new Set();
@@ -205,7 +205,7 @@ function computeRecommendations(){
 
   if(!uniq.length){
     uniq.push({ key:'zaklad', title:'Základné poistenie',
-      why:'Zatiaľ nemáš výraznejšie záväzky ani závislé osoby — odporúčame začať základným krytím pre prípad smrti, invalidity, trvalých následkov úrazu, kritických chorôb a dlhodobej PN ako štartovacím bodom.' });
+      why:'Zatiaľ nemáte výraznejšie záväzky ani závislé osoby — odporúčame začať základným krytím pre prípad smrti, invalidity, trvalých následkov úrazu, kritických chorôb a dlhodobej PN ako štartovacím bodom.' });
   }
 
   const priority = { rodina:['zivotne'], majetok:['domacnost','prenajom'], vypadok:['pn'] };
@@ -357,7 +357,7 @@ function renderResults(){
     + '<div class="res-head">'
       + '<div class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg></div>'
       + '<h2>Odporúčané typy poistenia</h2>'
-      + '<p>Na základe tvojich odpovedí odporúčame prebrať s poradcom nasledovné typy krytia.</p>'
+      + '<p>Na základe vašich odpovedí odporúčame prebrať s poradcom nasledovné typy krytia.</p>'
     + '</div>'
     + '<div class="rec-list">'+recHtml+'</div>'
     + pdfCardHtml

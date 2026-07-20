@@ -281,11 +281,15 @@ function institutionInfo(){
 function buildParas(){
   const reasonLabel = REASONS[state.reasonType].label.toLowerCase();
   const contractPart = state.contractNo.trim() ? (', v súvislosti so zmluvou/klientskym číslom ' + state.contractNo.trim()) : '';
-  const eventPart = parseDate(state.eventDate) ? (', ku ktorej došlo dňa ' + fmt(parseDate(state.eventDate))) : '';
+  // Samostatná veta namiesto vzťažného "ku ktorej/-ému" — dôvod (reasonLabel)
+  // môže byť aj mužského aj ženského rodu, vzťažné zámeno by sa muselo meniť
+  // podľa vybraného dôvodu, čo v pôvodnej verzii spôsobovalo gramaticky
+  // nesprávne vety (nezhoda rodu).
+  const eventPart = parseDate(state.eventDate) ? (' K uvedenému došlo dňa ' + fmt(parseDate(state.eventDate)) + '.') : '';
 
   const paras = [];
   paras.push('dolu podpísaný/á ' + (state.name||'____________________') + ' (ďalej len „sťažovateľ/-ka“) si Vás týmto dovoľujem upozorniť na nedostatok vo Vašom postupe: '
-    + reasonLabel + contractPart + eventPart + '.');
+    + reasonLabel + contractPart + '.' + eventPart);
 
   paras.push('Popis reklamácie: ' + (state.description.trim()||'__________'));
   paras.push('Požadovaná náprava: ' + (state.resolution.trim()||'__________'));

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BEplan – Finančná analýza | Dávid Babinčák</title>
+  <title>Finančná analýza | Vladimír Moščák</title>
   <script>/* html2canvas@1.4.1 – offline embed */
 /*!
  * html2canvas 1.4.1 <https://html2canvas.hertzen.com>
@@ -440,7 +440,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     *{box-sizing:border-box}
     body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);letter-spacing:.01em;font-size:14px}
 
-    /* ===== HEADER – BEplan brand ===== */
+    /* ===== HEADER ===== */
     .header{
       background:var(--blue);
       color:#fff;padding:0;
@@ -1147,8 +1147,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
           <span class="toggle-icon">🌙</span><span id="darkToggleLabel">Tmavý</span>
         </button>
         <div class="header-advisor">
-          <strong id="hdrAdvisorName">Dávid Babinčák</strong>
-          <span id="hdrAdvisorMeta">Finančný poradca · BEplan Slovensko</span>
+          <strong id="hdrAdvisorName">Vladimír Moščák</strong>
+          <span id="hdrAdvisorMeta">Finančný poradca</span>
         </div>
       </div>
     </div>
@@ -1584,9 +1584,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         <h3>Údaje poradcu</h3>
         <div class="muted" style="margin-bottom:14px">Tieto údaje sa zobrazujú v hlavičke a vo všetkých výstupoch (PDF pre poradcu, PDF pre klienta, prezentácia). Ukladajú sa vo vašom prehliadači na tomto počítači.</div>
         <div class="grid g2">
-          <div style="grid-column:1/-1"><label>Meno a priezvisko</label><input id="setAdvName" placeholder="napr. Dávid Babinčák"></div>
+          <div style="grid-column:1/-1"><label>Meno a priezvisko</label><input id="setAdvName" placeholder="napr. Vladimír Moščák"></div>
           <div><label>Pozícia</label><input id="setAdvRole" placeholder="napr. Finančný poradca"></div>
-          <div><label>Spoločnosť</label><input id="setAdvOrg" placeholder="napr. BEplan Slovensko"></div>
+          <div><label>Spoločnosť</label><input id="setAdvOrg" placeholder="nepovinné"></div>
           <div><label>Telefón</label><input id="setAdvTel" placeholder="napr. +421 918 260 063"></div>
           <div><label>E-mail</label><input id="setAdvEmail" type="email" placeholder="napr. meno@firma.sk"></div>
         </div>
@@ -2964,7 +2964,7 @@ function getOwnerLabel(val){
       const ix = getIndex();
       const client = ix.find(x=>x.id===id);
       const label = client?.name || id;
-      const ok = confirm(`Naozaj chcete vymazať klienta „${label}"?\nTáto akcia je nevratná.`);
+      const ok = confirm(`Naozaj chcete vymazať klienta „${label}“?\nTáto akcia je nevratná.`);
       if(!ok) return;
       await storageDeleteClient(id);
       const next = ix.filter(x=>x.id!==id);
@@ -3426,11 +3426,11 @@ function getOwnerLabel(val){
     }
     const ADVISOR_KEY = "fa2_advisor";
     const ADVISOR_DEFAULT = Object.freeze({
-      name: "Dávid Babinčák",
+      name: "Vladimír Moščák",
       role: "Finančný poradca",
-      org: "BEplan Slovensko",
-      tel: "+421 918 260 063",
-      email: "david.babincak@beplan.sk"
+      org: "",
+      tel: "+421 910 491 768",
+      email: "vmfin@vmfin.sk"
     });
     // Mutovateľná kópia – buildery a prezentácia čítajú ADVISOR.* v čase renderu.
     const ADVISOR = { ...ADVISOR_DEFAULT };
@@ -3653,7 +3653,7 @@ function getOwnerLabel(val){
               <div class="pdf-cover">
           <div class="pdf-cover-head">
           <div>
-            <div style="font-size:.72rem;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.12em;font-weight:300">BEplan Slovensko</div>
+            <div style="font-size:.72rem;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.12em;font-weight:300">Finančná analýza</div>
           </div>
           <div class="pdf-cover-center">
             <div style="font-size:.7rem;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">Interný výstup</div>
@@ -3869,7 +3869,7 @@ function getOwnerLabel(val){
               <div class="pdf-client-hero">
           <div class="pdf-client-head-grid">
             <div>
-              <div class="pdf-client-tagline">BEplan Slovensko · Finančný plán</div>
+              <div class="pdf-client-tagline">Finančný plán</div>
               <h2>Váš osobný finančný plán</h2>
               <div class="pdf-client-sub"><b>Klient:</b> ${escHtml(clientName)}</div>
               <div class="pdf-client-sub"><b>Poradca:</b> ${ADVISOR.name}</div>
@@ -3942,7 +3942,7 @@ function getOwnerLabel(val){
 
           <div class="pdf-block" style="margin-top:20px;padding:12px;background:#f8f9fd;border:1px solid #e2e6f2;border-radius:6px;font-size:.74rem;color:#7b7b7b;line-height:1.6">
             Tento dokument bol vypracovaný na základe informácií poskytnutých klientom a má informatívny charakter. 
-            Nie je investičným poradenstvom v zmysle zákona. BEplan Slovensko nenesie zodpovednosť za rozhodnutia klienta urobené na základe tohto dokumentu. 
+            Nie je investičným poradenstvom v zmysle zákona. Spracovateľ nenesie zodpovednosť za rozhodnutia klienta urobené na základe tohto dokumentu. 
             Odporúčame pravidelné prehodnotenie plánu (min. 1× ročne).
           </div>
             </div>
