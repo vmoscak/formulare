@@ -35,13 +35,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $icon = trim((string)($_POST['icon'] ?? '')) ?: '📍';
         $isOngoing = isset($_POST['is_ongoing']) ? 1 : 0;
         $duration = max(0, (int)($_POST['duration_days'] ?? 30));
+        $durationMonths = max(0, (int)($_POST['duration_months'] ?? 1));
         $rewardText = trim((string)($_POST['reward_text'] ?? ''));
         $supportText = trim((string)($_POST['support_text'] ?? ''));
         if ($name !== '') {
             $maxSort = (int)db()->query('SELECT COALESCE(MAX(sort_order), -1) FROM formulare_onboarding_phases')->fetchColumn();
             try {
-                db()->prepare('INSERT INTO formulare_onboarding_phases (name, icon, sort_order, duration_days, is_ongoing, reward_text, support_text) VALUES (?, ?, ?, ?, ?, ?, ?)')
-                    ->execute([$name, $icon, $maxSort + 1, $duration, $isOngoing, $rewardText, $supportText]);
+                db()->prepare('INSERT INTO formulare_onboarding_phases (name, icon, sort_order, duration_days, duration_months, is_ongoing, reward_text, support_text) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+                    ->execute([$name, $icon, $maxSort + 1, $duration, $durationMonths, $isOngoing, $rewardText, $supportText]);
             } catch (Throwable $e) { /* duplicitný názov fázy — ignorované */ }
         }
     } elseif ($isOwner && isset($_POST['edit_phase_id'])) {
@@ -50,11 +51,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $icon = trim((string)($_POST['icon'] ?? '')) ?: '📍';
         $isOngoing = isset($_POST['is_ongoing']) ? 1 : 0;
         $duration = max(0, (int)($_POST['duration_days'] ?? 30));
+        $durationMonths = max(0, (int)($_POST['duration_months'] ?? 1));
         $rewardText = trim((string)($_POST['reward_text'] ?? ''));
         $supportText = trim((string)($_POST['support_text'] ?? ''));
         if ($id && $name !== '') {
-            db()->prepare('UPDATE formulare_onboarding_phases SET name = ?, icon = ?, duration_days = ?, is_ongoing = ?, reward_text = ?, support_text = ? WHERE id = ?')
-                ->execute([$name, $icon, $duration, $isOngoing, $rewardText, $supportText, $id]);
+            db()->prepare('UPDATE formulare_onboarding_phases SET name = ?, icon = ?, duration_days = ?, duration_months = ?, is_ongoing = ?, reward_text = ?, support_text = ? WHERE id = ?')
+                ->execute([$name, $icon, $duration, $durationMonths, $isOngoing, $rewardText, $supportText, $id]);
         }
     } elseif ($isOwner && isset($_POST['delete_phase_id'])) {
         $id = (int)$_POST['delete_phase_id'];
@@ -123,16 +125,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($isOwner && isset($_POST['assign_advisor_id'])) {
         $id = (int)$_POST['assign_advisor_id'];
         if ($id) {
+            // Dátum nástupu (nepovinný) — reálny prvý deň "0. mesiaca", zvyčajne
+            // 1. v mesiaci. Bez neho fázy bežia po starom (pevný počet dní).
+            $startDateRaw = trim((string)($_POST['start_date'] ?? ''));
+            $startDate = null;
+            if ($startDateRaw !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $startDateRaw)) $startDate = $startDateRaw;
             // Nový cyklus onboardingu — prípadný predošlý dátum dokončenia
             // (z minulého priradenia) sa vynuluje, nech "História absolventov"
             // odráža aktuálny beh.
-            db()->prepare('UPDATE formulare_advisors SET onboarding_started_at = ?, onboarding_completed_at = NULL WHERE id = ? AND is_owner = 0')
-                ->execute([date('Y-m-d H:i:s'), $id]);
+            db()->prepare('UPDATE formulare_advisors SET onboarding_started_at = ?, onboarding_start_date = ?, onboarding_completed_at = NULL WHERE id = ? AND is_owner = 0')
+                ->execute([date('Y-m-d H:i:s'), $startDate, $id]);
         }
     } elseif ($isOwner && isset($_POST['unassign_advisor_id'])) {
         $id = (int)$_POST['unassign_advisor_id'];
         if ($id) {
-            db()->prepare('UPDATE formulare_advisors SET onboarding_started_at = NULL WHERE id = ?')->execute([$id]);
+            db()->prepare('UPDATE formulare_advisors SET onboarding_started_at = NULL, onboarding_start_date = NULL WHERE id = ?')->execute([$id]);
         }
     }
     header('Location: /cesta-novacika.php');
@@ -150,16 +157,6 @@ try {
 } catch (Throwable $e) { $migrationPending = true; }
 $phases = array_values(array_filter($allPhases, fn($p) => empty($p['is_ongoing'])));
 $ongoingPhases = array_values(array_filter($allPhases, fn($p) => !empty($p['is_ongoing'])));
-
-// Kumulatívne hranice dní (od 0) — určujú, kedy sa fáza časovo "začína" a "končí".
-$cumDay = 0;
-foreach ($phases as &$p) {
-    $p['start_day'] = $cumDay;
-    $cumDay += (int)$p['duration_days'];
-    $p['end_day'] = $cumDay;
-}
-unset($p);
-$totalDurationDays = $cumDay;
 
 $allMaterials = [];
 try {
@@ -179,6 +176,73 @@ function obPhaseStatuses(array $phases, int $elapsedDays): array {
     }
     unset($p);
     return $phases;
+}
+
+/** Pôvodný režim: fázy idú pevne po sebe podľa duration_days od aktivácie
+ * (deň 0). Fallback pre nováčikov bez nastaveného onboarding_start_date. */
+function obLegacySchedule(array $phases): array {
+    $cumDay = 0;
+    foreach ($phases as &$p) {
+        $p['start_day'] = $cumDay;
+        $cumDay += (int)$p['duration_days'];
+        $p['end_day'] = $cumDay;
+    }
+    unset($p);
+    return $phases;
+}
+
+/**
+ * Kalendárový režim: prvá fáza ("Pred nástupom") trvá od aktivácie po deň
+ * pred nástupom (môže to byť aj niekoľko mesiacov vopred, keď sa priradí
+ * skôr). Nástup je vždy 1. v mesiaci — od neho idú ostatné fázy postupne
+ * po celých kalendárnych mesiacoch (duration_months), takže napr. február
+ * má reálne 28/29 dní a nie paušálnych 30. Aby zvyšok stránky (progress bar,
+ * "Deň X z Y", tímový prehľad...) fungoval bezo zmeny, výsledok je stále
+ * v rovnakých jednotkách ako predtým — počet dní od aktivácie.
+ */
+function obBuildCalendarSchedule(array $phases, string $activatedAt, string $startDateStr): array {
+    if (!$phases) return $phases;
+    $activated = (new DateTimeImmutable($activatedAt))->setTime(0, 0);
+    $cursor = (new DateTimeImmutable($startDateStr))->setTime(0, 0);
+    $offsetOf = function (DateTimeImmutable $d) use ($activated): int {
+        $days = (int)$activated->diff($d)->days;
+        return $d < $activated ? -$days : $days;
+    };
+
+    $phases[0]['start_day'] = 0;
+    $prevIdx = 0;
+    for ($i = 1; $i < count($phases); $i++) {
+        $offset = $offsetOf($cursor);
+        $phases[$prevIdx]['end_day'] = $offset;
+        $phases[$prevIdx]['duration_days'] = $offset - $phases[$prevIdx]['start_day'];
+        $phases[$i]['start_day'] = $offset;
+        $months = max(1, (int)$phases[$i]['duration_months']);
+        $cursor = $cursor->modify('+' . $months . ' months');
+        $prevIdx = $i;
+    }
+    $offset = $offsetOf($cursor);
+    $phases[$prevIdx]['end_day'] = $offset;
+    $phases[$prevIdx]['duration_days'] = $offset - $phases[$prevIdx]['start_day'];
+    return $phases;
+}
+
+/** Vyberie kalendárový alebo pôvodný režim podľa toho, či má nováčik
+ * nastavený dátum nástupu. */
+function obScheduleFor(array $phases, ?string $activatedAt, ?string $startDate): array {
+    if ($activatedAt && $startDate) return obBuildCalendarSchedule($phases, $activatedAt, $startDate);
+    return obLegacySchedule($phases);
+}
+
+/** Kalendárový ekvivalent "aktuálneho mesiaca MZ" — počet celých kalendárnych
+ * mesiacov od nástupu (0 = mesiac nástupu). Vráti null mimo kalendárového
+ * režimu (volajúci si má dopočítať starý spôsob z elapsedDays/30). */
+function obCalendarMzMonth(?string $startDateStr): ?int {
+    if (!$startDateStr) return null;
+    $today = new DateTimeImmutable('today');
+    $start = (new DateTimeImmutable($startDateStr))->setTime(0, 0);
+    if ($today < $start) return 0;
+    $diff = $start->diff($today);
+    return min(24, $diff->y * 12 + $diff->m);
 }
 
 // Doplňujúce info k vybraným materiálom (bublinové okno na hover) — skrátená
@@ -205,15 +269,26 @@ $OB_TOOLTIPS = [
 $novicePreview = $isOwner && isset($_GET['view']) && $_GET['view'] === 'novice';
 $viewerIsNovice = $isOnboarding || $novicePreview;
 
+// Kalendárový režim (fázy naviazané na reálne mesiace) sa použije len pre
+// skutočne prihláseného nováčika s nastaveným dátumom nástupu — ownerov
+// generický náhľad "?view=novice&day=N" ostáva na starom (deň-based) móde,
+// lebo nie je naviazaný na konkrétny reálny záznam poradcu.
 if ($isOnboarding) {
     $elapsedDays = obElapsedDays($me['onboarding_started_at']);
+    $scheduledPhases = obScheduleFor($phases, $me['onboarding_started_at'], $me['onboarding_start_date'] ?? null);
+    $currentMzMonth = obCalendarMzMonth($me['onboarding_start_date'] ?? null) ?? min(24, intdiv($elapsedDays, 30));
 } elseif ($novicePreview) {
     $elapsedDays = isset($_GET['day']) ? max(0, (int)$_GET['day']) : 0;
+    $scheduledPhases = obLegacySchedule($phases);
+    $currentMzMonth = min(24, intdiv($elapsedDays, 30));
 } else {
     $elapsedDays = 0;
+    $scheduledPhases = obLegacySchedule($phases);
+    $currentMzMonth = 0;
 }
+$totalDurationDays = $scheduledPhases ? (int)end($scheduledPhases)['end_day'] : 0;
 
-$phasesWithStatus = obPhaseStatuses($phases, $elapsedDays);
+$phasesWithStatus = obPhaseStatuses($scheduledPhases, $elapsedDays);
 $phaseById = [];
 foreach ($phasesWithStatus as $p) { $phaseById[(int)$p['id']] = $p; }
 
@@ -317,8 +392,7 @@ function obRenderMzTotalBar(array $mzStatusMap): void {
  * podmienok, 1.–6. mesiac = podľa produkčných bodov, 7.–24. mesiac = podľa
  * statusu FIT/STD/TOP.
  */
-function obRenderRewards(array $mzStatusMap, int $elapsedDays): void {
-    $currentMzMonth = min(24, intdiv($elapsedDays, 30));
+function obRenderRewards(array $mzStatusMap, int $currentMzMonth): void {
     $sel0 = $mzStatusMap[0] ?? null;
     ?>
     <div class="mz-card mz-card-single">
@@ -391,23 +465,27 @@ $teamAdvisors = [];
 $graduates = [];
 if ($isOwner) {
     $teamAdvisors = db()->query(
-        "SELECT id, name, color, onboarding_started_at, onboarding_completed_at FROM formulare_advisors WHERE is_owner = 0 AND active = 1 ORDER BY name"
+        "SELECT id, name, color, onboarding_started_at, onboarding_start_date, onboarding_completed_at FROM formulare_advisors WHERE is_owner = 0 AND active = 1 ORDER BY name"
     )->fetchAll();
     foreach ($teamAdvisors as &$ta) {
         $taElapsed = obElapsedDays($ta['onboarding_started_at']);
         $ta['elapsedDays'] = $taElapsed;
+        // Každý nováčik môže mať vlastný dátum nástupu — rozvrh fáz sa preto
+        // počíta osobitne pre každého, nie zdieľane z jedného $phasesWithStatus.
+        $taSchedule = $ta['onboarding_started_at'] ? obScheduleFor($phases, $ta['onboarding_started_at'], $ta['onboarding_start_date'] ?? null) : $phases;
+        $taTotalDurationDays = $taSchedule ? (int)end($taSchedule)['end_day'] : 0;
         $taCurrent = null;
         if (!empty($ta['onboarding_started_at'])) {
-            foreach (obPhaseStatuses($phases, $taElapsed) as $tp) { if ($tp['status'] === 'current') { $taCurrent = $tp; break; } }
+            foreach (obPhaseStatuses($taSchedule, $taElapsed) as $tp) { if ($tp['status'] === 'current') { $taCurrent = $tp; break; } }
         }
         $ta['currentPhase'] = $taCurrent;
-        $ta['isGraduated'] = !empty($ta['onboarding_started_at']) && $totalDurationDays > 0 && $taElapsed >= $totalDurationDays;
+        $ta['isGraduated'] = !empty($ta['onboarding_started_at']) && $taTotalDurationDays > 0 && $taElapsed >= $taTotalDurationDays;
         // Lazy dopočítanie a uloženie dátumu absolvovania — spustí sa samo
         // pri prvom zobrazení tejto stránky ownerovi po tom, čo niekto reálne
         // prekročí celkovú dĺžku cesty. Vďaka tomu "História absolventov"
         // prežije aj prípadné neskoršie odobratie priradenia.
         if ($ta['isGraduated'] && empty($ta['onboarding_completed_at'])) {
-            $gradDate = date('Y-m-d H:i:s', strtotime($ta['onboarding_started_at']) + $totalDurationDays * 86400);
+            $gradDate = date('Y-m-d H:i:s', strtotime($ta['onboarding_started_at']) + $taTotalDurationDays * 86400);
             db()->prepare('UPDATE formulare_advisors SET onboarding_completed_at = ? WHERE id = ?')->execute([$gradDate, $ta['id']]);
             $ta['onboarding_completed_at'] = $gradDate;
         }
@@ -582,7 +660,7 @@ if ($isOwner) {
   .ob-manage-body{padding:4px 8px 14px 46px;}
   .ob-manage-actions{display:flex; align-items:center; gap:6px; flex-shrink:0;}
   .ob-phase-edit-form,.ob-material-edit-form{display:none; flex-direction:column; gap:10px; margin:8px 0 16px; padding:12px; background:var(--desk); border-radius:var(--radius-md);}
-  .ob-phase-add-row{display:grid; grid-template-columns:60px 1fr 110px; gap:10px;}
+  .ob-phase-add-row{display:grid; grid-template-columns:60px 1fr 110px 110px; gap:10px;}
   .ob-material-add-row{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
   @media(max-width:640px){.ob-phase-add-row,.ob-material-add-row{grid-template-columns:1fr;}}
   .ob-ongoing-check{display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--ink-2);}
@@ -754,7 +832,7 @@ if ($isOwner) {
 
   <div class="card">
     <h3 class="mz-tracker-title">💰 Čo za to dostaneš — Model zapracovania</h3>
-    <?php obRenderRewards($mzStatusMap, $elapsedDays); ?>
+    <?php obRenderRewards($mzStatusMap, $currentMzMonth); ?>
   </div>
 
   <?php
@@ -802,7 +880,7 @@ if ($isOwner) {
       <summary class="ob-manage-summary">
         <span class="ob-manage-icon"><?= $p['icon'] ?></span>
         <span class="ob-manage-name"><?= h($p['name']) ?></span>
-        <span class="ob-manage-duration"><?= $p['is_ongoing'] ? 'priebežná' : $p['duration_days'] . ' dní' ?> · <?= count($pMats) ?> materiálov</span>
+        <span class="ob-manage-duration"><?= $p['is_ongoing'] ? 'priebežná' : ($p['duration_months'] ?? 0) . ' mes. (' . (int)$p['duration_days'] . ' dní bez kalendára)' ?> · <?= count($pMats) ?> materiálov</span>
         <span class="ob-manage-actions">
           <?php if (!$isFirstPhase): ?>
           <form method="post" style="margin:0; display:inline;"><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>"><input type="hidden" name="move_phase_id" value="<?= (int)$p['id'] ?>"><input type="hidden" name="direction" value="up"><button type="submit" class="toggle-btn" title="Posunúť hore">↑</button></form>
@@ -821,7 +899,8 @@ if ($isOwner) {
           <div class="ob-phase-add-row">
             <input type="text" name="icon" value="<?= h($p['icon']) ?>" placeholder="Ikona" maxlength="8">
             <input type="text" name="name" value="<?= h($p['name']) ?>" placeholder="Názov fázy" required>
-            <input type="number" name="duration_days" value="<?= (int)$p['duration_days'] ?>" min="0" placeholder="Dĺžka (dni)">
+            <input type="number" name="duration_months" value="<?= (int)($p['duration_months'] ?? 1) ?>" min="0" placeholder="Dĺžka (mesiacov)" title="Dĺžka v kalendárnych mesiacoch — používa sa, keď má nováčik nastavený dátum nástupu.">
+            <input type="number" name="duration_days" value="<?= (int)$p['duration_days'] ?>" min="0" placeholder="Dĺžka (dni)" title="Dĺžka v dňoch — záložný režim bez dátumu nástupu (aj pre samotnú fázu Pred nástupom).">
           </div>
           <label class="ob-ongoing-check"><input type="checkbox" name="is_ongoing" <?= $p['is_ongoing'] ? 'checked' : '' ?>> Priebežná fáza (mimo časovej osi, dĺžka sa ignoruje)</label>
           <textarea name="support_text" rows="2" placeholder="Podporný odkaz (motivačná poznámka pre nováčika)"><?= h($p['support_text']) ?></textarea>
@@ -884,7 +963,8 @@ if ($isOwner) {
         <div class="ob-phase-add-row">
           <input type="text" name="icon" placeholder="📍" maxlength="8">
           <input type="text" name="name" placeholder="Názov fázy" required>
-          <input type="number" name="duration_days" value="30" min="0" placeholder="Dĺžka (dni)">
+          <input type="number" name="duration_months" value="1" min="0" placeholder="Dĺžka (mesiacov)" title="Dĺžka v kalendárnych mesiacoch — používa sa, keď má nováčik nastavený dátum nástupu.">
+          <input type="number" name="duration_days" value="30" min="0" placeholder="Dĺžka (dni)" title="Dĺžka v dňoch — záložný režim bez dátumu nástupu.">
         </div>
         <label class="ob-ongoing-check"><input type="checkbox" name="is_ongoing"> Priebežná fáza (mimo časovej osi)</label>
         <textarea name="support_text" rows="2" placeholder="Podporný odkaz (nepovinné)"></textarea>
@@ -920,11 +1000,17 @@ if ($isOwner) {
             <?php else: ?>Deň <?= $ta['elapsedDays'] + 1 ?> · <?= $ta['currentPhase'] ? h($ta['currentPhase']['icon'] . ' ' . $ta['currentPhase']['name']) : '—' ?>
             <?php endif; ?>
           </div>
+          <?php if ($assigned && !empty($ta['onboarding_start_date'])): ?>
+          <div class="ob-team-card-sub" style="opacity:.75;">Nástup <?= h((new DateTime($ta['onboarding_start_date']))->format('j.n.Y')) ?></div>
+          <?php endif; ?>
         </div>
       </div>
       <div class="ob-team-card-foot">
-        <form method="post" style="margin:0;"><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
+        <form method="post" style="margin:0; display:flex; gap:6px; align-items:center; flex-wrap:wrap;"><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
           <input type="hidden" name="<?= $assigned ? 'unassign_advisor_id' : 'assign_advisor_id' ?>" value="<?= (int)$ta['id'] ?>">
+          <?php if (!$assigned): ?>
+          <input type="date" name="start_date" value="<?= h(date('Y-m-01', strtotime('first day of next month'))) ?>" title="Dátum nástupu (1. v mesiaci) — nepovinné, bez neho pôjdu fázy po starom (pevný počet dní)">
+          <?php endif; ?>
           <button type="submit" class="toggle-btn"><?= $assigned ? 'Odobrať' : 'Priradiť' ?></button>
         </form>
       </div>

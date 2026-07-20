@@ -644,6 +644,7 @@ function dbInitSqlite(PDO $pdo): void {
     try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN favorite_tools TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
     try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN is_owner INTEGER NOT NULL DEFAULT 0"); } catch (Throwable $e) { /* stĺpec už existuje */ }
     try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN onboarding_started_at TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
+    try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN onboarding_start_date TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
     try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN onboarding_completed_at TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
     try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN sfa_acquisition_no TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
     try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN sfa_personal_no TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
@@ -774,11 +775,14 @@ function dbInitSqlite(PDO $pdo): void {
         icon TEXT NOT NULL DEFAULT '📍',
         sort_order INTEGER NOT NULL DEFAULT 0,
         duration_days INTEGER NOT NULL DEFAULT 30,
+        duration_months INTEGER NOT NULL DEFAULT 1,
         is_ongoing INTEGER NOT NULL DEFAULT 0,
         reward_text TEXT NOT NULL DEFAULT '',
         support_text TEXT NOT NULL DEFAULT '',
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )");
+    try { $pdo->exec("ALTER TABLE formulare_onboarding_phases ADD COLUMN duration_months INTEGER NOT NULL DEFAULT 1"); } catch (Throwable $e) { /* stĺpec už existuje */ }
+    $pdo->exec("UPDATE formulare_onboarding_phases SET duration_months = CASE WHEN is_ongoing = 1 THEN 0 ELSE MAX(1, ROUND(duration_days / 30.0)) END WHERE duration_months = 1 AND duration_days != 30");
     $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_onboarding_steps (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         phase TEXT NOT NULL,
@@ -841,9 +845,9 @@ function dbInitSqlite(PDO $pdo): void {
     $phaseCount = (int)$pdo->query('SELECT COUNT(*) FROM formulare_onboarding_phases')->fetchColumn();
     if ($phaseCount === 0) {
         $seedPhases = dbOnboardingSeedPhases();
-        $insP = $pdo->prepare('INSERT INTO formulare_onboarding_phases (name, icon, sort_order, duration_days, is_ongoing, reward_text, support_text) VALUES (?, ?, ?, ?, ?, ?, ?)');
+        $insP = $pdo->prepare('INSERT INTO formulare_onboarding_phases (name, icon, sort_order, duration_days, duration_months, is_ongoing, reward_text, support_text) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
         foreach ($seedPhases as $i => $p) {
-            $insP->execute([$p['name'], $p['icon'], $i, $p['duration_days'], $p['is_ongoing'] ? 1 : 0, $p['reward_text'], $p['support_text']]);
+            $insP->execute([$p['name'], $p['icon'], $i, $p['duration_days'], $p['duration_months'], $p['is_ongoing'] ? 1 : 0, $p['reward_text'], $p['support_text']]);
         }
     }
     $stepCount = (int)$pdo->query('SELECT COUNT(*) FROM formulare_onboarding_steps')->fetchColumn();
@@ -943,16 +947,16 @@ function dbInitSqlite(PDO $pdo): void {
  */
 function dbOnboardingSeedPhases(): array {
     return [
-        ['name' => 'Pred nástupom', 'icon' => '📋', 'duration_days' => 7, 'is_ongoing' => false, 'reward_text' => 'Dodatková provízia (DP) z Modelu zapracovania začína od 0. mesiaca (pozri ďalšiu fázu) — táto fáza je len príprava pred jeho štartom.', 'support_text' => 'Papierovanie a školenia na začiatku vyzerajú ako veľa — a naozaj toho je veľa. Netreba to zvládnuť dokonale na prvýkrát. Ak si niečím neistý, opýtaj sa — presne na to sú tu kolegovia aj tvoj manažér.'],
-        ['name' => '0. mesiac', 'icon' => '🌱', 'duration_days' => 30, 'is_ongoing' => false, 'reward_text' => '500 € DP, ak do konca mesiaca splníš: registráciu v NBS (sektor poistenie/zaistenie), e-learning, základné školenia (Prvé kroky v UNIQA, Úvod do predaja, IT, Autá), 100 kontaktov v CRM+ a min. 15 ponúk spolu v Unipoint (Život, Autá, Majetok).', 'support_text' => 'Prvý mesiac je o učení sa veľa nového naraz. Je úplne normálne, že si na začiatku neistý — nikto od teba nečaká, že to vieš hneď. Manažér aj skúsenejší kolegovia ti radi pomôžu, stačí sa ozvať.'],
-        ['name' => 'I. mesiac', 'icon' => '🧭', 'duration_days' => 30, 'is_ongoing' => false, 'reward_text' => 'DP podľa mesačnej produkcie: 1 200 PB → 500 € · 2 400 PB → 750 € · 3 600 PB → 1 000 €. Tracker nájdeš nižšie pri Modeli zapracovania.', 'support_text' => 'Ak máš pocit, že iní to majú jednoduchšie, nemajú — každý si prešiel rovnakou krivkou učenia. Pýtaj sa toľko, koľko potrebuješ, nie je to znak slabosti.'],
-        ['name' => 'II. mesiac', 'icon' => '💬', 'duration_days' => 30, 'is_ongoing' => false, 'reward_text' => 'DP podľa mesačnej produkcie: 1 200 PB → 500 € · 2 400 PB → 750 € · 3 600 PB → 1 000 €.', 'support_text' => 'Blok Predaj je o skutočnom rozhovore s klientom — analýza potrieb, argumentácia, zvládanie námietok, uzatváracie techniky. Netreba to zvládnuť dokonale hneď, tieto zručnosti sa budujú praxou. Ak chceš niečo nacvičiť nanečisto, kolegovia aj manažér radi pomôžu.'],
-        ['name' => 'III. mesiac', 'icon' => '❤️', 'duration_days' => 30, 'is_ongoing' => false, 'reward_text' => 'DP podľa mesačnej produkcie: 1 200 PB → 500 € · 2 400 PB → 750 € · 3 600 PB → 1 000 €.', 'support_text' => 'Životné poistenie je srdcom tejto práce a je úplne prirodzené, že práve pri ňom máš najviac otázok. Nie si v tom sám — kolegovia aj manažér ťa podržia.'],
-        ['name' => 'IV. mesiac', 'icon' => '🏠', 'duration_days' => 30, 'is_ongoing' => false, 'reward_text' => 'DP podľa mesačnej produkcie: 1 200 PB → 500 € · 2 400 PB → 750 € · 3 600 PB → 1 000 €.', 'support_text' => 'Majetkové poistenie je technickejšia oblasť a prvé ponuky bývajú pomalšie — to je v poriadku. Radšej sa spýtaj vopred, než aby si sa s tým trápil sám.'],
-        ['name' => 'V. mesiac', 'icon' => '🎓', 'duration_days' => 30, 'is_ongoing' => false, 'reward_text' => 'DP podľa mesačnej produkcie: 1 200 PB → 500 € · 2 400 PB → 750 € · 3 600 PB → 1 000 €. Do konca 6. mesiaca MZ treba spolu min. 5 000 PB, inak nasleduje vyradenie z Modelu zapracovania.', 'support_text' => 'Posledný krok pred maturitou. Ver si — dostal si sa sem vlastnou prácou. A ak sa niečo nepodarí na prvý pokus, nie je to koniec sveta.'],
-        ['name' => 'VI.–XII. mesiac', 'icon' => '📈', 'duration_days' => 210, 'is_ongoing' => false, 'reward_text' => '6. mesiac ešte podľa produkcie (min. 5 000 PB spolu za 0.–6. mesiac). Od 7. mesiaca DP podľa statusu: FIT 500 € · STD 750 € · TOP 1 000 € mesačne.', 'support_text' => 'Školenia sú za tebou — teraz ide hlavne o pravidelnosť. Status FIT/STD/TOP sa vyhodnocuje priebežne, takže sa oplatí sledovať ho každý mesiac.'],
-        ['name' => 'XIII.–XXIV. mesiac', 'icon' => '🏆', 'duration_days' => 360, 'is_ongoing' => false, 'reward_text' => 'DP podľa statusu: FIT 300 € · STD 500 € · TOP 700 € mesačne.', 'support_text' => 'Posledná časť Modelu zapracovania. Drž si svoj status a dodatková provízia ide s ním — nič nové sa už neučíš, len pokračuješ v tom, čo už vieš.'],
-        ['name' => 'Priebežne', 'icon' => '♾️', 'duration_days' => 0, 'is_ongoing' => true, 'reward_text' => '', 'support_text' => 'Bežná práca poradcu, ktorá pokračuje stále, nezávisle od času vo fáze.'],
+        ['name' => 'Pred nástupom', 'icon' => '📋', 'duration_days' => 7, 'duration_months' => 1, 'is_ongoing' => false, 'reward_text' => 'Dodatková provízia (DP) z Modelu zapracovania začína od 0. mesiaca (pozri ďalšiu fázu) — táto fáza je len príprava pred jeho štartom.', 'support_text' => 'Papierovanie a školenia na začiatku vyzerajú ako veľa — a naozaj toho je veľa. Netreba to zvládnuť dokonale na prvýkrát. Ak si niečím neistý, opýtaj sa — presne na to sú tu kolegovia aj tvoj manažér.'],
+        ['name' => '0. mesiac', 'icon' => '🌱', 'duration_days' => 30, 'duration_months' => 1, 'is_ongoing' => false, 'reward_text' => '500 € DP, ak do konca mesiaca splníš: registráciu v NBS (sektor poistenie/zaistenie), e-learning, základné školenia (Prvé kroky v UNIQA, Úvod do predaja, IT, Autá), 100 kontaktov v CRM+ a min. 15 ponúk spolu v Unipoint (Život, Autá, Majetok).', 'support_text' => 'Prvý mesiac je o učení sa veľa nového naraz. Je úplne normálne, že si na začiatku neistý — nikto od teba nečaká, že to vieš hneď. Manažér aj skúsenejší kolegovia ti radi pomôžu, stačí sa ozvať.'],
+        ['name' => 'I. mesiac', 'icon' => '🧭', 'duration_days' => 30, 'duration_months' => 1, 'is_ongoing' => false, 'reward_text' => 'DP podľa mesačnej produkcie: 1 200 PB → 500 € · 2 400 PB → 750 € · 3 600 PB → 1 000 €. Tracker nájdeš nižšie pri Modeli zapracovania.', 'support_text' => 'Ak máš pocit, že iní to majú jednoduchšie, nemajú — každý si prešiel rovnakou krivkou učenia. Pýtaj sa toľko, koľko potrebuješ, nie je to znak slabosti.'],
+        ['name' => 'II. mesiac', 'icon' => '💬', 'duration_days' => 30, 'duration_months' => 1, 'is_ongoing' => false, 'reward_text' => 'DP podľa mesačnej produkcie: 1 200 PB → 500 € · 2 400 PB → 750 € · 3 600 PB → 1 000 €.', 'support_text' => 'Blok Predaj je o skutočnom rozhovore s klientom — analýza potrieb, argumentácia, zvládanie námietok, uzatváracie techniky. Netreba to zvládnuť dokonale hneď, tieto zručnosti sa budujú praxou. Ak chceš niečo nacvičiť nanečisto, kolegovia aj manažér radi pomôžu.'],
+        ['name' => 'III. mesiac', 'icon' => '❤️', 'duration_days' => 30, 'duration_months' => 1, 'is_ongoing' => false, 'reward_text' => 'DP podľa mesačnej produkcie: 1 200 PB → 500 € · 2 400 PB → 750 € · 3 600 PB → 1 000 €.', 'support_text' => 'Životné poistenie je srdcom tejto práce a je úplne prirodzené, že práve pri ňom máš najviac otázok. Nie si v tom sám — kolegovia aj manažér ťa podržia.'],
+        ['name' => 'IV. mesiac', 'icon' => '🏠', 'duration_days' => 30, 'duration_months' => 1, 'is_ongoing' => false, 'reward_text' => 'DP podľa mesačnej produkcie: 1 200 PB → 500 € · 2 400 PB → 750 € · 3 600 PB → 1 000 €.', 'support_text' => 'Majetkové poistenie je technickejšia oblasť a prvé ponuky bývajú pomalšie — to je v poriadku. Radšej sa spýtaj vopred, než aby si sa s tým trápil sám.'],
+        ['name' => 'V. mesiac', 'icon' => '🎓', 'duration_days' => 30, 'duration_months' => 1, 'is_ongoing' => false, 'reward_text' => 'DP podľa mesačnej produkcie: 1 200 PB → 500 € · 2 400 PB → 750 € · 3 600 PB → 1 000 €. Do konca 6. mesiaca MZ treba spolu min. 5 000 PB, inak nasleduje vyradenie z Modelu zapracovania.', 'support_text' => 'Posledný krok pred maturitou. Ver si — dostal si sa sem vlastnou prácou. A ak sa niečo nepodarí na prvý pokus, nie je to koniec sveta.'],
+        ['name' => 'VI.–XII. mesiac', 'icon' => '📈', 'duration_days' => 210, 'duration_months' => 7, 'is_ongoing' => false, 'reward_text' => '6. mesiac ešte podľa produkcie (min. 5 000 PB spolu za 0.–6. mesiac). Od 7. mesiaca DP podľa statusu: FIT 500 € · STD 750 € · TOP 1 000 € mesačne.', 'support_text' => 'Školenia sú za tebou — teraz ide hlavne o pravidelnosť. Status FIT/STD/TOP sa vyhodnocuje priebežne, takže sa oplatí sledovať ho každý mesiac.'],
+        ['name' => 'XIII.–XXIV. mesiac', 'icon' => '🏆', 'duration_days' => 360, 'duration_months' => 12, 'is_ongoing' => false, 'reward_text' => 'DP podľa statusu: FIT 300 € · STD 500 € · TOP 700 € mesačne.', 'support_text' => 'Posledná časť Modelu zapracovania. Drž si svoj status a dodatková provízia ide s ním — nič nové sa už neučíš, len pokračuješ v tom, čo už vieš.'],
+        ['name' => 'Priebežne', 'icon' => '♾️', 'duration_days' => 0, 'duration_months' => 0, 'is_ongoing' => true, 'reward_text' => '', 'support_text' => 'Bežná práca poradcu, ktorá pokračuje stále, nezávisle od času vo fáze.'],
     ];
 }
 
