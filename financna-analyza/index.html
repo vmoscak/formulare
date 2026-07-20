@@ -1328,6 +1328,19 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         <div class="sec">
           <button type="button" class="sec-h" id="secHead7">7) Poistenie (rizikové + majetkové)</button>
           <div class="sec-b ins-layout">
+            <div class="card" id="coverageRecoCard" style="padding:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+                <strong>Odporúčané krytie (orientačný výpočet)</strong>
+                <label style="display:flex;align-items:center;gap:6px;font-weight:400;font-size:13px;">
+                  Dĺžka krytia (mesiace)
+                  <input type="number" min="36" max="60" step="1" class="track num" name="coverage_months" placeholder="48" style="width:70px;">
+                </label>
+              </div>
+              <p style="font-size:12.5px;color:var(--muted,#6b7280);margin:0 0 10px;">
+                Rovnaká metodika ako v Kalkulačke poistného krytia — orientačná suma na to, koľko poistiť, nie automatické porovnanie s tým, čo je zadané v tabuľke nižšie.
+              </p>
+              <div id="coverageRecoBody"></div>
+            </div>
             <div class="table">
               <div class="toolbar" style="display:block;margin:0 0 8px">
                 <strong id="insRizLabel">Rizikové poistenie Klient A / Klient B</strong>
@@ -2422,6 +2435,93 @@ function getOwnerLabel(val){
       return "Vyžaduje dopracovanie";
     }
 
+    /* ===========================================================================
+       ODPORÚČANÉ KRYTIE — rovnaká metodika ako financna-medzera (Kalkulačka
+       poistného krytia), zámerne skopírovaná sem samostatne (nie prepojená
+       cez API/odkaz) — obe appky majú fungovať nezávisle. Ak sa metodika
+       niekedy zmení, treba upraviť na OBOCH miestach.
+       Na rozdiel od Kalkulačky tu nemáme štruktúrované "existujúce krytie"
+       na osobu (v tabuľke Poistenie je riziko voľný text) — táto sekcia preto
+       ukazuje len ODPORÚČANÚ SUMU (koľko poistiť), nie gap voči už zadanému.
+    =========================================================================== */
+    const COV_FUNERAL_COST = 3000;
+    const COV_DEATH_DEBT_MONTHS = 12;
+    const COV_CHILD_DEATH_MONTHLY = 500;
+    const COV_MONTHS_DEFAULT = 48;
+    const COV_MONTHS_MIN = 36;
+    const COV_MONTHS_MAX = 60;
+    const COV_STATE_SICKPAY_RATIO = 0.55;
+    const COV_CHILD_CRITICAL_ILLNESS_FLAT = 50000;
+    const COV_CHILD_PERMANENT_INJURY_FLAT = 50000;
+    const COV_CHILD_INVALIDITY_FLAT = 50000;
+    // Čistý -> hrubý mesačný príjem, SK odvody/daň 2026 (9,4% soc. + 5% zdrav.
+    // dočasná sadzba 2026-2027, nezdaniteľná časť 497,23 €, daň 19%) — rovnaké
+    // ako v Kalkulačke, orientačné, nie na centy presné.
+    const COV_LEVY_RATE_EMPLOYEE = 0.144;
+    const COV_NCZD_MONTHLY = 497.23;
+    const COV_TAX_RATE_BASE = 0.19;
+    function covGrossFromNet(net){
+      net = Number(net)||0;
+      if(net<=0) return 0;
+      return (net - COV_NCZD_MONTHLY*COV_TAX_RATE_BASE) / ((1-COV_LEVY_RATE_EMPLOYEE)*(1-COV_TAX_RATE_BASE));
+    }
+    function covSingleAdultRisks(income, expenses, debtsPaymentTotal, childrenCount, coverageMonths){
+      const grossIncome = covGrossFromNet(income);
+      const needDeath = childrenCount>0
+        ? COV_FUNERAL_COST + childrenCount*COV_CHILD_DEATH_MONTHLY*coverageMonths
+        : COV_FUNERAL_COST + debtsPaymentTotal*COV_DEATH_DEBT_MONTHS;
+      const needDisability = expenses*coverageMonths;
+      const needCriticalIllness = expenses*coverageMonths;
+      const needPermanentInjury = expenses*coverageMonths;
+      const statePnBenefit = grossIncome*COV_STATE_SICKPAY_RATIO;
+      const monthlyShortfallPn = Math.max(0, expenses - statePnBenefit);
+      const neededDailyPn = monthlyShortfallPn/30;
+      return { death:needDeath, disability:needDisability, criticalIllness:needCriticalIllness, permanentInjury:needPermanentInjury, pnDaily:neededDailyPn };
+    }
+    function covCoupleAdultRisks(personIncome, partnerIncome, expenses, hasChildren, coverageMonths){
+      const sharedShortfall = expenses/2;
+      const grossIncome = covGrossFromNet(personIncome);
+      const deathShortfall = hasChildren ? sharedShortfall : Math.max(0, expenses - (Number(partnerIncome)||0));
+      const needDeath = COV_FUNERAL_COST + deathShortfall*coverageMonths;
+      const needDisability = sharedShortfall*coverageMonths;
+      const needCriticalIllness = sharedShortfall*coverageMonths;
+      const needPermanentInjury = sharedShortfall*coverageMonths;
+      const statePnBenefit = grossIncome*COV_STATE_SICKPAY_RATIO;
+      const monthlyShortfallPn = Math.max(0, expenses - (Number(partnerIncome)||0) - statePnBenefit);
+      const neededDailyPn = monthlyShortfallPn/30;
+      return { death:needDeath, disability:needDisability, criticalIllness:needCriticalIllness, permanentInjury:needPermanentInjury, pnDaily:neededDailyPn };
+    }
+    function covChildrenRisks(count){
+      return {
+        criticalIllness: count*COV_CHILD_CRITICAL_ILLNESS_FLAT,
+        permanentInjury: count*COV_CHILD_PERMANENT_INJURY_FLAT,
+        invalidity: count*COV_CHILD_INVALIDITY_FLAT,
+      };
+    }
+    function renderCoverageReco(d, aInc, bInc, expensesExclDebt, debtMonthly){
+      const el = $("#coverageRecoBody");
+      if(!el) return;
+      const isCouple = (d.household_type||"couple")==="couple" && (d.b_name||"").trim();
+      const childrenCount = Math.max(0, Number(d.children_count)||0);
+      const coverageMonths = Math.min(COV_MONTHS_MAX, Math.max(COV_MONTHS_MIN, Number(d.coverage_months)||COV_MONTHS_DEFAULT));
+      const rowsHtml = [];
+      const rowFor = (label, r) => `<tr><td>${label}</td><td>${money(r.death)}</td><td>${money(r.disability)}</td><td>${money(r.criticalIllness)}</td><td>${money(r.permanentInjury)}</td><td>${money(r.pnDaily)}/deň</td></tr>`;
+      if(isCouple){
+        const rA = covCoupleAdultRisks(aInc, bInc, expensesExclDebt, childrenCount>0, coverageMonths);
+        const rB = covCoupleAdultRisks(bInc, aInc, expensesExclDebt, childrenCount>0, coverageMonths);
+        rowsHtml.push(rowFor(ownerName("A",d), rA));
+        rowsHtml.push(rowFor(ownerName("B",d), rB));
+      } else {
+        const rA = covSingleAdultRisks(aInc, expensesExclDebt, debtMonthly, childrenCount, coverageMonths);
+        rowsHtml.push(rowFor(ownerName("A",d), rA));
+      }
+      if(childrenCount>0){
+        const rc = covChildrenRisks(childrenCount);
+        rowsHtml.push(`<tr><td>Deti (${childrenCount})</td><td>—</td><td>${money(rc.invalidity)}</td><td>${money(rc.criticalIllness)}</td><td>${money(rc.permanentInjury)}</td><td>—</td></tr>`);
+      }
+      el.innerHTML = `<div class="table"><table><thead><tr><th>Osoba</th><th>Úmrtie</th><th>Invalidita</th><th>Kritické choroby</th><th>Trvalé následky</th><th>PN</th></tr></thead><tbody>${rowsHtml.join("")}</tbody></table></div>`;
+    }
+
     function compute(){
       const d=serialize();
       const dataQuality = getDataQuality(d);
@@ -2471,6 +2571,7 @@ function getOwnerLabel(val){
       const aExp=sumByOwner(expenses,"A"), bExp=sumByOwner(expenses,"B"), sExp=sumByOwner(expenses,"spoločný");
       const debtMonthly=[...Array(rows.debt.length).keys()].reduce((s,i)=>s+toNum(d[`debt_month_${i}`]),0);
       const debtBalance=[...Array(rows.debt.length).keys()].reduce((s,i)=>s+toNum(d[`debt_balance_${i}`]),0);
+      renderCoverageReco(d, aInc, bInc, aExp+bExp+sExp, debtMonthly);
       const mortgageRows=[...Array(rows.debt.length).keys()].filter(i=>(d[`debt_type_${i}`]||"")==="Hypotéka");
       const mortBalance = mortgageRows.reduce((s,i)=>s+toNum(d[`debt_balance_${i}`]),0);
       const mortMonthly = mortgageRows.reduce((s,i)=>s+toNum(d[`debt_month_${i}`]),0);
