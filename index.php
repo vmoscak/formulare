@@ -38,7 +38,7 @@ if ($selected) {
             db()->prepare('UPDATE formulare_advisors SET pin_hash = ? WHERE id = ?')
                 ->execute([password_hash($pin1, PASSWORD_DEFAULT), $selected['id']]);
             setcookie('cur_advisor', signAdvisorId($selected['id']), [
-                'expires' => time() + 365 * 86400,
+                'expires' => time() + 86400,
                 'path' => '/',
                 'secure' => !empty($_SERVER['HTTPS']),
                 'httponly' => true,
@@ -52,7 +52,7 @@ if ($selected) {
         if ($entered !== '' && password_verify($entered, $selected['pin_hash'])) {
             throttleReset($scope);
             setcookie('cur_advisor', signAdvisorId($selected['id']), [
-                'expires' => time() + 365 * 86400,
+                'expires' => time() + 86400,
                 'path' => '/',
                 'secure' => !empty($_SERVER['HTTPS']),
                 'httponly' => true,
@@ -289,7 +289,7 @@ $curAdvisorId = curAdvisorId() ?: null;
   <div class="hero">
     <div class="kicker">Pracovný pult poradcu</div>
     <h1>Kto dnes pracuje?</h1>
-    <p>Vyber svoje meno a zadaj svoj osobný PIN — dokumenty a klientske odkazy sa budú ukladať pod tvojím profilom. Voľba sa zapamätá na tomto zariadení.</p>
+    <p>Vyber svoje meno a zadaj svoj osobný PIN — dokumenty a klientske odkazy sa budú ukladať pod tvojím profilom. Prihlásenie na tomto zariadení vydrží 24 hodín.</p>
   </div>
 
   <div class="grid">
