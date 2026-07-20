@@ -244,29 +244,6 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
 
   <div class="domov-layout<?= $upcomingEvents ? ' has-sidebar' : '' ?>">
     <div class="domov-main">
-      <?php if ($newSubmitted > 0 || $lastDoc): ?>
-      <div class="section dom-quick-banners">
-        <?php if ($newSubmitted > 0): ?>
-        <a class="dom-banner dom-banner-submitted" href="/moje-dokumenty.php">
-          <span class="dom-banner-ic">📥</span>
-          <span class="dom-banner-text"><b><?= submittedPhrase($newSubmitted) ?></b> — pozri si odpovede klientov</span>
-          <span class="dom-banner-go">Otvoriť
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </span>
-        </a>
-        <?php endif; ?>
-        <?php if ($lastDoc): ?>
-        <a class="dom-banner" href="/<?= h(rawurlencode($lastDoc['tool'])) ?>/index.html?loadDoc=<?= (int)$lastDoc['id'] ?>" target="_blank">
-          <span class="dom-banner-ic">🕘</span>
-          <span class="dom-banner-text">Naposledy: <b><?= h(toolLabel($lastDoc['tool'])) ?></b> — <?= h($lastDoc['client_label']) ?> · <?= timeAgoSk($lastDoc['generated_at']) ?></span>
-          <span class="dom-banner-go">Otvoriť
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </span>
-        </a>
-        <?php endif; ?>
-      </div>
-      <?php endif; ?>
-
       <?php if ($news): ?>
       <div class="section">
         <div class="section-head"><h3>Novinky <span id="newsUnreadPill" class="news-unread-pill" hidden></span></h3></div>
@@ -310,6 +287,29 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
     if (newest) localStorage.setItem(key, newest);
   })();
       </script>
+      <?php endif; ?>
+
+      <?php if ($newSubmitted > 0 || $lastDoc): ?>
+      <div class="section dom-quick-banners">
+        <?php if ($newSubmitted > 0): ?>
+        <a class="dom-banner dom-banner-submitted" href="/moje-dokumenty.php">
+          <span class="dom-banner-ic">📥</span>
+          <span class="dom-banner-text"><b><?= submittedPhrase($newSubmitted) ?></b> — pozri si odpovede klientov</span>
+          <span class="dom-banner-go">Otvoriť
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </span>
+        </a>
+        <?php endif; ?>
+        <?php if ($lastDoc): ?>
+        <a class="dom-banner" href="/<?= h(rawurlencode($lastDoc['tool'])) ?>/index.html?loadDoc=<?= (int)$lastDoc['id'] ?>" target="_blank">
+          <span class="dom-banner-ic">🕘</span>
+          <span class="dom-banner-text">Naposledy: <b><?= h(toolLabel($lastDoc['tool'])) ?></b> — <?= h($lastDoc['client_label']) ?> · <?= timeAgoSk($lastDoc['generated_at']) ?></span>
+          <span class="dom-banner-go">Otvoriť
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </span>
+        </a>
+        <?php endif; ?>
+      </div>
       <?php endif; ?>
 
       <div class="dom-search-wrap">
