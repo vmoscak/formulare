@@ -158,9 +158,12 @@ const state = {
   clientName:'', clientPhone:'', clientEmail:'',
   reason:'zmluva', tone:'formalne', channel:'whatsapp',
   reviewLink: GOOGLE_REVIEW_LINK,
-  advisorName:'',
+  advisorName:'', advisorGender:'m',
   touched:false,
 };
+
+/* Rod poradcu (z profilu, viď whoami) — texty tu hovoria o poradcovi v 1. osobe. */
+function g(gender, male, female){ return gender==='z' ? female : male; }
 
 /* ===========================================================================
    VALIDÁCIA
@@ -225,8 +228,8 @@ function buildMessage(){
     return greeting + (name ? ' ' + name : '') + ',\n\n'
       + thanksLine + ' '
       + (formal
-        ? 'Bol/-a by som veľmi rád/rada, keby ste si našli chvíľku a nechali krátku recenziu:'
-        : 'Veľmi by mi pomohlo, keby si mi venoval/-a chvíľku a nechal/-a krátku recenziu:')
+        ? 'Bol' + g(state.advisorGender,'','a') + ' by som veľmi ' + g(state.advisorGender,'rád','rada') + ', keby ste si našli chvíľku a nechali krátku recenziu:'
+        : 'Veľmi by mi pomohlo, keby si mi ' + g(state.advisorGender,'venoval','venovala') + ' chvíľku a ' + g(state.advisorGender,'nechal','nechala') + ' krátku recenziu:')
       + '\n\n' + link
       + '\n\n' + (formal ? 'Vopred ďakujem za Váš čas.' : 'Vopred veľká vďaka!')
       + '\n\n' + sign;
@@ -239,8 +242,8 @@ function buildMessage(){
   return greeting + ' ' + (name || '') + (name ? ',' : '')
     + '\n\n' + thanksLine + ' '
     + (formal
-      ? 'Bol/-a by som veľmi rád/rada, keby ste si našli chvíľku a nechali krátku recenziu:'
-      : 'Veľmi by mi pomohlo, keby si mi venoval/-a chvíľku a nechal/-a krátku recenziu:')
+      ? 'Bol' + g(state.advisorGender,'','a') + ' by som veľmi ' + g(state.advisorGender,'rád','rada') + ', keby ste si našli chvíľku a nechali krátku recenziu:'
+      : 'Veľmi by mi pomohlo, keby si mi ' + g(state.advisorGender,'venoval','venovala') + ' chvíľku a ' + g(state.advisorGender,'nechal','nechala') + ' krátku recenziu:')
     + '\n\n' + link
     + '\n\nVopred veľká vďaka! ⭐⭐⭐⭐⭐'
     + (sign ? '\n' + sign : '');
@@ -347,7 +350,7 @@ function bind(){
   wireClientAutocomplete('generator-recenzii', 'clientName');
   fetch('/api/whoami.php', { credentials:'same-origin' })
     .then(function(r){ return r.ok ? r.json() : {}; })
-    .then(function(adv){ if(adv && adv.id){ state.advisorName = adv.name || ''; render(); } })
+    .then(function(adv){ if(adv && adv.id){ state.advisorName = adv.name || ''; state.advisorGender = adv.gender || 'm'; render(); } })
     .catch(function(){});
 })();
 </script>

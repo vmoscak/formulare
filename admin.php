@@ -58,9 +58,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $sfaAcq = trim((string)($_POST['add_sfa_acquisition_no'] ?? ''));
         $sfaPer = trim((string)($_POST['add_sfa_personal_no'] ?? ''));
         $nbsNo = trim((string)($_POST['add_nbs_registration_no'] ?? ''));
+        $gender = ($_POST['add_gender'] ?? 'm') === 'z' ? 'z' : 'm';
         if ($name !== '' && $email !== '') {
-            $stmt = db()->prepare('INSERT INTO formulare_advisors (name, org, email, phone, sfa_acquisition_no, sfa_personal_no, nbs_registration_no) VALUES (?, ?, ?, ?, ?, ?, ?)');
-            $stmt->execute([$name, $org, $email, $phone, $sfaAcq, $sfaPer, $nbsNo]);
+            // Kým sa na produkcii nespustí sql/041_advisor_gender.sql (RUČNE
+            // v phpMyAdmin), stĺpec gender ešte neexistuje — radšej pridať
+            // poradcu bez neho než nechať celý formulár spadnúť na chybe.
+            try {
+                $stmt = db()->prepare('INSERT INTO formulare_advisors (name, org, email, phone, sfa_acquisition_no, sfa_personal_no, nbs_registration_no, gender) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+                $stmt->execute([$name, $org, $email, $phone, $sfaAcq, $sfaPer, $nbsNo, $gender]);
+            } catch (Throwable $e) {
+                $stmt = db()->prepare('INSERT INTO formulare_advisors (name, org, email, phone, sfa_acquisition_no, sfa_personal_no, nbs_registration_no) VALUES (?, ?, ?, ?, ?, ?, ?)');
+                $stmt->execute([$name, $org, $email, $phone, $sfaAcq, $sfaPer, $nbsNo]);
+            }
         }
     } elseif (isset($_POST['toggle_id'])) {
         $id = (int)$_POST['toggle_id'];
@@ -80,9 +89,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $sfaAcq = trim((string)($_POST['edit_sfa_acquisition_no'] ?? ''));
         $sfaPer = trim((string)($_POST['edit_sfa_personal_no'] ?? ''));
         $nbsNo = trim((string)($_POST['edit_nbs_registration_no'] ?? ''));
+        $gender = ($_POST['edit_gender'] ?? 'm') === 'z' ? 'z' : 'm';
         if ($name !== '' && $email !== '') {
-            $stmt = db()->prepare('UPDATE formulare_advisors SET name = ?, org = ?, email = ?, phone = ?, sfa_acquisition_no = ?, sfa_personal_no = ?, nbs_registration_no = ? WHERE id = ?');
-            $stmt->execute([$name, $org, $email, $phone, $sfaAcq, $sfaPer, $nbsNo, $id]);
+            try {
+                $stmt = db()->prepare('UPDATE formulare_advisors SET name = ?, org = ?, email = ?, phone = ?, sfa_acquisition_no = ?, sfa_personal_no = ?, nbs_registration_no = ?, gender = ? WHERE id = ?');
+                $stmt->execute([$name, $org, $email, $phone, $sfaAcq, $sfaPer, $nbsNo, $gender, $id]);
+            } catch (Throwable $e) {
+                $stmt = db()->prepare('UPDATE formulare_advisors SET name = ?, org = ?, email = ?, phone = ?, sfa_acquisition_no = ?, sfa_personal_no = ?, nbs_registration_no = ? WHERE id = ?');
+                $stmt->execute([$name, $org, $email, $phone, $sfaAcq, $sfaPer, $nbsNo, $id]);
+            }
         }
     } elseif (isset($_POST['delete_doc_id'])) {
         $id = (int)$_POST['delete_doc_id'];
@@ -239,6 +254,10 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
             <input name="edit_sfa_acquisition_no" value="<?= h($a['sfa_acquisition_no'] ?? '') ?>" placeholder="Získateľské číslo SFA/VFA" style="min-width:190px;">
             <input name="edit_sfa_personal_no" value="<?= h($a['sfa_personal_no'] ?? '') ?>" placeholder="Osobné číslo SFA/VFA" style="min-width:170px;">
             <input name="edit_nbs_registration_no" value="<?= h($a['nbs_registration_no'] ?? '') ?>" placeholder="Registračné číslo v NBS" style="min-width:190px;">
+            <select name="edit_gender" title="Rod v textoch, kde nástroj hovorí o poradcovi (napr. „chcel/-a by som“)">
+              <option value="m" <?= ($a['gender'] ?? 'm') === 'm' ? 'selected' : '' ?>>Muž</option>
+              <option value="z" <?= ($a['gender'] ?? 'm') === 'z' ? 'selected' : '' ?>>Žena</option>
+            </select>
             <button type="submit">Uložiť</button>
             <button type="button" class="toggle-btn" onclick="cancelEdit(<?= (int)$a['id'] ?>)">Zrušiť</button>
           </form>
@@ -293,6 +312,10 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
       <input name="add_sfa_acquisition_no" placeholder="Získateľské číslo SFA/VFA" style="min-width:190px;">
       <input name="add_sfa_personal_no" placeholder="Osobné číslo SFA/VFA" style="min-width:170px;">
       <input name="add_nbs_registration_no" placeholder="Registračné číslo v NBS" style="min-width:190px;">
+      <select name="add_gender" title="Rod v textoch, kde nástroj hovorí o poradcovi (napr. „chcel/-a by som“)">
+        <option value="m">Muž</option>
+        <option value="z">Žena</option>
+      </select>
       <button type="submit">Pridať poradcu</button>
     </form>
   </div>

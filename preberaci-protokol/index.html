@@ -59,7 +59,7 @@
         <div class="party">
           <div class="fields">
             <div class="field col-full" data-k="fromName">
-              <label>ODOVZDÁVAJÚCI/-A · meno a priezvisko / názov</label>
+              <label>ODOVZDÁVAJÚCA STRANA · meno a priezvisko / názov</label>
               <input id="fromName" placeholder="Meno a priezvisko alebo názov firmy">
               <span class="err">Zadaj odovzdávajúceho</span>
             </div>
@@ -74,7 +74,7 @@
         <div class="party">
           <div class="fields">
             <div class="field col-full" data-k="toName">
-              <label>PREBERAJÚCI/-A · meno a priezvisko / názov</label>
+              <label>PREBERAJÚCA STRANA · meno a priezvisko / názov</label>
               <input id="toName" placeholder="Meno a priezvisko alebo názov firmy">
               <span class="err">Zadaj preberajúceho</span>
             </div>
@@ -268,11 +268,11 @@ function buildLetterHtml(previewMode){
   const body = `
     <div class="doctitle">Preberací / odovzdávací protokol</div>
     <div class="meta">
-      <div><strong>Odovzdávajúci/-a:</strong> ${escapeHtml(state.fromName||'____________________')}${state.fromRole.trim()?' – '+escapeHtml(state.fromRole.trim()):''}</div>
-      <div><strong>Preberajúci/-a:</strong> ${escapeHtml(state.toName||'____________________')}${state.toRole.trim()?' – '+escapeHtml(state.toRole.trim()):''}</div>
+      <div><strong>Odovzdávajúca strana:</strong> ${escapeHtml(state.fromName||'____________________')}${state.fromRole.trim()?' – '+escapeHtml(state.fromRole.trim()):''}</div>
+      <div><strong>Preberajúca strana:</strong> ${escapeHtml(state.toName||'____________________')}${state.toRole.trim()?' – '+escapeHtml(state.toRole.trim()):''}</div>
     </div>
     <div class="body-text">
-      <p>Odovzdávajúci/-a týmto odovzdáva a preberajúci/-a preberá nižšie uvedené dokumenty a materiály, a to v úplnom a nepoškodenom stave:</p>
+      <p>Odovzdávajúca strana týmto odovzdáva a preberajúca strana preberá nižšie uvedené dokumenty a materiály, a to v úplnom a nepoškodenom stave:</p>
     </div>
     <table class="tasks">
       <thead><tr><th></th><th>Názov dokumentu / materiálu</th><th>Počet</th></tr></thead>
@@ -284,12 +284,12 @@ function buildLetterHtml(previewMode){
       <div class="sig-col">
         <div class="sig-line"></div>
         <div class="sig-name">${escapeHtml(state.fromName||'____________________')}</div>
-        <div class="sig-role">odovzdal/-a</div>
+        <div class="sig-role">odovzdávajúca strana</div>
       </div>
       <div class="sig-col">
         <div class="sig-line"></div>
         <div class="sig-name">${escapeHtml(state.toName||'____________________')}</div>
-        <div class="sig-role">prevzal/-a</div>
+        <div class="sig-role">preberajúca strana</div>
       </div>
     </div>
     <div class="footer-bar">
@@ -379,8 +379,8 @@ function doPDF(){
 function doCopy(){
   const dateFmt = parseDate(state.date) ? fmt(parseDate(state.date)) : '__________';
   const lines = ['PREBERACÍ / ODOVZDÁVACÍ PROTOKOL','',
-    'Odovzdávajúci/-a: '+(state.fromName||'____________________')+(state.fromRole.trim()?' – '+state.fromRole.trim():''),
-    'Preberajúci/-a: '+(state.toName||'____________________')+(state.toRole.trim()?' – '+state.toRole.trim():''),''];
+    'Odovzdávajúca strana: '+(state.fromName||'____________________')+(state.fromRole.trim()?' – '+state.fromRole.trim():''),
+    'Preberajúca strana: '+(state.toName||'____________________')+(state.toRole.trim()?' – '+state.toRole.trim():''),''];
   state.items.forEach(function(it,i){
     lines.push((i+1)+'. '+it.text+' — '+(it.qty||'—'));
   });

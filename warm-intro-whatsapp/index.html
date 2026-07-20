@@ -70,6 +70,13 @@
             <input id="referrerName" placeholder="napr. Peter Novák">
             <span class="err">Zadaj meno odporúčajúceho/-ej</span>
           </div>
+          <div class="field" data-k="referrerGender">
+            <label>ROD ODPORÚČAJÚCEHO/-EJ</label>
+            <div class="variant-chips">
+              <div class="chip" id="referrerGenderM" data-referrer-gender="m">Muž</div>
+              <div class="chip" id="referrerGenderZ" data-referrer-gender="z">Žena</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -112,7 +119,10 @@ const TONES = {
   strucny:    { label:'Stručný', sub:'Krátka rýchla správa', tile:'ST' },
 };
 
-const state = { contactName:'', contactPhone:'', referrerName:'', tone:'priatelsky', advisorName:'', advisorPhone:'', touched:false };
+const state = { contactName:'', contactPhone:'', referrerName:'', referrerGender:'m', tone:'priatelsky', advisorName:'', advisorPhone:'', advisorGender:'m', touched:false };
+
+/* Rod odporúčajúceho aj poradcu — text tu hovorí o oboch (3. resp. 1. osoba). */
+function g(gender, male, female){ return gender==='z' ? female : male; }
 
 function validate(){
   const e = {};
@@ -144,19 +154,19 @@ function buildMessage(){
 
   if (state.tone === 'formalny') {
     return 'Dobrý deň' + (name ? ' ' + name : '') + ',\n\n'
-      + 'volám sa ' + advisor + ' a pôsobím ako finančný poradca. Váš kontakt mi odovzdal/-a ' + referrer
-      + ', ktorý/-á sa domnieva, že by som Vám mohol/-la byť nápomocný/-á v oblasti financií a poistenia.'
+      + 'volám sa ' + advisor + ' a pôsobím ako finančný poradca. Váš kontakt mi ' + g(state.referrerGender,'odovzdal','odovzdala') + ' ' + referrer
+      + ', ' + g(state.referrerGender,'ktorý','ktorá') + ' sa domnieva, že by som Vám ' + g(state.advisorGender,'mohol','mohla') + ' byť ' + g(state.advisorGender,'nápomocný','nápomocná') + ' v oblasti financií a poistenia.'
       + '\n\nRád by som si s Vami dohodol krátky telefonát alebo stretnutie, ak by Vám to vyhovovalo. Dajte mi, prosím, vedieť, kedy sa Vám to hodí.'
       + '\n\nS pozdravom,\n' + advisor + phoneLine;
   }
   if (state.tone === 'strucny') {
-    return 'Ahoj' + (name ? ' ' + name : '') + ', som ' + advisor + ' (finančný poradca), kontakt mi dal/-a ' + referrer + '. Ozvem sa ti, keď budeš mať chvíľku?'
+    return 'Ahoj' + (name ? ' ' + name : '') + ', som ' + advisor + ' (finančný poradca), kontakt mi ' + g(state.referrerGender,'dal','dala') + ' ' + referrer + '. Ozvem sa ti, keď budeš mať chvíľku?'
       + '\n' + advisor + phoneLine;
   }
   // priateľský (predvolený)
   return 'Ahoj ' + (name || '') + ','
-    + '\n\nvolám sa ' + advisor + ' a som finančný poradca. Kontakt na teba mi dal/-a '
-    + referrer + ' — spomínal/-a, že by som ti mohol/-la pomôcť s financiami/poistením.'
+    + '\n\nvolám sa ' + advisor + ' a som finančný poradca. Kontakt na teba mi ' + g(state.referrerGender,'dal','dala') + ' '
+    + referrer + ' — ' + g(state.referrerGender,'spomínal','spomínala') + ', že by som ti ' + g(state.advisorGender,'mohol','mohla') + ' pomôcť s financiami/poistením.'
     + '\n\nNie je to žiadny záväzok, len krátke predstavenie 🙂 Ak by ti vyhovoval krátky telefonát alebo stretnutie, daj vedieť, kedy sa ti to hodí.'
     + '\n\n' + advisor + phoneLine;
 }
@@ -175,6 +185,9 @@ function render(){
 
   var _p=(state.contactName||'').trim().split(/\s+/), _av=_p.length>=2?_p[0][0]+_p[_p.length-1][0]:(_p[0]?_p[0][0]:'?');
   $('avatar').textContent=_av.toUpperCase();
+
+  $('referrerGenderM').classList.toggle('sel', state.referrerGender!=='z');
+  $('referrerGenderZ').classList.toggle('sel', state.referrerGender==='z');
 
   $('msgPreview').textContent = buildMessage();
 }
@@ -201,6 +214,7 @@ function doWhatsApp(){
 function bind(){
   document.addEventListener('click', function(e){
     const t=e.target.closest('[data-tone]'); if(t){ state.tone=t.dataset.tone; renderTones(); render(); return; }
+    const rg=e.target.closest('[data-referrer-gender]'); if(rg){ state.referrerGender=rg.dataset.referrerGender; render(); return; }
   });
   document.addEventListener('input', function(e){
     ['contactName','contactPhone','referrerName'].forEach(function(k){
@@ -217,7 +231,7 @@ function bind(){
   autoOpenSavedDocument(function(d){ Object.assign(state, d); syncInputs(); render(); }, function(){});
   fetch('/api/whoami.php', { credentials:'same-origin' })
     .then(function(r){ return r.ok ? r.json() : {}; })
-    .then(function(adv){ if(adv && adv.id){ state.advisorName = adv.name || ''; state.advisorPhone = adv.phone || ''; render(); } })
+    .then(function(adv){ if(adv && adv.id){ state.advisorName = adv.name || ''; state.advisorPhone = adv.phone || ''; state.advisorGender = adv.gender || 'm'; render(); } })
     .catch(function(){});
 })();
 </script>

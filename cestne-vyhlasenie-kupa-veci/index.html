@@ -299,7 +299,7 @@ function buildParas(){
       + (state.contractNo.trim() ? (', evidovanou pod č. ' + state.contractNo.trim()) : '') + '.'
     : '';
 
-  const warning = 'Som si vedomý/á, že uvedenie nepravdivých údajov v tomto čestnom vyhlásení môže mať za následok zamietnutie poistného plnenia, prípadne inú právnu zodpovednosť.';
+  const warning = 'Som si ' + g('vedomý','vedomá') + ', že uvedenie nepravdivých údajov v tomto čestnom vyhlásení môže mať za následok zamietnutie poistného plnenia, prípadne inú právnu zodpovednosť.';
 
   return { intro, purchasePara, reasonPara, incidentPara, warning };
 }

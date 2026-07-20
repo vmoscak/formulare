@@ -78,6 +78,13 @@
             <label>MENO KLIENTA</label>
             <input id="clientName" placeholder="napr. Ján Novák">
           </div>
+          <div class="field" data-k="gender">
+            <label>ROD</label>
+            <div class="variant-chips">
+              <div class="chip" id="genderM" data-gender="m">Muž</div>
+              <div class="chip" id="genderZ" data-gender="z">Žena</div>
+            </div>
+          </div>
           <div class="field" id="yearsField" data-k="years" style="display:none;">
             <label>KOĽKO ROKOV SPOLUPRÁCE <span style="font-weight:500;text-transform:none;">(nepovinné)</span></label>
             <input type="number" min="0" id="years" placeholder="napr. 5">
@@ -123,7 +130,10 @@
 /* ===========================================================================
    KONTAKT NA PORADCU (fallback, prepíše sa z whoami)
 =========================================================================== */
-const ADVISOR = { name: 'Vladimír Moščák', email: 'vmfin@vmfin.sk', phone: '+421 910 491 768' };
+const ADVISOR = { name: 'Vladimír Moščák', email: 'vmfin@vmfin.sk', phone: '+421 910 491 768', gender: 'm' };
+
+/* Rod klienta aj poradcu — v texte tu ide o oboch (2. osoba pozdrav, 1. osoba "chcel/-a by som"). */
+function g(gender, male, female){ return gender==='z' ? female : male; }
 
 /* ===========================================================================
    DÁTA — tu meníš príležitosti, farby a predvolené texty
@@ -141,14 +151,14 @@ const OCCASIONS = {
     headline: 'Krásne Vianoce a šťastný nový rok',
     subject: 'Krásne Vianoce a šťastný nový rok 🎄',
     formal: 'prajem Vám pokojné prežitie vianočných sviatkov v kruhu najbližších a úspešný nový rok. Ďakujem za dôveru, ktorú ste mi počas roka prejavili.',
-    informal: 'prajem ti pokojné prežitie vianočných sviatkov v kruhu najbližších a úspešný nový rok. Ďakujem za dôveru, ktorú si mi počas roka prejavil/-a.',
+    informal: function(cg){ return 'prajem ti pokojné prežitie vianočných sviatkov v kruhu najbližších a úspešný nový rok. Ďakujem za dôveru, ktorú si mi počas roka ' + g(cg,'prejavil','prejavila') + '.'; },
   },
   vyrocie: {
     label: 'Výročie zmluvy', tile: '📅', color: '#4338ca',
     headline: 'Ďakujeme za Vašu dôveru',
     subject: 'Ďakujeme za Vašu dôveru',
-    formal: 'pri príležitosti výročia Vašej zmluvy by som Vám chcel/-a poďakovať za dôveru a spoluprácu. Ak by ste chceli prejsť aktuálne krytie alebo máte akékoľvek otázky, som Vám kedykoľvek k dispozícii.',
-    informal: 'pri príležitosti výročia tvojej zmluvy by som ti chcel/-a poďakovať za dôveru a spoluprácu. Ak by si chcel/-a prejsť aktuálne krytie alebo máš akékoľvek otázky, som ti kedykoľvek k dispozícii.',
+    formal: function(cg, ag){ return 'pri príležitosti výročia Vašej zmluvy by som Vám ' + g(ag,'chcel','chcela') + ' poďakovať za dôveru a spoluprácu. Ak by ste chceli prejsť aktuálne krytie alebo máte akékoľvek otázky, som Vám kedykoľvek k dispozícii.'; },
+    informal: function(cg, ag){ return 'pri príležitosti výročia tvojej zmluvy by som ti ' + g(ag,'chcel','chcela') + ' poďakovať za dôveru a spoluprácu. Ak by si ' + g(cg,'chcel','chcela') + ' prejsť aktuálne krytie alebo máš akékoľvek otázky, som ti kedykoľvek k dispozícii.'; },
   },
 };
 
@@ -157,7 +167,7 @@ const TONES = {
   neformalne: { label:'Neformálne', sub:'Priateľské, tykanie', tile:'NE' },
 };
 
-const state = { occasion: 'narodeniny', tone: 'formalne', clientName: '', years: '', customMessage: '', subject: '', subjectTouched: false };
+const state = { occasion: 'narodeniny', tone: 'formalne', clientName: '', gender: 'm', years: '', customMessage: '', subject: '', subjectTouched: false };
 
 const $ = id => document.getElementById(id);
 function escapeHtml(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -177,7 +187,9 @@ function currentHeadline(){
 }
 
 function currentBody(){
-  return state.customMessage.trim() || OCCASIONS[state.occasion][state.tone === 'formalne' ? 'formal' : 'informal'];
+  if (state.customMessage.trim()) return state.customMessage.trim();
+  const body = OCCASIONS[state.occasion][state.tone === 'formalne' ? 'formal' : 'informal'];
+  return typeof body === 'function' ? body(state.gender, ADVISOR.gender) : body;
 }
 
 function currentSubject(){
@@ -190,7 +202,7 @@ function currentSubject(){
 =========================================================================== */
 function buildEmailHtml(){
   const occ = OCCASIONS[state.occasion];
-  const clientName = state.clientName.trim() || 'klient/-ka';
+  const clientName = state.clientName.trim() || g(state.gender,'klient','klientka');
   const advisorLine = escapeHtml(ADVISOR.name || '') +
     (ADVISOR.phone ? '<br>' + escapeHtml(ADVISOR.phone) : '') +
     (ADVISOR.email ? (ADVISOR.phone ? ' &middot; ' : '<br>') + escapeHtml(ADVISOR.email) : '');
@@ -204,7 +216,7 @@ function buildEmailHtml(){
     + '<div style="color:#ffffff;font-size:20px;font-weight:bold;margin-top:10px;font-family:Arial,Helvetica,sans-serif;">' + escapeHtml(currentHeadline()) + '</div>'
     + '</td></tr>'
     + '<tr><td style="padding:32px;">'
-    + '<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#20242b;">Milý/á ' + escapeHtml(clientName) + ',</p>'
+    + '<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#20242b;">' + g(state.gender,'Milý','Milá') + ' ' + escapeHtml(clientName) + ',</p>'
     + '<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#20242b;">' + nl2br(currentBody()) + '</p>'
     + '<p style="margin:24px 0 0;font-size:15px;line-height:1.6;color:#20242b;">S úctou,<br><strong>' + advisorLine + '</strong></p>'
     + '</td></tr>'
@@ -215,10 +227,10 @@ function buildEmailHtml(){
 }
 
 function buildEmailPlainText(){
-  const clientName = state.clientName.trim() || 'klient/-ka';
+  const clientName = state.clientName.trim() || g(state.gender,'klient','klientka');
   const advisorLine = (ADVISOR.name || '') + (ADVISOR.phone ? '\n' + ADVISOR.phone : '') + (ADVISOR.email ? '\n' + ADVISOR.email : '');
   return currentHeadline() + '\n\n'
-    + 'Milý/á ' + clientName + ',\n\n'
+    + g(state.gender,'Milý','Milá') + ' ' + clientName + ',\n\n'
     + currentBody() + '\n\n'
     + 'S úctou,\n' + advisorLine;
 }
@@ -253,7 +265,11 @@ function renderPreview(){
   frame.srcdoc = doc;
 }
 
-function render(){ renderOccasions(); renderTones(); renderPreview(); }
+function render(){
+  renderOccasions(); renderTones(); renderPreview();
+  $('genderM').classList.toggle('sel', state.gender!=='z');
+  $('genderZ').classList.toggle('sel', state.gender==='z');
+}
 
 /* ===========================================================================
    KOPÍROVANIE — formátovaný HTML (rich text) do schránky, s fallbackom
@@ -328,6 +344,7 @@ function bind(){
   document.addEventListener('click', function(e){
     const o = e.target.closest('[data-occasion]'); if(o){ state.occasion = o.dataset.occasion; state.subjectTouched = false; render(); return; }
     const t = e.target.closest('[data-tone]'); if(t){ state.tone = t.dataset.tone; render(); return; }
+    const gd = e.target.closest('[data-gender]'); if(gd){ state.gender = gd.dataset.gender; render(); return; }
   });
   $('clientName').addEventListener('input', function(e){ state.clientName = e.target.value; renderPreview(); });
   $('years').addEventListener('input', function(e){ state.years = e.target.value; renderPreview(); });
@@ -352,6 +369,7 @@ function bind(){
         ADVISOR.name = adv.name || ADVISOR.name;
         ADVISOR.phone = adv.phone || ADVISOR.phone;
         ADVISOR.email = adv.email || ADVISOR.email;
+        ADVISOR.gender = adv.gender || ADVISOR.gender;
         renderPreview();
       }
     })
