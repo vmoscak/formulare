@@ -62,6 +62,8 @@ $TOOL_CATEGORIES = [
     // v mriežke sa nezobrazia, keďže sú zvýraznené vo flow banneri vyššie
     // (viď inc-tools-page.php, $FLOW_STEPS).
     ['title' => 'Pred stretnutím / motivácia', 'group' => 'nastroje', 'tools' => [
+        ['href' => 'financna-analyza/', 'name' => 'Finančná analýza', 'ico' => 'trending', 'color' => 'sky',
+         'desc' => 'Komplexný finančný plán pre klienta – domácnosť, príjmy, majetok aj poistenie na jednom mieste, s výstupom pre poradcu aj pre klienta (PDF, prezentácia).'],
         ['href' => 'wizard-poistenie/', 'name' => 'Aké poistenie potrebujem', 'ico' => 'help', 'color' => 'violet', 'client' => true,
          'desc' => 'Krátky dotazník na 8 otázok – odporúčanie typov poistenia, s prekliknutím do Kalkulačky poistného krytia.'],
         ['href' => 'financna-medzera/', 'name' => 'Kalkulačka poistného krytia', 'ico' => 'chart', 'color' => 'indigo', 'client' => true,
