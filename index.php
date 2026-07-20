@@ -3,7 +3,7 @@ require_once __DIR__ . '/db.php';
 
 function fetchActiveAdvisor(int $id): ?array {
     try {
-        $stmt = db()->prepare('SELECT id, name, org, color, pin_hash FROM formulare_advisors WHERE id = ? AND active = 1');
+        $stmt = db()->prepare('SELECT id, name, org, color, pin_hash, session_version FROM formulare_advisors WHERE id = ? AND active = 1');
         $stmt->execute([$id]);
         $row = $stmt->fetch();
         return $row ?: null;
@@ -37,7 +37,7 @@ if ($selected) {
         } else {
             db()->prepare('UPDATE formulare_advisors SET pin_hash = ? WHERE id = ?')
                 ->execute([password_hash($pin1, PASSWORD_DEFAULT), $selected['id']]);
-            setcookie('cur_advisor', signAdvisorId($selected['id']), [
+            setcookie('cur_advisor', signAdvisorId((int)$selected['id'], (int)$selected['session_version']), [
                 'expires' => time() + 86400,
                 'path' => '/',
                 'secure' => !empty($_SERVER['HTTPS']),
@@ -51,7 +51,7 @@ if ($selected) {
         $entered = trim((string)($_POST['pin'] ?? ''));
         if ($entered !== '' && password_verify($entered, $selected['pin_hash'])) {
             throttleReset($scope);
-            setcookie('cur_advisor', signAdvisorId($selected['id']), [
+            setcookie('cur_advisor', signAdvisorId((int)$selected['id'], (int)$selected['session_version']), [
                 'expires' => time() + 86400,
                 'path' => '/',
                 'secure' => !empty($_SERVER['HTTPS']),

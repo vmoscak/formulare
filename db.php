@@ -48,21 +48,36 @@ function asset(string $relPath): string {
 }
 
 /**
- * Podpísaná hodnota cur_advisor cookie ("id.podpis") — HMAC kľúčom GATE_TOKEN.
- * Bráni tomu, aby si poradca len zmenou cookie v prehliadači vydával za iného
- * poradcu (napr. mazal jeho dokumenty). Nevyžaduje žiadne dodatočné heslo.
+ * Podpísaná hodnota cur_advisor cookie ("id.verzia.podpis") — HMAC kľúčom
+ * GATE_TOKEN. Bráni tomu, aby si poradca len zmenou cookie v prehliadači
+ * vydával za iného poradcu (napr. mazal jeho dokumenty). Nevyžaduje žiadne
+ * dodatočné heslo. Verzia (formulare_advisors.session_version) umožňuje
+ * ownerovi/adminovi okamžite zneplatniť už vydané cookie daného poradcu
+ * (napr. pri strate zariadenia) — stačí ju v DB zvýšiť, curAdvisorId() nižšie
+ * potom odmietne cookie podpísanú starou verziou, aj keby inak bola platná.
  */
-function signAdvisorId(int $id): string {
-    return $id . '.' . substr(hash_hmac('sha256', (string)$id, GATE_TOKEN), 0, 20);
+function signAdvisorId(int $id, int $sessionVersion = 0): string {
+    $payload = $id . '.' . $sessionVersion;
+    return $payload . '.' . substr(hash_hmac('sha256', $payload, GATE_TOKEN), 0, 20);
 }
 
 function curAdvisorId(): int {
     $raw = $_COOKIE['cur_advisor'] ?? '';
-    if (!is_string($raw) || !str_contains($raw, '.')) return 0;
-    [$id, $sig] = explode('.', $raw, 2);
-    if (!ctype_digit($id)) return 0;
-    $expected = substr(hash_hmac('sha256', $id, GATE_TOKEN), 0, 20);
-    return hash_equals($expected, $sig) ? (int)$id : 0;
+    if (!is_string($raw)) return 0;
+    $parts = explode('.', $raw);
+    if (count($parts) !== 3) return 0;
+    [$id, $ver, $sig] = $parts;
+    if (!ctype_digit($id) || !ctype_digit($ver)) return 0;
+    $payload = $id . '.' . $ver;
+    $expected = substr(hash_hmac('sha256', $payload, GATE_TOKEN), 0, 20);
+    if (!hash_equals($expected, $sig)) return 0;
+    try {
+        $stmt = db()->prepare('SELECT session_version FROM formulare_advisors WHERE id = ?');
+        $stmt->execute([(int)$id]);
+        $row = $stmt->fetch();
+        if (!$row || (int)$row['session_version'] !== (int)$ver) return 0;
+    } catch (Throwable $e) { return 0; }
+    return (int)$id;
 }
 
 /**
@@ -649,6 +664,7 @@ function dbInitSqlite(PDO $pdo): void {
     try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN sfa_acquisition_no TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
     try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN sfa_personal_no TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
     try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN nbs_registration_no TEXT NULL"); } catch (Throwable $e) { /* stĺpec už existuje */ }
+    try { $pdo->exec("ALTER TABLE formulare_advisors ADD COLUMN session_version INTEGER NOT NULL DEFAULT 0"); } catch (Throwable $e) { /* stĺpec už existuje */ }
     $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_login_throttle (
         scope TEXT PRIMARY KEY,
         fail_count INTEGER NOT NULL DEFAULT 0,

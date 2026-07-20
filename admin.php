@@ -92,9 +92,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $newPin = trim((string)($_POST['pin'] ?? ''));
         if (preg_match('/^\d{4}$/', $newPin)) {
             $hash = password_hash($newPin, PASSWORD_DEFAULT);
-            db()->prepare('UPDATE formulare_advisors SET pin_hash = ? WHERE id = ?')->execute([$hash, $id]);
+            // Reset PINu zároveň okamžite odhlási všetky doteraz prihlásené
+            // zariadenia daného poradcu (session_version) — nový PIN nemá
+            // zmysel, ak by staré zariadenie zostalo prihlásené pod pôvodným.
+            db()->prepare('UPDATE formulare_advisors SET pin_hash = ?, session_version = session_version + 1 WHERE id = ?')->execute([$hash, $id]);
             throttleReset('advisor:' . $id);
         }
+    } elseif (isset($_POST['logout_id'])) {
+        $id = (int)$_POST['logout_id'];
+        db()->prepare('UPDATE formulare_advisors SET session_version = session_version + 1 WHERE id = ?')->execute([$id]);
     } elseif (isset($_POST['tools_id'])) {
         $id = (int)$_POST['tools_id'];
         $allSlugs = [];
@@ -215,6 +221,10 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
           <form method="post" style="display:contents;"><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
             <input type="hidden" name="toggle_id" value="<?= (int)$a['id'] ?>">
             <button type="submit" class="toggle-btn" style="width:100%;"><?= $a['active'] ? 'Deaktivovať' : 'Aktivovať' ?></button>
+          </form>
+          <form method="post" style="display:contents;" onsubmit="return confirm('Odhlásiť <?= h($a['name']) ?> zo všetkých zariadení? Bude si musieť nabudúce znova zadať PIN.');"><input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
+            <input type="hidden" name="logout_id" value="<?= (int)$a['id'] ?>">
+            <button type="submit" class="toggle-btn" style="width:100%;" title="Okamžite zneplatní prihlásenie na všetkých zariadeniach">Odhlásiť</button>
           </form>
         </td>
       </tr>
