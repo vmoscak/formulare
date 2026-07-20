@@ -960,6 +960,95 @@ function dbOnboardingSeedPhases(): array {
     ];
 }
 
+// -- Cesta nováčika: zdieľané funkcie na výpočet rozvrhu fáz --
+// Používa ich cesta-novacika.php (celá mapa fáz) aj uvod.php (banner na
+// Domov s celkovým % postupu) — musia dávať ROVNAKÝ výsledok, inak by sa
+// percento/deň na Domov nezhodovalo s tým, čo vidí poradca na svojej ceste.
+
+/** Počet celých dní od nástupu (0 = deň nástupu). Bez nástupu = 0. */
+function obElapsedDays(?string $startedAt): int {
+    if (!$startedAt) return 0;
+    return max(0, (int)floor((time() - strtotime($startedAt)) / 86400));
+}
+
+/** Doplní 'status' (done/current/upcoming) do zoznamu fáz podľa uplynutých dní. */
+function obPhaseStatuses(array $phases, int $elapsedDays): array {
+    foreach ($phases as &$p) {
+        if ($elapsedDays >= $p['end_day']) $p['status'] = 'done';
+        elseif ($elapsedDays >= $p['start_day']) $p['status'] = 'current';
+        else $p['status'] = 'upcoming';
+    }
+    unset($p);
+    return $phases;
+}
+
+/** Pôvodný režim: fázy idú pevne po sebe podľa duration_days od aktivácie
+ * (deň 0). Fallback pre nováčikov bez nastaveného onboarding_start_date. */
+function obLegacySchedule(array $phases): array {
+    $cumDay = 0;
+    foreach ($phases as &$p) {
+        $p['start_day'] = $cumDay;
+        $cumDay += (int)$p['duration_days'];
+        $p['end_day'] = $cumDay;
+    }
+    unset($p);
+    return $phases;
+}
+
+/**
+ * Kalendárový režim: prvá fáza ("Pred nástupom") trvá od aktivácie po deň
+ * pred nástupom (môže to byť aj niekoľko mesiacov vopred, keď sa priradí
+ * skôr). Nástup je vždy 1. v mesiaci — od neho idú ostatné fázy postupne
+ * po celých kalendárnych mesiacoch (duration_months), takže napr. február
+ * má reálne 28/29 dní a nie paušálnych 30. Aby zvyšok stránky (progress bar,
+ * "Deň X z Y", tímový prehľad...) fungoval bezo zmeny, výsledok je stále
+ * v rovnakých jednotkách ako predtým — počet dní od aktivácie.
+ */
+function obBuildCalendarSchedule(array $phases, string $activatedAt, string $startDateStr): array {
+    if (!$phases) return $phases;
+    $activated = (new DateTimeImmutable($activatedAt))->setTime(0, 0);
+    $cursor = (new DateTimeImmutable($startDateStr))->setTime(0, 0);
+    $offsetOf = function (DateTimeImmutable $d) use ($activated): int {
+        $days = (int)$activated->diff($d)->days;
+        return $d < $activated ? -$days : $days;
+    };
+
+    $phases[0]['start_day'] = 0;
+    $prevIdx = 0;
+    for ($i = 1; $i < count($phases); $i++) {
+        $offset = $offsetOf($cursor);
+        $phases[$prevIdx]['end_day'] = $offset;
+        $phases[$prevIdx]['duration_days'] = $offset - $phases[$prevIdx]['start_day'];
+        $phases[$i]['start_day'] = $offset;
+        $months = max(1, (int)$phases[$i]['duration_months']);
+        $cursor = $cursor->modify('+' . $months . ' months');
+        $prevIdx = $i;
+    }
+    $offset = $offsetOf($cursor);
+    $phases[$prevIdx]['end_day'] = $offset;
+    $phases[$prevIdx]['duration_days'] = $offset - $phases[$prevIdx]['start_day'];
+    return $phases;
+}
+
+/** Vyberie kalendárový alebo pôvodný režim podľa toho, či má nováčik
+ * nastavený dátum nástupu. */
+function obScheduleFor(array $phases, ?string $activatedAt, ?string $startDate): array {
+    if ($activatedAt && $startDate) return obBuildCalendarSchedule($phases, $activatedAt, $startDate);
+    return obLegacySchedule($phases);
+}
+
+/** Kalendárový ekvivalent "aktuálneho mesiaca MZ" — počet celých kalendárnych
+ * mesiacov od nástupu (0 = mesiac nástupu). Vráti null mimo kalendárového
+ * režimu (volajúci si má dopočítať starý spôsob z elapsedDays/30). */
+function obCalendarMzMonth(?string $startDateStr): ?int {
+    if (!$startDateStr) return null;
+    $today = new DateTimeImmutable('today');
+    $start = (new DateTimeImmutable($startDateStr))->setTime(0, 0);
+    if ($today < $start) return 0;
+    $diff = $start->diff($today);
+    return min(24, $diff->y * 12 + $diff->m);
+}
+
 /**
  * Predvolené materiály (referenčné kroky) Cesty nováčika — zdieľané medzi
  * lokálnym SQLite seedom (dbInitSqlite) aj produkčnou migráciou

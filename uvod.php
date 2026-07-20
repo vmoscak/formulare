@@ -12,7 +12,7 @@ $curAdvisorId = curAdvisorId();
 if (!$curAdvisorId) { header('Location: /'); exit; }
 
 try {
-    $stmt = db()->prepare('SELECT name, color, disabled_tools, favorite_tools, is_admin, is_owner, onboarding_started_at FROM formulare_advisors WHERE id = ? AND active = 1');
+    $stmt = db()->prepare('SELECT name, color, disabled_tools, favorite_tools, is_admin, is_owner, onboarding_started_at, onboarding_start_date FROM formulare_advisors WHERE id = ? AND active = 1');
     $stmt->execute([$curAdvisorId]);
     $me = $stmt->fetch();
 } catch (Throwable $e) { $me = null; }
@@ -104,8 +104,16 @@ $newsPalette = ['#4f46e5', '#059669', '#0d9488', '#7c3aed', '#0284c7', '#d97706'
 $onboarding = null;
 if (!empty($me['onboarding_started_at'])) {
     try {
-        $totalDurationDays = (int)db()->query('SELECT COALESCE(SUM(duration_days), 0) FROM formulare_onboarding_phases WHERE is_ongoing = 0')->fetchColumn();
-        $elapsedDays = max(0, (int)floor((time() - strtotime($me['onboarding_started_at'])) / 86400));
+        $obPhases = array_values(array_filter(
+            db()->query('SELECT * FROM formulare_onboarding_phases ORDER BY sort_order, id')->fetchAll(),
+            fn($p) => empty($p['is_ongoing'])
+        ));
+        // Rovnaký rozvrh (kalendárový, ak má nováčik nastavený dátum nástupu,
+        // inak pôvodný dňový) ako na samotnej Ceste nováčika — inak by sa
+        // percento/deň tu na Domov nezhodovalo s tým, čo vidí na svojej ceste.
+        $obSchedule = obScheduleFor($obPhases, $me['onboarding_started_at'], $me['onboarding_start_date'] ?? null);
+        $totalDurationDays = $obSchedule ? (int)end($obSchedule)['end_day'] : 0;
+        $elapsedDays = obElapsedDays($me['onboarding_started_at']);
         $onboarding = [
             'day' => $elapsedDays + 1,
             'pct' => $totalDurationDays > 0 ? min(100, round($elapsedDays / $totalDurationDays * 100)) : 0,
