@@ -363,7 +363,12 @@ function bind(){
     })
     .catch(function(){});
   wireClientAutocomplete('karticka-odporucte-ma', 'clientName');
-  autoOpenSavedDocument(function(d){ Object.assign(state, d); state.touched = true; syncInputs(); render(); }, doPDF);
+  autoOpenSavedDocument(function(d){
+    // Meno/telefón/e-mail/rod poradcu sa vždy berú z aktuálneho profilu
+    // (whoami.php), nikdy zo starej uloženej verzie dokumentu.
+    delete d.advisorName; delete d.advisorPhone; delete d.advisorEmail; delete d.advisorGender;
+    Object.assign(state, d); state.touched = true; syncInputs(); render();
+  }, doPDF);
 })();
 </script>
 

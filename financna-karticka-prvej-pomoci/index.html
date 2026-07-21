@@ -426,7 +426,12 @@ function bind(){
     })
     .catch(function(){});
   wireClientAutocomplete('financna-karticka-prvej-pomoci', 'clientName');
-  autoOpenSavedDocument(function(d){ Object.assign(state, d); state.touched = true; renderPolicies(); renderLines(); syncInputs(); render(); }, doPDF);
+  autoOpenSavedDocument(function(d){
+    // Meno/telefón/e-mail poradcu sa vždy berú z aktuálneho profilu
+    // (whoami.php), nikdy zo starej uloženej verzie dokumentu.
+    delete d.advisorName; delete d.advisorPhone; delete d.advisorEmail;
+    Object.assign(state, d); state.touched = true; renderPolicies(); renderLines(); syncInputs(); render();
+  }, doPDF);
 })();
 </script>
 

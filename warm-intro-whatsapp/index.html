@@ -228,7 +228,13 @@ function bind(){
 (function init(){
   renderTones(); syncInputs(); bind(); render();
   wireClientAutocomplete('warm-intro-whatsapp', 'contactName');
-  autoOpenSavedDocument(function(d){ Object.assign(state, d); syncInputs(); render(); }, function(){});
+  autoOpenSavedDocument(function(d){
+    // Meno/telefón/rod poradcu sa vždy berú z aktuálneho profilu (whoami.php),
+    // nikdy zo starej uloženej verzie dokumentu — inak by po znovuotvorení
+    // rozpracovanej správy zostal podpis prázdny alebo neaktuálny.
+    delete d.advisorName; delete d.advisorPhone; delete d.advisorGender;
+    Object.assign(state, d); syncInputs(); render();
+  }, function(){});
   fetch('/api/whoami.php', { credentials:'same-origin' })
     .then(function(r){ return r.ok ? r.json() : {}; })
     .then(function(adv){ if(adv && adv.id){ state.advisorName = adv.name || ''; state.advisorPhone = adv.phone || ''; state.advisorGender = adv.gender || 'm'; render(); } })

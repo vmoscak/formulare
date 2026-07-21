@@ -473,7 +473,12 @@ function bind(){
   }
   renderRows(); syncInputs(); bind(); render();
   wireClientAutocomplete('zmena-spravcu-zmluvy', 'clientName');
-  autoOpenSavedDocument(function(d){ Object.assign(state, d); renderRows(); syncInputs(); render(); }, doPDF);
+  autoOpenSavedDocument(function(d){
+    // Meno/e-mail/spoločnosť poradcu sa vždy berú z aktuálneho profilu
+    // (loadAdvisor() vyššie), nikdy zo starej uloženej verzie dokumentu.
+    delete d.advisorName; delete d.advisorEmail; delete d.advisorCompany;
+    Object.assign(state, d); renderRows(); syncInputs(); render();
+  }, doPDF);
 })();
 </script>
 

@@ -306,7 +306,12 @@ function bind(){
 (function init(){
   renderControls(); syncInputs(); bind(); render();
   wireClientAutocomplete('checklisty-skody', 'clientName');
-  autoOpenSavedDocument(function(d){ Object.assign(state, d); syncInputs(); renderControls(); render(); }, doPDF);
+  autoOpenSavedDocument(function(d){
+    // Rod poradcu sa vždy berie z aktuálneho profilu (whoami.php), nikdy
+    // zo starej uloženej verzie dokumentu.
+    delete d.advisorGender;
+    Object.assign(state, d); syncInputs(); renderControls(); render();
+  }, doPDF);
   fetch('/api/whoami.php', { credentials:'same-origin' })
     .then(function(r){ return r.ok ? r.json() : {}; })
     .then(function(adv){ if(adv && adv.id){ state.advisorGender = adv.gender || 'm'; } })
