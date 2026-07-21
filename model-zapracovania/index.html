@@ -14,7 +14,7 @@
   .mz-section-title h2{margin:0; font-size:16.5px; font-weight:700; color:var(--ink);}
   .mz-section-title .ico{width:30px; height:30px; border-radius:9px; background:var(--accent-soft); color:var(--accent);
     display:flex; align-items:center; justify-content:center; flex-shrink:0;}
-  .mz-table-wrap{overflow-x:auto; margin:0 0 18px; border:1px solid var(--border); border-radius:var(--radius-xl);}
+  .mz-table-wrap{overflow-x:auto; margin:0 0 18px; border:1px solid var(--border); border-radius:var(--radius-xl); -webkit-overflow-scrolling:touch;}
   .mz-table{width:100%; border-collapse:collapse; font-size:13px; white-space:nowrap;}
   .mz-table th{text-align:left; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.03em;
     color:var(--muted); padding:9px 12px; border-bottom:1px solid var(--border); background:var(--desk);}
@@ -22,11 +22,18 @@
   .mz-table tr:last-child td{border-bottom:none;}
   .mz-table td.num{font-weight:700; color:var(--accent-ink); text-align:right;}
   .mz-table td.wrap{white-space:normal; min-width:220px;}
-  .mz-table-coef{table-layout:fixed;}
-  .mz-table-coef th, .mz-table-coef td, .mz-table-coef td.num{text-align:center;}
   .mz-table-status th, .mz-table-status td{padding:9px 8px; font-size:12.5px;}
   .mz-table-status td.wrap{min-width:150px;}
   .mz-note{font-size:12px; color:var(--muted); margin:-10px 0 22px; line-height:1.5;}
+  /* Koeficienty (9 hodnôt) — na mobile sa table-layout:fixed s 9 stĺpcami
+     nezmestí (hlavičky sa prekrývajú/orežú), preto mriežka dlaždíc namiesto
+     tabuľky: prirodzene sa zalomí do viacerých riadkov podľa šírky. */
+  .mz-coef-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(78px,1fr)); gap:8px; margin:0 0 18px;
+    border:1px solid var(--border); border-radius:var(--radius-xl); padding:12px; background:var(--paper);}
+  .mz-coef-item{text-align:center; padding:6px 4px;}
+  .mz-coef-item .l{display:block; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--muted); margin-bottom:3px;}
+  .mz-coef-item .v{display:block; font-size:15px; font-weight:700; color:var(--accent-ink);}
+  @media(max-width:640px){ .mz-table th, .mz-table td{padding:8px 9px; font-size:12.5px;} }
   .mz-shots{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:0 0 10px;}
   .mz-shots img{width:100%; border:1px solid var(--border); border-radius:var(--radius-lg); display:block;}
   .mz-shots figcaption{font-size:11.5px; color:var(--muted); margin-top:6px; text-align:center;}
@@ -63,13 +70,16 @@
     <span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></span>
     <h2>Produkčné body (PB) za 1 € ročného bežne plateného poistného</h2>
   </div>
-  <div class="mz-table-wrap">
-    <table class="mz-table mz-table-coef">
-      <thead><tr><th>Život</th><th>CP</th><th>D&B</th><th>SME</th><th>Corpo</th><th>Auto</th><th>Tempo</th><th>II. pilier</th><th>III. pilier</th></tr></thead>
-      <tbody>
-        <tr><td class="num">2,5</td><td class="num">1</td><td class="num">3</td><td class="num">1,5</td><td class="num">1,5</td><td class="num">0,5</td><td class="num">0,5</td><td class="num">0,5</td><td class="num">0,5</td></tr>
-      </tbody>
-    </table>
+  <div class="mz-coef-grid">
+    <div class="mz-coef-item"><span class="l">Život</span><span class="v">2,5</span></div>
+    <div class="mz-coef-item"><span class="l">CP</span><span class="v">1</span></div>
+    <div class="mz-coef-item"><span class="l">D&B</span><span class="v">3</span></div>
+    <div class="mz-coef-item"><span class="l">SME</span><span class="v">1,5</span></div>
+    <div class="mz-coef-item"><span class="l">Corpo</span><span class="v">1,5</span></div>
+    <div class="mz-coef-item"><span class="l">Auto</span><span class="v">0,5</span></div>
+    <div class="mz-coef-item"><span class="l">Tempo</span><span class="v">0,5</span></div>
+    <div class="mz-coef-item"><span class="l">II. pilier</span><span class="v">0,5</span></div>
+    <div class="mz-coef-item"><span class="l">III. pilier</span><span class="v">0,5</span></div>
   </div>
 
   <div class="rec-list">
