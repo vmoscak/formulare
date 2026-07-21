@@ -237,9 +237,12 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
 <style>
   .fav-draggable{cursor:grab;}
   .fav-draggable.is-dragging{opacity:.4;}
-  .fav-drag-handle{position:absolute; top:10px; left:10px; z-index:3; width:26px; height:26px; border-radius:50%;
+  .fav-drag-handle{position:absolute; bottom:10px; right:10px; z-index:3; width:26px; height:26px; border-radius:50%;
     background:rgba(255,255,255,.88); box-shadow:0 2px 6px rgba(0,0,0,.12); display:flex; align-items:center; justify-content:center;
     font-size:14px; color:var(--muted); line-height:1; pointer-events:none;}
+  /* Karta môže mať zároveň CTA "Poslať klientovi" (aj to je pri pravom
+     dolnom rohu) — v obľúbených ho posunieme nabok, nech sa neprekrývajú. */
+  .fav-draggable .tool-client-cta{right:44px;}
 </style>
 </head><body class="home-page">
 <div class="home-bg" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
