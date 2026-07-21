@@ -139,7 +139,10 @@ const DAMAGE_TYPES = {
   },
 };
 
-const state = { damageType:'auto', clientName:'' };
+const state = { damageType:'auto', clientName:'', advisorGender:'m' };
+
+/* Rod poradcu (z profilu, viď whoami) — texty tu hovoria o poradcovi v 1. osobe. */
+function g(gender, male, female){ return gender==='z' ? female : male; }
 
 /* ===========================================================================
    VYKRESLENIE
@@ -198,7 +201,7 @@ function buildLetterHtml(previewMode){
     <div class="pdf-topbar"></div><div class="doctitle">Checklist — ${escapeHtml(t.label)}</div>
     <p class="intro">${greeting} pre rýchle vybavenie škody si, prosím, pripravte nasledovné podklady:</p>
     ${itemsHtml}
-    <p class="outro">S vyplnením a odoslaním Vám rád/rada pomôžem — stačí mi podklady poslať.</p>
+    <p class="outro">S vyplnením a odoslaním Vám ${g(state.advisorGender,'rád','rada')} pomôžem — stačí mi podklady poslať.</p>
     <div class="footer-bar">
       <table><tr>
         <td class="fl">${escapeHtml(state.clientName||'')}</td>
@@ -271,7 +274,7 @@ function doCopy(){
   const greeting = state.clientName ? 'Dobrý deň, ' + state.clientName + ',' : 'Dobrý deň,';
   const txt=[greeting, 'pre rýchle vybavenie škody si, prosím, pripravte nasledovné podklady:', '']
     .concat(t.items.map(function(i){ return '– ' + i; }))
-    .concat(['', 'S vyplnením a odoslaním Vám rád/rada pomôžem.'])
+    .concat(['', 'S vyplnením a odoslaním Vám ' + g(state.advisorGender,'rád','rada') + ' pomôžem.'])
     .join('\n');
   try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
   const b=$('copyBtn'); b.textContent='Skopírované ✓'; setTimeout(function(){ b.textContent='Kopírovať ako SMS/WhatsApp text'; },1600);
@@ -304,6 +307,10 @@ function bind(){
   renderControls(); syncInputs(); bind(); render();
   wireClientAutocomplete('checklisty-skody', 'clientName');
   autoOpenSavedDocument(function(d){ Object.assign(state, d); syncInputs(); renderControls(); render(); }, doPDF);
+  fetch('/api/whoami.php', { credentials:'same-origin' })
+    .then(function(r){ return r.ok ? r.json() : {}; })
+    .then(function(adv){ if(adv && adv.id){ state.advisorGender = adv.gender || 'm'; } })
+    .catch(function(){});
 })();
 </script>
 

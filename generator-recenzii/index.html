@@ -128,8 +128,8 @@ const REASONS = {
     formal:'Ďakujem Vám za dôveru a spoluprácu pri uzatváraní novej zmluvy.',
     informal:'Ďakujem ti za dôveru a spoluprácu pri uzatváraní novej zmluvy.' },
   skoda:       { label:'Vybavenie škody', sub:'Poistná udalosť', tile:'ŠK',
-    formal:'Som rád/rada, že sme poistnú udalosť spoločne úspešne vyriešili a poistné plnenie Vám už bolo vyplatené.',
-    informal:'Som rád/rada, že sme poistnú udalosť spoločne úspešne vyriešili a poistné plnenie ti už bolo vyplatené.' },
+    formal:'Som {RAD}, že sme poistnú udalosť spoločne úspešne vyriešili a poistné plnenie Vám už bolo vyplatené.',
+    informal:'Som {RAD}, že sme poistnú udalosť spoločne úspešne vyriešili a poistné plnenie ti už bolo vyplatené.' },
   konzultacia: { label:'Konzultácia', sub:'Poradenstvo', tile:'KO',
     formal:'Ďakujem Vám za čas na našej konzultácii.',
     informal:'Ďakujem ti za čas na našej konzultácii.' },
@@ -221,7 +221,7 @@ function buildMessage(){
   const link = state.reviewLink.trim() || '…';
   const sign = state.advisorName || '';
   const formal = state.tone === 'formalne';
-  const thanksLine = formal ? r.formal : r.informal;
+  const thanksLine = (formal ? r.formal : r.informal).replace('{RAD}', g(state.advisorGender,'rád','rada'));
   const greeting = formal ? 'Dobrý deň' : 'Ahoj';
 
   if (state.channel === 'email') {
