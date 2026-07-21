@@ -171,6 +171,10 @@ const state = { mode:'poradca', layer: 'ochrana', checked: {}, clientName: '' };
 =========================================================================== */
 const $ = id => document.getElementById(id);
 
+function syncInputs(){
+  $('contactName').value = state.clientName;
+}
+
 function progressFor(key){
   const layer = LAYERS.find(l => l.key === key);
   const c = state.checked[key] || {};
@@ -369,7 +373,7 @@ function bind(){
 (function init(){
   bind(); render(); setMode(state.mode);
   wireClientAutocomplete('pyramida-istoty', 'contactName');
-  autoOpenSavedDocument(function(d){ Object.assign(state, d); render(); }, doPDF);
+  autoOpenSavedDocument(function(d){ Object.assign(state, d); syncInputs(); render(); }, doPDF);
 })();
 </script>
 

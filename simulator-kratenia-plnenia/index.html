@@ -158,6 +158,13 @@ function num(v){ const n = Number(v); return isFinite(n) && n >= 0 ? n : 0; }
 function eur(n){ return Math.round(n).toLocaleString('sk-SK') + ' €'; }
 function escapeHtml(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+function syncInputs(){
+  $('actualValue').value = state.actualValue;
+  $('insuredSum').value = state.insuredSum;
+  $('lossAmount').value = state.lossAmount;
+  $('clientName').value = state.clientName;
+}
+
 /* ===========================================================================
    VÝPOČET — princíp pomerného plnenia: Plnenie = Škoda × (Poistná suma /
    Skutočná hodnota), zhora ohraničené poistnou sumou.
@@ -375,7 +382,7 @@ function bind(){
 (function init(){
   bind(); render();
   wireClientAutocomplete('simulator-kratenia-plnenia', 'clientName');
-  autoOpenSavedDocument(function(d){ Object.assign(state, d); render(); }, doPDF);
+  autoOpenSavedDocument(function(d){ Object.assign(state, d); syncInputs(); render(); }, doPDF);
 })();
 </script>
 

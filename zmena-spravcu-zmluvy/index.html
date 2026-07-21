@@ -473,7 +473,7 @@ function bind(){
   }
   renderRows(); syncInputs(); bind(); render();
   wireClientAutocomplete('zmena-spravcu-zmluvy', 'clientName');
-  autoOpenSavedDocument(function(d){ Object.assign(state, d); syncInputs(); render(); }, doPDF);
+  autoOpenSavedDocument(function(d){ Object.assign(state, d); renderRows(); syncInputs(); render(); }, doPDF);
 })();
 </script>
 

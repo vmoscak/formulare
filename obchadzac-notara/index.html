@@ -165,6 +165,14 @@ function num(v){ const n = Number(v); return isFinite(n) && n >= 0 ? n : 0; }
 function eur(n){ return Math.round(n).toLocaleString('sk-SK') + ' €'; }
 function escapeHtml(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+function syncInputs(){
+  $('monthlyExpenses').value = state.monthlyExpenses;
+  $('months').value = state.months;
+  $('oneTimeCosts').value = state.oneTimeCosts;
+  $('existingCoverage').value = state.existingCoverage;
+  $('clientName').value = state.clientName;
+}
+
 /* ===========================================================================
    VÝPOČET — potrebná hotovosť = mesačné výdavky × dĺžka konania + jednorazové
    náklady. Ak je zadané existujúce krytie, porovná sa s potrebou.
@@ -395,7 +403,7 @@ function bind(){
 (function init(){
   bind(); render();
   wireClientAutocomplete('obchadzac-notara', 'clientName');
-  autoOpenSavedDocument(function(d){ Object.assign(state, d); render(); }, doPDF);
+  autoOpenSavedDocument(function(d){ Object.assign(state, d); syncInputs(); render(); }, doPDF);
 })();
 </script>
 

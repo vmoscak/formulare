@@ -234,6 +234,20 @@ function eur(n){ return Math.round(n).toLocaleString('sk-SK') + ' €'; }
 function eurDay(n){ return (Math.round(n*100)/100).toLocaleString('sk-SK') + ' €/deň'; }
 function escapeHtml(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+function syncInputs(){
+  $('hasPartner').checked = state.hasPartner;
+  $('income').value = state.income;
+  $('partnerIncome').value = state.partnerIncome;
+  $('expenses').value = state.expenses;
+  $('existingDeath').value = state.existingDeath;
+  $('existingDisability').value = state.existingDisability;
+  $('existingCriticalIllness').value = state.existingCriticalIllness;
+  $('existingPermanentInjury').value = state.existingPermanentInjury;
+  $('existingPn').value = state.existingPn;
+  $('savings').value = state.savings;
+  $('clientName').value = state.clientName;
+}
+
 function computeSemafor(){
   const income = num(state.income);
   const partnerIncome = num(state.partnerIncome);
@@ -498,7 +512,7 @@ function bind(){
 (function init(){
   bind(); syncPanelWidth(); setSlider(60); render();
   wireClientAutocomplete('financny-rontgen', 'clientName');
-  autoOpenSavedDocument(function(d){ Object.assign(state, d); render(); }, doPDF);
+  autoOpenSavedDocument(function(d){ Object.assign(state, d); syncInputs(); render(); }, doPDF);
   window.addEventListener('resize', syncPanelWidth);
 })();
 </script>
