@@ -2,19 +2,24 @@
 <html lang="sk"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Žiadosť o výplatu poistného plnenia</title>
+<title>Oznámenie o bankovom účte</title>
 
 <!-- =========================================================================
-     GENERÁTOR ŽIADOSTI O VÝPLATU POISTNÉHO PLNENIA
+     GENERÁTOR OZNÁMENIA O BANKOVOM ÚČTE
      -------------------------------------------------------------------------
      Celá aplikácia je v tomto jednom súbore: HTML + CSS (v <style>) + JS (dole).
      PDF sa generuje na serveri cez zdieľaný ../pdf.php (Dompdf) — rovnaký
      endpoint ako v ostatných formulároch.
 
+     Účel: klient pri hlásení poistnej udalosti niekedy nezadá číslo účtu —
+     tento formulár slúži na jeho dodatočné doloženie podpísaným dokumentom.
+     Zámerne odľahčené (žiadne pole na sumu/dátum udalosti/poznámku) — IBAN
+     je jediná dôležitá vec, preto má v dokumente vlastný zvýraznený riadok/box.
+
      KDE ČO UPRAVIŤ:
        • Farby / vzhľad ........ zdieľaný dizajnový systém ../assets/ui.css
        • Zoznam poisťovní ...... JS, objekt  INSURERS
-       • Text žiadosti ......... JS, funkcia buildParas()
+       • Text oznámenia ........ JS, funkcia buildParas()
        • Napovedanie adresy .... JS, funkcia fetchNominatim() (Nominatim/OSM)
 ========================================================================== -->
 
@@ -31,10 +36,10 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
       </a>
       <div class="brand">
-        <div class="logo">V</div>
+        <div class="logo">O</div>
         <div>
-          <b>Výplata poistného plnenia</b><br>
-          <small>Poistná udalosť — na bankový účet</small>
+          <b>Oznámenie o bankovom účte</b><br>
+          <small>Dodatočne k poistnej udalosti</small>
         </div>
       </div>
     </div>
@@ -57,31 +62,16 @@
             <span class="err">Zadaj číslo škodovej udalosti</span>
           </div>
           <div class="field" data-k="contractNo">
-            <label>ČÍSLO POISTNEJ ZMLUVY</label>
+            <label>ČÍSLO POISTNEJ ZMLUVY <span style="font-weight:500;text-transform:none;">(nepovinné)</span></label>
             <input id="contractNo" placeholder="napr. 1234567890">
-            <span class="err">Zadaj číslo poistnej zmluvy</span>
-          </div>
-          <div class="field" data-k="eventDate">
-            <label>DÁTUM VZNIKU UDALOSTI <span style="font-weight:500;text-transform:none;">(nepovinné)</span></label>
-            <input type="date" id="eventDate">
             <span class="err"></span>
           </div>
-          <div class="field" data-k="amount">
-            <label>VÝŠKA PLNENIA (€) <span style="font-weight:500;text-transform:none;">(nepovinné, ak známa)</span></label>
-            <input type="number" min="0" step="0.01" id="amount" placeholder="napr. 850">
-            <span class="err"></span>
-          </div>
-        </div>
-        <div class="field col-full" data-k="note" style="margin-top:12px;">
-          <label>POZNÁMKA <span style="font-weight:500;text-transform:none;">(nepovinné)</span></label>
-          <textarea id="note" placeholder="napr. bližší popis poistnej udalosti…"></textarea>
-          <span class="err"></span>
         </div>
       </div>
 
       <!-- 2. poisťovňa -->
       <div>
-        <div class="step-head"><div class="step-num">2</div><div class="step-title">Poisťovňa (adresát žiadosti)</div></div>
+        <div class="step-head"><div class="step-num">2</div><div class="step-title">Poisťovňa (adresát oznámenia)</div></div>
         <div class="select-wrap">
           <select id="insurer"></select>
           <span class="caret">▼</span>
@@ -89,9 +79,9 @@
         <div class="fields" style="margin-top:12px;" id="insurerExtra"></div>
       </div>
 
-      <!-- 3. žiadateľ -->
+      <!-- 3. poistník -->
       <div>
-        <div class="step-head"><div class="step-num">3</div><div class="step-title">Žiadateľ/-ka (poistník/-čka)</div></div>
+        <div class="step-head"><div class="step-num">3</div><div class="step-title">Poistník/-čka (žiadateľ/-ka)</div></div>
         <div class="fields">
           <div class="field col-full" data-k="name">
             <label>MENO A PRIEZVISKO</label>
@@ -134,17 +124,17 @@
         </div>
       </div>
 
-      <!-- 4. IBAN -->
+      <!-- 4. IBAN — najdôležitejší údaj na celom oznámení -->
       <div>
-        <div class="step-head"><div class="step-num">4</div><div class="step-title">Bankový účet na výplatu plnenia</div></div>
+        <div class="step-head"><div class="step-num">4</div><div class="step-title">Číslo bankového účtu</div></div>
         <div class="fields">
           <div class="field col-full" data-k="iban">
             <label>IBAN</label>
-            <input id="iban" placeholder="SK00 0000 0000 0000 0000 0000" style="letter-spacing:.02em;">
+            <input id="iban" placeholder="SK00 0000 0000 0000 0000 0000" style="letter-spacing:.03em;font-weight:700;font-size:1.05em;">
             <span class="err">Neplatný IBAN (SK + 22 číslic)</span>
           </div>
           <div class="field col-full" data-k="accountOwner">
-            <label>MAJITEĽ ÚČTU <span style="font-weight:500;text-transform:none;">(nepovinné, ak nie je žiadateľ)</span></label>
+            <label>MAJITEĽ ÚČTU <span style="font-weight:500;text-transform:none;">(nepovinné, ak nie je poistník/-čka)</span></label>
             <input id="accountOwner" placeholder="Vyplň, ak je účet vedený na iné meno">
             <span class="err"></span>
           </div>
@@ -155,9 +145,9 @@
       <div>
         <div class="step-head"><div class="step-num">5</div><div class="step-title">Miesto a dátum podpisu</div></div>
         <div class="grid2">
-          <div class="field" data-k="signPlace">
+          <div class="field" data-k="place">
             <label>MIESTO PODPISU</label>
-            <input id="signPlace" placeholder="napr. Bratislava">
+            <input id="place" placeholder="napr. Bratislava">
             <span class="err">Zadaj miesto podpisu</span>
           </div>
           <div class="field" data-k="signDate">
@@ -183,14 +173,14 @@
     <!-- ============ NÁHĽAD ============ -->
     <div class="preview">
       <div class="preview-head">
-        <span class="t">Náhľad žiadosti</span>
+        <span class="t">Náhľad oznámenia</span>
         <span class="live"><i></i>Aktualizuje sa naživo</span>
       </div>
       <div class="preview-tools">
         <button class="tool" id="copyBtn">Kopírovať text</button>
       </div>
       <div class="letter-wrap">
-        <iframe id="letterFrame" class="letter-frame" title="Náhľad žiadosti"></iframe>
+        <iframe id="letterFrame" class="letter-frame" title="Náhľad oznámenia"></iframe>
       </div>
     </div>
   </div>
@@ -247,10 +237,10 @@ async function fetchNominatim(q){
 =========================================================================== */
 const state = {
   insurer:'allianz', insurerOtherName:'', insurerOtherAddress:'',
-  claimNo:'', contractNo:'', eventDate:'', amount:'', note:'',
+  claimNo:'', contractNo:'',
   name:'', gender:'m', street:'', zip:'', city:'', phone:'', email:'',
   iban:'', accountOwner:'',
-  signPlace:'', signDate: toISO(TODAY),
+  place:'', signDate: toISO(TODAY),
   touched:false,
 };
 
@@ -263,7 +253,6 @@ function fmt(d){ return d.getDate()+'. '+(d.getMonth()+1)+'. '+d.getFullYear(); 
 function toISO(d){ const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
 /** Rodovo správny tvar slova podľa zvoleného rodu ('z' = žena, inak muž). */
 function g(male, female){ return state.gender==='z' ? female : male; }
-function eur(n){ return (Number(n)||0).toLocaleString('sk-SK',{minimumFractionDigits:2, maximumFractionDigits:2}) + ' €'; }
 
 function insurerInfo(){
   if(state.insurer==='other'){
@@ -272,25 +261,25 @@ function insurerInfo(){
   return INSURERS[state.insurer];
 }
 
+function ibanFormatted(){
+  const clean=(state.iban||'').replace(/\s/g,'').toUpperCase();
+  return clean ? (clean.match(/.{1,4}/g)||[clean]).join(' ') : '';
+}
+
 /* ===========================================================================
-   ZOSTAVENIE TEXTU ŽIADOSTI
+   ZOSTAVENIE TEXTU OZNÁMENIA
 =========================================================================== */
 function buildParas(){
-  const eventDatePart = parseDate(state.eventDate) ? (' zo dňa ' + fmt(parseDate(state.eventDate))) : '';
+  const contractPart = state.contractNo.trim() ? (' (poistná zmluva č. ' + state.contractNo.trim() + ')') : '';
 
-  const paras = [];
-  paras.push('dolu ' + g('podpísaný','podpísaná') + ' ' + (state.name||'____________________') + ', ' + g('poistník','poistníčka') + ' v súvislosti s poistnou udalosťou č. '
-    + (state.claimNo||'__________') + eventDatePart + ', evidovanou na poistnej zmluve č. ' + (state.contractNo||'__________')
-    + ', si Vás týmto dovoľujem požiadať o vyplatenie poistného plnenia.');
+  const intro = 'Ja, dolu ' + g('podpísaný','podpísaná') + ' ' + (state.name||'____________________') + ', trvale bytom ' + (state.street||'__________') + ', '
+    + (state.zip||'__________') + ' ' + (state.city||'__________') + ' (ďalej len „' + g('poistník','poistníčka') + '“), ako ' + g('poistník','poistníčka') + ' v poistnej udalosti č. '
+    + (state.claimNo||'__________') + contractPart
+    + ', týmto oznamujem poisťovni nasledovné číslo bankového účtu, na ktorý žiadam vyplatiť poistné plnenie k uvedenej udalosti — pri jej nahlásení nebolo číslo účtu uvedené.';
 
-  if(state.amount) paras.push('Výška poistného plnenia je mi známa v sume ' + eur(state.amount) + '.');
-  if(state.note.trim()) paras.push('Doplňujúca poznámka: ' + state.note.trim());
+  const ack = 'Beriem na vedomie, že poistné plnenie bude vyplatené na uvedený bankový účet.';
 
-  const ownerPart = state.accountOwner.trim() ? (' (majiteľ účtu: ' + state.accountOwner.trim() + ')') : '';
-  paras.push('Žiadam o poukázanie poistného plnenia na nasledovný bankový účet: IBAN ' + (state.iban.trim()||'__________') + ownerPart + '.');
-
-  paras.push('Za skoré vybavenie žiadosti vopred ďakujem.');
-  return paras;
+  return { intro, ack };
 }
 
 /* ===========================================================================
@@ -298,19 +287,17 @@ function buildParas(){
 =========================================================================== */
 function validate(){
   const e = {};
-  const ibanClean = (state.iban||'').replace(/\s/g,'').toUpperCase();
-
-  if(!state.claimNo.trim())    e.claimNo='Zadaj číslo škodovej udalosti';
-  if(!state.contractNo.trim()) e.contractNo='Zadaj číslo poistnej zmluvy';
+  if(!state.claimNo.trim()) e.claimNo='Zadaj číslo škodovej udalosti';
 
   if(!state.name.trim())   e.name='Zadaj meno a priezvisko';
   if(!state.street.trim()) e.street='Zadaj ulicu a číslo';
   if(!/^\d{3} ?\d{2}$/.test(state.zip.trim())) e.zip='PSČ v tvare 080 01';
   if(!state.city.trim())   e.city='Zadaj mesto';
 
+  const ibanClean = (state.iban||'').replace(/\s/g,'').toUpperCase();
   if(!/^SK\d{22}$/.test(ibanClean)) e.iban='Neplatný IBAN (SK + 22 číslic)';
 
-  if(!state.signPlace.trim()) e.signPlace='Zadaj miesto podpisu';
+  if(!state.place.trim()) e.place='Zadaj miesto podpisu';
   if(!parseDate(state.signDate)) e.signDate='Zadaj dátum podpisu';
 
   if(state.insurer==='other' && !state.insurerOtherName.trim()) e.insurerOtherName='Zadaj názov poisťovne';
@@ -344,7 +331,8 @@ function renderControls(){
 }
 
 function syncInputs(){
-  ['claimNo','contractNo','eventDate','amount','note','name','zip','city','phone','email','iban','accountOwner','signPlace','signDate']
+  ['claimNo','contractNo','name','street','zip','city','phone','email',
+   'iban','accountOwner','place','signDate']
     .forEach(k=>{ if($(k)) $(k).value = state[k]; });
 }
 
@@ -386,61 +374,66 @@ function render(){
   refreshPreview();
 }
 
-function escapeHtml(x){ return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escapeHtml(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 /* ===========================================================================
-   ZOSTAVENIE LISTU (HTML pre PDF aj náhľad)
+   ZOSTAVENIE LISTU (HTML pre PDF aj náhľad) — IBAN má vlastný zvýraznený
+   riadok/box, je to jediná naozaj dôležitá informácia na celom dokumente.
 =========================================================================== */
 function buildLetterHtml(previewMode){
-  const paras = buildParas();
-  const paraHtml = paras.map(function(p){ return '<p>'+escapeHtml(p).replace(/\n/g,'<br>')+'</p>'; }).join('');
+  const d = buildParas();
+  const placeDate = (state.place||'__________') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '__________');
   const ins = insurerInfo();
   const insZipCity = [ins.zip, ins.city].filter(Boolean).join(' ');
-  const placeDate = (state.signPlace||'__________') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '__________');
-  const contactLine=[
-    state.phone ? 'Tel.: '+escapeHtml(state.phone) : '',
-    state.email ? 'E-mail: '+escapeHtml(state.email) : ''
-  ].filter(Boolean).join(' | ');
-
-  const parties = `<table class="parties"><tr>
-    <td class="from"><strong>${escapeHtml(state.name||'____________________')}</strong><br>${escapeHtml(state.street||'__________')}<br>${escapeHtml((state.zip||'__________')+' '+(state.city||'__________'))}</td>
-    <td class="to"><strong>${escapeHtml(ins.name)}</strong>${ins.street?'<br>'+escapeHtml(ins.street):''}${insZipCity?'<br>'+escapeHtml(insZipCity):''}</td>
-  </tr></table>`;
+  const ibanShown = ibanFormatted() || 'SK__ ____ ____ ____ ____ ____';
+  const ownerLine = state.accountOwner.trim() ? ('Majiteľ účtu: ' + escapeHtml(state.accountOwner.trim())) : '';
 
   const body = `
-    <div class="header-block">${parties}</div>
+    <div class="doctitle">Oznámenie o bankovom účte</div>
+    <div class="addressee">Adresát: <strong>${escapeHtml(ins.name)}</strong>${ins.street?', '+escapeHtml(ins.street):''}${insZipCity?', '+escapeHtml(insZipCity):''}</div>
+    <div class="body-text">
+      <p>${escapeHtml(d.intro)}</p>
+    </div>
+    <div class="iban-box">
+      <div class="iban-label">Číslo účtu (IBAN)</div>
+      <div class="iban-value">${escapeHtml(ibanShown)}</div>
+      ${ownerLine ? '<div class="iban-owner">'+ownerLine+'</div>' : ''}
+    </div>
+    <div class="body-text">
+      <p>${escapeHtml(d.ack)}</p>
+    </div>
     <div class="place-date">${escapeHtml(placeDate)}</div>
-    <div class="subject">Vec: Žiadosť o výplatu poistného plnenia</div>
-    <div class="salutation">Vážená poisťovňa,</div>
-    <div class="body-text">${paraHtml}</div>
-    <div class="farewell">S úctou,</div>
-    <div class="sig-block">
-      <div class="sig-line">${escapeHtml(state.name||'____________________')}</div>
-      ${contactLine?'<div class="sig-contact">'+contactLine+'</div>':''}
+    <div class="sig-grid">
+      <div class="sig-col">
+        <div class="sig-line"></div>
+        <div class="sig-name">${escapeHtml(state.name||'____________________')}</div>
+        <div class="sig-role">${g('poistník','poistníčka')}</div>
+      </div>
     </div>
     <div class="footer-bar">
       <table><tr>
         <td class="fl">${escapeHtml(state.name||'____________________')}</td>
-        <td class="fr">Žiadosť o výplatu poistného plnenia</td>
+        <td class="fr">Oznámenie o bankovom účte</td>
       </tr></table>
     </div>`;
 
   const css = `
-    div,p,table,tr,td,th,strong,span,a { box-sizing:border-box; margin:0; padding:0; }
-    body { margin:0; padding:0; font-family:'DejaVu Sans',sans-serif; font-size:11pt; line-height:1.6; color:#222; background:#fff; }
-    a,:link,:visited { color:inherit; text-decoration:none; }
-    table.parties { width:100%; border-collapse:collapse; table-layout:fixed; }
-    table.parties td { vertical-align:top; width:50%; word-wrap:break-word; font-size:11pt; line-height:1.5; }
-    table.parties td strong { font-size:11.5pt; }
-    table.parties td.to { text-align:right; }
-    .header-block { margin-bottom:12mm; }
-    .place-date { text-align:right; margin:0 0 10mm; }
-    .subject { font-weight:bold; font-size:12.5pt; border-bottom:1.5pt solid #222; padding-bottom:4pt; margin-bottom:7mm; }
-    .salutation { margin-bottom:5mm; }
-    .body-text p { margin-bottom:4mm; text-align:left; }
-    .farewell { margin:7mm 0 12mm; }
-    .sig-line { display:block; width:58mm; border-top:1pt solid #333; padding-top:4pt; font-size:11pt; font-weight:bold; }
-    .sig-contact { margin-top:3pt; font-size:9pt; color:#666; }
+    div,p,table,tr,td,th,strong,span { box-sizing:border-box; margin:0; padding:0; }
+    body { margin:0; padding:0; font-family:'DejaVu Sans',sans-serif; font-size:11pt; line-height:1.6; color:#20242b; background:#fff; }
+    .doctitle { text-align:center; font-size:15pt; letter-spacing:1.5pt; text-transform:uppercase; font-weight:bold;
+      padding:7pt 0; border-top:1pt solid #20242b; border-bottom:1pt solid #20242b; margin-bottom:6mm; }
+    .addressee { font-size:10pt; color:#555; margin-bottom:9mm; }
+    .body-text p { margin-bottom:4.5mm; text-align:justify; }
+    .iban-box { border:2.2pt solid #20242b; border-radius:2mm; padding:7mm 6mm; margin:7mm 0; text-align:center; background:#f5f6fa; }
+    .iban-label { font-size:9pt; font-weight:bold; text-transform:uppercase; letter-spacing:1.2pt; color:#666; margin-bottom:3mm; }
+    .iban-value { font-size:18pt; font-weight:bold; letter-spacing:1.2pt; color:#20242b; }
+    .iban-owner { font-size:9.5pt; color:#555; margin-top:3.5mm; }
+    .place-date { text-align:right; margin:9mm 0 14mm; }
+    .sig-grid { display:table; width:100%; margin-bottom:8mm; }
+    .sig-col { display:table-cell; width:58mm; text-align:center; }
+    .sig-line { border-top:1pt solid #333; margin:16mm 0 3pt; }
+    .sig-name { font-size:11pt; font-weight:bold; }
+    .sig-role { font-size:9pt; color:#666; margin-top:2pt; }
     .footer-bar table { width:100%; border-collapse:collapse; }
     .footer-bar td.fr { text-align:right; }
     .footer-bar { position:fixed; bottom:-22mm; left:0; right:0; width:166mm; border-top:0.5pt solid #ccc; padding-top:4pt; font-size:8.5pt; color:#999; }
@@ -456,7 +449,7 @@ function buildLetterHtml(previewMode){
 
   return '<!DOCTYPE html><html lang="sk"><head>'
     +'<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
-    +'<title>Ziadost o vyplatu poistneho plnenia</title>'
+    +'<title>Oznamenie o bankovom ucte</title>'
     +'<style>'+finalCss+'</style></head><body>'+body+'</body></html>';
 }
 
@@ -470,7 +463,7 @@ function doPDF(){
   btn.textContent='Generujem…'; btn.disabled=true;
 
   const letterHtml=buildLetterHtml();
-  const filename='Ziadost_o_vyplatu_poistneho_plnenia_'+(state.name||'klient').replace(/\s+/g,'_');
+  const filename='Oznamenie_bankovy_ucet_'+(state.name||'klient').replace(/\s+/g,'_');
 
   fetch('../pdf.php', {
     method: 'POST',
@@ -498,13 +491,14 @@ function doPDF(){
 }
 
 function doCopy(){
-  const paras = buildParas();
+  const d=buildParas();
+  const placeDate = (state.place||'__________') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '__________');
   const ins = insurerInfo();
-  const insZipCity = [ins.zip, ins.city].filter(Boolean).join(' ');
-  const placeDate = (state.signPlace||'__________') + ', ' + (parseDate(state.signDate) ? fmt(parseDate(state.signDate)) : '__________');
-  const txt=[state.name,state.street,(state.zip+' '+state.city),'',ins.name,ins.street,insZipCity,'',placeDate,'',
-    'Vec: Žiadosť o výplatu poistného plnenia','','Vážená poisťovňa,']
-    .concat(paras).concat(['','S úctou,','',state.name]).join('\n');
+  const ibanShown = ibanFormatted() || 'SK__ ____ ____ ____ ____ ____';
+  const txt=['OZNÁMENIE O BANKOVOM ÚČTE','','Adresát: '+ins.name,'',d.intro,'','IBAN: '+ibanShown]
+    .concat(state.accountOwner.trim()?['Majiteľ účtu: '+state.accountOwner.trim()]:[])
+    .concat(['',d.ack,'',placeDate,'',g('Poistník','Poistníčka')+': '+(state.name||'____________________')])
+    .join('\n');
   try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
   const b=$('copyBtn'); b.textContent='Skopírované ✓'; setTimeout(()=>b.textContent='Kopírovať text',1600);
 }
@@ -512,10 +506,10 @@ function doCopy(){
 function doReset(){
   Object.assign(state,{
     insurer:'allianz', insurerOtherName:'', insurerOtherAddress:'',
-    claimNo:'', contractNo:'', eventDate:'', amount:'', note:'',
+    claimNo:'', contractNo:'',
     name:'', gender:'m', street:'', zip:'', city:'', phone:'', email:'',
     iban:'', accountOwner:'',
-    signPlace:'', signDate: toISO(TODAY), touched:false,
+    place:'', signDate: toISO(TODAY), touched:false,
   });
   renderControls(); syncInputs(); render();
 }
@@ -566,7 +560,8 @@ function bind(){
     if(e.target.id==='insurerOtherAddress'){ state.insurerOtherAddress=e.target.value; render(); }
   });
 
-  ['claimNo','contractNo','eventDate','amount','note','name','zip','city','phone','email','iban','accountOwner','signPlace','signDate'].forEach(k=>{
+  ['claimNo','contractNo','name','zip','city','phone','email',
+   'iban','accountOwner','place','signDate'].forEach(k=>{
     if($(k)) $(k).addEventListener('input', e=>{ state[k]=e.target.value; render(); });
   });
   $('street').addEventListener('input', e=>{ state.street=e.target.value; renderSuggest(); render(); });
