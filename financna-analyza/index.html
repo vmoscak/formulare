@@ -824,7 +824,17 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       text-align:right;
     }
     @keyframes spin{to{transform:rotate(360deg)}}
-    @media (max-width:960px){.g4,.g3,.g2,.split{grid-template-columns:1fr}}
+    @media (max-width:960px){.g4,.g3,.g2,.split,.live-strip{grid-template-columns:1fr}}
+    @media (max-width:640px){
+      .header-inner{flex-direction:column;align-items:flex-start;gap:10px;padding:12px 16px}
+      .header-right{width:100%;justify-content:space-between;text-align:left}
+      .header-advisor{text-align:left}
+      .tabs{width:100%;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+      .tabs::-webkit-scrollbar{display:none}
+      .tab{white-space:nowrap;flex-shrink:0}
+      .table{-webkit-overflow-scrolling:touch}
+      th,td{padding:7px 8px;font-size:.82rem}
+    }
 
     /* ===== ADDITIONAL POLISH ===== */
     /* Progress bar */
@@ -4391,7 +4401,7 @@ function getOwnerLabel(val){
       slides.push(`
         <div class="present-kicker">Ďalší krok</div>
         <h2 class="present-title">Ako pokračujeme</h2>
-        <div class="present-grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+        <div class="present-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
           <div class="present-stat"><div class="t">Ďalšie stretnutie</div><div class="v" style="font-size:1.3rem">${followupDate || "Dohodneme spoločne"}</div></div>
           <div class="present-stat"><div class="t">Váš poradca</div><div class="v" style="font-size:1.3rem">${ADVISOR.name}</div><div class="t" style="margin-top:8px;text-transform:none;letter-spacing:0">${ADVISOR.tel} · ${ADVISOR.email}</div></div>
         </div>
