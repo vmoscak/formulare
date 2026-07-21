@@ -128,6 +128,8 @@ $TOOL_CATEGORIES = [
          'desc' => 'Súhlas poškodeného/-ej s výplatou poistného plnenia na účet tretej osoby, napr. priamo autoservisu.'],
         ['href' => 'ziadost-vyplata-poistneho-plnenia/', 'name' => 'Výplata poistného plnenia', 'ico' => 'euro', 'color' => 'rose',
          'desc' => 'Žiadosť o vyplatenie poistného plnenia z poistnej udalosti na bankový účet žiadateľa, s IBANom.'],
+        ['href' => 'oznamenie-bankovy-ucet/', 'name' => 'Oznámenie o bankovom účte', 'ico' => 'euro', 'color' => 'amber', 'added' => '2026-07-21',
+         'desc' => 'Keď klient pri hlásení škody nezadá číslo účtu – krátke podpísané doplnenie IBAN, ktorý je v dokumente zvýraznený ako hlavný údaj.'],
     ]],
     ['title' => 'Reklamácie, zmeny a spory', 'group' => 'formulare', 'tools' => [
         ['href' => 'ziadost-vratenie-preplatku/', 'name' => 'Vrátenie preplatku', 'ico' => 'euro', 'color' => 'indigo',

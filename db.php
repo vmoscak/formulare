@@ -119,6 +119,7 @@ function toolLabel(string $slug): string {
         'odvolanie-zamietnutie-plnenia' => 'Odvolanie voči likvidácii',
         'reklamacia-postup-institucie' => 'Reklamácia / sťažnosť',
         'ziadost-vyplata-poistneho-plnenia' => 'Výplata poistného plnenia',
+        'oznamenie-bankovy-ucet' => 'Oznámenie o bankovom účte',
         'financna-karticka-prvej-pomoci' => 'Prehľad poistiek klienta',
         'checklisty-skody' => 'Checklisty podľa typu škody',
         'generator-recenzii' => 'Generátor 5-hviezdičkovej prosby',
