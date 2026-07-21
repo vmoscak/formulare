@@ -596,6 +596,12 @@ if ($isOwner) {
   .ob-phase-add-row{display:grid; grid-template-columns:60px 1fr 110px 110px; gap:10px;}
   .ob-material-add-row{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
   @media(max-width:640px){.ob-phase-add-row,.ob-material-add-row{grid-template-columns:1fr;}}
+  @media(max-width:640px){
+    .ob-manage-summary{flex-wrap:wrap;}
+    .ob-manage-name{flex:1 1 auto; min-width:0;}
+    .ob-manage-duration{flex:1 1 100%; margin-left:40px; margin-top:2px;}
+    .ob-manage-actions{flex:1 1 100%; margin-left:40px; margin-top:6px; flex-wrap:wrap;}
+  }
   .ob-ongoing-check{display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--ink-2);}
 
   .ob-team-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:12px;}
