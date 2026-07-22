@@ -4461,7 +4461,25 @@ function getOwnerLabel(val){
         // ?openClient=<id> — priamy odkaz z Domova (nadchádzajúce kontroly),
         // nech sa poradca nemusí sám hľadať v zozname klientov.
         const openId = new URLSearchParams(location.search).get("openClient");
-        if(openId) openClient(openId);
+        if(openId){
+          openClient(openId);
+        } else {
+          // ?newName=&newPhone=&newEmail= — odkaz z VMfin admin zóny "Finančný
+          // svet" (klient tam ešte nemá záznam v tomto nástroji) — predvyplní
+          // nového klienta menom/kontaktom namiesto prázdneho formulára.
+          const qp = new URLSearchParams(location.search);
+          const newName = qp.get("newName");
+          if(newName){
+            newClient();
+            fill({
+              household_type:"couple", case_status:"nova",
+              case_name:newName, a_name:newName,
+              a_phone:qp.get("newPhone")||"", a_email:qp.get("newEmail")||"",
+            });
+            safeCompute();
+            switchTab("input");
+          }
+        }
       });
       $$(".add-row-btn").forEach(b=>b.addEventListener("click",(e)=>{e.stopPropagation(); addRow(b.dataset.add);}));
       document.addEventListener("click",e=>{
