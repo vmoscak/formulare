@@ -16,7 +16,7 @@
 # ---------------------------------------------------------------------------
 <IfModule mod_rewrite.c>
     # 1) Vždy verejné infraštruktúrne endpointy — nikdy za bránou
-    RewriteRule ^(brana\.php|pdf\.php|api/client-session\.php|api/client-submit\.php|api/log-document\.php|cron/nabor-geocode\.php|cron/backup-db\.php)$ - [L]
+    RewriteRule ^(brana\.php|pdf\.php|api/client-session\.php|api/client-submit\.php|api/log-document\.php|api/leads-intake\.php|cron/nabor-geocode\.php|cron/backup-db\.php)$ - [L]
     # Statické assety (JS/CSS/ikony/manifest) nenesú citlivé dáta — verejné,
     # nech sa favicon/manifest.json/panel.css nenačítavajú cez bránu (brana.php
     # aj index.php ich potrebujú ešte pred prihlásením).
