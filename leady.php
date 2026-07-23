@@ -1,6 +1,6 @@
 <?php
 /**
- * Dopyty — malý CRM priamo v Portáli: Leady + Rezervácie stretnutí, náhrada
+ * Kontakty — malé CRM priamo v Portáli: Leady + Rezervácie stretnutí, náhrada
  * za starú evidenciu v admin.vmfin.sk (Finančný svet tam už len presmerúva
  * sem, vmfin_bookings/vmfin_meetings tiež mizne). Výhradne pre poradcu
  * s is_owner=1, rovnaká zásada ako nabor-kandidati.php.
@@ -32,6 +32,19 @@ const BK_STATUSES = [
     'confirmed' => ['Potvrdené', 'ok'],
     'cancelled' => ['Zrušené', 'bad'],
 ];
+const KT_AVATAR_COLORS = ['#4f46e5', '#059669', '#e11d48', '#0d9488', '#d97706', '#7c3aed', '#0284c7', '#ea580c'];
+
+function ktInitials(string $name): string {
+    $parts = preg_split('/\s+/', trim($name));
+    $a = $parts[0][0] ?? '';
+    $b = count($parts) > 1 ? ($parts[count($parts) - 1][0] ?? '') : '';
+    $r = mb_strtoupper($a . $b);
+    return $r !== '' ? $r : '?';
+}
+function ktAvatarColor(string $name): string {
+    $i = crc32($name) % count(KT_AVATAR_COLORS);
+    return KT_AVATAR_COLORS[$i];
+}
 
 $tab = ($_GET['tab'] ?? 'leady') === 'rezervacie' ? 'rezervacie' : 'leady';
 
@@ -121,6 +134,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         header('Location: /leady.php?tab=rezervacie');
         exit;
+    } elseif (isset($_POST['booking_delete_id'])) {
+        $id = (int)$_POST['booking_delete_id'];
+        db()->prepare('DELETE FROM formulare_bookings WHERE id = ?')->execute([$id]);
+        header('Location: /leady.php?tab=rezervacie');
+        exit;
     }
 }
 
@@ -180,39 +198,66 @@ function ldQs(array $overrides): string {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
-<title>Dopyty</title>
+<title>Kontakty</title>
 <link rel="stylesheet" href="<?= asset('fonts.css') ?>">
 <script src="<?= asset('theme-init.js') ?>"></script>
 <link rel="stylesheet" href="<?= asset('panel.css') ?>">
 <style>
+  /* ── Kontakty (CRM) — vlastný, prehľadnejší vzhľad nad panel.css základom ── */
   .ld-status{display:inline-flex; align-items:center; font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px;}
   .ld-status.neutral{background:var(--desk); color:var(--muted);}
   .ld-status.warn{background:var(--amber-soft); color:var(--amber);}
   .ld-status.ok{background:var(--good-soft); color:var(--good);}
   .ld-status.bad{background:var(--rose-soft); color:var(--rose);}
-  .ld-row{display:flex; align-items:flex-start; gap:12px; padding:14px 4px; border-bottom:1px solid var(--border);}
-  .ld-row:last-child{border-bottom:none;}
+
+  /* Kartové riadky namiesto plochého zoznamu — každý kontakt/rezervácia je
+     samostatná karta s farebným avatarom, aby sa dal zoznam rýchlo prehľadať. */
+  .kt-list{display:flex; flex-direction:column; gap:10px;}
+  .kt-row{display:flex; align-items:flex-start; gap:14px; padding:16px; border:1px solid var(--border); border-radius:var(--radius-xl); background:var(--desk); transition:border-color .15s, background .15s;}
+  .kt-row:hover{border-color:var(--line-strong); background:var(--paper);}
+  .kt-avatar{width:40px; height:40px; border-radius:50%; flex-shrink:0; color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; box-shadow:0 2px 6px rgba(0,0,0,.12);}
   .ld-main{flex:1; min-width:0;}
   .ld-name-line{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
-  .ld-name{font-size:14px; font-weight:700; color:var(--ink);}
-  .ld-meta{font-size:12.5px; color:var(--muted); margin-top:3px;}
-  .ld-message{font-size:12.5px; color:var(--ink-2); margin-top:6px; line-height:1.5; white-space:pre-wrap;}
-  .ld-note{font-size:12.5px; color:var(--muted); margin-top:4px; line-height:1.5; white-space:pre-wrap; font-style:italic;}
+  .ld-name{font-size:14.5px; font-weight:700; color:var(--ink);}
+  .ld-meta{font-size:12.5px; color:var(--muted); line-height:1.6;}
+  .kt-chips{display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:6px;}
+  .kt-chip{display:inline-flex; align-items:center; gap:5px; font-size:12px; color:var(--muted); background:var(--paper); border:1px solid var(--border); border-radius:999px; padding:3px 9px 3px 8px;}
+  .kt-chip svg{flex-shrink:0; width:12px; height:12px;}
+  .ld-message{font-size:12.5px; color:var(--ink-2); margin-top:8px; line-height:1.5; white-space:pre-wrap;}
+  .ld-note{font-size:12.5px; color:var(--muted); margin-top:6px; line-height:1.5; white-space:pre-wrap; font-style:italic;}
   .ld-actions{display:flex; align-items:center; gap:6px; flex-shrink:0; flex-wrap:wrap; justify-content:flex-end; max-width:220px;}
-  .ld-edit-form{display:none; flex-direction:column; gap:10px; margin-bottom:12px;}
+  .ld-edit-form{display:none; flex-direction:column; gap:10px; margin-bottom:12px; padding:16px; border:1px solid var(--border); border-radius:var(--radius-xl); background:var(--desk);}
   .ld-add-row{display:grid; grid-template-columns:2fr 1fr 1fr; gap:10px;}
   .ld-add-row2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
-  @media(max-width:720px){ .ld-add-row,.ld-add-row2{grid-template-columns:1fr;} .ld-actions{max-width:none;} }
-  .ld-stats{display:flex; align-items:center; gap:22px; flex-wrap:wrap;}
-  .ld-stat-num{font-size:20px; font-weight:700; color:var(--ink);}
-  .ld-stat-label{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em;}
+  @media(max-width:720px){ .ld-add-row,.ld-add-row2{grid-template-columns:1fr;} .ld-actions{max-width:none;} .kt-row{flex-wrap:wrap;} }
+
+  /* Štatistické karty — samostatné boxy s ikonou namiesto jedného riadku čísel */
+  .kt-stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:22px;}
+  .kt-stat-card{display:flex; align-items:center; gap:12px; background:var(--paper); border:1px solid var(--border); border-radius:var(--radius-xl); padding:16px 18px; box-shadow:var(--shadow-sm);}
+  .kt-stat-ic{width:38px; height:38px; border-radius:var(--radius-lg); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .kt-stat-ic.neutral{background:var(--desk); color:var(--muted);}
+  .kt-stat-ic.warn{background:var(--amber-soft); color:var(--amber);}
+  .kt-stat-ic.ok{background:var(--good-soft); color:var(--good);}
+  .kt-stat-ic.bad{background:var(--rose-soft); color:var(--rose);}
+  .kt-stat-ic.accent{background:var(--accent-soft); color:var(--accent);}
+  .kt-stat-num{font-size:21px; font-weight:700; color:var(--ink); line-height:1.1;}
+  .kt-stat-label{font-size:11.5px; color:var(--muted); margin-top:1px;}
+
   .ld-filter-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px;}
   .ld-search{flex:1; min-width:220px; display:flex; align-items:center; gap:8px; padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-md); background:var(--desk);}
   .ld-search input{flex:1; border:none; background:transparent; font-size:13.5px; color:var(--ink); outline:none;}
   .ld-search svg{flex-shrink:0; color:var(--muted);}
-  .dp-tabs{display:flex; gap:8px; margin-bottom:14px;}
-  .dp-tab{padding:9px 16px; border-radius:999px; border:1px solid var(--border); background:var(--paper); color:var(--ink-2); font-weight:600; font-size:13.5px; text-decoration:none;}
-  .dp-tab.active{background:var(--accent); color:#fff; border-color:var(--accent);}
+
+  /* Taby Leady / Rezervácie — väčšie, s ikonou a počítadlom v samostatnej pilulke */
+  .kt-tabs{display:flex; gap:8px; margin-bottom:18px;}
+  .kt-tab{display:inline-flex; align-items:center; gap:8px; padding:10px 16px 10px 14px; border-radius:var(--radius-lg); border:1px solid var(--border); background:var(--paper); color:var(--ink-2); font-weight:600; font-size:13.5px; text-decoration:none; box-shadow:var(--shadow-sm); transition:border-color .15s, color .15s, background .15s;}
+  .kt-tab svg{flex-shrink:0;}
+  .kt-tab:hover{border-color:var(--accent-line); color:var(--accent);}
+  .kt-tab.active{background:var(--accent); color:#fff; border-color:var(--accent);}
+  .kt-tab-count{font-size:11px; font-weight:700; background:rgba(0,0,0,.08); border-radius:999px; padding:1px 8px;}
+  .kt-tab.active .kt-tab-count{background:rgba(255,255,255,.25);}
+  .kt-tab:not(.active) .kt-tab-count{background:var(--desk); color:var(--muted);}
+
   .bk-term{font-weight:700; color:var(--ink);}
   .bk-alt{color:var(--muted); font-size:12.5px;}
   .bk-inline-form{display:none; flex-direction:column; gap:8px; margin-top:10px; padding-top:10px; border-top:1px dashed var(--border);}
@@ -222,8 +267,8 @@ function ldQs(array $overrides): string {
 </head><body>
 <header class="topbar">
   <div class="tb-title">
-    <h1>Dopyty</h1>
-    <p>Leady a rezervácie stretnutí — viditeľné len tebe</p>
+    <h1>Kontakty</h1>
+    <p>Leady a rezervácie stretnutí — tvoje malé CRM, viditeľné len tebe</p>
   </div>
   <div class="tb-actions">
     <a class="pillbtn" href="/nastroje.php">← Späť na nástroje</a>
@@ -232,29 +277,35 @@ function ldQs(array $overrides): string {
 
 <main class="content">
 
-  <div class="dp-tabs">
-    <a class="dp-tab<?= $tab === 'leady' ? ' active' : '' ?>" href="/leady.php">Leady (<?= $totalCount ?>)</a>
-    <a class="dp-tab<?= $tab === 'rezervacie' ? ' active' : '' ?>" href="/leady.php?tab=rezervacie">Rezervácie (<?= $bkTotalCount ?><?= $bkPendingCount > 0 ? ', ' . $bkPendingCount . ' čaká' : '' ?>)</a>
+  <div class="kt-tabs">
+    <a class="kt-tab<?= $tab === 'leady' ? ' active' : '' ?>" href="/leady.php">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
+      Leady <span class="kt-tab-count"><?= $totalCount ?></span>
+    </a>
+    <a class="kt-tab<?= $tab === 'rezervacie' ? ' active' : '' ?>" href="/leady.php?tab=rezervacie">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Rezervácie <span class="kt-tab-count"><?= $bkTotalCount ?><?= $bkPendingCount > 0 ? ' · ' . $bkPendingCount . ' čaká' : '' ?></span>
+    </a>
   </div>
 
   <?php if ($tab === 'leady'): ?>
 
-  <div class="card ld-stats">
-    <div>
-      <div class="ld-stat-label">Celkovo</div>
-      <div class="ld-stat-num"><?= $totalCount ?></div>
+  <div class="kt-stats">
+    <div class="kt-stat-card">
+      <div class="kt-stat-ic accent"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+      <div><div class="kt-stat-num"><?= $totalCount ?></div><div class="kt-stat-label">Celkovo</div></div>
     </div>
-    <div>
-      <div class="ld-stat-label">Nových</div>
-      <div class="ld-stat-num"><?= $statusCounts['novy'] ?? 0 ?></div>
+    <div class="kt-stat-card">
+      <div class="kt-stat-ic neutral"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+      <div><div class="kt-stat-num"><?= $statusCounts['novy'] ?? 0 ?></div><div class="kt-stat-label">Nových</div></div>
     </div>
-    <div>
-      <div class="ld-stat-label">Kontaktovaných</div>
-      <div class="ld-stat-num"><?= $statusCounts['kontaktovany'] ?? 0 ?></div>
+    <div class="kt-stat-card">
+      <div class="kt-stat-ic warn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+      <div><div class="kt-stat-num"><?= $statusCounts['kontaktovany'] ?? 0 ?></div><div class="kt-stat-label">Kontaktovaných</div></div>
     </div>
-    <div>
-      <div class="ld-stat-label">Konvertovaných</div>
-      <div class="ld-stat-num" style="color:var(--good);"><?= $statusCounts['konvertovany'] ?? 0 ?></div>
+    <div class="kt-stat-card">
+      <div class="kt-stat-ic ok"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+      <div><div class="kt-stat-num"><?= $statusCounts['konvertovany'] ?? 0 ?></div><div class="kt-stat-label">Konvertovaných</div></div>
     </div>
   </div>
 
@@ -284,18 +335,20 @@ function ldQs(array $overrides): string {
         <span class="es-sub">Pridaj prvý dopyt nižšie.</span>
       </div>
     <?php endif; ?>
+    <div class="kt-list">
     <?php foreach ($leads as $l): $st = LD_STATUSES[$l['status']] ?? ['—', 'neutral']; ?>
-    <div class="ld-row" id="ld-row-<?= (int)$l['id'] ?>">
+    <div class="kt-row" id="ld-row-<?= (int)$l['id'] ?>">
+      <div class="kt-avatar" style="background:<?= h(ktAvatarColor((string)$l['name'])) ?>;"><?= h(ktInitials((string)$l['name'])) ?></div>
       <div class="ld-main">
         <div class="ld-name-line">
           <span class="ld-name"><?= h($l['name']) ?></span>
           <span class="ld-status <?= h($st[1]) ?>"><?= h($st[0]) ?></span>
         </div>
-        <div class="ld-meta">
-          <?= h(LD_SOURCES[$l['source']] ?? '') ?>
-          <?php if ($l['phone']): ?> · <?= h($l['phone']) ?><?php endif; ?>
-          <?php if ($l['email']): ?> · <?= h($l['email']) ?><?php endif; ?>
-          · <?= h(date('j. n. Y', strtotime((string)$l['created_at']))) ?>
+        <div class="kt-chips">
+          <span class="kt-chip"><?= h(LD_SOURCES[$l['source']] ?? '') ?></span>
+          <?php if ($l['phone']): ?><span class="kt-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg><?= h($l['phone']) ?></span><?php endif; ?>
+          <?php if ($l['email']): ?><span class="kt-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4z" opacity="0"/><path d="M22 6l-10 7L2 6"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg><?= h($l['email']) ?></span><?php endif; ?>
+          <span class="kt-chip"><?= h(date('j. n. Y', strtotime((string)$l['created_at']))) ?></span>
         </div>
         <?php if ($l['message']): ?><div class="ld-message"><?= h($l['message']) ?></div><?php endif; ?>
         <?php if ($l['note']): ?><div class="ld-note">Poznámka: <?= h($l['note']) ?></div><?php endif; ?>
@@ -344,6 +397,7 @@ function ldQs(array $overrides): string {
       </div>
     </form>
     <?php endforeach; ?>
+    </div>
   </div>
 
   <div class="card">
@@ -369,15 +423,15 @@ function ldQs(array $overrides): string {
 
   <?php else /* rezervacie */: ?>
 
-  <div class="card ld-stats">
-    <div>
-      <div class="ld-stat-label">Celkovo</div>
-      <div class="ld-stat-num"><?= $bkTotalCount ?></div>
+  <div class="kt-stats">
+    <div class="kt-stat-card">
+      <div class="kt-stat-ic accent"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+      <div><div class="kt-stat-num"><?= $bkTotalCount ?></div><div class="kt-stat-label">Celkovo</div></div>
     </div>
     <?php foreach (BK_STATUSES as $key => $meta): ?>
-    <div>
-      <div class="ld-stat-label"><?= h($meta[0]) ?></div>
-      <div class="ld-stat-num"><?= $bkStatusCounts[$key] ?? 0 ?></div>
+    <div class="kt-stat-card">
+      <div class="kt-stat-ic <?= h($meta[1]) ?>"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+      <div><div class="kt-stat-num"><?= $bkStatusCounts[$key] ?? 0 ?></div><div class="kt-stat-label"><?= h($meta[0]) ?></div></div>
     </div>
     <?php endforeach; ?>
   </div>
@@ -401,19 +455,22 @@ function ldQs(array $overrides): string {
         <span class="es-sub">Nové žiadosti z rezervačného formulára na vmfin.sk sa objavia tu.</span>
       </div>
     <?php endif; ?>
+    <div class="kt-list">
     <?php foreach ($bookings as $b): $bst = BK_STATUSES[$b['status']] ?? ['—', 'neutral']; ?>
-    <div class="ld-row">
+    <div class="kt-row">
+      <div class="kt-avatar" style="background:<?= h(ktAvatarColor((string)$b['name'])) ?>;"><?= h(ktInitials((string)$b['name'])) ?></div>
       <div class="ld-main">
         <div class="ld-name-line">
           <span class="ld-name"><?= h($b['name']) ?></span>
           <span class="ld-status <?= h($bst[1]) ?>"><?= h($bst[0]) ?></span>
         </div>
-        <div class="ld-meta">
-          <?= h($b['topic']) ?> · <?= $b['meeting_type'] === 'osobne' ? 'Osobne' : 'Online' ?>
-          <?php if ($b['phone']): ?> · <?= h($b['phone']) ?><?php endif; ?>
-          <?php if ($b['email']): ?> · <?= h($b['email']) ?><?php endif; ?>
+        <div class="kt-chips">
+          <span class="kt-chip"><?= h($b['topic']) ?></span>
+          <span class="kt-chip"><?= $b['meeting_type'] === 'osobne' ? 'Osobne' : 'Online' ?></span>
+          <?php if ($b['phone']): ?><span class="kt-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg><?= h($b['phone']) ?></span><?php endif; ?>
+          <?php if ($b['email']): ?><span class="kt-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 6l-10 7L2 6"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg><?= h($b['email']) ?></span><?php endif; ?>
         </div>
-        <div class="ld-meta">
+        <div class="ld-meta" style="margin-top:8px;">
           Preferovaný termín: <span class="bk-term"><?= h(date('j. n. Y', strtotime((string)$b['preferred_date']))) ?> o <?= h($b['preferred_time']) ?></span>
           <?php if ($b['alt_date']): ?><br><span class="bk-alt">Alternatíva: <?= h(date('j. n. Y', strtotime((string)$b['alt_date']))) ?> o <?= h($b['alt_time'] ?? '') ?></span><?php endif; ?>
           <?php if ($b['status'] === 'proposed' || $b['status'] === 'confirmed'): ?>
@@ -472,9 +529,15 @@ function ldQs(array $overrides): string {
           <button type="submit" class="toggle-btn">Zrušiť</button>
         </form>
         <?php endif; ?>
+        <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj natrvalo zmazať túto rezerváciu?');">
+          <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
+          <input type="hidden" name="booking_delete_id" value="<?= (int)$b['id'] ?>">
+          <button type="submit" class="toggle-btn">Zmazať</button>
+        </form>
       </div>
     </div>
     <?php endforeach; ?>
+    </div>
   </div>
 
   <?php endif; ?>
