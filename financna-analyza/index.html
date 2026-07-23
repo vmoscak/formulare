@@ -829,11 +829,23 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       .header-inner{flex-direction:column;align-items:flex-start;gap:10px;padding:12px 16px}
       .header-right{width:100%;justify-content:space-between;text-align:left}
       .header-advisor{text-align:left}
-      .tabs{width:100%;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-      .tabs::-webkit-scrollbar{display:none}
-      .tab{white-space:nowrap;flex-shrink:0}
+      /* Karty sa na mobile zalamujú do viacerých riadkov namiesto vodorovného
+         skrolovania — pri skrole totiž posledná karta vyzerala orezaná bez
+         náznaku, že sa dá posunúť ďalej. */
+      .tabs{width:100%;flex-wrap:wrap}
+      .tab{white-space:nowrap;flex:0 0 auto;font-size:.78rem;padding:7px 10px}
       .table{-webkit-overflow-scrolling:touch}
       th,td{padding:7px 8px;font-size:.82rem}
+      /* Zoznam klientov: klasická tabuľka sa na úzkom displeji nezmestí
+         (7 stĺpcov vrátane akcií) — prepne sa na kartový zoznam, kde je
+         každá bunka vlastný riadok s popisom (data-label). */
+      #clients table thead{display:none}
+      #clients table, #clients tbody, #clients tr, #clients td{display:block;width:100%}
+      #clients tbody tr{border-bottom:1px solid var(--line);padding:10px 16px;margin:0}
+      #clients table td{padding:5px 0;border:none;display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:right}
+      #clients table td::before{content:attr(data-label);font-weight:600;color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.02em;flex:0 0 auto;text-align:left}
+      #clients table td.actions-cell{justify-content:flex-end;gap:6px;padding-top:8px;min-height:0}
+      #clients table td:first-child{padding-left:0}
     }
 
     /* ===== ADDITIONAL POLISH ===== */
@@ -3280,11 +3292,11 @@ function getOwnerLabel(val){
       const safeFollowup = followup ? escHtml(new Date(followup).toLocaleDateString("sk-SK")) : "—";
       const safeId = escHtml(c.id || "");
       return `<tr>
-        <td>${safeName}${badge}</td>
-        <td>${safeA}</td><td>${safeB}</td>
-        <td>${buildStatusBadge(c.status)}</td>
-        <td>${safeUpdated}</td>
-        <td>${safeFollowup}</td>
+        <td data-label="Meno domácnosti">${safeName}${badge}</td>
+        <td data-label="Klient A">${safeA}</td><td data-label="Klient B">${safeB}</td>
+        <td data-label="Stav">${buildStatusBadge(c.status)}</td>
+        <td data-label="Posledná zmena">${safeUpdated}</td>
+        <td data-label="Termín kontroly">${safeFollowup}</td>
         <td class="actions-cell">
           <button class="btn light" data-open="${safeId}">Otvoriť</button>
           <button class="btn light" data-duplicate="${safeId}" title="Duplikovať">⎘</button>
