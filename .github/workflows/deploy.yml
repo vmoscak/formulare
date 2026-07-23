@@ -89,6 +89,9 @@ jobs:
             file_put_contents(".htaccess", str_replace("__GATE_TOKEN__", getenv("GATE_TOKEN"), $h));
           '
 
+      - name: Zosynchronizovanie ?v= verzií zdieľaných assetov v statických stránkach nástrojov
+        run: php scripts/sync-static-asset-versions.php
+
       - name: Deploy Portál (lftp mirror, vytvára vnorené priečinky)
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
