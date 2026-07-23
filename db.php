@@ -899,6 +899,24 @@ function dbInitSqlite(PDO $pdo): void {
     )");
     $pdo->exec("CREATE INDEX IF NOT EXISTS idx_recruit_candidates_status ON formulare_recruit_candidates(status)");
 
+    // Leady — malý CRM priamo v Portáli (nahrádza starú evidenciu v admin.vmfin.sk,
+    // Finančný svet tam už len presmerúva sem). Len owner, rovnaká zásada ako vyššie.
+    $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_leads (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        phone TEXT NOT NULL DEFAULT '',
+        email TEXT NOT NULL DEFAULT '',
+        source TEXT NOT NULL DEFAULT 'manual',
+        message TEXT NOT NULL DEFAULT '',
+        status TEXT NOT NULL DEFAULT 'novy',
+        note TEXT NOT NULL DEFAULT '',
+        created_by INTEGER NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (created_by) REFERENCES formulare_advisors(id)
+    )");
+    $pdo->exec("CREATE INDEX IF NOT EXISTS idx_leads_status ON formulare_leads(status)");
+
     // Budgetové zľavy — pravidlá editovateľné ownerom priamo v appke (viď
     // sql/026_budget_rules.sql pre produkčný náprotivok tejto migrácie).
     $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_budget_rules (

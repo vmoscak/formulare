@@ -39,6 +39,7 @@
     docs: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="14" y2="17"/>',
     admin: '<path d="M12 2l7 4v6c0 5-3.5 8-7 10-3.5-2-7-5-7-10V6z"/>',
     nabor: '<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+    leady: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/>',
     kb: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
     news: '<path d="M3 11v3a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15 8a4 4 0 0 1 0 8"/><path d="M17.5 5.5a8 8 0 0 1 0 13"/>',
     home: '<path d="M3 10.5L12 3l9 7.5"/><path d="M5 9v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9"/>',
@@ -103,6 +104,7 @@
     var isDocs = /moje-dokumenty/.test(path);
     var isAdmin = /admin\.php/.test(path);
     var isNabor = /nabor(-kandidati)?\.php/.test(path);
+    var isLeady = /leady\.php/.test(path);
     var isKb = /znalostna-baza/.test(path);
     var isNews = /novinky\.php/.test(path);
     var isHome = /uvod\.php/.test(path);
@@ -121,7 +123,7 @@
     else if (/\/formulare\.php/.test(path)) currentGroup = 'formulare';
     else if (/\/pomocky\.php/.test(path)) currentGroup = 'pomocky';
     else if (/\/uniqa-tlaciva\.php/.test(path)) currentGroup = 'uniqa';
-    else if (!isDocs && !isAdmin && !isNabor && !isKb && !isNews && !isHome && !isRefi && !isCopy && !isRefiCalc && !isCesta && !isTimPrehlad && !isTimKalendar) {
+    else if (!isDocs && !isAdmin && !isNabor && !isLeady && !isKb && !isNews && !isHome && !isRefi && !isCopy && !isRefiCalc && !isCesta && !isTimPrehlad && !isTimKalendar) {
       var slug = (path.split('/').filter(Boolean)[0]) || '';
       currentGroup = (toolGroups && toolGroups[slug]) || 'nastroje';
     }
@@ -142,6 +144,7 @@
     // stránka nabor-kandidati.php je aj tak server-side gate-nutá na is_owner.
     if (adv.is_owner) {
       NAV.push({ key: 'nabor', icon: ICONS.nabor, href: '/nabor-kandidati.php', label: 'Nábor', active: isNabor });
+      NAV.push({ key: 'leady', icon: ICONS.leady, href: '/leady.php', label: 'Leady', active: isLeady });
     }
     // Admin/owner-only položky pribúdajú len tebe — aby lišta nenarastala do
     // neprehľadna, na desktope sa schovajú za jednu ikonu "Viac" (flyout).
