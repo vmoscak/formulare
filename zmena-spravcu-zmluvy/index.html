@@ -360,7 +360,15 @@ function render(){
 function doPDF(){
   state.touched = true; render();
   const errors = validate();
-  if(Object.keys(errors).length>0) return;
+  if(Object.keys(errors).length>0){
+    // Bez tohto pri chýbajúcom povinnom poli tlačidlo len "nič neurobí" —
+    // banner s chybami môže byť mimo obrazovky (napr. pri obnove uloženého
+    // dokumentu, keď sa PDF generuje automaticky bez posunu k formuláru).
+    const summary = $('summary');
+    if(summary) summary.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    showToast('Chýbajú povinné údaje — skontroluj zvýraznené polia.', 'error');
+    return;
+  }
 
   lsSet('newAdminName', state.newAdminName);
   lsSet('newAdminAcquisitionNo', state.newAdminAcquisitionNo);
