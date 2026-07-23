@@ -27,6 +27,23 @@ if (!str_starts_with(DB_DSN, 'sqlite:')) {
 /** HTML-escapovanie — spoločné pre všetky stránky (bývalo duplikované v 14 súboroch). */
 function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
+/**
+ * Jednoduché odosielanie e-mailov cez PHP mail() — Portál doteraz žiadne
+ * vlastné maily neposielal (na rozdiel od vmfin-web, ktorý má SMTP cez
+ * PHPMailer). Zámerne bez SMTP vrstvy, nech sa nemusí ťahať nová závislosť
+ * len pre rezervácie — mail() je rovnaký fallback, aký vmfin-web aj tak
+ * používa, keď SMTP konfig chýba.
+ */
+function sendPortalMail(string $to, string $subject, string $body, string $replyTo = 'vmfin@vmfin.sk', string $replyToName = 'VMfin'): bool {
+    $mimeSubject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
+    $headers = [
+        'From: VMfin <vmfin@vmfin.sk>',
+        'Reply-To: ' . ($replyToName !== '' ? $replyToName . ' <' . $replyTo . '>' : $replyTo),
+        'Content-Type: text/plain; charset=UTF-8',
+    ];
+    return @mail($to, $mimeSubject, $body, implode("\r\n", $headers));
+}
+
 /** Iniciály poradcu pre okrúhle avatary (bývalo duplikované v 7 súboroch). */
 function advisorInitials(string $name): string {
     $parts = preg_split('/\s+/', trim($name));
@@ -916,6 +933,32 @@ function dbInitSqlite(PDO $pdo): void {
         FOREIGN KEY (created_by) REFERENCES formulare_advisors(id)
     )");
     $pdo->exec("CREATE INDEX IF NOT EXISTS idx_leads_status ON formulare_leads(status)");
+
+    // Rezervácie stretnutí — nahrádza vmfin_bookings vo vmfin-web (rezervačný
+    // formulár na vmfin.sk sem posiela nové žiadosti cez api/bookings-intake.php,
+    // potvrdenie klientom cez token beží priamo tu v booking-confirm.php).
+    $pdo->exec("CREATE TABLE IF NOT EXISTS formulare_bookings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL,
+        phone TEXT NOT NULL DEFAULT '',
+        topic TEXT NOT NULL DEFAULT '',
+        message TEXT NOT NULL DEFAULT '',
+        meeting_type TEXT NOT NULL DEFAULT 'online',
+        preferred_date TEXT NOT NULL,
+        preferred_time TEXT NOT NULL,
+        alt_date TEXT NULL,
+        alt_time TEXT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        admin_note TEXT NOT NULL DEFAULT '',
+        confirmed_date TEXT NULL,
+        confirmed_time TEXT NULL,
+        token TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )");
+    $pdo->exec("CREATE INDEX IF NOT EXISTS idx_bookings_status ON formulare_bookings(status)");
+    $pdo->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_bookings_token ON formulare_bookings(token)");
 
     // Budgetové zľavy — pravidlá editovateľné ownerom priamo v appke (viď
     // sql/026_budget_rules.sql pre produkčný náprotivok tejto migrácie).

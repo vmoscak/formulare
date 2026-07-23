@@ -144,7 +144,7 @@
     // stránka nabor-kandidati.php je aj tak server-side gate-nutá na is_owner.
     if (adv.is_owner) {
       NAV.push({ key: 'nabor', icon: ICONS.nabor, href: '/nabor-kandidati.php', label: 'Nábor', active: isNabor });
-      NAV.push({ key: 'leady', icon: ICONS.leady, href: '/leady.php', label: 'Leady', active: isLeady });
+      NAV.push({ key: 'leady', icon: ICONS.leady, href: '/leady.php', label: 'Dopyty', active: isLeady });
     }
     // Admin/owner-only položky pribúdajú len tebe — aby lišta nenarastala do
     // neprehľadna, na desktope sa schovajú za jednu ikonu "Viac" (flyout).

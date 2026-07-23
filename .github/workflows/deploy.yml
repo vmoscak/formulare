@@ -51,7 +51,7 @@ jobs:
             file_put_contents("/tmp/ci-cookie.txt", signAdvisorId(1));
           '
           COOKIE="gate_auth=ci-test-token; cur_advisor=$(cat /tmp/ci-cookie.txt)"
-          PAGES="uvod.php admin.php nabor.php nabor-kandidati.php tim-kalendar.php tim-prehlad.php moje-dokumenty.php novinky.php znalostna-baza.php cesta-novacika.php copy-paste.php refinancny-radar.php oplati-sa-refinancovat.php nastroje.php formulare.php pomocky.php uniqa-tlaciva.php index.php"
+          PAGES="uvod.php admin.php nabor.php nabor-kandidati.php leady.php booking-confirm.php tim-kalendar.php tim-prehlad.php moje-dokumenty.php novinky.php znalostna-baza.php cesta-novacika.php copy-paste.php refinancny-radar.php oplati-sa-refinancovat.php nastroje.php formulare.php pomocky.php uniqa-tlaciva.php index.php"
           FAIL=0
           for page in $PAGES; do
             CODE=$(curl -s -o /tmp/resp.html -w "%{http_code}" -b "$COOKIE" "http://127.0.0.1:8899/$page")

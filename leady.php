@@ -1,8 +1,9 @@
 <?php
 /**
- * Leady — malý CRM priamo v Portáli, náhrada za starú evidenciu v admin.vmfin.sk
- * (Finančný svet tam už len presmerúva sem). Výhradne pre poradcu s is_owner=1,
- * rovnaká zásada ako nabor-kandidati.php.
+ * Dopyty — malý CRM priamo v Portáli: Leady + Rezervácie stretnutí, náhrada
+ * za starú evidenciu v admin.vmfin.sk (Finančný svet tam už len presmerúva
+ * sem, vmfin_bookings/vmfin_meetings tiež mizne). Výhradne pre poradcu
+ * s is_owner=1, rovnaká zásada ako nabor-kandidati.php.
  */
 require_once __DIR__ . '/db.php';
 
@@ -25,6 +26,14 @@ const LD_SOURCES = [
     'social'       => 'Sociálne siete',
     'ine'          => 'Iné',
 ];
+const BK_STATUSES = [
+    'pending'   => ['Čaká', 'warn'],
+    'proposed'  => ['Navrhnuté', 'warn'],
+    'confirmed' => ['Potvrdené', 'ok'],
+    'cancelled' => ['Zrušené', 'bad'],
+];
+
+$tab = ($_GET['tab'] ?? 'leady') === 'rezervacie' ? 'rezervacie' : 'leady';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrfCheck()) { http_response_code(403); exit('Neplatný CSRF token — obnov stránku a skús to znova.'); }
@@ -75,6 +84,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         header('Location: /leady.php');
         exit;
+    } elseif (isset($_POST['booking_confirm_id']) || isset($_POST['booking_propose_id'])) {
+        $isPropose = isset($_POST['booking_propose_id']);
+        $id = (int)($isPropose ? $_POST['booking_propose_id'] : $_POST['booking_confirm_id']);
+        $confirmedDate = trim((string)($_POST['confirmed_date'] ?? ''));
+        $confirmedTime = trim((string)($_POST['confirmed_time'] ?? ''));
+        $adminNote = trim((string)($_POST['admin_note'] ?? ''));
+        $stmt = db()->prepare('SELECT * FROM formulare_bookings WHERE id = ?');
+        $stmt->execute([$id]);
+        $booking = $stmt->fetch();
+        if ($booking && $confirmedDate !== '' && $confirmedTime !== '') {
+            $status = $isPropose ? 'proposed' : 'confirmed';
+            db()->prepare('UPDATE formulare_bookings SET status = ?, confirmed_date = ?, confirmed_time = ?, admin_note = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+                ->execute([$status, $confirmedDate, $confirmedTime, $adminNote, $id]);
+            $name = (string)$booking['name']; $email = (string)$booking['email']; $topic = (string)$booking['topic'];
+            if ($status === 'confirmed') {
+                sendPortalMail($email, '✅ Váš termín konzultácie bol potvrdený | VMfin',
+                    "Dobrý deň, $name,\n\nVáš termín konzultácie k téme $topic bol potvrdený na $confirmedDate o $confirmedTime.\n\nS pozdravom,\nVMfin");
+            } else {
+                $confirmLink = 'https://portal.vmfin.sk/booking-confirm.php?token=' . urlencode((string)$booking['token']);
+                sendPortalMail($email, '🔄 Návrh nového termínu konzultácie | VMfin',
+                    "Dobrý deň, $name,\n\nnavrhujem nový termín konzultácie: $confirmedDate o $confirmedTime.\n\nAk vám termín vyhovuje, potvrďte ho jedným klikom:\n$confirmLink\n\nAk vám termín nevyhovuje, odpovedzte na tento email alebo mi zavolajte a dohodneme iný.\n\nS pozdravom,\nVMfin");
+            }
+        }
+        header('Location: /leady.php?tab=rezervacie');
+        exit;
+    } elseif (isset($_POST['booking_cancel_id'])) {
+        $id = (int)$_POST['booking_cancel_id'];
+        $stmt = db()->prepare('SELECT * FROM formulare_bookings WHERE id = ?');
+        $stmt->execute([$id]);
+        $booking = $stmt->fetch();
+        if ($booking) {
+            db()->prepare('UPDATE formulare_bookings SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')->execute(['cancelled', $id]);
+            sendPortalMail((string)$booking['email'], '❌ Konzultácia bola zrušená | VMfin',
+                "Dobrý deň, {$booking['name']},\n\nvaša rezervácia konzultácie bola zrušená.\nAk chcete, navrhnite nový termín odpoveďou na tento email.\n\nS pozdravom,\nVMfin");
+        }
+        header('Location: /leady.php?tab=rezervacie');
+        exit;
     }
 }
 
@@ -102,6 +148,28 @@ foreach (db()->query('SELECT status, COUNT(*) c FROM formulare_leads GROUP BY st
 }
 $totalCount = array_sum($statusCounts);
 
+$bkStatusCounts = [];
+foreach (db()->query('SELECT status, COUNT(*) c FROM formulare_bookings GROUP BY status') as $r) {
+    $bkStatusCounts[$r['status']] = (int)$r['c'];
+}
+$bkTotalCount = array_sum($bkStatusCounts);
+$bkPendingCount = $bkStatusCounts['pending'] ?? 0;
+
+$bkFStatus = trim((string)($_GET['bstatus'] ?? ''));
+$bookings = [];
+if ($tab === 'rezervacie') {
+    $bwhere = [];
+    $bparams = [];
+    if ($bkFStatus !== '' && array_key_exists($bkFStatus, BK_STATUSES)) {
+        $bwhere[] = 'status = ?';
+        $bparams[] = $bkFStatus;
+    }
+    $bwhereSql = $bwhere ? ('WHERE ' . implode(' AND ', $bwhere)) : '';
+    $stmt = db()->prepare("SELECT * FROM formulare_bookings $bwhereSql ORDER BY created_at DESC, id DESC");
+    $stmt->execute($bparams);
+    $bookings = $stmt->fetchAll();
+}
+
 function ldQs(array $overrides): string {
     $params = array_merge($_GET, $overrides);
     $params = array_filter($params, fn($v) => $v !== '' && $v !== null);
@@ -112,7 +180,7 @@ function ldQs(array $overrides): string {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
-<title>Leady</title>
+<title>Dopyty</title>
 <link rel="stylesheet" href="<?= asset('fonts.css') ?>">
 <script src="<?= asset('theme-init.js') ?>"></script>
 <link rel="stylesheet" href="<?= asset('panel.css') ?>">
@@ -142,12 +210,20 @@ function ldQs(array $overrides): string {
   .ld-search{flex:1; min-width:220px; display:flex; align-items:center; gap:8px; padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-md); background:var(--desk);}
   .ld-search input{flex:1; border:none; background:transparent; font-size:13.5px; color:var(--ink); outline:none;}
   .ld-search svg{flex-shrink:0; color:var(--muted);}
+  .dp-tabs{display:flex; gap:8px; margin-bottom:14px;}
+  .dp-tab{padding:9px 16px; border-radius:999px; border:1px solid var(--border); background:var(--paper); color:var(--ink-2); font-weight:600; font-size:13.5px; text-decoration:none;}
+  .dp-tab.active{background:var(--accent); color:#fff; border-color:var(--accent);}
+  .bk-term{font-weight:700; color:var(--ink);}
+  .bk-alt{color:var(--muted); font-size:12.5px;}
+  .bk-inline-form{display:none; flex-direction:column; gap:8px; margin-top:10px; padding-top:10px; border-top:1px dashed var(--border);}
+  .bk-inline-row{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  @media(max-width:720px){ .bk-inline-row{grid-template-columns:1fr;} }
 </style>
 </head><body>
 <header class="topbar">
   <div class="tb-title">
-    <h1>Leady</h1>
-    <p>Noví záujemcovia a dopyty — viditeľné len tebe</p>
+    <h1>Dopyty</h1>
+    <p>Leady a rezervácie stretnutí — viditeľné len tebe</p>
   </div>
   <div class="tb-actions">
     <a class="pillbtn" href="/nastroje.php">← Späť na nástroje</a>
@@ -155,6 +231,13 @@ function ldQs(array $overrides): string {
 </header>
 
 <main class="content">
+
+  <div class="dp-tabs">
+    <a class="dp-tab<?= $tab === 'leady' ? ' active' : '' ?>" href="/leady.php">Leady (<?= $totalCount ?>)</a>
+    <a class="dp-tab<?= $tab === 'rezervacie' ? ' active' : '' ?>" href="/leady.php?tab=rezervacie">Rezervácie (<?= $bkTotalCount ?><?= $bkPendingCount > 0 ? ', ' . $bkPendingCount . ' čaká' : '' ?>)</a>
+  </div>
+
+  <?php if ($tab === 'leady'): ?>
 
   <div class="card ld-stats">
     <div>
@@ -284,6 +367,118 @@ function ldQs(array $overrides): string {
     </form>
   </div>
 
+  <?php else /* rezervacie */: ?>
+
+  <div class="card ld-stats">
+    <div>
+      <div class="ld-stat-label">Celkovo</div>
+      <div class="ld-stat-num"><?= $bkTotalCount ?></div>
+    </div>
+    <?php foreach (BK_STATUSES as $key => $meta): ?>
+    <div>
+      <div class="ld-stat-label"><?= h($meta[0]) ?></div>
+      <div class="ld-stat-num"><?= $bkStatusCounts[$key] ?? 0 ?></div>
+    </div>
+    <?php endforeach; ?>
+  </div>
+
+  <div class="card">
+    <h3>Filtrovať podľa stavu</h3>
+    <div class="ld-filter-row">
+      <a class="pillbtn<?= $bkFStatus === '' ? ' solid' : '' ?>" href="<?= ldQs(['bstatus' => '']) ?>">Všetky (<?= $bkTotalCount ?>)</a>
+      <?php foreach (BK_STATUSES as $key => $meta): ?>
+      <a class="pillbtn<?= $bkFStatus === $key ? ' solid' : '' ?>" href="<?= ldQs(['bstatus' => $key]) ?>"><?= h($meta[0]) ?> (<?= $bkStatusCounts[$key] ?? 0 ?>)</a>
+      <?php endforeach; ?>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Zoznam rezervácií</h3>
+    <?php if (!$bookings): ?>
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span class="es-title">Zatiaľ žiadne rezervácie</span>
+        <span class="es-sub">Nové žiadosti z rezervačného formulára na vmfin.sk sa objavia tu.</span>
+      </div>
+    <?php endif; ?>
+    <?php foreach ($bookings as $b): $bst = BK_STATUSES[$b['status']] ?? ['—', 'neutral']; ?>
+    <div class="ld-row">
+      <div class="ld-main">
+        <div class="ld-name-line">
+          <span class="ld-name"><?= h($b['name']) ?></span>
+          <span class="ld-status <?= h($bst[1]) ?>"><?= h($bst[0]) ?></span>
+        </div>
+        <div class="ld-meta">
+          <?= h($b['topic']) ?> · <?= $b['meeting_type'] === 'osobne' ? 'Osobne' : 'Online' ?>
+          <?php if ($b['phone']): ?> · <?= h($b['phone']) ?><?php endif; ?>
+          <?php if ($b['email']): ?> · <?= h($b['email']) ?><?php endif; ?>
+        </div>
+        <div class="ld-meta">
+          Preferovaný termín: <span class="bk-term"><?= h(date('j. n. Y', strtotime((string)$b['preferred_date']))) ?> o <?= h($b['preferred_time']) ?></span>
+          <?php if ($b['alt_date']): ?><br><span class="bk-alt">Alternatíva: <?= h(date('j. n. Y', strtotime((string)$b['alt_date']))) ?> o <?= h($b['alt_time'] ?? '') ?></span><?php endif; ?>
+          <?php if ($b['status'] === 'proposed' || $b['status'] === 'confirmed'): ?>
+            <?php if ($b['confirmed_date']): ?><br><strong>Dohodnutý termín: <?= h(date('j. n. Y', strtotime((string)$b['confirmed_date']))) ?> o <?= h($b['confirmed_time'] ?? '') ?></strong><?php endif; ?>
+          <?php endif; ?>
+        </div>
+        <?php if ($b['message']): ?><div class="ld-message"><?= h($b['message']) ?></div><?php endif; ?>
+        <?php if ($b['admin_note']): ?><div class="ld-note">Poznámka: <?= h($b['admin_note']) ?></div><?php endif; ?>
+
+        <?php if (in_array($b['status'], ['pending', 'proposed'], true)): ?>
+        <div class="bk-inline-form" id="bk-confirm-<?= (int)$b['id'] ?>">
+          <form method="post">
+            <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
+            <input type="hidden" name="booking_confirm_id" value="<?= (int)$b['id'] ?>">
+            <div class="bk-inline-row">
+              <input type="date" name="confirmed_date" value="<?= h((string)($b['confirmed_date'] ?: $b['preferred_date'])) ?>" required>
+              <input type="time" name="confirmed_time" value="<?= h((string)($b['confirmed_time'] ?: $b['preferred_time'])) ?>" required>
+            </div>
+            <textarea name="admin_note" rows="2" placeholder="Poznámka (nepovinné)"><?= h((string)$b['admin_note']) ?></textarea>
+            <div style="display:flex; gap:8px;">
+              <button type="submit" class="pillbtn solid">Potvrdiť a odoslať e-mail</button>
+              <button type="button" class="pillbtn" onclick="bkToggle(<?= (int)$b['id'] ?>,'confirm')">Zrušiť</button>
+            </div>
+          </form>
+        </div>
+        <?php endif; ?>
+        <?php if ($b['status'] === 'pending'): ?>
+        <div class="bk-inline-form" id="bk-propose-<?= (int)$b['id'] ?>">
+          <form method="post">
+            <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
+            <input type="hidden" name="booking_propose_id" value="<?= (int)$b['id'] ?>">
+            <div class="bk-inline-row">
+              <input type="date" name="confirmed_date" value="<?= h((string)($b['alt_date'] ?: '')) ?>" required>
+              <input type="time" name="confirmed_time" value="<?= h((string)($b['alt_time'] ?: '')) ?>" required>
+            </div>
+            <textarea name="admin_note" rows="2" placeholder="Poznámka (nepovinné)"></textarea>
+            <div style="display:flex; gap:8px;">
+              <button type="submit" class="pillbtn solid">Navrhnúť a odoslať e-mail</button>
+              <button type="button" class="pillbtn" onclick="bkToggle(<?= (int)$b['id'] ?>,'propose')">Zrušiť</button>
+            </div>
+          </form>
+        </div>
+        <?php endif; ?>
+      </div>
+      <div class="ld-actions">
+        <?php if (in_array($b['status'], ['pending', 'proposed'], true)): ?>
+        <button type="button" class="toggle-btn" onclick="bkToggle(<?= (int)$b['id'] ?>,'confirm')">Potvrdiť</button>
+        <?php endif; ?>
+        <?php if ($b['status'] === 'pending'): ?>
+        <button type="button" class="toggle-btn" onclick="bkToggle(<?= (int)$b['id'] ?>,'propose')">Navrhnúť termín</button>
+        <?php endif; ?>
+        <?php if (in_array($b['status'], ['pending', 'confirmed'], true)): ?>
+        <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj zrušiť túto rezerváciu?');">
+          <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
+          <input type="hidden" name="booking_cancel_id" value="<?= (int)$b['id'] ?>">
+          <button type="submit" class="toggle-btn">Zrušiť</button>
+        </form>
+        <?php endif; ?>
+      </div>
+    </div>
+    <?php endforeach; ?>
+  </div>
+
+  <?php endif; ?>
+
 </main>
 <script>
 function ldEdit(id) {
@@ -293,6 +488,11 @@ function ldEdit(id) {
 function ldCancel(id) {
   document.getElementById('ld-row-' + id).style.display = 'flex';
   document.getElementById('ld-edit-' + id).style.display = 'none';
+}
+function bkToggle(id, kind) {
+  var el = document.getElementById('bk-' + kind + '-' + id);
+  if (!el) return;
+  el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
 }
 </script>
 <script src="<?= asset('toast.js') ?>"></script>
