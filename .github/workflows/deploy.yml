@@ -35,6 +35,7 @@ jobs:
             $out .= "define(\"GATE_TOKEN\", \"ci-test-token\");\n";
             $out .= "define(\"GATE_PASSPHRASE\", \"0000\");\n";
             $out .= "define(\"LOCATIONIQ_TOKEN\", \"\");\n";
+            $out .= "define(\"LEADS_API_SECRET\", \"ci-test-secret\");\n";
             file_put_contents("config.local.php", $out);
           '
           mkdir -p tmp
@@ -75,9 +76,10 @@ jobs:
           GATE_TOKEN: ${{ secrets.GATE_TOKEN }}
           GATE_PASSPHRASE: ${{ secrets.GATE_PASSPHRASE }}
           LOCATIONIQ_TOKEN: ${{ secrets.LOCATIONIQ_TOKEN }}
+          LEADS_API_SECRET: ${{ secrets.LEADS_API_SECRET }}
         run: |
           php -r '
-            $vars = ["DB_DSN","DB_USER","DB_PASS","GATE_TOKEN","GATE_PASSPHRASE","LOCATIONIQ_TOKEN"];
+            $vars = ["DB_DSN","DB_USER","DB_PASS","GATE_TOKEN","GATE_PASSPHRASE","LOCATIONIQ_TOKEN","LEADS_API_SECRET"];
             $out = "<?php\n";
             foreach ($vars as $v) { $out .= "define(".var_export($v,true).", ".var_export(getenv($v),true).");\n"; }
             file_put_contents("config.local.php", $out);

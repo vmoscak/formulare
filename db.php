@@ -910,7 +910,7 @@ function dbInitSqlite(PDO $pdo): void {
         message TEXT NOT NULL DEFAULT '',
         status TEXT NOT NULL DEFAULT 'novy',
         note TEXT NOT NULL DEFAULT '',
-        created_by INTEGER NOT NULL,
+        created_by INTEGER NULL,
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (created_by) REFERENCES formulare_advisors(id)
