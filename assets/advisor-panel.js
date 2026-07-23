@@ -78,14 +78,20 @@ async function autoOpenSavedDocument(applyFn, generateFn){
 /* Doručí vygenerované PDF používateľovi — na mobile s podporou Web Share API
    (Android Chrome, iOS Safari) otvorí natívne menu "Zdieľať" priamo s PDF
    súborom (WhatsApp/e-mail/Airdrop...), inak (desktop, staršie prehliadače)
-   spadne späť na klasické stiahnutie ako doteraz. */
+   spadne späť na klasické stiahnutie ako doteraz. Natívne "Zdieľať" sa
+   obmedzuje len na mobil — novšie desktopové Chrome/Edge (Windows) tiež
+   vedia navigator.share, ale tam poradcovia väčšinou chcú PDF rovno
+   uložiť, nie otvárať zdieľací dialóg. */
 function downloadOrSharePdfBlob(blob, filename){
   var name = filename + '.pdf';
+  var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   try{
-    var file = new File([blob], name, { type: 'application/pdf' });
-    if(navigator.share && navigator.canShare && navigator.canShare({ files: [file] })){
-      navigator.share({ files: [file] }).catch(function(){});
-      return;
+    if(isMobile){
+      var file = new File([blob], name, { type: 'application/pdf' });
+      if(navigator.share && navigator.canShare && navigator.canShare({ files: [file] })){
+        navigator.share({ files: [file] }).catch(function(){});
+        return;
+      }
     }
   }catch(e){ /* File/share nepodporované — pokračuj na stiahnutie nižšie */ }
   var url = URL.createObjectURL(blob);
