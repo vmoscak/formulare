@@ -178,11 +178,19 @@ body.rail-scrolled .topbar{box-shadow:var(--shadow-md);}
 .dom-events-list{max-height:420px; overflow-y:auto;}
 .dom-events-list .tew-row[hidden]{display:none;}
 
-/* ── Widget "Najbližšie udalosti" (uvod.php, náhľad Tímového kalendára) ── */
-.tew-row{display:flex; align-items:center; gap:12px; padding:11px 4px; border-bottom:1px solid var(--border);}
-.tew-row:last-child{border-bottom:none;}
-.tew-badge{width:40px; height:40px; border-radius:var(--radius-md); background:var(--accent-soft); color:var(--accent);
-  display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0;}
+/* ── Widget "Najbližšie udalosti" (uvod.php, náhľad Tímového kalendára) ──
+   Každá udalosť je vlastná farebná kartička (--tew-accent/--tew-soft sa
+   cyklicky nastavujú inline z PHP, rovnaký princíp ako --news-accent pri
+   Novinkách) namiesto pôvodných plochých riadkov oddelených čiarou. */
+.tew-row{
+  display:flex; align-items:center; gap:12px; padding:12px 13px; margin-bottom:8px;
+  border-radius:var(--radius-lg); background:var(--tew-soft, var(--accent-soft));
+  transition:transform .15s ease, box-shadow .15s ease;
+}
+.tew-row:last-child{margin-bottom:0;}
+.tew-row:hover{transform:translateY(-1px); box-shadow:var(--shadow-sm);}
+.tew-badge{width:38px; height:38px; border-radius:var(--radius-md); background:var(--paper); color:var(--tew-accent, var(--accent));
+  display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 1px 2px rgba(16,24,40,.06);}
 .tew-badge .d{font-size:13.5px; font-weight:800; line-height:1.1;}
 .tew-badge .m{font-size:8.5px; font-weight:700; letter-spacing:.04em;}
 .tew-body{flex:1; min-width:0;}

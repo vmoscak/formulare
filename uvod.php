@@ -442,8 +442,16 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
         </select>
         <?php endif; ?>
         <div class="dom-events-list" id="domEventsList">
+          <?php
+            // Farebný prúžok pre každú udalosť sa cyklicky strieda (rovnaký
+            // princíp ako --news-accent pri Novinkách), nech zoznam nepôsobí
+            // ako jednotvárna tabuľka.
+            $eventAccents = [['accent', 'accent-soft'], ['teal', 'teal-soft'], ['amber', 'amber-soft'], ['good', 'good-soft'], ['rose', 'rose-soft']];
+            $eIdx = 0;
+          ?>
           <?php foreach ($upcomingEvents as $e): $ts = strtotime($e['event_date']); $assignees = $e['assignees'] ?? []; $assigneeIds = implode(',', array_column($assignees, 'advisor_id')); ?>
-          <div class="tew-row" data-assignees="<?= h($assigneeIds) ?>">
+          <?php [$eAccent, $eSoft] = $eventAccents[$eIdx % count($eventAccents)]; $eIdx++; ?>
+          <div class="tew-row" data-assignees="<?= h($assigneeIds) ?>" style="--tew-accent:var(--<?= $eAccent ?>); --tew-soft:var(--<?= $eSoft ?>);">
             <div class="tew-badge"><span class="d"><?= (int)date('j', $ts) ?></span><span class="m"><?= $EVT_SK_MONTHS_SHORT[(int)date('n', $ts)] ?></span></div>
             <div class="tew-body">
               <div class="tew-title"><?= h($e['title']) ?></div>
