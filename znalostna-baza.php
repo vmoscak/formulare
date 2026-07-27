@@ -174,6 +174,7 @@ try {
             </div>
           </div>
           <p class="kb-body" data-raw="<?= h($e['body']) ?>"><?= nl2br(h($e['body'])) ?></p>
+          <button type="button" class="kb-more" onclick="kbToggleMore(this)">Zobraziť celé</button>
           <div class="kb-meta">Pridal <?= h($e['advisor_name']) ?> · <span class="date"><?= h($e['created_at']) ?></span></div>
         </div>
         <?php if ($isOwner): ?>
@@ -220,6 +221,24 @@ function kbCopy(id) {
   var text = item.querySelector('.kb-body').dataset.raw;
   navigator.clipboard.writeText(text).catch(function () {});
 }
+// "Zobraziť celé" — text je skrátený na pár riadkov (CSS max-height), bez
+// posuvnej lišty vnútri karty; kliknutím sa odkryje celý. Tlačidlo sa ukáže
+// len pri záznamoch, kde sa text naozaj neveľme celý (porovnanie skutočnej
+// a zobrazenej výšky).
+function kbToggleMore(btn) {
+  var body = btn.previousElementSibling;
+  var expanded = body.classList.toggle('expanded');
+  btn.textContent = expanded ? 'Skryť' : 'Zobraziť celé';
+}
+(function () {
+  document.querySelectorAll('.kb-body').forEach(function (el) {
+    if (el.scrollHeight > el.clientHeight + 2) {
+      el.classList.add('truncated');
+      var btn = el.nextElementSibling;
+      if (btn && btn.classList.contains('kb-more')) btn.classList.add('show');
+    }
+  });
+})();
 // Rovnaký prepínač ako admin režim v ľavej lište (assets/shell.js) — kým je
 // vypnutý, aj owner vidí presne to isté, čo bežný poradca (len čítanie).
 (function () {
