@@ -62,6 +62,15 @@ try {
 <link rel="stylesheet" href="<?= asset('fonts.css') ?>">
 <script src="<?= asset('theme-init.js') ?>"></script>
 <link rel="stylesheet" href="<?= asset('panel.css') ?>">
+<style>
+  /* Pridávanie/úprava/mazanie je aj pre ownera schované, kým si v ľavej lište
+     nezapne admin režim (assets/shell.js, localStorage 'adminView') — bežne
+     má vidieť presne to isté, čo ostatní poradcovia. Skutočné oprávnenie
+     (POST akcie) je stále gate-nuté server-side na is_owner, toto je len
+     viditeľnosť ovládacích prvkov. */
+  .owner-only{display:none;}
+  body.admin-view-on .owner-only{display:revert;}
+</style>
 </head><body>
 <header class="topbar">
   <div class="tb-title">
@@ -94,7 +103,7 @@ try {
   </div>
 
   <?php if ($isOwner): ?>
-  <div class="card">
+  <div class="card owner-only">
     <h3>Pridať nový záznam</h3>
     <form method="post" class="kb-form">
       <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
@@ -117,8 +126,8 @@ try {
             <div class="kb-actions">
               <button type="button" class="toggle-btn" onclick="kbCopy(<?= (int)$e['id'] ?>)">Kopírovať</button>
               <?php if ($isOwner): ?>
-              <button type="button" class="toggle-btn" onclick="kbEdit(<?= (int)$e['id'] ?>)">Upraviť</button>
-              <form method="post" style="margin:0;" onsubmit="return confirm('Naozaj zmazať tento záznam?');">
+              <button type="button" class="toggle-btn owner-only" onclick="kbEdit(<?= (int)$e['id'] ?>)">Upraviť</button>
+              <form method="post" class="owner-only" style="margin:0;" onsubmit="return confirm('Naozaj zmazať tento záznam?');">
                 <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
                 <input type="hidden" name="delete_id" value="<?= (int)$e['id'] ?>">
                 <button type="submit" class="toggle-btn">Zmazať</button>
@@ -146,7 +155,7 @@ try {
       <?php if (!$entries): ?><div class="empty-state">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <span class="es-title">Žiadne výsledky<?= $q ? ' pre „' . h($q) . '“' : '' ?></span>
-        <span class="es-sub"><?= $q ? 'Skús iné slovo, alebo pridaj nový záznam nižšie.' : 'Zatiaľ tu nič nie je — pridaj prvý záznam nižšie.' ?></span>
+        <span class="es-sub"><?= $q ? 'Skús iné slovo.' : 'Zatiaľ tu nič nie je.' ?><?php if ($isOwner): ?><span class="owner-only"> <?= $q ? 'Alebo pridaj nový záznam nižšie.' : 'Pridaj prvý záznam nižšie.' ?></span><?php endif; ?></span>
       </div><?php endif; ?>
     </div>
   </div>
@@ -168,6 +177,15 @@ function kbCopy(id) {
   var text = item.querySelector('.kb-body').dataset.raw;
   navigator.clipboard.writeText(text).catch(function () {});
 }
+// Rovnaký prepínač ako admin režim v ľavej lište (assets/shell.js) — kým je
+// vypnutý, aj owner vidí presne to isté, čo bežný poradca (len čítanie).
+(function () {
+  try {
+    if (localStorage.getItem('adminView') === '1') {
+      document.body.classList.add('admin-view-on');
+    }
+  } catch (e) {}
+})();
 </script>
 <script src="<?= asset('shell.js') ?>"></script>
 </body></html>
