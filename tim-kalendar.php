@@ -3,9 +3,11 @@
  * Tímový kalendár — klasický mesačný kalendár s udalosťami/úlohami, ktoré
  * owner priraďuje jednému alebo viacerým kolegom naraz (farebne podľa ich
  * farby, rovnako ako iniciálky inde v appke), alebo necháva pre celý tím
- * (sivá bodka = nikto konkrétny priradený). Vidí každý prihlásený poradca,
- * pridávať/upravovať/mazať smie výhradne owner. Kompaktný náhľad
- * najbližších udalostí je aj na Domov (uvod.php).
+ * (sivá bodka = nikto konkrétny priradený). Pridávať/upravovať/mazať smie
+ * výhradne owner. Bežný poradca vidí len udalosti priradené jemu a udalosti
+ * pre celý tím (žiadny konkrétny priradený) — kolegove osobné udalosti nie
+ * (viď tkVisibilitySql() nižšie); owner vidí všetko. Kompaktný náhľad
+ * najbližších udalostí na Domov (uvod.php) rešpektuje rovnaké pravidlo.
  */
 require_once __DIR__ . '/db.php';
 
@@ -19,6 +21,18 @@ $SK_MONTHS = ['', 'január','február','marec','apríl','máj','jún','júl','au
 $SK_DOW = ['Po','Ut','St','Št','Pi','So','Ne'];
 $SK_DOW_LONG = ['', 'Pondelok','Utorok','Streda','Štvrtok','Piatok','Sobota','Nedeľa'];
 
+/**
+ * SQL fragment obmedzujúci zoznam udalostí pre bežného poradcu na "moje +
+ * celý tím" (žiadny konkrétny priradený = pre všetkých, inak len ak je medzi
+ * priradenými) — owner vidí všetko bez obmedzenia, keďže tím reálne riadi.
+ * Očakáva alias "e" na formulare_team_events vo vonkajšom dotaze; ak sa
+ * použije, treba do parametrov pridať $advisorId na zodpovedajúce miesto.
+ */
+function tkVisibilitySql(bool $isOwner): string {
+    if ($isOwner) return '';
+    return ' AND (NOT EXISTS (SELECT 1 FROM formulare_team_event_assignees ea WHERE ea.event_id = e.id)'
+         . ' OR EXISTS (SELECT 1 FROM formulare_team_event_assignees ea WHERE ea.event_id = e.id AND ea.advisor_id = ?))';
+}
 function backUrl(string $month, ?string $day): string {
     $qs = ['month' => $month];
     if ($day) $qs['day'] = $day;
@@ -105,8 +119,13 @@ $rangeEnd = end($gridDays)->format('Y-m-d');
 
 // Viacdňová udalosť patrí do mriežky, ak sa jej rozsah [event_date, end_date]
 // prekrýva s viditeľným rozsahom dní (nielen keď v ňom začína).
-$evStmt = db()->prepare('SELECT * FROM formulare_team_events WHERE event_date <= ? AND COALESCE(end_date, event_date) >= ? ORDER BY event_date, id');
-$evStmt->execute([$rangeEnd, $rangeStart]);
+$evStmt = db()->prepare(
+    'SELECT e.* FROM formulare_team_events e WHERE e.event_date <= ? AND COALESCE(e.end_date, e.event_date) >= ?'
+    . tkVisibilitySql($isOwner) . ' ORDER BY e.event_date, e.id'
+);
+$evParams = [$rangeEnd, $rangeStart];
+if (!$isOwner) { $evParams[] = $advisorId; }
+$evStmt->execute($evParams);
 $eventsInRange = $evStmt->fetchAll();
 $eventsByDate = [];
 foreach ($eventsInRange as $e) {
@@ -157,9 +176,11 @@ $listShowPast = isset($_GET['past']);
 // Viacdňová udalosť, čo ešte prebieha (začala v minulosti, končí dnes/neskôr),
 // sa aj bez "aj uplynulé" počíta ako nadchádzajúca/prebiehajúca.
 $listStmt = $listShowPast
-    ? db()->prepare('SELECT * FROM formulare_team_events ORDER BY event_date ASC, id')
-    : db()->prepare('SELECT * FROM formulare_team_events WHERE COALESCE(end_date, event_date) >= ? ORDER BY event_date ASC, id');
-$listShowPast ? $listStmt->execute() : $listStmt->execute([$today]);
+    ? db()->prepare('SELECT e.* FROM formulare_team_events e WHERE 1=1' . tkVisibilitySql($isOwner) . ' ORDER BY e.event_date ASC, e.id')
+    : db()->prepare('SELECT e.* FROM formulare_team_events e WHERE COALESCE(e.end_date, e.event_date) >= ?' . tkVisibilitySql($isOwner) . ' ORDER BY e.event_date ASC, e.id');
+$listParams = $listShowPast ? [] : [$today];
+if (!$isOwner) { $listParams[] = $advisorId; }
+$listStmt->execute($listParams);
 $allEventsForList = $listStmt->fetchAll();
 
 $listAssigneesByEvent = [];
@@ -259,7 +280,7 @@ function tkListFilterUrl(string $monthParam, string $filter, bool $showPast): st
 <header class="topbar">
   <div class="tb-title">
     <h1>Tímový kalendár</h1>
-    <p>Dôležité termíny a úlohy pre celý tím<?= $isOwner ? '' : ' · farba = kolega, ktorého sa to týka' ?></p>
+    <p><?= $isOwner ? 'Dôležité termíny a úlohy pre celý tím' : 'Tvoje úlohy a termíny pre celý tím' ?></p>
   </div>
   <div class="tb-actions">
     <a class="pillbtn" href="/nastroje.php">← Späť na nástroje</a>
@@ -318,9 +339,11 @@ function tkListFilterUrl(string $monthParam, string $filter, bool $showPast): st
 
     <div class="cal-legend">
       <span class="cal-legend-item"><span class="cal-legend-dot" style="background:<?= $UNASSIGNED_COLOR ?>;"></span>Celý tím</span>
-      <?php foreach ($assignableAdvisors as $a): ?>
+      <?php if ($isOwner): foreach ($assignableAdvisors as $a): ?>
       <span class="cal-legend-item"><span class="cal-legend-dot" style="background:<?= h($a['color']) ?>;"></span><?= h($a['name']) ?></span>
-      <?php endforeach; ?>
+      <?php endforeach; else: ?>
+      <span class="cal-legend-item"><span class="cal-legend-dot" style="background:<?= h($me['color']) ?>;"></span>Ty</span>
+      <?php endif; ?>
     </div>
   </div>
 
@@ -334,11 +357,11 @@ function tkListFilterUrl(string $monthParam, string $filter, bool $showPast): st
       <a class="tk-filter-chip<?= $listFilter === 'unassigned' ? ' is-active' : '' ?>" href="<?= tkListFilterUrl($monthParam, 'unassigned', $listShowPast) ?>">
         <span class="tk-filter-dot" style="background:<?= $UNASSIGNED_COLOR ?>;"></span>Celý tím
       </a>
-      <?php foreach ($assignableAdvisors as $a): ?>
+      <?php if ($isOwner): foreach ($assignableAdvisors as $a): ?>
       <a class="tk-filter-chip<?= $listFilter === (string)$a['id'] ? ' is-active' : '' ?>" href="<?= tkListFilterUrl($monthParam, (string)$a['id'], $listShowPast) ?>">
         <span class="tk-filter-dot" style="background:<?= h($a['color']) ?>;"></span><?= h($a['name']) ?>
       </a>
-      <?php endforeach; ?>
+      <?php endforeach; endif; ?>
     </div>
     <?php if (!$filteredEvents): ?>
     <div class="empty-state">

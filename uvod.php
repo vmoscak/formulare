@@ -191,16 +191,27 @@ function timeAgoSk(string $dt): string {
     return "pred $days dňami";
 }
 
-// Náhľad najbližších udalostí z Tímového kalendára — viditeľný pre celý tím.
-// Udalosť môže byť priradená viacerým kolegom naraz (napr. obchodníci + owner).
-// Načíta sa ich viac, než sa naraz zobrazí (viď .dom-events-list max-height +
-// "Zobraziť všetky") a filter podľa mena rieši JS na klientovi bez reloadu.
+// Náhľad najbližších udalostí z Tímového kalendára. Bežný poradca vidí len
+// udalosti priradené jemu a udalosti pre celý tím (žiadny konkrétny
+// priradený) — rovnaké pravidlo ako v tim-kalendar.php (tkVisibilitySql());
+// owner vidí všetko. Udalosť môže byť priradená viacerým kolegom naraz
+// (napr. obchodníci + owner). Načíta sa ich viac, než sa naraz zobrazí (viď
+// .dom-events-list max-height + "Zobraziť všetky") a filter podľa mena rieši
+// JS na klientovi bez reloadu.
+$isOwner = !empty($me['is_owner']);
 $upcomingEvents = [];
 $eventFilterAdvisors = [];
 try {
     $today = date('Y-m-d');
-    $evStmt = db()->prepare('SELECT * FROM formulare_team_events WHERE event_date >= ? ORDER BY event_date ASC LIMIT 50');
-    $evStmt->execute([$today]);
+    $evSql = 'SELECT e.* FROM formulare_team_events e WHERE e.event_date >= ?';
+    $evParams = [$today];
+    if (!$isOwner) {
+        $evSql .= ' AND (NOT EXISTS (SELECT 1 FROM formulare_team_event_assignees ea WHERE ea.event_id = e.id)'
+                . ' OR EXISTS (SELECT 1 FROM formulare_team_event_assignees ea WHERE ea.event_id = e.id AND ea.advisor_id = ?))';
+        $evParams[] = $curAdvisorId;
+    }
+    $evStmt = db()->prepare($evSql . ' ORDER BY e.event_date ASC LIMIT 50');
+    $evStmt->execute($evParams);
     $upcomingEvents = $evStmt->fetchAll();
     if ($upcomingEvents) {
         $eventIds = array_column($upcomingEvents, 'id');
@@ -215,7 +226,11 @@ try {
         foreach ($upcomingEvents as &$ev) { $ev['assignees'] = $assigneesByEvent[$ev['id']] ?? []; }
         unset($ev);
     }
-    $eventFilterAdvisors = db()->query('SELECT id, name FROM formulare_advisors WHERE active = 1 ORDER BY name')->fetchAll();
+    // Filter podľa mena kolegu má zmysel len pre ownera — bežný poradca už
+    // vidí len svoje a tímové udalosti, takže niet medzi kým vyberať.
+    if ($isOwner) {
+        $eventFilterAdvisors = db()->query('SELECT id, name FROM formulare_advisors WHERE active = 1 ORDER BY name')->fetchAll();
+    }
 } catch (Throwable $e) { /* tabuľka ešte nemusí existovať */ }
 $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 'AUG', 'SEP', 'OKT', 'NOV', 'DEC'];
 ?>
