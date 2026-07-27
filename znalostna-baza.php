@@ -17,22 +17,40 @@ $me = $stmt->fetch();
 if (!$me) { header('Location: /'); exit; }
 $isOwner = !empty($me['is_owner']);
 
+// Pevný zoznam kategórií (nie voľný text) — nech sa dá podľa nich naozaj
+// filtrovať a farebne rozlíšiť, bez rizika, že si každý napíše niečo trochu
+// inak ("Auto" vs. "auto poistenie"). Farby preberajú tú istú paletu ako
+// plávajúci dok a karty nástrojov na Domov.
+$KB_CATEGORIES = [
+    'zivotne'   => ['label' => 'Životné poistenie',        'c1' => '#10b981', 'c2' => '#059669'],
+    'auto'      => ['label' => 'Poistenie auta',            'c1' => '#38bdf8', 'c2' => '#0284c7'],
+    'majetok'   => ['label' => 'Majetok a domácnosť',       'c1' => '#fbbf24', 'c2' => '#d97706'],
+    'skody'     => ['label' => 'Škody a reklamácie',        'c1' => '#fb7185', 'c2' => '#e11d48'],
+    'zmluvy'    => ['label' => 'Zmluvy a administratíva',   'c1' => '#4f46e5', 'c2' => '#4338ca'],
+    'vseobecne' => ['label' => 'Všeobecné',                 'c1' => '#a78bfa', 'c2' => '#7c3aed'],
+];
+function kbCategory(array $cats, ?string $key): array {
+    return $cats[$key] ?? end($cats);
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isOwner) {
     if (!csrfCheck()) { http_response_code(403); exit('Neplatný CSRF token — obnov stránku a skús to znova.'); }
+    $category = (string)($_POST['category'] ?? 'vseobecne');
+    if (!isset($KB_CATEGORIES[$category])) { $category = 'vseobecne'; }
     if (isset($_POST['add'])) {
         $title = trim((string)($_POST['title'] ?? ''));
         $body = trim((string)($_POST['body'] ?? ''));
         if ($title !== '' && $body !== '') {
-            db()->prepare('INSERT INTO formulare_knowledge_base (title, body, advisor_id, advisor_name) VALUES (?, ?, ?, ?)')
-                ->execute([$title, $body, $advisorId, $me['name']]);
+            db()->prepare('INSERT INTO formulare_knowledge_base (title, body, category, advisor_id, advisor_name) VALUES (?, ?, ?, ?, ?)')
+                ->execute([$title, $body, $category, $advisorId, $me['name']]);
         }
     } elseif (isset($_POST['edit_id'])) {
         $id = (int)$_POST['edit_id'];
         $title = trim((string)($_POST['title'] ?? ''));
         $body = trim((string)($_POST['body'] ?? ''));
         if ($id && $title !== '' && $body !== '') {
-            db()->prepare("UPDATE formulare_knowledge_base SET title = ?, body = ?, updated_at = ? WHERE id = ?")
-                ->execute([$title, $body, date('Y-m-d H:i:s'), $id]);
+            db()->prepare("UPDATE formulare_knowledge_base SET title = ?, body = ?, category = ?, updated_at = ? WHERE id = ?")
+                ->execute([$title, $body, $category, date('Y-m-d H:i:s'), $id]);
         }
     } elseif (isset($_POST['delete_id'])) {
         $id = (int)$_POST['delete_id'];
@@ -43,16 +61,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isOwner) {
 }
 
 $q = trim((string)($_GET['q'] ?? ''));
+$cat = (string)($_GET['cat'] ?? '');
+if ($cat !== '' && !isset($KB_CATEGORIES[$cat])) { $cat = ''; }
 $entries = [];
 try {
-    if ($q !== '') {
-        $stmt = db()->prepare('SELECT * FROM formulare_knowledge_base WHERE title LIKE ? OR body LIKE ? ORDER BY title');
-        $stmt->execute(['%' . $q . '%', '%' . $q . '%']);
-    } else {
-        $stmt = db()->query('SELECT * FROM formulare_knowledge_base ORDER BY title');
-    }
+    $where = [];
+    $params = [];
+    if ($q !== '') { $where[] = '(title LIKE ? OR body LIKE ?)'; $params[] = '%' . $q . '%'; $params[] = '%' . $q . '%'; }
+    if ($cat !== '') { $where[] = 'category = ?'; $params[] = $cat; }
+    $sql = 'SELECT * FROM formulare_knowledge_base' . ($where ? ' WHERE ' . implode(' AND ', $where) : '') . ' ORDER BY title';
+    $stmt = db()->prepare($sql);
+    $stmt->execute($params);
     $entries = $stmt->fetchAll();
-} catch (Throwable $e) { /* tabuľka môže byť ešte prázdna */ }
+} catch (Throwable $e) { /* tabuľka/stĺpec category ešte nemusí existovať — spusti sql/046 */ }
 ?>
 <!DOCTYPE html><html lang="sk"><head>
 <meta charset="UTF-8">
@@ -91,10 +112,19 @@ try {
         <label>Text</label>
         <input type="text" name="q" value="<?= h($q) ?>" placeholder="napr. výpoveď, ČSOB, reklamácia...">
       </div>
+      <div class="f-field" style="min-width:200px;">
+        <label>Kategória</label>
+        <select name="cat">
+          <option value="">Všetky kategórie</option>
+          <?php foreach ($KB_CATEGORIES as $ck => $cv): ?>
+          <option value="<?= h($ck) ?>" <?= $cat === $ck ? 'selected' : '' ?>><?= h($cv['label']) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
       <div class="f-field" style="min-width:0;">
         <button type="submit" class="pillbtn solid">Hľadať</button>
       </div>
-      <?php if ($q): ?>
+      <?php if ($q || $cat): ?>
       <div class="f-field" style="min-width:0;">
         <a class="pillbtn" href="/znalostna-baza.php">Zrušiť</a>
       </div>
@@ -109,6 +139,11 @@ try {
       <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
       <input type="hidden" name="add" value="1">
       <input type="text" name="title" placeholder="Názov (napr. „ČSOB – čo pýtať pri zaseknutej likvidácii“)" required>
+      <select name="category">
+        <?php foreach ($KB_CATEGORIES as $ck => $cv): ?>
+        <option value="<?= h($ck) ?>" <?= $ck === 'vseobecne' ? 'selected' : '' ?>><?= h($cv['label']) ?></option>
+        <?php endforeach; ?>
+      </select>
       <textarea name="body" rows="4" placeholder="Text, ktorý sa dá skopírovať a poslať/vložiť..." required></textarea>
       <button type="submit" class="pillbtn solid" style="align-self:flex-start;">Pridať</button>
     </form>
@@ -118,11 +153,14 @@ try {
   <div class="card">
     <h3>Záznamy · <?= count($entries) ?></h3>
     <div class="kb-list">
-      <?php foreach ($entries as $e): ?>
-      <div class="kb-item" id="kb-<?= (int)$e['id'] ?>">
+      <?php foreach ($entries as $e): $ecat = kbCategory($KB_CATEGORIES, $e['category'] ?? null); ?>
+      <div class="kb-item" id="kb-<?= (int)$e['id'] ?>" style="--kb-c:<?= h($ecat['c2']) ?>; --kb-c1:<?= h($ecat['c1']) ?>; --kb-c2:<?= h($ecat['c2']) ?>;">
         <div class="kb-view">
           <div class="kb-head">
-            <h4><?= h($e['title']) ?></h4>
+            <div>
+              <span class="kb-cat-badge"><?= h($ecat['label']) ?></span>
+              <h4><?= h($e['title']) ?></h4>
+            </div>
             <div class="kb-actions">
               <button type="button" class="toggle-btn" onclick="kbCopy(<?= (int)$e['id'] ?>)">Kopírovať</button>
               <?php if ($isOwner): ?>
@@ -143,6 +181,11 @@ try {
           <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
           <input type="hidden" name="edit_id" value="<?= (int)$e['id'] ?>">
           <input type="text" name="title" value="<?= h($e['title']) ?>" required>
+          <select name="category">
+            <?php foreach ($KB_CATEGORIES as $ck => $cv): ?>
+            <option value="<?= h($ck) ?>" <?= ($e['category'] ?? 'vseobecne') === $ck ? 'selected' : '' ?>><?= h($cv['label']) ?></option>
+            <?php endforeach; ?>
+          </select>
           <textarea name="body" rows="4" required><?= h($e['body']) ?></textarea>
           <div style="display:flex; gap:8px;">
             <button type="submit" class="pillbtn solid">Uložiť</button>
