@@ -191,11 +191,13 @@ function timeAgoSk(string $dt): string {
     return "pred $days dňami";
 }
 
-// Náhľad najbližších udalostí z Tímového kalendára. Bežný poradca vidí len
-// udalosti priradené jemu a udalosti pre celý tím (žiadny konkrétny
-// priradený) — rovnaké pravidlo ako v tim-kalendar.php (tkVisibilitySql());
-// owner vidí všetko. Udalosť môže byť priradená viacerým kolegom naraz
-// (napr. obchodníci + owner). Načíta sa ich viac, než sa naraz zobrazí (viď
+// Náhľad najbližších udalostí z Tímového kalendára — LEN pre tento widget na
+// Domov. Bežný poradca tu vidí iba udalosti priradené jemu a udalosti pre
+// celý tím (žiadny konkrétny priradený); owner vidí všetko. Zámerne inak než
+// samotný Tímový kalendár (tim-kalendar.php), kde vidí každý poradca úplne
+// všetko — tam je to plnohodnotný tímový prehľad, tu len osobný "na dnes/
+// zajtra" súhrn. Udalosť môže byť priradená viacerým kolegom naraz (napr.
+// obchodníci + owner). Načíta sa ich viac, než sa naraz zobrazí (viď
 // .dom-events-list max-height + "Zobraziť všetky") a filter podľa mena rieši
 // JS na klientovi bez reloadu.
 $isOwner = !empty($me['is_owner']);
