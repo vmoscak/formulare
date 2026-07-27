@@ -128,15 +128,28 @@
       currentGroup = (toolGroups && toolGroups[slug]) || 'nastroje';
     }
 
-    // Základná lišta — rovnaká pre každého poradcu, nikdy nenarastá.
+    // Základná lišta — rovnaká pre každého poradcu, nikdy nenarastá. Denne
+    // najpoužívanejšie kategórie (Nástroje/Formuláre/Pomôcky/UNIQA) a Aktuálne
+    // postupy majú vlastný výraznejší plávajúci dok dole (pole DOCK nižšie) —
+    // bočná lišta tak ostáva pre "utilitárne" veci (dokumenty, kalendár, tím).
     var NAV = [
       { key: 'home', icon: ICONS.home, href: '/uvod.php', label: 'Domov', active: isHome },
-      { key: 'nastroje', icon: ICONS.tools, href: '/nastroje.php', label: 'Nástroje', active: currentGroup === 'nastroje' },
-      { key: 'formulare', icon: ICONS.formulare, href: '/formulare.php', label: 'Formuláre', active: currentGroup === 'formulare' },
-      { key: 'pomocky', icon: ICONS.pomocky, href: '/pomocky.php', label: 'Pomôcky', active: currentGroup === 'pomocky' },
-      { key: 'uniqa', icon: ICONS.uniqa, href: '/uniqa-tlaciva.php', label: 'UNIQA', active: currentGroup === 'uniqa' },
       { key: 'docs', icon: ICONS.docs, href: '/moje-dokumenty.php', label: 'Moje dokumenty', active: isDocs },
       { key: 'timKalendar', icon: ICONS.calendar, href: '/tim-kalendar.php', label: 'Tímový kalendár', active: isTimKalendar }
+    ];
+
+    // Plávajúci spodný dok — farebné kruhové ikony pre obsahové kategórie,
+    // ktoré poradca používa denne. Farby preberajú presne tú istú paletu ako
+    // .tool-card.c-* v panel.css (indigo/emerald/sky/orange/violet), nech dok
+    // pôsobí ako súčasť appky, nie cudzí prvok. Aktuálne postupy = znovu
+    // sprístupnená (a premenovaná) bývalá "Znalostná báza", ktorú predtým
+    // nikto nepoužíval práve preto, že nebola nikde vidieť.
+    var DOCK = [
+      { key: 'nastroje', icon: ICONS.tools, href: '/nastroje.php', label: 'Nástroje', active: currentGroup === 'nastroje', c1: '#4f46e5', c2: '#4338ca' },
+      { key: 'formulare', icon: ICONS.formulare, href: '/formulare.php', label: 'Formuláre', active: currentGroup === 'formulare', c1: '#10b981', c2: '#059669' },
+      { key: 'pomocky', icon: ICONS.pomocky, href: '/pomocky.php', label: 'Pomôcky', active: currentGroup === 'pomocky', c1: '#38bdf8', c2: '#0284c7' },
+      { key: 'uniqa', icon: ICONS.uniqa, href: '/uniqa-tlaciva.php', label: 'UNIQA', active: currentGroup === 'uniqa', c1: '#fb923c', c2: '#ea580c' },
+      { key: 'kb', icon: ICONS.kb, href: '/znalostna-baza.php', label: 'Aktuálne postupy', active: isKb, c1: '#a78bfa', c2: '#7c3aed' }
     ];
     // Nábor je na rozdiel od ostatných owner-only nástrojov bežne používaný
     // (nie len príležitostná administratíva), takže je vždy viditeľný v
@@ -214,8 +227,22 @@
       '#appRail .rav-badge{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;' +
       'font-size:13px;font-weight:600;color:#fff;box-shadow:0 4px 10px -4px rgba(16,24,40,.4);flex-shrink:0;}' +
       '#appRail .rname{display:none;}' +
-      'body.has-rail{padding-left:72px;}' +
+      'body.has-rail{padding-left:72px; padding-bottom:92px;}' +
       '.rail-toggle,.rail-backdrop{display:none;}' +
+      // Plávajúci spodný dok — samostatný od #appRail, aby zostal vycentrovaný
+      // dole nezávisle od šírky bočnej lišty.
+      '#appDock{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);' +
+      'z-index:58;display:flex;gap:10px;background:var(--paper,#fff);border:1px solid var(--border,#eef0f3);' +
+      'border-radius:999px;padding:8px;box-shadow:0 16px 40px -12px rgba(16,24,40,.28);}' +
+      '#appDock a.di{position:relative;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;' +
+      'color:#fff;text-decoration:none;flex-shrink:0;transition:transform .15s ease,box-shadow .15s ease;}' +
+      '#appDock a.di:hover{transform:translateY(-3px) scale(1.05);}' +
+      '#appDock a.di:active{transform:translateY(-3px) scale(.96);}' +
+      '#appDock a.di.on{box-shadow:0 0 0 3px var(--paper,#fff),0 0 0 5px var(--di-c,#4f46e5);}' +
+      '#appDock a.di .tip{position:absolute;bottom:58px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;' +
+      'font-size:12px;font-weight:500;padding:6px 10px;border-radius:8px;white-space:nowrap;opacity:0;pointer-events:none;' +
+      'transition:opacity .15s;box-shadow:0 8px 20px -6px rgba(0,0,0,.4);}' +
+      '#appDock a.di:hover .tip{opacity:1;}' +
       '@media(max-width:720px){' +
         '#appRail{align-items:stretch;width:250px;transform:translateX(-100%);transition:transform .25s cubic-bezier(.22,1,.36,1);' +
         'box-shadow:0 12px 40px -8px rgba(0,0,0,.35);padding:18px 14px;}' +
@@ -230,7 +257,13 @@
         '#appRail .ravatar{width:100%;padding:8px 10px;border-radius:10px;gap:10px;}' +
         '#appRail .ravatar:hover{background:var(--desk,#f5f6f8);}' +
         '#appRail .rname{display:inline;font-size:13px;font-weight:600;color:var(--ink,#111827);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
-        'body.has-rail{padding-left:0;}' +
+        'body.has-rail{padding-left:0; padding-bottom:150px;}' +
+        // Dok o niečo vyššie a menší než na desktope — na mobile je dole aj
+        // hamburger FAB (.rail-toggle, bottom:18px, výška 50px), dok preto
+        // sedí nad ním (stack), nie vedľa neho, nech sa na úzkych obrazovkách
+        // neprekrývajú.
+        '#appDock{bottom:calc(84px + env(safe-area-inset-bottom,0px));gap:7px;padding:7px;}' +
+        '#appDock a.di{width:42px;height:42px;}' +
         // Vo vysúvacom paneli sa "Viac" nezobrazuje ako samostatné tlačidlo —
         // admin/owner-only položky sú tam rovno v zozname (na mobile nie je
         // dôvod nič schovávať, prekáža tam skôr výška pevnej lišty na desktope).
@@ -253,7 +286,13 @@
       return '<a class="ri' + (n.active ? ' on' : '') + '" href="' + n.href + '">' + svg(n.icon) +
         '<span class="tip">' + esc(n.label) + '</span></a>';
     }
+    function dockItemHtml(n) {
+      return '<a class="di' + (n.active ? ' on' : '') + '" href="' + n.href + '" ' +
+        'style="background:linear-gradient(150deg,' + n.c1 + ',' + n.c2 + ');--di-c:' + n.c2 + ';">' + svg(n.icon) +
+        '<span class="tip">' + esc(n.label) + '</span></a>';
+    }
     var navHtml = NAV.map(navItemHtml).join('');
+    var dockHtml = DOCK.map(dockItemHtml).join('');
     var moreWrapHtml = MORE.length ? (
       '<div class="rail-more-wrap">' +
         '<button type="button" class="ri rail-more-toggle' + (moreActive ? ' on' : '') + '" id="railMoreToggle">' + svg(ICONS.more) +
@@ -285,7 +324,8 @@
           '<span class="rname">' + esc(adv.name || 'Zmeniť poradcu') + '</span>' +
           '</a>' +
         '</div>' +
-      '</div>';
+      '</div>' +
+      '<div id="appDock">' + dockHtml + '</div>';
 
     var style = document.createElement('style');
     style.textContent = css;

@@ -1,8 +1,12 @@
 <?php
 /**
- * Znalostná báza — interné FAQ / rýchle texty. Čítanie majú všetci aktívni
- * poradcovia (zdieľaný tímový obsah) — pridávať, upravovať a mazať záznamy
- * môže len owner (is_owner=1), rovnako ako v nabor.php.
+ * Aktuálne postupy (predtým "Znalostná báza", tabuľka aj URL ostávajú
+ * formulare_knowledge_base / znalostna-baza.php — premenované len viditeľne,
+ * nech to poradcovia reálne používajú). Krátke trvalé postupy/FAQ. Čítanie
+ * majú všetci aktívni poradcovia (zdieľaný tímový obsah) — pridávať,
+ * upravovať a mazať záznamy môže len owner (is_owner=1), rovnako ako v
+ * nabor.php. Teraz aj v spodnom plávajúcom doku (assets/shell.js), predtým
+ * bola zámerne mimo navigácie a nikto ju nepoužíval.
  */
 require_once __DIR__ . '/db.php';
 
@@ -54,15 +58,15 @@ try {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
-<title>Znalostná báza</title>
+<title>Aktuálne postupy</title>
 <link rel="stylesheet" href="<?= asset('fonts.css') ?>">
 <script src="<?= asset('theme-init.js') ?>"></script>
 <link rel="stylesheet" href="<?= asset('panel.css') ?>">
 </head><body>
 <header class="topbar">
   <div class="tb-title">
-    <h1>Znalostná báza</h1>
-    <p>Interné FAQ a rýchle texty · zdieľané pre celý tím</p>
+    <h1>Aktuálne postupy</h1>
+    <p>Krátke návody a postupy · zdieľané pre celý tím</p>
   </div>
   <div class="tb-actions">
     <a class="pillbtn" href="/nastroje.php">← Späť na nástroje</a>
