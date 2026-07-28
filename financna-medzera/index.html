@@ -105,16 +105,24 @@
         </div>
       </div>
 
-      <!-- 3. deti -->
+      <!-- 3. záväzky -->
       <div>
-        <div class="step-head"><div class="step-num">3</div><div class="step-title">Deti <span style="font-weight:500;text-transform:none;">(vek a existujúce krytie)</span></div></div>
+        <div class="step-head"><div class="step-num">3</div><div class="step-title">Existujúce záväzky <span style="font-weight:500;text-transform:none;">(hypotéka, úvery)</span></div></div>
+        <div class="step-hint">Informatívny prehľad pre ďalšiu prácu s klientom — do výpočtu krytia na úmrtie sa nezapočítava (ten vychádza z mesačných výdavkov domácnosti).</div>
+        <div class="items" id="debtItems"></div>
+        <button type="button" class="add-item" id="addDebt" style="margin-top:10px;">+ Pridať záväzok</button>
+      </div>
+
+      <!-- 4. deti -->
+      <div>
+        <div class="step-head"><div class="step-num">4</div><div class="step-title">Deti <span style="font-weight:500;text-transform:none;">(vek a existujúce krytie)</span></div></div>
         <div class="items" id="childItems"></div>
         <button type="button" class="add-item" id="addChild" style="margin-top:10px;">+ Pridať dieťa</button>
       </div>
 
-      <!-- 4. existujúce krytie -->
+      <!-- 5. existujúce krytie -->
       <div>
-        <div class="step-head"><div class="step-num">4</div><div class="step-title">Existujúce poistné krytie <span style="font-weight:500;text-transform:none;">(ak nejaké máš)</span></div></div>
+        <div class="step-head"><div class="step-num">5</div><div class="step-title">Existujúce poistné krytie <span style="font-weight:500;text-transform:none;">(ak nejaké máš)</span></div></div>
         <div class="grid3">
           <div class="field" data-k="existingLife">
             <label>PRE ÚMRTIE (€)</label>
@@ -174,9 +182,9 @@
         </div>
       </div>
 
-      <!-- 5. rezervy -->
+      <!-- 6. rezervy -->
       <div>
-        <div class="step-head"><div class="step-num">5</div><div class="step-title">Dostupné úspory / rezervy</div></div>
+        <div class="step-head"><div class="step-num">6</div><div class="step-title">Dostupné úspory / rezervy</div></div>
         <div class="field" data-k="savings">
           <label>SPOLU NA ÚČTOCH / VKLADOCH (€)</label>
           <input type="number" min="0" step="50" id="savings" placeholder="napr. 3000">
@@ -308,6 +316,7 @@ const state = {
   coverageMonths: 48,
   income:'', expenses:'',
   hasPartner:false, partnerIncome:'',
+  debts: [withId({ desc:'', balance:'', payment:'' })],
   children: [],
   existingLife:'', existingDisability:'', existingCriticalIllness:'', existingPermanentInjury:'', existingPn:'',
   existingLifePartner:'', existingDisabilityPartner:'', existingCriticalIllnessPartner:'', existingPermanentInjuryPartner:'', existingPnPartner:'',
@@ -338,6 +347,10 @@ function eurDay(n){ return (Math.round(n*100)/100).toLocaleString('sk-SK') + ' �
    bez detí (iný koncept — vyrovnanie dedičského konania, nie dlhodobé krytie),
    na PN (počíta sa z reálneho príjmového rozdielu, nie z násobku) a na
    paušálne sumy pri deťoch (50 000 €/dieťa, nezávislé od dĺžky krytia).
+
+   EXISTUJÚCE ZÁVÄZKY (state.debts, krok "Existujúce záväzky") — čisto
+   informatívny prehľad pre poradcu do ďalšej práce s klientom (hypotéka,
+   úvery), do žiadneho výpočtu nižšie sa nezapočítava.
 
    KLIENT BEZ PARTNERA (jednotlivec):
    Úmrtie:            3 000 € pohrebné (vyplatiteľné do 2-3 dní) + 12x mesačné
@@ -606,6 +619,26 @@ function worstInMatrix(g){
 =========================================================================== */
 const $ = id => document.getElementById(id);
 
+function renderDebts(){
+  const box = $('debtItems');
+  if(!state.debts.length){
+    box.innerHTML = '<div class="empty-hint">Zatiaľ žiadne záväzky. Ak nemáš hypotéku ani úver, pole nechaj prázdne.</div>';
+    return;
+  }
+  box.innerHTML = state.debts.map(function(d){
+    return '<div class="item" data-id="'+d.id+'">'
+      + '<div class="item-top">'
+      + '<div class="item-body">'
+      + '<input placeholder="Názov (napr. Hypotéka)" value="'+escapeHtml(d.desc)+'" data-act="desc">'
+      + '<div class="item-meta">'
+      + '<input type="number" min="0" placeholder="Zostatok (€)" value="'+escapeHtml(d.balance)+'" data-act="balance">'
+      + '<input type="number" min="0" placeholder="Mesačná splátka (€)" value="'+escapeHtml(d.payment)+'" data-act="payment">'
+      + '</div></div>'
+      + '<div class="item-del" data-act="del" title="Odstrániť">✕</div>'
+      + '</div></div>';
+  }).join('');
+}
+
 function renderChildren(){
   const box = $('childItems');
   if(!state.children.length){
@@ -685,13 +718,14 @@ function supplementaryInfoHtml(){
 }
 
 function render(){
+  renderDebts();
   renderChildren();
   renderResults();
 }
 
-/* Prepočíta a vykreslí len výsledky (bez prekreslenia zoznamu detí) —
+/* Prepočíta a vykreslí len výsledky (bez prekreslenia zoznamov záväzkov/detí) —
    volá sa pri písaní do ich polí, aby input políčka nestrácali focus po
-   každom znaku (viď onChildInput). */
+   každom znaku (viď onDebtInput/onChildInput). */
 function renderResults(){
   const errors = validate();
   document.querySelectorAll('.form .field[data-k]').forEach(f=>{
@@ -1090,6 +1124,7 @@ function doReset(){
     coverageMonths:48,
     income:'', expenses:'',
     hasPartner:false, partnerIncome:'',
+    debts:[withId({ desc:'', balance:'', payment:'' })],
     children:[],
     existingLife:'', existingDisability:'', existingCriticalIllness:'', existingPermanentInjury:'', existingPn:'',
     existingLifePartner:'', existingDisabilityPartner:'', existingCriticalIllnessPartner:'', existingPermanentInjuryPartner:'', existingPnPartner:'',
@@ -1162,13 +1197,27 @@ function bind(){
     render();
   });
 
+  $('addDebt').addEventListener('click', ()=>{ state.debts.push(withId({ desc:'', balance:'', payment:'' })); render(); });
   $('addChild').addEventListener('click', ()=>{ state.children.push(withId({ age:'', existingCriticalIllness:'', existingPermanentInjury:'', existingInvalidity:'' })); render(); });
 
+  $('debtItems').addEventListener('click', e=>{
+    const row=e.target.closest('.item'); if(!row) return;
+    const id=Number(row.dataset.id);
+    if(e.target.closest('[data-act="del"]')){ state.debts=state.debts.filter(d=>d.id!==id); render(); }
+  });
   $('childItems').addEventListener('click', e=>{
     const row=e.target.closest('.item'); if(!row) return;
     const id=Number(row.dataset.id);
     if(e.target.closest('[data-act="del"]')){ state.children=state.children.filter(c=>c.id!==id); render(); }
   });
+
+  const onDebtInput = e=>{
+    const row=e.target.closest('.item'); if(!row) return;
+    const id=Number(row.dataset.id); const d=state.debts.find(x=>x.id===id); if(!d) return;
+    const act=e.target.dataset.act; if(act) d[act]=e.target.value;
+    renderResults();
+  };
+  $('debtItems').addEventListener('input', onDebtInput);
 
   const onChildInput = e=>{
     const row=e.target.closest('.item'); if(!row) return;
