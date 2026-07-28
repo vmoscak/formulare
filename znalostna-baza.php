@@ -79,7 +79,7 @@ try {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
-<title>Aktuálne postupy</title>
+<title>Aktuálne postupy a informácie</title>
 <link rel="stylesheet" href="<?= asset('fonts.css') ?>">
 <script src="<?= asset('theme-init.js') ?>"></script>
 <link rel="stylesheet" href="<?= asset('panel.css') ?>">
@@ -95,7 +95,7 @@ try {
 </head><body>
 <header class="topbar">
   <div class="tb-title">
-    <h1>Aktuálne postupy</h1>
+    <h1>Aktuálne postupy a informácie</h1>
     <p>Krátke návody a postupy · zdieľané pre celý tím</p>
   </div>
   <div class="tb-actions">

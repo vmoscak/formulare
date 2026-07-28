@@ -10,8 +10,9 @@ smoke testom pred deployom).
 Čo appka rieši: nástroje/kalkulačky pre klientov, generátor dokumentov
 (plnomocenstvá, žiadosti, čestné vyhlásenia), Kontakty (CRM leadov),
 Nábor, Tímový kalendár/prehľad, onboarding nováčikov, Aktuálne postupy
-(predtým "Znalostná báza" — premenované a pridané do spodného doku, keď
-sa ukázalo, že ju nikto nepoužíval práve preto, že nebola nikde vidieť).
+a informácie (predtým "Znalostná báza" — premenované a pridané do
+spodného doku, keď sa ukázalo, že ju nikto nepoužíval práve preto, že
+nebola nikde vidieť).
 Podrobnejšie nápady/backlog viď `NAPADY.md`.
 
 ## Vzťah k druhému systému — vmoscak/vmfin-web

@@ -149,7 +149,7 @@
       { key: 'formulare', icon: ICONS.formulare, href: '/formulare.php', label: 'Formuláre', active: currentGroup === 'formulare', c1: '#10b981', c2: '#059669' },
       { key: 'pomocky', icon: ICONS.pomocky, href: '/pomocky.php', label: 'Pomôcky', active: currentGroup === 'pomocky', c1: '#38bdf8', c2: '#0284c7' },
       { key: 'uniqa', icon: ICONS.uniqa, href: '/uniqa-tlaciva.php', label: 'UNIQA', active: currentGroup === 'uniqa', c1: '#fb923c', c2: '#ea580c' },
-      { key: 'kb', icon: ICONS.kb, href: '/znalostna-baza.php', label: 'Aktuálne postupy', active: isKb, c1: '#a78bfa', c2: '#7c3aed' }
+      { key: 'kb', icon: ICONS.kb, href: '/znalostna-baza.php', label: 'Aktuálne postupy a informácie', active: isKb, c1: '#a78bfa', c2: '#7c3aed' }
     ];
     // Nábor je na rozdiel od ostatných owner-only nástrojov bežne používaný
     // (nie len príležitostná administratíva), takže je vždy viditeľný v
