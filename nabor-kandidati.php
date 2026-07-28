@@ -3,7 +3,9 @@
  * Evidencia kandidátov na nábor — vlastný zoznam ľudí, ktorých si oslovil/-a
  * ty alebo ktorí oslovili teba, nezávislý od registra NBS/mapy (nabor.php).
  * Kandidát nemusí byť vôbec v tom datasete — táto evidencia je čisto tvoja
- * poznámka/pipeline, nie prepojená s formulare_registry_entities.
+ * poznámka/pipeline. Voliteľne (registry_ico) sa dá prepojiť s konkrétnym
+ * záznamom v registri (formulare_registry_entities) cez vyhľadávanie
+ * (api/registry-search.php) — čisto pomôcka na zobrazenie, nie nutnosť.
  *
  * Prístup VÝHRADNE pre poradcu s is_owner=1 (rovnaká zásada ako nabor.php).
  */
@@ -39,9 +41,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $status = array_key_exists($_POST['status'] ?? '', RK_STATUSES) ? $_POST['status'] : 'novy';
         $note = trim((string)($_POST['note'] ?? ''));
         $contactDate = trim((string)($_POST['contact_date'] ?? '')) ?: null;
+        $registryIco = trim((string)($_POST['registry_ico'] ?? '')) ?: null;
         if ($name !== '') {
-            db()->prepare('INSERT INTO formulare_recruit_candidates (name, phone, email, initiator, status, note, contact_date, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-                ->execute([$name, $phone, $email, $initiator, $status, $note, $contactDate, $advisorId]);
+            db()->prepare('INSERT INTO formulare_recruit_candidates (name, phone, email, registry_ico, initiator, status, note, contact_date, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+                ->execute([$name, $phone, $email, $registryIco, $initiator, $status, $note, $contactDate, $advisorId]);
         }
     } elseif (isset($_POST['edit_id'])) {
         $id = (int)$_POST['edit_id'];
@@ -52,9 +55,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $status = array_key_exists($_POST['status'] ?? '', RK_STATUSES) ? $_POST['status'] : 'novy';
         $note = trim((string)($_POST['note'] ?? ''));
         $contactDate = trim((string)($_POST['contact_date'] ?? '')) ?: null;
+        $registryIco = trim((string)($_POST['registry_ico'] ?? '')) ?: null;
         if ($id && $name !== '') {
-            db()->prepare('UPDATE formulare_recruit_candidates SET name = ?, phone = ?, email = ?, initiator = ?, status = ?, note = ?, contact_date = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-                ->execute([$name, $phone, $email, $initiator, $status, $note, $contactDate, $id]);
+            db()->prepare('UPDATE formulare_recruit_candidates SET name = ?, phone = ?, email = ?, registry_ico = ?, initiator = ?, status = ?, note = ?, contact_date = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+                ->execute([$name, $phone, $email, $registryIco, $initiator, $status, $note, $contactDate, $id]);
         }
     } elseif (isset($_POST['delete_id'])) {
         $id = (int)$_POST['delete_id'];
@@ -103,6 +107,45 @@ foreach ($candidates as &$c) {
     $c['is_stale'] = $isActiveStatus && (!$c['contact_date'] || $c['contact_date'] < $staleThreshold);
 }
 unset($c);
+
+// Voliteľné prepojenie s registrom NBS — dotiahne aktuálny názov/mesto pre
+// každé použité IČO naraz (nie per riadok), aby sa dalo zobraziť aj vtedy,
+// keď medzitým register reimportoval a záznam sa (ne)zmenil.
+$registryIcos = array_values(array_unique(array_filter(array_column($candidates, 'registry_ico'))));
+$registryMap = [];
+if ($registryIcos) {
+    try {
+        $ph = implode(',', array_fill(0, count($registryIcos), '?'));
+        $rstmt = db()->prepare("SELECT ico, name, city FROM formulare_registry_entities WHERE ico IN ($ph)");
+        $rstmt->execute($registryIcos);
+        foreach ($rstmt->fetchAll() as $r) { $registryMap[$r['ico']] = $r; }
+    } catch (Throwable $e) { /* register môže byť ešte prázdny */ }
+}
+function rkRegistryLabel(?string $ico, array $map): ?string {
+    if (!$ico) return null;
+    if (isset($map[$ico])) {
+        $e = $map[$ico];
+        return $e['name'] . ($e['city'] ? ' (' . $e['city'] . ')' : '');
+    }
+    return 'IČO ' . $ico . ' — už nie je v registri';
+}
+function rkRegistryWidget(?string $ico, array $map): void {
+    $label = rkRegistryLabel($ico, $map);
+    ?>
+    <div class="rk-registry-link">
+      <div class="rk-registry-link-label">Prepojiť s registrom NBS (voliteľné)</div>
+      <input type="hidden" name="registry_ico" class="rk-registry-ico" value="<?= h((string)$ico) ?>">
+      <div class="rk-registry-picked" style="<?= $label ? 'display:flex;' : '' ?>">
+        <span class="rk-registry-picked-name"><?= h((string)$label) ?></span>
+        <button type="button" class="rk-registry-clear">✕ odpojiť</button>
+      </div>
+      <div class="rk-registry-search-wrap" style="<?= $label ? 'display:none;' : '' ?>">
+        <input type="text" class="rk-registry-search" placeholder="Hľadať v registri podľa mena alebo IČO…" autocomplete="off">
+        <div class="rk-registry-results"></div>
+      </div>
+    </div>
+    <?php
+}
 
 $statusCounts = [];
 foreach (db()->query('SELECT status, COUNT(*) c FROM formulare_recruit_candidates GROUP BY status') as $r) {
@@ -175,6 +218,22 @@ function rkQs(array $overrides): string {
   .rk-add-row{display:grid; grid-template-columns:2fr 1fr 1fr; gap:10px;}
   .rk-add-row2{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;}
   @media(max-width:720px){ .rk-add-row,.rk-add-row2{grid-template-columns:1fr;} }
+  .rk-registry-badge{display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; color:var(--accent); background:var(--accent-soft); padding:2px 9px; border-radius:999px; margin-top:6px; text-decoration:none; white-space:nowrap;}
+  .rk-registry-badge:hover{filter:brightness(0.95);}
+  .rk-registry-link{display:flex; flex-direction:column; gap:6px;}
+  .rk-registry-link-label{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em;}
+  .rk-registry-picked{display:none; align-items:center; gap:8px; padding:7px 10px; border:1px solid var(--border); border-radius:var(--radius-md); background:var(--desk); font-size:12.5px;}
+  .rk-registry-picked-name{flex:1; min-width:0; font-weight:600; color:var(--ink);}
+  .rk-registry-clear{border:none; background:none; color:var(--muted); font-size:12px; cursor:pointer; padding:2px 4px;}
+  .rk-registry-clear:hover{color:var(--rose);}
+  .rk-registry-search-wrap{position:relative;}
+  .rk-registry-results{position:absolute; z-index:5; left:0; right:0; top:100%; margin-top:4px; background:var(--paper); border:1px solid var(--border); border-radius:var(--radius-md); box-shadow:var(--shadow-md,0 4px 16px rgba(0,0,0,.12)); max-height:220px; overflow-y:auto;}
+  .rk-registry-results:empty{display:none;}
+  .rk-registry-opt{display:flex; flex-direction:column; gap:1px; padding:8px 10px; cursor:pointer; font-size:12.5px;}
+  .rk-registry-opt:hover{background:var(--desk);}
+  .rk-registry-opt strong{font-size:12.5px; color:var(--ink);}
+  .rk-registry-opt span{font-size:11.5px; color:var(--muted);}
+  .rk-registry-empty{padding:8px 10px; font-size:12px; color:var(--muted); font-style:italic;}
   .rk-stats{display:flex; align-items:center; gap:22px; flex-wrap:wrap;}
   .rk-stat-num{font-size:20px; font-weight:700; color:var(--ink);}
   .rk-stat-label{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em;}
@@ -316,6 +375,9 @@ function rkQs(array $overrides): string {
             <?php if ($c['contact_date']): ?><br>posledný kontakt <?= h(date('j. n. Y', strtotime($c['contact_date']))) ?><?php endif; ?>
           </div>
           <?php if ($c['note']): ?><div class="rk-kanban-note"><?= h($c['note']) ?></div><?php endif; ?>
+          <?php $regLabel = rkRegistryLabel($c['registry_ico'] ?? null, $registryMap); if ($regLabel): ?>
+          <a class="rk-registry-badge" href="/nabor.php?q=<?= h((string)($c['registry_ico'] ?? '')) ?>" title="Otvoriť v registri NBS">🔗 <?= h($regLabel) ?></a>
+          <?php endif; ?>
           <select class="rk-kanban-move" data-id="<?= (int)$c['id'] ?>" onchange="rkMoveCard(this)">
             <?php foreach (RK_STATUSES as $mKey => $mMeta): ?>
             <option value="<?= h($mKey) ?>" <?= $mKey === $key ? 'selected' : '' ?>><?= h($mMeta[0]) ?></option>
@@ -352,6 +414,9 @@ function rkQs(array $overrides): string {
           <?php if ($c['contact_date']): ?> · posledný kontakt <?= h(date('j. n. Y', strtotime($c['contact_date']))) ?><?php endif; ?>
         </div>
         <?php if ($c['note']): ?><div class="rk-note"><?= h($c['note']) ?></div><?php endif; ?>
+        <?php $regLabel = rkRegistryLabel($c['registry_ico'] ?? null, $registryMap); if ($regLabel): ?>
+        <div><a class="rk-registry-badge" href="/nabor.php?q=<?= h((string)($c['registry_ico'] ?? '')) ?>" title="Otvoriť v registri NBS">🔗 <?= h($regLabel) ?></a></div>
+        <?php endif; ?>
       </div>
       <div class="rk-actions">
         <button type="button" class="toggle-btn" onclick="rkEdit(<?= (int)$c['id'] ?>)">Upraviť</button>
@@ -383,6 +448,7 @@ function rkQs(array $overrides): string {
         </select>
         <input type="date" name="contact_date" value="<?= h((string)$c['contact_date']) ?>">
       </div>
+      <?php rkRegistryWidget($c['registry_ico'] ?? null, $registryMap); ?>
       <textarea name="note" rows="2" placeholder="Poznámka (nepovinné)"><?= h($c['note']) ?></textarea>
       <div style="display:flex; gap:8px;">
         <button type="submit" class="pillbtn solid">Uložiť</button>
@@ -416,6 +482,7 @@ function rkQs(array $overrides): string {
         </select>
         <input type="date" name="contact_date" value="<?= h(date('Y-m-d')) ?>">
       </div>
+      <?php rkRegistryWidget(null, $registryMap); ?>
       <textarea name="note" rows="2" placeholder="Poznámka (nepovinné) — odkiaľ ho poznáš, o čom ste sa rozprávali..."></textarea>
       <button type="submit" class="pillbtn solid" style="align-self:start; width:max-content;">Pridať kandidáta</button>
     </form>
@@ -450,6 +517,76 @@ function rkMoveCard(sel) {
   });
   if (card) card.style.opacity = '.5';
 }
+
+function rkRegistryOpt(item) {
+  var div = document.createElement('div');
+  div.className = 'rk-registry-opt';
+  div.dataset.ico = item.ico;
+  div.dataset.name = item.name;
+  var strong = document.createElement('strong');
+  strong.textContent = item.name;
+  var span = document.createElement('span');
+  span.textContent = (item.city ? item.city + ' · ' : '') + 'IČO ' + item.ico;
+  div.appendChild(strong);
+  div.appendChild(span);
+  return div;
+}
+function rkWireRegistrySearch(root) {
+  root.querySelectorAll('.rk-registry-link').forEach(function (wrap) {
+    var hidden = wrap.querySelector('.rk-registry-ico');
+    var picked = wrap.querySelector('.rk-registry-picked');
+    var pickedName = wrap.querySelector('.rk-registry-picked-name');
+    var searchWrap = wrap.querySelector('.rk-registry-search-wrap');
+    var input = wrap.querySelector('.rk-registry-search');
+    var results = wrap.querySelector('.rk-registry-results');
+    var timer = null;
+
+    function showPicked(name) {
+      pickedName.textContent = name;
+      picked.style.display = 'flex';
+      searchWrap.style.display = 'none';
+      results.innerHTML = '';
+    }
+    function showSearch() {
+      hidden.value = '';
+      picked.style.display = 'none';
+      searchWrap.style.display = 'block';
+      input.value = '';
+      results.innerHTML = '';
+    }
+
+    wrap.querySelector('.rk-registry-clear').addEventListener('click', showSearch);
+
+    input.addEventListener('input', function () {
+      clearTimeout(timer);
+      var q = input.value.trim();
+      if (q.length < 2) { results.innerHTML = ''; return; }
+      timer = setTimeout(function () {
+        fetch('/api/registry-search.php?q=' + encodeURIComponent(q))
+          .then(function (r) { return r.json(); })
+          .then(function (list) {
+            results.innerHTML = '';
+            if (!list.length) {
+              var empty = document.createElement('div');
+              empty.className = 'rk-registry-empty';
+              empty.textContent = 'Nič sa nenašlo';
+              results.appendChild(empty);
+              return;
+            }
+            list.forEach(function (item) { results.appendChild(rkRegistryOpt(item)); });
+          }).catch(function () {});
+      }, 250);
+    });
+
+    results.addEventListener('click', function (e) {
+      var opt = e.target.closest('.rk-registry-opt');
+      if (!opt) return;
+      hidden.value = opt.dataset.ico;
+      showPicked(opt.dataset.name);
+    });
+  });
+}
+document.addEventListener('DOMContentLoaded', function () { rkWireRegistrySearch(document); });
 </script>
 <script src="<?= asset('toast.js') ?>"></script>
 <script src="<?= asset('shell.js') ?>"></script>

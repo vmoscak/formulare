@@ -4,6 +4,10 @@
  * za starú evidenciu v admin.vmfin.sk (Finančný svet tam už len presmerúva
  * sem, vmfin_bookings/vmfin_meetings tiež mizne). Výhradne pre poradcu
  * s is_owner=1, rovnaká zásada ako nabor-kandidati.php.
+ *
+ * Rezervácie -> Leady: ručné tlačidlo "Vytvoriť lead" pri rezervácii
+ * (formulare_bookings.lead_id) — zámerne nie automatické pri každom novom
+ * dopyte, nech sa lead vytvorí len vtedy, keď o to poradca reálne stojí.
  */
 require_once __DIR__ . '/db.php';
 
@@ -24,6 +28,7 @@ const LD_SOURCES = [
     'web_formular' => 'Web formulár',
     'odporucanie'  => 'Odporúčanie',
     'social'       => 'Sociálne siete',
+    'rezervacia'   => 'Z rezervácie',
     'ine'          => 'Iné',
 ];
 const BK_STATUSES = [
@@ -139,6 +144,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         db()->prepare('DELETE FROM formulare_bookings WHERE id = ?')->execute([$id]);
         header('Location: /leady.php?tab=rezervacie');
         exit;
+    } elseif (isset($_POST['create_lead_from_booking_id'])) {
+        $id = (int)$_POST['create_lead_from_booking_id'];
+        $stmt = db()->prepare('SELECT * FROM formulare_bookings WHERE id = ?');
+        $stmt->execute([$id]);
+        $booking = $stmt->fetch();
+        if ($booking && empty($booking['lead_id'])) {
+            $msgParts = [];
+            if ($booking['topic'] !== '') $msgParts[] = 'Téma: ' . $booking['topic'];
+            if ($booking['message'] !== '') $msgParts[] = $booking['message'];
+            db()->prepare('INSERT INTO formulare_leads (name, phone, email, source, message, created_by) VALUES (?, ?, ?, ?, ?, ?)')
+                ->execute([$booking['name'], $booking['phone'], $booking['email'], 'rezervacia', implode("\n", $msgParts), $advisorId]);
+            $newLeadId = (int)db()->lastInsertId();
+            db()->prepare('UPDATE formulare_bookings SET lead_id = ? WHERE id = ?')->execute([$newLeadId, $id]);
+        }
+        header('Location: /leady.php?tab=rezervacie');
+        exit;
     }
 }
 
@@ -186,6 +207,19 @@ if ($tab === 'rezervacie') {
     $stmt = db()->prepare("SELECT * FROM formulare_bookings $bwhereSql ORDER BY created_at DESC, id DESC");
     $stmt->execute($bparams);
     $bookings = $stmt->fetchAll();
+}
+
+// Rezervácie prevedené na lead — dotiahne aktuálny stav leadu naraz pre
+// všetky zobrazené rezervácie (nie per riadok).
+$bookingLeadMap = [];
+$bookingLeadIds = array_values(array_unique(array_filter(array_column($bookings, 'lead_id'))));
+if ($bookingLeadIds) {
+    try {
+        $ph = implode(',', array_fill(0, count($bookingLeadIds), '?'));
+        $lstmt = db()->prepare("SELECT id, name, status FROM formulare_leads WHERE id IN ($ph)");
+        $lstmt->execute($bookingLeadIds);
+        foreach ($lstmt->fetchAll() as $l) { $bookingLeadMap[$l['id']] = $l; }
+    } catch (Throwable $e) { /* nič */ }
 }
 
 function ldQs(array $overrides): string {
@@ -469,6 +503,9 @@ function ldQs(array $overrides): string {
           <span class="kt-chip"><?= $b['meeting_type'] === 'osobne' ? 'Osobne' : 'Online' ?></span>
           <?php if ($b['phone']): ?><span class="kt-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg><?= h($b['phone']) ?></span><?php endif; ?>
           <?php if ($b['email']): ?><span class="kt-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 6l-10 7L2 6"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg><?= h($b['email']) ?></span><?php endif; ?>
+          <?php if (!empty($b['lead_id']) && isset($bookingLeadMap[$b['lead_id']])): $bl = $bookingLeadMap[$b['lead_id']]; $blst = LD_STATUSES[$bl['status']] ?? ['—', 'neutral']; ?>
+          <a class="ld-status <?= h($blst[1]) ?>" style="text-decoration:none;" href="/leady.php?tab=leady&q=<?= urlencode((string)$bl['name']) ?>" title="Otvoriť lead">Lead: <?= h($blst[0]) ?></a>
+          <?php endif; ?>
         </div>
         <div class="ld-meta" style="margin-top:8px;">
           Preferovaný termín: <span class="bk-term"><?= h(date('j. n. Y', strtotime((string)$b['preferred_date']))) ?> o <?= h($b['preferred_time']) ?></span>
@@ -516,6 +553,13 @@ function ldQs(array $overrides): string {
         <?php endif; ?>
       </div>
       <div class="ld-actions">
+        <?php if (empty($b['lead_id'])): ?>
+        <form method="post" style="margin:0;">
+          <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
+          <input type="hidden" name="create_lead_from_booking_id" value="<?= (int)$b['id'] ?>">
+          <button type="submit" class="toggle-btn">Vytvoriť lead</button>
+        </form>
+        <?php endif; ?>
         <?php if (in_array($b['status'], ['pending', 'proposed'], true)): ?>
         <button type="button" class="toggle-btn" onclick="bkToggle(<?= (int)$b['id'] ?>,'confirm')">Potvrdiť</button>
         <?php endif; ?>
