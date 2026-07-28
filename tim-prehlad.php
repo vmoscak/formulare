@@ -36,6 +36,23 @@ function daysAgo(?string $dt, DateTimeImmutable $now): ?int {
     try { $d = new DateTimeImmutable($dt); } catch (Throwable $e) { return null; }
     return (int)$now->diff($d)->days;
 }
+
+if (($_GET['export'] ?? '') === 'csv') {
+    header('Content-Type: text/csv; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="timovy-prehlad-' . date('Y-m-d') . '.csv"');
+    $out = fopen('php://output', 'w');
+    fwrite($out, chr(0xEF) . chr(0xBB) . chr(0xBF));
+    fputcsv($out, ['Poradca', 'Vyskúšané nástroje', 'Dokumenty spolu', 'Posledná aktivita'], ';');
+    foreach ($rows as $r) {
+        $ago = daysAgo($r['last_active'], $now);
+        fputcsv($out, [
+            $r['name'], $r['tools_used'] . '/' . $totalToolsAvailable, $r['total_docs'],
+            $ago === null ? '' : $r['last_active'],
+        ], ';');
+    }
+    fclose($out);
+    exit;
+}
 ?>
 <!DOCTYPE html><html lang="sk"><head>
 <meta charset="UTF-8">
@@ -69,7 +86,10 @@ function daysAgo(?string $dt, DateTimeImmutable $now): ?int {
 <main class="content">
 
   <div class="card">
-    <h3>Aktivita poradcov · <?= count($rows) ?></h3>
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+      <h3 style="margin:0;">Aktivita poradcov · <?= count($rows) ?></h3>
+      <?php if ($rows): ?><a class="toggle-btn" href="?export=csv">⬇ Export CSV</a><?php endif; ?>
+    </div>
     <p style="margin:-6px 0 16px; font-size:12.5px; color:var(--muted);">
       Zoradené od najmenej aktívnych — nikto sa nezhromažďuje mimo toho, čo appka beztak už loguje pri generovaní PDF.
     </p>

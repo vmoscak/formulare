@@ -222,6 +222,39 @@ if ($bookingLeadIds) {
     } catch (Throwable $e) { /* nič */ }
 }
 
+// Export CSV — vždy nad AKTUÁLNE zobrazeným (filtrovaným) zoznamom, nie nad
+// celou tabuľkou, aby export presne zodpovedal tomu, čo poradca práve vidí.
+if (($_GET['export'] ?? '') === 'csv') {
+    $which = ($_GET['which'] ?? '') === 'rezervacie' ? 'rezervacie' : 'leady';
+    header('Content-Type: text/csv; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="' . $which . '-' . date('Y-m-d') . '.csv"');
+    $out = fopen('php://output', 'w');
+    fwrite($out, chr(0xEF) . chr(0xBB) . chr(0xBF));
+    if ($which === 'rezervacie') {
+        fputcsv($out, ['Meno', 'E-mail', 'Telefón', 'Téma', 'Typ stretnutia', 'Preferovaný termín', 'Dohodnutý termín', 'Stav', 'Správa', 'Poznámka', 'Vytvorené'], ';');
+        foreach ($bookings as $b) {
+            fputcsv($out, [
+                $b['name'], $b['email'], $b['phone'], $b['topic'],
+                $b['meeting_type'] === 'osobne' ? 'Osobne' : 'Online',
+                trim($b['preferred_date'] . ' ' . $b['preferred_time']),
+                $b['confirmed_date'] ? trim($b['confirmed_date'] . ' ' . (string)$b['confirmed_time']) : '',
+                BK_STATUSES[$b['status']][0] ?? $b['status'],
+                $b['message'], $b['admin_note'], $b['created_at'],
+            ], ';');
+        }
+    } else {
+        fputcsv($out, ['Meno', 'Telefón', 'E-mail', 'Zdroj', 'Stav', 'Správa', 'Poznámka', 'Vytvorené'], ';');
+        foreach ($leads as $l) {
+            fputcsv($out, [
+                $l['name'], $l['phone'], $l['email'], LD_SOURCES[$l['source']] ?? $l['source'],
+                LD_STATUSES[$l['status']][0] ?? $l['status'], $l['message'], $l['note'], $l['created_at'],
+            ], ';');
+        }
+    }
+    fclose($out);
+    exit;
+}
+
 function ldQs(array $overrides): string {
     $params = array_merge($_GET, $overrides);
     $params = array_filter($params, fn($v) => $v !== '' && $v !== null);
@@ -361,7 +394,10 @@ function ldQs(array $overrides): string {
   </div>
 
   <div class="card">
-    <h3>Zoznam leadov</h3>
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+      <h3 style="margin:0;">Zoznam leadov</h3>
+      <?php if ($leads): ?><a class="toggle-btn" href="<?= ldQs(['export' => 'csv', 'which' => 'leady']) ?>">⬇ Export CSV</a><?php endif; ?>
+    </div>
     <?php if (!$leads): ?>
       <div class="empty-state">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
@@ -481,7 +517,10 @@ function ldQs(array $overrides): string {
   </div>
 
   <div class="card">
-    <h3>Zoznam rezervácií</h3>
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+      <h3 style="margin:0;">Zoznam rezervácií</h3>
+      <?php if ($bookings): ?><a class="toggle-btn" href="<?= ldQs(['export' => 'csv', 'which' => 'rezervacie']) ?>">⬇ Export CSV</a><?php endif; ?>
+    </div>
     <?php if (!$bookings): ?>
       <div class="empty-state">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>

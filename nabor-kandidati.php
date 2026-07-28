@@ -185,6 +185,27 @@ try {
     $staleCount = (int)$stStmt->fetchColumn();
 } catch (Throwable $e) { /* nič */ }
 
+// Export CSV — nad aktuálne filtrovaným zoznamom (status/stale/hľadanie),
+// nie nad celou tabuľkou.
+if (($_GET['export'] ?? '') === 'csv') {
+    header('Content-Type: text/csv; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="kandidati-nabor-' . date('Y-m-d') . '.csv"');
+    $out = fopen('php://output', 'w');
+    fwrite($out, chr(0xEF) . chr(0xBB) . chr(0xBF));
+    fputcsv($out, ['Meno', 'Telefón', 'E-mail', 'Iniciátor', 'Stav', 'Posledný kontakt', 'Poznámka', 'Prepojenie NBS'], ';');
+    foreach ($candidates as $c) {
+        fputcsv($out, [
+            $c['name'], $c['phone'], $c['email'],
+            RK_INITIATORS[$c['initiator']] ?? $c['initiator'],
+            RK_STATUSES[$c['status']][0] ?? $c['status'],
+            $c['contact_date'], $c['note'],
+            rkRegistryLabel($c['registry_ico'] ?? null, $registryMap) ?? '',
+        ], ';');
+    }
+    fclose($out);
+    exit;
+}
+
 function rkQs(array $overrides): string {
     $params = array_merge($_GET, $overrides);
     $params = array_filter($params, fn($v) => $v !== '' && $v !== null);
@@ -355,7 +376,10 @@ function rkQs(array $overrides): string {
 
   <?php if ($view === 'kanban'): ?>
   <div class="card">
-    <h3>Kanban podľa stavu</h3>
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+      <h3 style="margin:0;">Kanban podľa stavu</h3>
+      <?php if ($candidates): ?><a class="toggle-btn" href="<?= rkQs(['export' => 'csv']) ?>">⬇ Export CSV</a><?php endif; ?>
+    </div>
     <div class="rk-kanban">
       <?php foreach (RK_STATUSES as $key => $meta): $colCandidates = array_values(array_filter($candidates, fn($c) => $c['status'] === $key)); ?>
       <div class="rk-kanban-col">
@@ -391,7 +415,10 @@ function rkQs(array $overrides): string {
   </div>
   <?php else: ?>
   <div class="card">
-    <h3>Zoznam kandidátov</h3>
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+      <h3 style="margin:0;">Zoznam kandidátov</h3>
+      <?php if ($candidates): ?><a class="toggle-btn" href="<?= rkQs(['export' => 'csv']) ?>">⬇ Export CSV</a><?php endif; ?>
+    </div>
     <?php if (!$candidates): ?>
       <div class="empty-state">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>

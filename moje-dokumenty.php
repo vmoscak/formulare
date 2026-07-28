@@ -55,6 +55,38 @@ try {
     db()->prepare("UPDATE formulare_client_links SET claimed_at = ? WHERE advisor_id = ? AND status = 'submitted' AND claimed_at IS NULL")
         ->execute([date('Y-m-d H:i:s'), $advisorId]);
 } catch (Throwable $e) { /* nie je kritické */ }
+
+// Export CSV — vždy len vlastné záznamy prihláseného poradcu (rovnaký rozsah
+// ako zvyšok tejto stránky).
+if (($_GET['export'] ?? '') === 'csv') {
+    $which = ($_GET['which'] ?? '') === 'odkazy' ? 'odkazy' : 'dokumenty';
+    header('Content-Type: text/csv; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="' . $which . '-' . date('Y-m-d') . '.csv"');
+    $out = fopen('php://output', 'w');
+    fwrite($out, chr(0xEF) . chr(0xBB) . chr(0xBF));
+    if ($which === 'odkazy') {
+        fputcsv($out, ['Klient', 'Nástroj', 'Stav', 'Vytvorené', 'Platnosť do', 'Vyplnené'], ';');
+        foreach ($links as $l) {
+            fputcsv($out, [
+                $l['client_label'], toolLabel($l['tool']),
+                $l['status'] === 'submitted' ? 'Vyplnené' : 'Čaká',
+                $l['created_at'], $l['expires_at'], $l['submitted_at'],
+            ], ';');
+        }
+    } else {
+        fputcsv($out, ['Klient', 'Nástroj', 'Zdroj', 'Koncept', 'Vygenerované'], ';');
+        foreach ($docs as $d) {
+            fputcsv($out, [
+                $d['client_label'], toolLabel($d['tool']),
+                $d['source'] === 'client' ? 'klient' : 'poradca',
+                !empty($d['is_draft']) ? 'áno' : 'nie',
+                $d['generated_at'],
+            ], ';');
+        }
+    }
+    fclose($out);
+    exit;
+}
 ?>
 <!DOCTYPE html><html lang="sk"><head>
 <meta charset="UTF-8">
@@ -87,7 +119,10 @@ try {
 <main class="content">
 
   <div class="card">
-    <h3>Vygenerované dokumenty · posledných 200</h3>
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+      <h3 style="margin:0;">Vygenerované dokumenty · posledných 200</h3>
+      <?php if ($docs): ?><a class="toggle-btn" href="?export=csv&which=dokumenty">⬇ Export CSV</a><?php endif; ?>
+    </div>
     <?php if ($docs): ?>
     <div class="dom-search-wrap" style="max-width:360px; margin-bottom:14px;">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -125,7 +160,10 @@ try {
   </div>
 
   <div class="card">
-    <h3>Klientske odkazy</h3>
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+      <h3 style="margin:0;">Klientske odkazy</h3>
+      <?php if ($links): ?><a class="toggle-btn" href="?export=csv&which=odkazy">⬇ Export CSV</a><?php endif; ?>
+    </div>
     <table>
       <tr><th>Klient</th><th>Nástroj</th><th>Stav</th><th>Platnosť</th><th></th></tr>
       <?php foreach ($links as $l):
