@@ -105,24 +105,16 @@
         </div>
       </div>
 
-      <!-- 3. záväzky -->
+      <!-- 3. deti -->
       <div>
-        <div class="step-head"><div class="step-num">3</div><div class="step-title">Existujúce záväzky <span style="font-weight:500;text-transform:none;">(hypotéka, úvery)</span></div></div>
-        <div class="step-hint">Používa sa len pri jednotlivcovi bez detí (preklenutie obdobia dedičského konania po úmrtí). Pri páre alebo klientovi s deťmi sa do výpočtu nezapočítava — nahrádza ho väčší násobok priamo pri riziku úmrtia.</div>
-        <div class="items" id="debtItems"></div>
-        <button type="button" class="add-item" id="addDebt" style="margin-top:10px;">+ Pridať záväzok</button>
-      </div>
-
-      <!-- 4. deti -->
-      <div>
-        <div class="step-head"><div class="step-num">4</div><div class="step-title">Deti <span style="font-weight:500;text-transform:none;">(vek a existujúce krytie)</span></div></div>
+        <div class="step-head"><div class="step-num">3</div><div class="step-title">Deti <span style="font-weight:500;text-transform:none;">(vek a existujúce krytie)</span></div></div>
         <div class="items" id="childItems"></div>
         <button type="button" class="add-item" id="addChild" style="margin-top:10px;">+ Pridať dieťa</button>
       </div>
 
-      <!-- 5. existujúce krytie -->
+      <!-- 4. existujúce krytie -->
       <div>
-        <div class="step-head"><div class="step-num">5</div><div class="step-title">Existujúce poistné krytie <span style="font-weight:500;text-transform:none;">(ak nejaké máš)</span></div></div>
+        <div class="step-head"><div class="step-num">4</div><div class="step-title">Existujúce poistné krytie <span style="font-weight:500;text-transform:none;">(ak nejaké máš)</span></div></div>
         <div class="grid3">
           <div class="field" data-k="existingLife">
             <label>PRE ÚMRTIE (€)</label>
@@ -182,9 +174,9 @@
         </div>
       </div>
 
-      <!-- 6. rezervy -->
+      <!-- 5. rezervy -->
       <div>
-        <div class="step-head"><div class="step-num">6</div><div class="step-title">Dostupné úspory / rezervy</div></div>
+        <div class="step-head"><div class="step-num">5</div><div class="step-title">Dostupné úspory / rezervy</div></div>
         <div class="field" data-k="savings">
           <label>SPOLU NA ÚČTOCH / VKLADOCH (€)</label>
           <input type="number" min="0" step="50" id="savings" placeholder="napr. 3000">
@@ -316,7 +308,6 @@ const state = {
   coverageMonths: 48,
   income:'', expenses:'',
   hasPartner:false, partnerIncome:'',
-  debts: [withId({ desc:'', balance:'', payment:'' })],
   children: [],
   existingLife:'', existingDisability:'', existingCriticalIllness:'', existingPermanentInjury:'', existingPn:'',
   existingLifePartner:'', existingDisabilityPartner:'', existingCriticalIllnessPartner:'', existingPermanentInjuryPartner:'', existingPnPartner:'',
@@ -349,13 +340,13 @@ function eurDay(n){ return (Math.round(n*100)/100).toLocaleString('sk-SK') + ' �
    paušálne sumy pri deťoch (50 000 €/dieťa, nezávislé od dĺžky krytia).
 
    KLIENT BEZ PARTNERA (jednotlivec):
-   Úmrtie:            3 000 € pohrebné (vyplatiteľné do 2-3 dní) + 12x mesačná
-                      splátka záväzkov — preklenutie obdobia dedičského
-                      konania, nie splatenie celého dlhu. AK MÁ DETI (a nemá
-                      partnera), namiesto 12x splátky sa rieši dlhodobo:
-                      Nx 500 € na každé dieťa — zabezpečenie opatrovníka,
-                      ktorý sa o dieťa postará, keď rodič zomrie (spolu so
-                      štátnym sirotským dôchodkom).
+   Úmrtie:            3 000 € pohrebné (vyplatiteľné do 2-3 dní) + 12x mesačné
+                      výdavky domácnosti — preklenutie obdobia dedičského
+                      konania, nie dlhodobé zabezpečenie (nie je koho dlhodobo
+                      kryť). AK MÁ DETI (a nemá partnera), namiesto 12x
+                      výdavkov sa rieši dlhodobo: Nx 500 € na každé dieťa —
+                      zabezpečenie opatrovníka, ktorý sa o dieťa postará, keď
+                      rodič zomrie (spolu so štátnym sirotským dôchodkom).
    Invalidita:        Nx mesačné výdavky (počíta sa s čiastočnou invaliditou).
    Kritické choroby:  Nx mesačné výdavky + orientačná suma na liečbu
                       v zahraničí (bežný štandard, individuálne sa spresní
@@ -402,7 +393,7 @@ function eurDay(n){ return (Math.round(n*100)/100).toLocaleString('sk-SK') + ' �
                        nezapočítavajú ako krytie poistných rizík.
 =========================================================================== */
 const FUNERAL_COST = 3000;
-const DEATH_DEBT_MONTHS = 12;
+const DEATH_BRIDGE_MONTHS = 12;
 const CHILD_DEATH_MONTHLY = 500;
 const COVERAGE_MONTHS_MIN = 36;
 const COVERAGE_MONTHS_MAX = 60;
@@ -435,14 +426,15 @@ function gapObj(need, covered){
 
 /* Jednotlivec (bez partnera) — základ je plný mesačný výdavok domácnosti.
    Úmrtie: ak nemá deti, len krátky preklenovací bridge na dedičské konanie
-   (12x splátka). Ak má deti, nie je partner, ktorý by sa o ne postaral, preto
-   sa rieši dlhodobo — 60x 500 € na každé dieťa (zabezpečenie opatrovníka). */
-function computeSingleAdultRisks(income, expenses, debtsPaymentTotal, childrenCount, existing, coverageMonths){
+   (12x mesačné výdavky domácnosti). Ak má deti, nie je partner, ktorý by sa
+   o ne postaral, preto sa rieši dlhodobo — Nx 500 € na každé dieťa
+   (zabezpečenie opatrovníka). */
+function computeSingleAdultRisks(income, expenses, childrenCount, existing, coverageMonths){
   const grossIncome = grossFromNet(income);
 
   const needDeath = childrenCount>0
     ? FUNERAL_COST + childrenCount*CHILD_DEATH_MONTHLY*coverageMonths
-    : FUNERAL_COST + debtsPaymentTotal*DEATH_DEBT_MONTHS;
+    : FUNERAL_COST + expenses*DEATH_BRIDGE_MONTHS;
   const needDisability = expenses*coverageMonths;
   const needCriticalIllness = expenses*coverageMonths;
   const needPermanentInjury = expenses*coverageMonths;
@@ -512,7 +504,6 @@ function computeChildrenRisks(children){
 function computeGaps(){
   const income = num(state.income);
   const expenses = num(state.expenses);
-  const debtsPaymentTotal = state.debts.reduce((s,d)=>s+num(d.payment),0);
   const hasPartner = !!state.hasPartner;
   const partnerIncome = num(state.partnerIncome);
 
@@ -532,7 +523,7 @@ function computeGaps(){
       pn: state.existingPnPartner,
     }, hasChildren, coverageMonths);
   } else {
-    adult1 = computeSingleAdultRisks(income, expenses, debtsPaymentTotal, state.children.length, {
+    adult1 = computeSingleAdultRisks(income, expenses, state.children.length, {
       life: state.existingLife, disability: state.existingDisability,
       criticalIllness: state.existingCriticalIllness, permanentInjury: state.existingPermanentInjury,
       pn: state.existingPn,
@@ -548,7 +539,7 @@ function computeGaps(){
   return {
     hasPartner, adult1, adult2, children, coverageMonths,
     reserve:{ target:reserveTarget, current:reserveCurrent, gap:reserveGap },
-    inputs:{ income, expenses, debtsPaymentTotal, partnerIncome },
+    inputs:{ income, expenses, partnerIncome },
   };
 }
 
@@ -572,7 +563,7 @@ function buildRiskMatrix(g){
           : 'Pohrebné (3 000 €) + '+m+'-násobok reálneho výpadku pre prežívajúceho partnera/-ku (výdavky mínus jeho/jej vlastný príjem) — bez detí nemá zmysel kryť na scenár, že zomrú obaja naraz. Pri deťoch sa nerieši.')
         : (g.children
           ? 'Pohrebné (3 000 €) + '+m+'-násobok 500 € na každé dieťa ('+g.children.count+') — zabezpečenie opatrovníka, spolu so štátnym sirotským dôchodkom. Pri deťoch samotných sa nerieši.'
-          : 'Pohrebné (3 000 €) + 12-násobok mesačnej splátky záväzkov ('+eur(g.inputs.debtsPaymentTotal)+'). Pri deťoch sa nerieši.') },
+          : 'Pohrebné (3 000 €) + 12-násobok mesačných výdavkov domácnosti ('+eur(g.inputs.expenses)+'). Pri deťoch sa nerieši.') },
     { key:'disability', field:'disability', childField:'invalidity', label:'Invalidita', fmt:eur,
       note: g.hasPartner
         ? m+'-násobok referenčnej sumy pri výpadku oboch príjmov naraz. Vypláca sa dohodnutá PS; u dieťaťa len úplná, od 18 rokov.'
@@ -614,26 +605,6 @@ function worstInMatrix(g){
    VYKRESLENIE
 =========================================================================== */
 const $ = id => document.getElementById(id);
-
-function renderDebts(){
-  const box = $('debtItems');
-  if(!state.debts.length){
-    box.innerHTML = '<div class="empty-hint">Zatiaľ žiadne záväzky. Ak nemáš hypotéku ani úver, pole nechaj prázdne.</div>';
-    return;
-  }
-  box.innerHTML = state.debts.map(function(d){
-    return '<div class="item" data-id="'+d.id+'">'
-      + '<div class="item-top">'
-      + '<div class="item-body">'
-      + '<input placeholder="Názov (napr. Hypotéka)" value="'+escapeHtml(d.desc)+'" data-act="desc">'
-      + '<div class="item-meta">'
-      + '<input type="number" min="0" placeholder="Zostatok (€)" value="'+escapeHtml(d.balance)+'" data-act="balance">'
-      + '<input type="number" min="0" placeholder="Mesačná splátka (€)" value="'+escapeHtml(d.payment)+'" data-act="payment">'
-      + '</div></div>'
-      + '<div class="item-del" data-act="del" title="Odstrániť">✕</div>'
-      + '</div></div>';
-  }).join('');
-}
 
 function renderChildren(){
   const box = $('childItems');
@@ -714,14 +685,13 @@ function supplementaryInfoHtml(){
 }
 
 function render(){
-  renderDebts();
   renderChildren();
   renderResults();
 }
 
-/* Prepočíta a vykreslí len výsledky (bez prekreslenia zoznamov záväzkov/detí) —
+/* Prepočíta a vykreslí len výsledky (bez prekreslenia zoznamu detí) —
    volá sa pri písaní do ich polí, aby input políčka nestrácali focus po
-   každom znaku (viď onDebtInput/onChildInput). */
+   každom znaku (viď onChildInput). */
 function renderResults(){
   const errors = validate();
   document.querySelectorAll('.form .field[data-k]').forEach(f=>{
@@ -1120,7 +1090,6 @@ function doReset(){
     coverageMonths:48,
     income:'', expenses:'',
     hasPartner:false, partnerIncome:'',
-    debts:[withId({ desc:'', balance:'', payment:'' })],
     children:[],
     existingLife:'', existingDisability:'', existingCriticalIllness:'', existingPermanentInjury:'', existingPn:'',
     existingLifePartner:'', existingDisabilityPartner:'', existingCriticalIllnessPartner:'', existingPermanentInjuryPartner:'', existingPnPartner:'',
@@ -1193,27 +1162,13 @@ function bind(){
     render();
   });
 
-  $('addDebt').addEventListener('click', ()=>{ state.debts.push(withId({ desc:'', balance:'', payment:'' })); render(); });
   $('addChild').addEventListener('click', ()=>{ state.children.push(withId({ age:'', existingCriticalIllness:'', existingPermanentInjury:'', existingInvalidity:'' })); render(); });
 
-  $('debtItems').addEventListener('click', e=>{
-    const row=e.target.closest('.item'); if(!row) return;
-    const id=Number(row.dataset.id);
-    if(e.target.closest('[data-act="del"]')){ state.debts=state.debts.filter(d=>d.id!==id); render(); }
-  });
   $('childItems').addEventListener('click', e=>{
     const row=e.target.closest('.item'); if(!row) return;
     const id=Number(row.dataset.id);
     if(e.target.closest('[data-act="del"]')){ state.children=state.children.filter(c=>c.id!==id); render(); }
   });
-
-  const onDebtInput = e=>{
-    const row=e.target.closest('.item'); if(!row) return;
-    const id=Number(row.dataset.id); const d=state.debts.find(x=>x.id===id); if(!d) return;
-    const act=e.target.dataset.act; if(act) d[act]=e.target.value;
-    renderResults();
-  };
-  $('debtItems').addEventListener('input', onDebtInput);
 
   const onChildInput = e=>{
     const row=e.target.closest('.item'); if(!row) return;
