@@ -244,6 +244,18 @@ toho, čo sa rozhodneme spraviť.
   slovami, Claude navrhne, ktorý z ~40 nástrojov použiť a v akom poradí.
 - [ ] **„Hypo-Refinance Autopilot“** s notifikáciou pre poradcu
 
+## AI agenti (autonómne, viackrokové)
+
+Na rozdiel od vyššie — nie jednorazová kontrola/text na schválenie, ale
+viackrokový proces, kde AI sama rozhoduje čo ďalej (vyhľadá, porovná,
+navrhne), teba zapojí len na schválenie alebo pri výnimke.
+
+- [ ] **Agent na triedenie nových leadov** — keď príde dopyt cez
+  `api/leads-intake.php`, namiesto len notifikácie (pozri nižšie) agent:
+  skontroluje duplicitu v Kontaktoch, navrhne prvú odpoveď na mieru,
+  pozrie kalendár a rovno ponúkne 2-3 voľné termíny na stretnutie. Ty len
+  schváliš/upravíš a odošleš.
+
 ## Manažérske a tímové funkcie
 
 - [ ] **Notifikácia na nový lead** — keď príde dopyt cez
