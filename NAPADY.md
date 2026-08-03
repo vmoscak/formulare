@@ -235,6 +235,15 @@ toho, čo sa rozhodneme spraviť.
 
 ## Manažérske a tímové funkcie
 
+- [ ] **Notifikácia na nový lead** — keď príde dopyt cez
+  `api/leads-intake.php` (HMAC/`LEADS_API_SECRET` endpoint), pošli hneď
+  cinknutie cez ntfy (už beží na Vladoserveri, používa sa aj pre n8n) s
+  menom a kontaktom leadu, nech vieš rýchlo zareagovať bez nutnosti
+  appku priebežne kontrolovať.
+- [ ] **Jednoduchý CRM dashboard** — súhrnný pohľad na Kontakty (rozpísaný
+  nápad, doladiť rozsah — pravdepodobne prieniky s existujúcim
+  `leady.php`/KPI na iných hub stránkach, premyslieť či ide o nový
+  widget alebo samostatnú stránku).
 - [ ] **Most medzi Hypotékou a Poistením** (manažérska funkcia — synergia)
 - [ ] **Smart Lead Routing** (inteligentné prerozdeľovanie kontaktov)
 - [ ] **Modul „Klientske výročia a narodeniny“** (automaty na vzťahy)
