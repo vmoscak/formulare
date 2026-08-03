@@ -219,6 +219,13 @@ toho, čo sa rozhodneme spraviť.
 
 ## Nástroje a produktivita poradcu
 
+- [ ] **Chat nad „Aktuálne postupy a informácie“** — namiesto prehľadávania
+  dokumentu sa poradca/nováčik rovno spýta ("Ako sa rieši storno poistky?"),
+  Claude odpovie na základe celého obsahu dokumentu (žiadny RAG/vector
+  search — dokument je jeden a dosť malý na to, aby išiel ako kontext pri
+  každej otázke celý). Chatovacie pole priamo na spodku existujúcej
+  stránky (nie nová záložka) — rieši rovnaký problém viditeľnosti, kvôli
+  ktorému sa pôvodná Znalostná báza nepoužívala.
 - [ ] **„Tichý radar“ pre poradcov** (pripomienkovač aktivít)
 - [ ] **Šablóny na riešenie „Zásekov“** (trablšúting) — rýchle texty na
   vyžiadanie dokladov, keď proces v poisťovni zastane
