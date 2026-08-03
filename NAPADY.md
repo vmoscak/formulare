@@ -231,6 +231,17 @@ toho, čo sa rozhodneme spraviť.
   vyžiadanie dokladov, keď proces v poisťovni zastane
 - [ ] **60-sekundový „Zápisník po stretnutí“**
 - [ ] **Hlasový zápisník z auta** (AI, moderná produktivita)
+- [ ] **Hlasová poznámka po stretnutí → priamo do Kontaktu** — nadväzuje na
+  vyššie dva zápisníky: nahráš/nadiktuješ, Claude vytiahne štruktúrované
+  polia (čo klient riešil, dohodnutý ďalší krok, dátum) a rovno predvyplní
+  záznam v Kontaktoch, nie len uloží text niekde bokom.
+- [ ] **AI kontrola vygenerovaných PDF dokumentov** — obdoba doc-check vo
+  vmfin-web/admin, ale pre dokumenty z Portálu (plnomocenstvá, žiadosti,
+  čestné vyhlásenia): pred stiahnutím Claude skontroluje chýbajúce
+  povinné pole, preklep v mene klienta a pod.
+- [ ] **Konverzačný odporúčač nástroja** — namiesto pevnej postupnosti v
+  "Sprievodcovi podľa životnej udalosti" opíšeš situáciu klienta vlastnými
+  slovami, Claude navrhne, ktorý z ~40 nástrojov použiť a v akom poradí.
 - [ ] **„Hypo-Refinance Autopilot“** s notifikáciou pre poradcu
 
 ## Manažérske a tímové funkcie
