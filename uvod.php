@@ -91,6 +91,12 @@ if (!$favoriteTools) {
     }
 }
 
+$wifiPassword = '';
+try {
+    $wifiRow = db()->query('SELECT password FROM formulare_wifi WHERE id = 1')->fetch();
+    if ($wifiRow) $wifiPassword = (string)$wifiRow['password'];
+} catch (Throwable $e) { /* sql/049_wifi_password.sql ešte nemusí byť spustená */ }
+
 $news = [];
 try {
     $news = db()->query('SELECT * FROM formulare_news ORDER BY important DESC, created_at DESC LIMIT 5')->fetchAll();
@@ -269,6 +275,9 @@ $EVT_SK_MONTHS_SHORT = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MÁJ', 'JÚN', 'JÚL', 
     <p><?= $news ? 'Prehľad noviniek a rýchly vstup do appky' : 'Rýchly vstup do appky a tvoje obľúbené nástroje' ?></p>
   </div>
   <div class="tb-actions">
+    <?php if ($wifiPassword !== ''): ?>
+    <button type="button" class="pillbtn" id="wifiChip" data-pw="<?= h($wifiPassword) ?>" onclick="wifiCopy(this)" title="Kliknutím skopíruješ heslo">📶 WiFi: <?= h($wifiPassword) ?></button>
+    <?php endif; ?>
     <a class="pillbtn" href="/moje-dokumenty.php">Moje dokumenty</a>
     <span class="who">
       <span class="ini" style="background:<?= h($me['color']) ?>;"><?= h(advisorInitials($me['name'])) ?></span>
@@ -570,6 +579,14 @@ function domHighlight(original, normQuery) {
   });
 })();
 
+function wifiCopy(btn) {
+  var pw = btn.dataset.pw || '';
+  if (!pw) return;
+  navigator.clipboard.writeText(pw).then(function () {
+    if (window.showToast) showToast('WiFi heslo skopírované', 'success');
+  }).catch(function () {});
+}
+
 function bzToggleFav(btn) {
   var slug = btn.dataset.slug;
   btn.classList.toggle('is-fav');
@@ -656,5 +673,6 @@ function bzUnfavorite(btn) {
   });
 })();
 </script>
+<script src="<?= asset('toast.js') ?>"></script>
 <script src="<?= asset('shell.js') ?>"></script>
 </body></html>

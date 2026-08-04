@@ -124,6 +124,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $disabledSlugs = array_values(array_diff($allSlugs, $enabledSlugs));
         db()->prepare('UPDATE formulare_advisors SET disabled_tools = ? WHERE id = ?')
             ->execute([json_encode($disabledSlugs), $id]);
+    } elseif (isset($_POST['wifi_password'])) {
+        $wifiPw = trim((string)$_POST['wifi_password']);
+        try {
+            db()->prepare('UPDATE formulare_wifi SET password = ?, updated_at = ? WHERE id = 1')
+                ->execute([$wifiPw, date('Y-m-d H:i:s')]);
+        } catch (Throwable $e) { $migrationRunError = 'Tabuľka formulare_wifi ešte neexistuje — spusti najprv sql/049_wifi_password.sql (nižšie v Databázových migráciách).'; }
     } elseif (isset($_POST['mark_applied_file'])) {
         $file = basename((string)$_POST['mark_applied_file']);
         if (preg_match('/^\d{3}_[\w.-]+\.sql$/', $file) && is_file(__DIR__ . '/sql/' . $file)) {
@@ -148,6 +154,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     if (empty($migrationRunError)) { header('Location: /admin.php'); exit; }
 }
+
+$wifiPassword = '';
+try {
+    $wifiRow = db()->query('SELECT password FROM formulare_wifi WHERE id = 1')->fetch();
+    if ($wifiRow) $wifiPassword = (string)$wifiRow['password'];
+} catch (Throwable $e) { /* sql/049_wifi_password.sql ešte nemusí byť spustená */ }
 
 $advisors = db()->query('SELECT * FROM formulare_advisors ORDER BY active DESC, name')->fetchAll();
 $docs = db()->query(
@@ -205,6 +217,19 @@ function advisorDisabledSlugs(array $a, array $allToolSlugs): array {
 </header>
 
 <main class="content">
+
+  <div class="card">
+    <h3>WiFi heslo</h3>
+    <p style="margin:-6px 0 16px; font-size:12.5px; color:var(--muted);">Zobrazuje sa natrvalo na Domov u všetkých poradcov. Mení sa cca raz za 3 mesiace.</p>
+    <form method="post" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; max-width:420px;">
+      <input type="hidden" name="csrf" value="<?= h(csrfToken()) ?>">
+      <label style="flex:1; min-width:200px;">
+        <span style="display:block; font-size:12.5px; color:var(--ink-2); margin-bottom:4px;">Aktuálne heslo</span>
+        <input type="text" name="wifi_password" value="<?= h($wifiPassword) ?>" placeholder="napr. BRSuwEv9xz">
+      </label>
+      <button type="submit" class="pillbtn solid">Uložiť</button>
+    </form>
+  </div>
 
   <div class="card">
     <h3>Poradcovia</h3>
